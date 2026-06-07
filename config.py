@@ -1,6 +1,0 @@
-import os
-
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-
-KAABA_LAT = 21.422487
-KAABA_LON = 39.826206
