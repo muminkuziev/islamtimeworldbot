@@ -1,1 +1,0 @@
-HADITH_QUOTES = []
