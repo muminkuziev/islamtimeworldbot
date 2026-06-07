@@ -1,1 +1,0 @@
-QURAN_QUOTES = []
