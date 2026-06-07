@@ -1,7 +1,12 @@
 import telebot
 
-from config import TOKEN
+from config import BOT_TOKEN
+from handlers.start import register_start_handler
 
-bot = telebot.TeleBot(TOKEN)
+bot = telebot.TeleBot(BOT_TOKEN)
 
-print("IslamTimeWorldBot started...")
+register_start_handler(bot)
+
+print("Islam Time World Bot ishga tushdi...")
+
+bot.infinity_polling()
