@@ -160,7 +160,7 @@ async def api_prayer_times(
     from domain.prayer.extras  import fetch_all_extras
 
     prayer_task = prayer_service.get_prayer_data(lat, lon, lang, method)
-    extras_task = fetch_all_extras(lat, lon)
+    extras_task = fetch_all_extras(lat, lon, lang)
 
     prayer_data, extras = await _asyncio.gather(prayer_task, extras_task)
 

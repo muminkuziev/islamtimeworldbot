@@ -49,7 +49,7 @@ const QuranScreen = (function () {
 
   /* Translation editions on AlQuran.cloud */
   const TRANSLATIONS = {
-    uz: 'uz.sodik', uz_cyr: 'ru.kuliev', en: 'en.sahih', ru: 'ru.kuliev',
+    uz: 'uz.sodik', uz_cyr: 'uz.sodik', en: 'en.sahih', ru: 'ru.kuliev',
     tr: 'tr.diyanet', ar: null, kk: 'ru.kuliev', tg: 'ru.kuliev',
     ky: 'ru.kuliev', de: 'de.aburida', fr: 'fr.hamidullah',
     id: 'id.indonesian', hi: 'hi.hindi', ur: 'ur.ahmedali'
