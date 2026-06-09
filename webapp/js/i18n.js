@@ -407,6 +407,22 @@ const I18N = {
     ky:"№",     de:"Nr.",      fr:"N°",  id:"No.",
     hi:"क्र.",  ur:"نمبر",
   },
+  hadith_search_hint: {
+    uz:"Arabcha yoki Indonesia tilida qidiring",
+    uz_cyr:"Арабча ёки Индонезия тилида қидиринг",
+    en:"Search in Arabic or Indonesian",
+    ru:"Поиск на арабском или индонезийском",
+    tr:"Arapça veya Endonezce arayın",
+    ar:"ابحث بالعربية أو الإندونيسية",
+    kk:"Арабша немесе Индонезияша іздеңіз",
+    tg:"Бо забони арабӣ ё индонезӣ ҷустуҷӯ кунед",
+    ky:"Арабча же Индонезияча издеңиз",
+    de:"Suche auf Arabisch oder Indonesisch",
+    fr:"Rechercher en arabe ou indonésien",
+    id:"Cari dalam bahasa Arab atau Indonesia",
+    hi:"अरबी या इंडोनेशियाई में खोजें",
+    ur:"عربی یا انڈونیشیائی میں تلاش کریں",
+  },
 
   /* ── Duas screen ───────────────────────────────────────── */
   duas_morning: {

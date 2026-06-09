@@ -72,6 +72,7 @@ const HadithScreen = (function () {
                    placeholder="${t('search', lang)}" autocomplete="off"/>
             <button class="hadith-search-btn" id="hadith-search-btn">🔍</button>
           </div>
+          <div class="hadith-search-hint">${t('hadith_search_hint', lang)}</div>
 
           <!-- List -->
           <div class="hadith-list" id="hadith-list">

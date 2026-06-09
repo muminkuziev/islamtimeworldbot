@@ -2469,6 +2469,13 @@ button {
   font-size: 0.9rem;
 }
 
+.hadith-search-hint {
+  font-size: 0.72rem;
+  color: var(--text-3);
+  padding: 2px var(--sp-lg) 4px;
+  font-style: italic;
+}
+
 .hadith-list {
   flex: 1;
   overflow-y: auto;

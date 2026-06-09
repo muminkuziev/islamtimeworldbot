@@ -204,13 +204,19 @@ async def api_hadith(
         return JSONResponse({"error": str(e)}, status_code=500)
 
 
+def _strip_harakat(s: str) -> str:
+    """Remove Arabic diacritical marks (harakat/tashkeel) for flexible search."""
+    import re
+    return re.sub(r'[ً-ْٰۖ-ۜ۟-ۭ]', '', s or '')
+
+
 @app.get("/api/hadith/search")
 async def api_hadith_search(
     q:          str = Query(...),
     collection: str = Query("bukhari"),
     lang:       str = Query("en"),
 ):
-    """Full-text search in hadiths."""
+    """Full-text search in hadiths (narrator, Indonesian text, Arabic with harakat stripping)."""
     try:
         import sqlite3
         db_path = BASE_DIR / "data" / "hadiths.db"
@@ -221,12 +227,34 @@ async def api_hadith_search(
         cur = con.cursor()
         col  = "bukhari" if collection != "muslim" else "muslim"
         like = f"%{q}%"
-        rows = cur.execute(
-            "SELECT * FROM hadiths WHERE collection=? AND (text LIKE ? OR narrator LIKE ?) LIMIT 50",
-            (col, like, like)
+
+        # Fast SQL path: narrator (English) and text (Indonesian)
+        sql_rows = cur.execute(
+            "SELECT * FROM hadiths WHERE collection=? AND "
+            "(narrator LIKE ? OR text LIKE ? OR chapter LIKE ?) LIMIT 50",
+            (col, like, like, like)
         ).fetchall()
+        results = [dict(r) for r in sql_rows]
+        seen_ids = {r["id"] for r in results}
+
+        # Python-level Arabic search with harakat stripping (for Arabic keyword queries)
+        if len(results) < 50:
+            q_norm = _strip_harakat(q)
+            if q_norm and any(0x0600 <= ord(c) <= 0x06FF for c in q_norm):
+                ar_rows = cur.execute(
+                    "SELECT * FROM hadiths WHERE collection=? AND arabic != '' LIMIT 3000",
+                    (col,)
+                ).fetchall()
+                for row in ar_rows:
+                    if len(results) >= 50:
+                        break
+                    d = dict(row)
+                    if d["id"] not in seen_ids and q_norm in _strip_harakat(d.get("arabic", "")):
+                        results.append(d)
+                        seen_ids.add(d["id"])
+
         con.close()
-        return JSONResponse({"hadiths": [dict(r) for r in rows], "total": len(rows)})
+        return JSONResponse({"hadiths": results, "total": len(results)})
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
 

@@ -22,13 +22,13 @@ const PrayerScreen = (function () {
   const L = {
     title:      { uz:'Namoz vaqtlari', uz_cyr:'Намоз вақтлари', en:'Prayer Times',
                   ru:'Время намаза',   tr:'Namaz Vakitleri',     ar:'مواقيت الصلاة',
-                  kk:'Намаз уақыттары',tg:'Вақти намоз',        pl:'Czasy modlitwy',
+                  kk:'Намаз уақыттары',tg:'Вақти намоз',        ky:'Намаз убактылары',
                   de:'Gebetszeiten',   fr:'Heures de prière',   id:'Waktu Sholat',
                   hi:'नमाज़ का वक्त',  ur:'نماز کے اوقات' },
 
     nextPrayer: { uz:'Keyingi namoz', uz_cyr:'Кейинги намоз', en:'Next Prayer',
                   ru:'Следующий намаз',tr:'Sonraki Namaz',     ar:'الصلاة القادمة',
-                  kk:'Келесі намаз',  tg:'Намози навбатӣ',    pl:'Następna modlitwa',
+                  kk:'Келесі намаз',  tg:'Намози навбатӣ',    ky:'Кийинки намаз',
                   de:'Nächstes Gebet',fr:'Prochaine prière',  id:'Sholat Berikutnya',
                   hi:'अगली नमाज़',    ur:'اگلی نماز' },
 
@@ -36,13 +36,13 @@ const PrayerScreen = (function () {
                   en:'All prayers done for today 🌙',         ru:'Все намазы прошли 🌙',
                   tr:'Tüm namazlar bitti 🌙',                 ar:'انتهت الصلوات 🌙',
                   kk:'Барлық намаздар аяқталды 🌙',           tg:'Ҳамаи намозҳо гузаштанд 🌙',
-                  pl:'Wszystkie modlitwy skończone 🌙',        de:'Alle Gebete erledigt 🌙',
+                  ky:'Бардык намаздар аяктады 🌙',            de:'Alle Gebete erledigt 🌙',
                   fr:'Toutes les prières terminées 🌙',       id:'Semua sholat selesai 🌙',
                   hi:'आज की सभी नमाज़ें हो गईं 🌙',          ur:'آج کی نمازیں ختم 🌙' },
 
     refresh:    { uz:'🔄 Yangilash',  uz_cyr:'🔄 Янгилаш', en:'🔄 Refresh',
                   ru:'🔄 Обновить',   tr:'🔄 Yenile',       ar:'🔄 تحديث',
-                  kk:'🔄 Жаңарту',   tg:'🔄 Навсоз кардан',pl:'🔄 Odśwież',
+                  kk:'🔄 Жаңарту',   tg:'🔄 Навсоз кардан',ky:'🔄 Жаңылоо',
                   de:'🔄 Aktualisieren',fr:'🔄 Actualiser', id:'🔄 Perbarui',
                   hi:'🔄 रिफ्रेश',   ur:'🔄 تازہ کریں' },
 
@@ -50,7 +50,7 @@ const PrayerScreen = (function () {
                   en:'📍 Change Location',            ru:'📍 Изменить локацию',
                   tr:'📍 Konumu değiştir',            ar:'📍 تغيير الموقع',
                   kk:'📍 Орынды өзгерту',            tg:'📍 Мавқеатро иваз кунед',
-                  pl:'📍 Zmień lokalizację',          de:'📍 Standort ändern',
+                  ky:'📍 Жайгашкан жерди өзгөртүү', de:'📍 Standort ändern',
                   fr:'📍 Changer d\'emplacement',     id:'📍 Ubah lokasi',
                   hi:'📍 स्थान बदलें',               ur:'📍 مقام تبدیل کریں' },
 
@@ -58,7 +58,7 @@ const PrayerScreen = (function () {
                   en:'Loading prayer times…',        ru:'Загрузка намаза…',
                   tr:'Namaz vakitleri yükleniyor…',  ar:'جاري التحميل…',
                   kk:'Жүктелуде…',                  tg:'Бор карда мешавад…',
-                  pl:'Ładowanie…',                   de:'Wird geladen…',
+                  ky:'Жүктөлүүдө…',                 de:'Wird geladen…',
                   fr:'Chargement…',                  id:'Memuat…',
                   hi:'लोड हो रहा है…',              ur:'لوڈ ہو رہا ہے…' },
 
@@ -72,24 +72,24 @@ const PrayerScreen = (function () {
                   tr:'Tekrar Dene',   ar:'حاول مجدداً' },
 
     weather:    { uz:'Ob-havo',    en:'Weather',   ru:'Погода',   tr:'Hava durumu',
-                  ar:'الطقس',      kk:'Ауа райы',  tg:'Обу ҳаво', pl:'Pogoda',
+                  ar:'الطقس',      kk:'Ауа райы',  tg:'Обу ҳаво', ky:'Аба ырайы',
                   de:'Wetter',     fr:'Météo',      id:'Cuaca',    hi:'मौसम', ur:'موسم' },
 
     airQuality: { uz:'Havo sifati',     en:'Air Quality',     ru:'Качество воздуха',
                   tr:'Hava kalitesi',   ar:'جودة الهواء',     kk:'Ауа сапасы',
-                  tg:'Сифати ҳаво',    pl:'Jakość powietrza', de:'Luftqualität',
+                  tg:'Сифати ҳаво',    ky:'Аба сапаты',       de:'Luftqualität',
                   fr:'Qualité de l\'air',id:'Kualitas Udara', hi:'वायु गुणवत्ता',
                   ur:'ہوا کا معیار' },
 
     dailyAyah:  { uz:'Kunlik oyat',    en:'Daily Ayah',     ru:'Аят дня',
                   tr:'Günün Ayeti',    ar:'آية اليوم',       kk:'Күндегі аят',
-                  tg:'Ояти рӯзона',   pl:'Ayah dnia',       de:'Tagesayah',
+                  tg:'Ояти рӯзона',   ky:'Күнүмдүк аят',    de:'Tagesayah',
                   fr:'Verset du jour', id:'Ayat Harian',    hi:'आज की आयत',
                   ur:'آج کی آیت' },
 
     dailyHadith:{ uz:'Kunlik hadis',   en:'Daily Hadith',   ru:'Хадис дня',
                   tr:'Günün Hadisi',   ar:'حديث اليوم',     kk:'Күндегі хадис',
-                  tg:'Ҳадиси рӯзона', pl:'Hadis dnia',      de:'Tageshadith',
+                  tg:'Ҳадиси рӯзона', ky:'Күнүмдүк хадис',  de:'Tageshadith',
                   fr:'Hadith du jour', id:'Hadits Harian',  hi:'आज का हदीस',
                   ur:'آج کا حدیث' },
 
