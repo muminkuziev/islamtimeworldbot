@@ -1,0 +1,663 @@
+/* ═══════════════════════════════════════════════════════════
+   IslamTimeWorldBot — i18n  (14 languages)
+   uz · uz_cyr · en · ru · tr · ar · kk · tg · ky · de · fr · id · hi · ur
+   ═══════════════════════════════════════════════════════════ */
+
+const LANG_META = [
+  { code:'uz',     name:"O'zbek",    flag:'🇺🇿', dir:'ltr' },
+  { code:'uz_cyr', name:'Ўзбек',     flag:'🇺🇿', dir:'ltr' },
+  { code:'en',     name:'English',   flag:'🇬🇧', dir:'ltr' },
+  { code:'ru',     name:'Русский',   flag:'🇷🇺', dir:'ltr' },
+  { code:'tr',     name:'Türkçe',    flag:'🇹🇷', dir:'ltr' },
+  { code:'ar',     name:'العربية',   flag:'🇸🇦', dir:'rtl' },
+  { code:'kk',     name:'Қазақша',   flag:'🇰🇿', dir:'ltr' },
+  { code:'tg',     name:'Тоҷикӣ',    flag:'🇹🇯', dir:'ltr' },
+  { code:'ky',     name:'Кыргызча',  flag:'🇰🇬', dir:'ltr' },
+  { code:'de',     name:'Deutsch',   flag:'🇩🇪', dir:'ltr' },
+  { code:'fr',     name:'Français',  flag:'🇫🇷', dir:'ltr' },
+  { code:'id',     name:'Indonesia', flag:'🇮🇩', dir:'ltr' },
+  { code:'hi',     name:'हिन्दी',    flag:'🇮🇳', dir:'ltr' },
+  { code:'ur',     name:'اردو',      flag:'🇵🇰', dir:'rtl' },
+];
+
+const RTL_LANGS = new Set(['ar','ur']);
+
+const I18N = {
+
+  bismillah: { uz:'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ', en:'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ', ru:'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ', ar:'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ', tr:'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ', kk:'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ', tg:'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ', ky:'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ', de:'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ', fr:'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ', id:'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ', hi:'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ', ur:'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ', uz_cyr:'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ' },
+
+  assalamu: {
+    uz:"Assalomu alaykum!", uz_cyr:"Ассалому алейкум!",
+    en:"Assalamu Alaikum!", ru:"Ассаляму алейкум!",
+    tr:"Esselamu Aleyküm!",ar:"السلام عليكم!",
+    kk:"Ассаламу алейкум!",tg:"Ассалому алейкум!",
+    ky:"Ассалоому алейкум!",de:"Assalamu Alaikum!",
+    fr:"Assalamu Alaikum!", id:"Assalamu Alaikum!",
+    hi:"अस्सलामु अलैकुम!", ur:"السلام علیکم!",
+  },
+  welcome: {
+    uz:"Xush kelibsiz", uz_cyr:"Хуш келибсиз",
+    en:"Welcome",       ru:"Добро пожаловать",
+    tr:"Hoş geldiniz",  ar:"أهلاً وسهلاً",
+    kk:"Қош келдіңіз",  tg:"Хуш омадед",
+    ky:"Кош келдиңиз",  de:"Willkommen",
+    fr:"Bienvenue",     id:"Selamat datang",
+    hi:"स्वागत है",     ur:"خوش آمدید",
+  },
+  back: {
+    uz:"Orqaga", uz_cyr:"Орқага", en:"Back",    ru:"Назад",
+    tr:"Geri",   ar:"رجوع",       kk:"Артқа",   tg:"Бозгашт",
+    ky:"Артка",  de:"Zurück",     fr:"Retour",  id:"Kembali",
+    hi:"वापस",   ur:"واپس",
+  },
+  loading: {
+    uz:"Yuklanmoqda…",    uz_cyr:"Юкланмоқда…",
+    en:"Loading…",        ru:"Загрузка…",
+    tr:"Yükleniyor…",     ar:"جاري التحميل…",
+    kk:"Жүктелуде…",      tg:"Бор карда мешавад…",
+    ky:"Жүктөлүүдö…",     de:"Wird geladen…",
+    fr:"Chargement…",     id:"Memuat…",
+    hi:"लोड हो रहा है…",  ur:"لوڈ ہو رہا ہے…",
+  },
+  error: {
+    uz:"Xatolik yuz berdi",         uz_cyr:"Хатолик юз берди",
+    en:"An error occurred",         ru:"Произошла ошибка",
+    tr:"Hata oluştu",               ar:"حدث خطأ",
+    kk:"Қате орын алды",            tg:"Хато рӯй дод",
+    ky:"Ката чыкты",                de:"Fehler aufgetreten",
+    fr:"Une erreur s'est produite", id:"Terjadi kesalahan",
+    hi:"एक त्रुटि हुई",             ur:"ایک خرابی پیش آئی",
+  },
+  retry: {
+    uz:"Qayta urinish",  uz_cyr:"Қайта уриниш",
+    en:"Try again",      ru:"Повторить",
+    tr:"Tekrar dene",    ar:"حاول مجدداً",
+    kk:"Қайталау",       tg:"Такрор кунед",
+    ky:"Кайра аракет",   de:"Nochmal",
+    fr:"Réessayer",      id:"Coba lagi",
+    hi:"पुनः प्रयास",    ur:"دوبارہ کوشش",
+  },
+  continue: {
+    uz:"Davom etish",    uz_cyr:"Давом этиш",
+    en:"Continue",       ru:"Продолжить",
+    tr:"Devam et",       ar:"متابعة",
+    kk:"Жалғастыру",     tg:"Идома додан",
+    ky:"Улантуу",        de:"Weiter",
+    fr:"Continuer",      id:"Lanjutkan",
+    hi:"जारी रखें",      ur:"جاری رکھیں",
+  },
+  search: {
+    uz:"Qidirish…",   uz_cyr:"Қидириш…",
+    en:"Search…",     ru:"Поиск…",
+    tr:"Ara…",        ar:"بحث…",
+    kk:"Іздеу…",      tg:"Ҷустуҷӯ…",
+    ky:"Издөö…",      de:"Suchen…",
+    fr:"Rechercher…", id:"Cari…",
+    hi:"खोजें…",      ur:"تلاش کریں…",
+  },
+  save: {
+    uz:"Saqlash",    uz_cyr:"Сақлаш",
+    en:"Save",       ru:"Сохранить",
+    tr:"Kaydet",     ar:"حفظ",
+    kk:"Сақтау",     tg:"Нигоҳ доштан",
+    ky:"Сактоо",     de:"Speichern",
+    fr:"Enregistrer",id:"Simpan",
+    hi:"सहेजें",     ur:"محفوظ کریں",
+  },
+  close: {
+    uz:"Yopish",   uz_cyr:"Ёпиш",
+    en:"Close",    ru:"Закрыть",
+    tr:"Kapat",    ar:"إغلاق",
+    kk:"Жабу",     tg:"Пӯшидан",
+    ky:"Жабуу",    de:"Schließen",
+    fr:"Fermer",   id:"Tutup",
+    hi:"बंद करें", ur:"بند کریں",
+  },
+  noData: {
+    uz:"Ma'lumot topilmadi",        uz_cyr:"Маълумот топилмади",
+    en:"No data found",             ru:"Данные не найдены",
+    tr:"Veri bulunamadı",           ar:"لا توجد بيانات",
+    kk:"Деректер табылмады",        tg:"Маълумот ёфт нашуд",
+    ky:"Маалымат табылган жок",     de:"Keine Daten gefunden",
+    fr:"Aucune donnée trouvée",     id:"Data tidak ditemukan",
+    hi:"कोई डेटा नहीं मिला",        ur:"کوئی ڈیٹا نہیں ملا",
+  },
+  comingSoon: {
+    uz:"Tez kunda…",     uz_cyr:"Тез кунда…",
+    en:"Coming soon…",   ru:"Скоро…",
+    tr:"Çok yakında…",   ar:"قريباً…",
+    kk:"Жақын арада…",   tg:"Ба зудӣ…",
+    ky:"Жакында…",       de:"Demnächst…",
+    fr:"Bientôt…",       id:"Segera hadir…",
+    hi:"जल्द आ रहा है…", ur:"جلد آ رہا ہے…",
+  },
+  modules: {
+    uz:"Modullar",  uz_cyr:"Модуллар",
+    en:"Modules",   ru:"Модули",
+    tr:"Modüller",  ar:"الوحدات",
+    kk:"Модульдер", tg:"Модулҳо",
+    ky:"Модулдар",  de:"Module",
+    fr:"Modules",   id:"Modul",
+    hi:"मॉड्यूल",   ur:"ماڈیولز",
+  },
+
+  /* ── Module titles ─────────────────────────────────────── */
+  modules_list: {
+    prayer: {
+      uz:"Namoz vaqtlari",  uz_cyr:"Намоз вақтлари",
+      en:"Prayer Times",    ru:"Время намаза",
+      tr:"Namaz Vakitleri", ar:"مواقيت الصلاة",
+      kk:"Намаз уақыттары", tg:"Вақти намоз",
+      ky:"Намаз убактылары",de:"Gebetszeiten",
+      fr:"Heures de prière",id:"Waktu Sholat",
+      hi:"नमाज़ का वक्त",   ur:"نماز کے اوقات",
+    },
+    qibla: {
+      uz:"Qibla",    uz_cyr:"Қибла",
+      en:"Qibla",    ru:"Кибла",
+      tr:"Kıble",    ar:"القبلة",
+      kk:"Қибла",    tg:"Қибла",
+      ky:"Кыбла",    de:"Qibla",
+      fr:"Qibla",    id:"Kiblat",
+      hi:"क़िब्ला",  ur:"قبلہ",
+    },
+    mosques: {
+      uz:"Yaqin masjidlar",     uz_cyr:"Яқин масжидлар",
+      en:"Nearby Mosques",      ru:"Ближайшие мечети",
+      tr:"Yakın Camiler",       ar:"المساجد القريبة",
+      kk:"Жақын мешіттер",      tg:"Масҷидҳои наздик",
+      ky:"Жакын мечиттер",      de:"Nahe Moscheen",
+      fr:"Mosquées proches",    id:"Masjid Terdekat",
+      hi:"पास की मस्जिदें",    ur:"قریبی مساجد",
+    },
+    quran: {
+      uz:"Qur'on",    uz_cyr:"Қуръон",
+      en:"Quran",     ru:"Коран",
+      tr:"Kur'an",    ar:"القرآن الكريم",
+      kk:"Құран",     tg:"Қуръон",
+      ky:"Куран",     de:"Koran",
+      fr:"Coran",     id:"Al-Qur'an",
+      hi:"क़ुरान",    ur:"قرآن کریم",
+    },
+    hadith: {
+      uz:"Hadis",     uz_cyr:"Ҳадис",
+      en:"Hadith",    ru:"Хадис",
+      tr:"Hadis",     ar:"الحديث الشريف",
+      kk:"Хадис",     tg:"Ҳадис",
+      ky:"Хадис",     de:"Hadith",
+      fr:"Hadith",    id:"Hadits",
+      hi:"हदीस",      ur:"حدیث شریف",
+    },
+    duas: {
+      uz:"Duolar",   uz_cyr:"Дуолар",
+      en:"Duas",     ru:"Дуа",
+      tr:"Dualar",   ar:"الأدعية",
+      kk:"Дұғалар",  tg:"Дуоҳо",
+      ky:"Дуалар",   de:"Duas",
+      fr:"Douaas",   id:"Doa-Doa",
+      hi:"दुआएं",    ur:"دعائیں",
+    },
+    dhikr: {
+      uz:"Zikr va Salavot",      uz_cyr:"Зикр ва Салавот",
+      en:"Dhikr & Salawat",      ru:"Зикр и Салават",
+      tr:"Zikir ve Salavat",     ar:"الذكر والصلاة على النبي",
+      kk:"Зікір мен Салауат",    tg:"Зикр ва Салавот",
+      ky:"Зикир жана Салават",   de:"Dhikr & Salawat",
+      fr:"Dhikr & Salawat",      id:"Zikir & Salawat",
+      hi:"ज़िक्र और सलावात",     ur:"ذکر اور درود",
+    },
+    calendar: {
+      uz:"Hijriy taqvim",       uz_cyr:"Ҳижрий тақвим",
+      en:"Hijri Calendar",      ru:"Хиджрий календарь",
+      tr:"Hicri Takvim",        ar:"التقويم الهجري",
+      kk:"Хижра жыл санағы",    tg:"Солшумории Ҳиҷрӣ",
+      ky:"Хижра Жыл Санагы",    de:"Hijri-Kalender",
+      fr:"Calendrier Hégirien", id:"Kalender Hijriah",
+      hi:"हिजरी कैलेंडर",       ur:"ہجری کیلنڈر",
+    },
+    names: {
+      uz:"Allohning 99 ismi",        uz_cyr:"Аллоҳнинг 99 исми",
+      en:"99 Names of Allah",        ru:"99 имён Аллаха",
+      tr:"Allah'ın 99 İsmi",         ar:"أسماء الله الحسنى",
+      kk:"Алланың 99 есімі",         tg:"99 номи Аллоҳ",
+      ky:"Алланын 99 Аты",           de:"99 Namen Allahs",
+      fr:"Les 99 Noms d'Allah",      id:"99 Nama Allah",
+      hi:"अल्लाह के 99 नाम",        ur:"اللہ کے 99 نام",
+    },
+    settings: {
+      uz:"Sozlamalar",  uz_cyr:"Созламалар",
+      en:"Settings",    ru:"Настройки",
+      tr:"Ayarlar",     ar:"الإعدادات",
+      kk:"Параметрлер", tg:"Танзимот",
+      ky:"Жөндөөлөр",   de:"Einstellungen",
+      fr:"Paramètres",  id:"Pengaturan",
+      hi:"सेटिंग्स",    ur:"ترتیبات",
+    },
+  },
+
+  /* ── Prayer Times screen ───────────────────────────────── */
+  nextPrayer: {
+    uz:"Keyingi namoz",   uz_cyr:"Кейинги намоз",
+    en:"Next Prayer",     ru:"Следующий намаз",
+    tr:"Sonraki Namaz",   ar:"الصلاة القادمة",
+    kk:"Келесі намаз",    tg:"Намози навбатӣ",
+    ky:"Кийинки намаз",   de:"Nächstes Gebet",
+    fr:"Prochaine prière",id:"Sholat Berikutnya",
+    hi:"अगली नमाज़",      ur:"اگلی نماز",
+  },
+  allPrayersDone: {
+    uz:"Barcha namozlar o'tdi 🌙",    uz_cyr:"Барча намозлар ўтди 🌙",
+    en:"All prayers done 🌙",         ru:"Все намазы прошли 🌙",
+    tr:"Tüm namazlar bitti 🌙",       ar:"انتهت الصلوات 🌙",
+    kk:"Барлық намаздар аяқталды 🌙", tg:"Ҳамаи намозҳо гузаштанд 🌙",
+    ky:"Бардык намаздар бүттү 🌙",    de:"Alle Gebete erledigt 🌙",
+    fr:"Toutes les prières terminées 🌙",id:"Semua sholat selesai 🌙",
+    hi:"सभी नमाज़ें हो गईं 🌙",       ur:"آج کی نمازیں ختم 🌙",
+  },
+  refresh: {
+    uz:"🔄 Yangilash",  uz_cyr:"🔄 Янгилаш",
+    en:"🔄 Refresh",    ru:"🔄 Обновить",
+    tr:"🔄 Yenile",     ar:"🔄 تحديث",
+    kk:"🔄 Жаңарту",    tg:"🔄 Навсоз",
+    ky:"🔄 Жаңыртуу",   de:"🔄 Aktualisieren",
+    fr:"🔄 Actualiser", id:"🔄 Perbarui",
+    hi:"🔄 रिफ्रेश",    ur:"🔄 تازہ کریں",
+  },
+  changeLocation: {
+    uz:"📍 Lokatsiyani o'zgartirish",  uz_cyr:"📍 Локацияни ўзгартириш",
+    en:"📍 Change Location",           ru:"📍 Изменить локацию",
+    tr:"📍 Konumu değiştir",           ar:"📍 تغيير الموقع",
+    kk:"📍 Орынды өзгерту",            tg:"📍 Мавқеатро иваз кунед",
+    ky:"📍 Жайгашкан жерди өзгөртүү",  de:"📍 Standort ändern",
+    fr:"📍 Changer d'emplacement",     id:"📍 Ubah lokasi",
+    hi:"📍 स्थान बदलें",               ur:"📍 مقام تبدیل کریں",
+  },
+
+  /* ── Qibla screen ──────────────────────────────────────── */
+  qibla_getting_loc: {
+    uz:"Joylashuv aniqlanmoqda…",    uz_cyr:"Жойлашув аниқланмоқда…",
+    en:"Getting location…",          ru:"Определение местоположения…",
+    tr:"Konum alınıyor…",            ar:"جاري تحديد الموقع…",
+    kk:"Орын анықталуда…",           tg:"Мавқеат муайян мешавад…",
+    ky:"Жайгашкан жер аныкталууда…", de:"Standort wird ermittelt…",
+    fr:"Localisation en cours…",     id:"Mendapatkan lokasi…",
+    hi:"स्थान प्राप्त हो रहा है…",   ur:"مقام تلاش ہو رہا ہے…",
+  },
+  qibla_degree: {
+    uz:"Qibla yo'nalishi",     uz_cyr:"Қибла йўналиши",
+    en:"Qibla Direction",      ru:"Направление Киблы",
+    tr:"Kıble Yönü",           ar:"اتجاه القبلة",
+    kk:"Қибла бағыты",         tg:"Самти Қибла",
+    ky:"Кыбла багыты",         de:"Qibla-Richtung",
+    fr:"Direction de la Qibla",id:"Arah Kiblat",
+    hi:"क़िब्ला की दिशा",      ur:"سمت قبلہ",
+  },
+  qibla_from_north: {
+    uz:"shimoldan",   uz_cyr:"шимолдан",
+    en:"from North",  ru:"от севера",
+    tr:"Kuzeyden",    ar:"من الشمال",
+    kk:"солтүстіктен",tg:"аз шимол",
+    ky:"Түндүктөн",   de:"von Norden",
+    fr:"depuis le Nord",id:"dari Utara",
+    hi:"उत्तर से",    ur:"شمال سے",
+  },
+  qibla_calibrate: {
+    uz:"Telefoni 8 shaklida aylantiring, aniqlikni oshiradi",
+    uz_cyr:"Телефонни 8 шаклида айлантиринг",
+    en:"Move phone in figure-8 to calibrate compass",
+    ru:"Повращайте телефон восьмёркой для калибровки",
+    tr:"Kalibre etmek için telefonu 8 şeklinde döndürün",
+    ar:"حرّك الهاتف بشكل 8 لمعايرة البوصلة",
+    kk:"Калибрлеу үшін телефонды 8 пішімінде жылжытыңыз",
+    tg:"Барои танзим телефонро ба шакли 8 гардонед",
+    ky:"Компасты тактоо үчүн телефонду 8 формасында жылдырыңыз",
+    de:"Bewegen Sie das Handy in Achtform zur Kalibrierung",
+    fr:"Déplacez le téléphone en forme de 8 pour calibrer",
+    id:"Gerakkan ponsel membentuk angka 8 untuk kalibrasi",
+    hi:"कम्पास कैलिब्रेट करने के लिए फ़ोन को 8 की आकृति में घुमाएं",
+    ur:"کمپاس کیلیبریٹ کرنے کے لیے فون کو 8 کی شکل میں گھمائیں",
+  },
+
+  /* ── Mosques screen ────────────────────────────────────── */
+  mosques_km: {
+    uz:"km narida",        uz_cyr:"км нарида",
+    en:"km away",          ru:"км от вас",
+    tr:"km uzakta",        ar:"كم",
+    kk:"км қашықтықта",    tg:"км дуртар",
+    ky:"км алыста",        de:"km entfernt",
+    fr:"km de vous",       id:"km jauhnya",
+    hi:"किमी दूर",         ur:"کلومیٹر دور",
+  },
+  mosques_none: {
+    uz:"5 km da masjid topilmadi",     uz_cyr:"5 км да масжид топилмади",
+    en:"No mosques found within 5 km", ru:"Мечети в 5 км не найдены",
+    tr:"5 km içinde cami bulunamadı",  ar:"لا توجد مساجد في 5 كم",
+    kk:"5 км радиуста мешіт табылмады",tg:"Дар 5 км масҷид ёфт нашуд",
+    ky:"5 км ичинде мечит табылган жок",de:"Keine Moscheen in 5 km gefunden",
+    fr:"Aucune mosquée dans 5 km",     id:"Tidak ada masjid dalam 5 km",
+    hi:"5 किमी में कोई मस्जिद नहीं",   ur:"5 کلومیٹر میں کوئی مسجد نہیں",
+  },
+
+  /* ── Quran screen ──────────────────────────────────────── */
+  quran_surah: {
+    uz:"Sura",   uz_cyr:"Сура",  en:"Surah",   ru:"Сура",
+    tr:"Sure",   ar:"سورة",     kk:"Сүре",    tg:"Сура",
+    ky:"Сүрö",   de:"Sure",     fr:"Sourate", id:"Surah",
+    hi:"सूरह",   ur:"سورہ",
+  },
+  quran_ayah: {
+    uz:"Oyat",  uz_cyr:"Оят",  en:"Ayah",   ru:"Аят",
+    tr:"Ayet",  ar:"آية",     kk:"Аят",    tg:"Оят",
+    ky:"Аят",   de:"Vers",    fr:"Verset", id:"Ayat",
+    hi:"आयत",   ur:"آیت",
+  },
+  quran_juz: {
+    uz:"Juz",  uz_cyr:"Жуз",  en:"Juz",  ru:"Джуз",
+    tr:"Cüz",  ar:"جزء",     kk:"Жүз",  tg:"Ҷуз",
+    ky:"Жүз",  de:"Juz",     fr:"Juz",  id:"Juz",
+    hi:"जुज़",  ur:"جز",
+  },
+  quran_verses: {
+    uz:"oyat",   uz_cyr:"оят",  en:"verses", ru:"аятов",
+    tr:"ayet",   ar:"آية",     kk:"аят",    tg:"оят",
+    ky:"аят",    de:"Verse",   fr:"versets",id:"ayat",
+    hi:"आयतें",  ur:"آیات",
+  },
+  quran_read: {
+    uz:"O'qish",  uz_cyr:"Ўқиш",
+    en:"Read",    ru:"Читать",
+    tr:"Oku",     ar:"اقرأ",
+    kk:"Оқу",     tg:"Хондан",
+    ky:"Окуу",    de:"Lesen",
+    fr:"Lire",    id:"Baca",
+    hi:"पढ़ें",   ur:"پڑھیں",
+  },
+
+  /* ── Hadith screen ─────────────────────────────────────── */
+  hadith_bukhari: {
+    uz:"Sahih al-Buxoriy",  uz_cyr:"Саҳиҳ ал-Бухорий",
+    en:"Sahih al-Bukhari",  ru:"Sahih al-Bukhari",
+    tr:"Sahih Buhari",      ar:"صحيح البخاري",
+    kk:"Сахих аль-Бухари",  tg:"Саҳеҳи Бухорӣ",
+    ky:"Сахих аль-Бухари",  de:"Sahih al-Bukhari",
+    fr:"Sahih al-Bukhari",  id:"Sahih al-Bukhari",
+    hi:"सहीह बुखारी",       ur:"صحیح البخاری",
+  },
+  hadith_muslim: {
+    uz:"Sahih Muslim",  uz_cyr:"Саҳиҳ Муслим",
+    en:"Sahih Muslim",  ru:"Sahih Muslim",
+    tr:"Sahih Müslim",  ar:"صحيح مسلم",
+    kk:"Сахих Муслим",  tg:"Саҳеҳи Муслим",
+    ky:"Сахих Муслим",  de:"Sahih Muslim",
+    fr:"Sahih Muslim",  id:"Sahih Muslim",
+    hi:"सहीह मुस्लिम",  ur:"صحیح مسلم",
+  },
+  hadith_narrator: {
+    uz:"Rivoyat qilgan",  uz_cyr:"Ривоят қилган",
+    en:"Narrated by",     ru:"Передал",
+    tr:"Rivayet eden",    ar:"رواه",
+    kk:"Жеткізген",       tg:"Ривоят кардааст",
+    ky:"Баяндаган",       de:"Überliefert von",
+    fr:"Rapporté par",    id:"Diriwayatkan oleh",
+    hi:"वर्णित",          ur:"روایت کیا",
+  },
+  hadith_number: {
+    uz:"Raqam", uz_cyr:"Рақам", en:"No.", ru:"№",
+    tr:"No.",   ar:"رقم",      kk:"№",   tg:"№",
+    ky:"№",     de:"Nr.",      fr:"N°",  id:"No.",
+    hi:"क्र.",  ur:"نمبر",
+  },
+
+  /* ── Duas screen ───────────────────────────────────────── */
+  duas_morning: {
+    uz:"Ertalabki duolar",   uz_cyr:"Эрталабки дуолар",
+    en:"Morning Duas",       ru:"Утренние дуа",
+    tr:"Sabah Duaları",      ar:"أذكار الصباح",
+    kk:"Таңғы дұғалар",      tg:"Дуоҳои субҳ",
+    ky:"Эртеңки дуалар",     de:"Morgengebete",
+    fr:"Douaas du matin",    id:"Doa Pagi",
+    hi:"सुबह की दुआएं",      ur:"صبح کی دعائیں",
+  },
+  duas_evening: {
+    uz:"Kechki duolar",      uz_cyr:"Кечки дуолар",
+    en:"Evening Duas",       ru:"Вечерние дуа",
+    tr:"Akşam Duaları",      ar:"أذكار المساء",
+    kk:"Кешкі дұғалар",      tg:"Дуоҳои шом",
+    ky:"Кечки дуалар",       de:"Abendgebete",
+    fr:"Douaas du soir",     id:"Doa Petang",
+    hi:"शाम की दुआएं",       ur:"شام کی دعائیں",
+  },
+  duas_food: {
+    uz:"Ovqat duolari",      uz_cyr:"Овқат дуолари",
+    en:"Food Duas",          ru:"Дуа для еды",
+    tr:"Yemek Duaları",      ar:"أدعية الطعام",
+    kk:"Тамақ дұғалары",     tg:"Дуоҳои таом",
+    ky:"Тамак дуалары",      de:"Essengebete",
+    fr:"Douaas des repas",   id:"Doa Makan",
+    hi:"खाने की दुआएं",      ur:"کھانے کی دعائیں",
+  },
+  duas_travel: {
+    uz:"Safar duolari",      uz_cyr:"Сафар дуолари",
+    en:"Travel Duas",        ru:"Дуа в путешествии",
+    tr:"Yolculuk Duaları",   ar:"أدعية السفر",
+    kk:"Жол дұғалары",       tg:"Дуоҳои сафар",
+    ky:"Жол дуалары",        de:"Reisegebete",
+    fr:"Douaas du voyage",   id:"Doa Perjalanan",
+    hi:"सफर की दुआएं",       ur:"سفر کی دعائیں",
+  },
+  duas_sleep: {
+    uz:"Uxlash duolari",     uz_cyr:"Ухлаш дуолари",
+    en:"Sleep Duas",         ru:"Дуа перед сном",
+    tr:"Uyku Duaları",       ar:"أدعية النوم",
+    kk:"Ұйқы дұғалары",      tg:"Дуоҳои хоб",
+    ky:"Уйку дуалары",       de:"Schlafgebete",
+    fr:"Douaas du sommeil",  id:"Doa Tidur",
+    hi:"सोने की दुआएं",      ur:"سونے کی دعائیں",
+  },
+  duas_mosque: {
+    uz:"Masjid duolari",     uz_cyr:"Масжид дуолари",
+    en:"Mosque Duas",        ru:"Дуа для мечети",
+    tr:"Cami Duaları",       ar:"أدعية المسجد",
+    kk:"Мешіт дұғалары",     tg:"Дуоҳои масҷид",
+    ky:"Мечит дуалары",      de:"Moscheengebete",
+    fr:"Douaas de la mosquée",id:"Doa Masjid",
+    hi:"मस्जिद की दुआएं",    ur:"مسجد کی دعائیں",
+  },
+  duas_general: {
+    uz:"Umumiy duolar",      uz_cyr:"Умумий дуолар",
+    en:"General Duas",       ru:"Общие дуа",
+    tr:"Genel Dualar",       ar:"أدعية عامة",
+    kk:"Жалпы дұғалар",      tg:"Дуоҳои умумӣ",
+    ky:"Жалпы дуалар",       de:"Allgemeine Gebete",
+    fr:"Douaas générales",   id:"Doa Umum",
+    hi:"सामान्य दुआएं",      ur:"عام دعائیں",
+  },
+
+  /* ── Dhikr screen ──────────────────────────────────────── */
+  dhikr_tap: {
+    uz:"Bosish uchun bosing",  uz_cyr:"Босиш учун босинг",
+    en:"Tap to count",         ru:"Нажмите для счёта",
+    tr:"Saymak için dokun",    ar:"اضغط للعد",
+    kk:"Санау үшін басыңыз",   tg:"Барои ҳисоб пахш кунед",
+    ky:"Эсептөö үчүн бас",     de:"Tippen zum Zählen",
+    fr:"Appuyer pour compter", id:"Ketuk untuk menghitung",
+    hi:"गिनने के लिए टैप करें",ur:"گننے کے لیے ٹیپ کریں",
+  },
+  dhikr_reset: {
+    uz:"Qayta boshlash",   uz_cyr:"Қайта бошлаш",
+    en:"Reset",            ru:"Сбросить",
+    tr:"Sıfırla",          ar:"إعادة",
+    kk:"Қайта бастау",     tg:"Аз нав оғоз",
+    ky:"Кайра баштоо",     de:"Zurücksetzen",
+    fr:"Réinitialiser",    id:"Reset",
+    hi:"रीसेट",            ur:"ری سیٹ",
+  },
+  dhikr_complete: {
+    uz:"Barakalloh! ✨",    uz_cyr:"Барокаллоҳ! ✨",
+    en:"BaarakAllahu! ✨",  ru:"БаракаллахуАлейк! ✨",
+    tr:"Bareke versin! ✨", ar:"بارك الله فيك! ✨",
+    kk:"Барәкалла! ✨",     tg:"Баракаллоҳ! ✨",
+    ky:"Барак Алла! ✨",    de:"BarakAllahu! ✨",
+    fr:"BaarakAllahu! ✨",  id:"BaarakAllahu! ✨",
+    hi:"बारकल्लाह! ✨",     ur:"بارک اللہ! ✨",
+  },
+  dhikr_target: {
+    uz:"Maqsad", uz_cyr:"Мақсад", en:"Target", ru:"Цель",
+    tr:"Hedef",  ar:"الهدف",     kk:"Мақсат", tg:"Ҳадаф",
+    ky:"Максат", de:"Ziel",      fr:"Objectif",id:"Target",
+    hi:"लक्ष्य", ur:"ہدف",
+  },
+
+  /* ── Calendar screen ───────────────────────────────────── */
+  calendar_today: {
+    uz:"Bugun",  uz_cyr:"Бугун", en:"Today",         ru:"Сегодня",
+    tr:"Bugün",  ar:"اليوم",    kk:"Бүгін",          tg:"Имрӯз",
+    ky:"Бүгүн",  de:"Heute",    fr:"Aujourd'hui",   id:"Hari ini",
+    hi:"आज",     ur:"آج",
+  },
+  calendar_converter: {
+    uz:"Sana konvertori",   uz_cyr:"Сана конвертори",
+    en:"Date Converter",    ru:"Конвертер дат",
+    tr:"Tarih Dönüştürücü", ar:"محوّل التاريخ",
+    kk:"Күн аудармашысы",   tg:"Мубаддили сана",
+    ky:"Дата которгуч",     de:"Datumskonverter",
+    fr:"Convertisseur",     id:"Konverter Tanggal",
+    hi:"दिनांक कनवर्टर",    ur:"تاریخ کنورٹر",
+  },
+  calendar_hijri_months: {
+    uz:["Muharram","Safar","Rabiul Avval","Rabiul Oxir","Jumadal Ulo","Jumadal Uxro","Rajab","Sha'bon","Ramazon","Shavvol","Zulqa'da","Zulhijja"],
+    uz_cyr:["Муҳаррам","Сафар","Рабиул Аввал","Рабиул Охир","Жумадал Уло","Жумадал Ухро","Ражаб","Шаъбон","Рамазон","Шаввол","Зулқаъда","Зулҳижжа"],
+    en:["Muharram","Safar","Rabi al-Awwal","Rabi al-Thani","Jumada al-Awwal","Jumada al-Thani","Rajab","Sha'ban","Ramadan","Shawwal","Dhul-Qa'dah","Dhul-Hijjah"],
+    ru:["Мухаррам","Сафар","Раби уль-Авваль","Раби уль-Ахир","Джумада уль-Уля","Джумада уль-Ухра","Раджаб","Шаабан","Рамадан","Шавваль","Зуль-Каада","Зуль-Хиджа"],
+    ar:["مُحَرَّم","صَفَر","رَبِيع الأَوَّل","رَبِيع الثَّانِي","جُمَادَى الأُولَى","جُمَادَى الآخِرَة","رَجَب","شَعْبَان","رَمَضَان","شَوَّال","ذُو القَعْدَة","ذُو الحِجَّة"],
+    tr:["Muharrem","Safer","Rebiülevvel","Rebiülahir","Cemaziyelevvel","Cemaziyelahir","Recep","Şaban","Ramazan","Şevval","Zilkade","Zilhicce"],
+    kk:["Мухаррам","Сафар","Раби уль-авуал","Раби уль-ахир","Жумадел-ула","Жумадел-ухра","Ражаб","Шаабан","Рамазан","Шаввал","Зул-қаида","Зул-хижжа"],
+    tg:["Муҳаррам","Сафар","Рабиулаввал","Рабиусонӣ","Ҷумадулуло","Ҷумадулухро","Раҷаб","Шаъбон","Рамазон","Шаввол","Зулқаъда","Зулҳижжа"],
+    ky:["Мухаррам","Сапар","Раби-уль-авуал","Раби-уль-ахир","Жумадел-уло","Жумадел-ухро","Ражаб","Шаабан","Рамазан","Шаввал","Зулка'да","Зулхижжа"],
+    de:["Muharram","Safar","Rabi al-Awwal","Rabi al-Thani","Jumada al-Awwal","Jumada al-Thani","Rajab","Schaaban","Ramadan","Schawwal","Dhu al-Qi'da","Dhu al-Hijja"],
+    fr:["Mouharram","Safar","Rabi al-Awwal","Rabi al-Thani","Joumada al-Awwal","Joumada al-Thania","Rajab","Chaabane","Ramadan","Chawwal","Dhoul-Qi'da","Dhoul-Hijja"],
+    id:["Muharram","Safar","Rabiul Awal","Rabiul Akhir","Jumadil Awal","Jumadil Akhir","Rajab","Sya'ban","Ramadhan","Syawwal","Dzulqa'dah","Dzulhijjah"],
+    hi:["मुहर्रम","सफर","रबी अल-अव्वल","रबी अल-सानी","जुमाद अल-अव्वल","जुमाद अल-सानी","रजब","शाबान","रमज़ान","शव्वाल","ज़ुल-क़ादा","ज़ुल-हिज्जा"],
+    ur:["محرم","صفر","ربیع الاول","ربیع الثانی","جمادی الاول","جمادی الثانی","رجب","شعبان","رمضان","شوال","ذوالقعدہ","ذوالحجہ"],
+  },
+  calendar_week_days: {
+    en:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],
+    uz:["Yak","Dush","Sesh","Chor","Pay","Jum","Shan"],
+    uz_cyr:["Якш","Душ","Сеш","Чор","Пай","Жум","Шан"],
+    ru:["Вс","Пн","Вт","Ср","Чт","Пт","Сб"],
+    ar:["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"],
+    tr:["Paz","Pzt","Sal","Çar","Per","Cum","Cmt"],
+    kk:["Жс","Дс","Сс","Ср","Бс","Жм","Сб"],
+    tg:["Яш","Дш","Сш","Чш","Пш","Ҷм","Шб"],
+    ky:["Жк","Дш","Сш","Шр","Бш","Жм","Иш"],
+    de:["So","Mo","Di","Mi","Do","Fr","Sa"],
+    fr:["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"],
+    id:["Min","Sen","Sel","Rab","Kam","Jum","Sab"],
+    hi:["रवि","सोम","मंगल","बुध","गुरु","शुक्र","शनि"],
+    ur:["اتوار","سوموار","منگل","بدھ","جمعرات","جمعہ","ہفتہ"],
+  },
+  calendar_islamic_events: {
+    "1/1":  { en:"Islamic New Year",     uz:"Islomiy yangi yil",    ru:"Исламский Новый год", ar:"رأس السنة الهجرية"  },
+    "1/10": { en:"Day of Ashura",        uz:"Ashura kuni",          ru:"День Ашуры",           ar:"يوم عاشوراء"       },
+    "3/12": { en:"Mawlid al-Nabi ﷺ",    uz:"Mawlid an-Nabiy ﷺ",   ru:"Мавлид ан-Набий ﷺ",  ar:"المولد النبوي ﷺ"   },
+    "7/27": { en:"Isra & Mi'raj",        uz:"Isro va Mi'roj",       ru:"Исра и Мирадж",        ar:"الإسراء والمعراج"  },
+    "8/15": { en:"Laylat al-Bara'ah",    uz:"Baraat kechasi",       ru:"Ночь аль-Бараат",      ar:"ليلة النصف من شعبان"},
+    "9/1":  { en:"Ramadan begins 🌙",    uz:"Ramazon boshlandi 🌙", ru:"Начало Рамадана 🌙",   ar:"بداية رمضان 🌙"    },
+    "9/27": { en:"Laylat al-Qadr ✨",    uz:"Qadr kechasi ✨",      ru:"Ночь Кадра ✨",         ar:"ليلة القدر ✨"      },
+    "10/1": { en:"Eid al-Fitr 🎉",       uz:"Ramazon Hayiti 🎉",    ru:"Ид аль-Фитр 🎉",       ar:"عيد الفطر 🎉"      },
+    "12/9": { en:"Day of Arafah",        uz:"Arafa kuni",           ru:"День Арафа",            ar:"يوم عرفة"          },
+    "12/10":{ en:"Eid al-Adha 🐑",       uz:"Qurbon Hayit 🐑",      ru:"Ид аль-Адха 🐑",        ar:"عيد الأضحى 🐑"     },
+  },
+
+  /* ── 99 Names screen ───────────────────────────────────── */
+  names_meaning: {
+    uz:"Ma'nosi",      uz_cyr:"Маъноси",
+    en:"Meaning",      ru:"Значение",
+    tr:"Anlamı",       ar:"المعنى",
+    kk:"Мағынасы",     tg:"Маъно",
+    ky:"Мааниси",      de:"Bedeutung",
+    fr:"Signification",id:"Makna",
+    hi:"अर्थ",         ur:"معنی",
+  },
+
+  /* ── Settings screen ───────────────────────────────────── */
+  settings_language: {
+    uz:"Til",    uz_cyr:"Тил",   en:"Language", ru:"Язык",
+    tr:"Dil",    ar:"اللغة",    kk:"Тіл",      tg:"Забон",
+    ky:"Тил",    de:"Sprache",  fr:"Langue",   id:"Bahasa",
+    hi:"भाषा",   ur:"زبان",
+  },
+  settings_madhab: {
+    uz:"Mazxab",  uz_cyr:"Мазҳаб",
+    en:"Madhab",  ru:"Мазхаб",
+    tr:"Mezhep",  ar:"المذهب",
+    kk:"Мазхаб",  tg:"Мазҳаб",
+    ky:"Мазхаб",  de:"Madhab",
+    fr:"Madhab",  id:"Mazhab",
+    hi:"मज़हब",   ur:"مذہب",
+  },
+  settings_prayer_method: {
+    uz:"Namoz hisoblash usuli",      uz_cyr:"Намоз ҳисоблаш усули",
+    en:"Prayer Calculation Method",  ru:"Метод расчёта намаза",
+    tr:"Namaz Hesaplama Yöntemi",    ar:"طريقة حساب مواقيت الصلاة",
+    kk:"Намаз есептеу әдісі",        tg:"Усули ҳисоби намоз",
+    ky:"Намаз эсептөö усулу",        de:"Gebetszeitberechnungsmethode",
+    fr:"Méthode de calcul",          id:"Metode Hitung Sholat",
+    hi:"नमाज़ गणना विधि",            ur:"نماز حساب کا طریقہ",
+  },
+  settings_notifications: {
+    uz:"Bildirishnomalar",  uz_cyr:"Билдиришномалар",
+    en:"Notifications",     ru:"Уведомления",
+    tr:"Bildirimler",       ar:"الإشعارات",
+    kk:"Хабарландырулар",   tg:"Огоҳинома",
+    ky:"Билдирмелер",       de:"Benachrichtigungen",
+    fr:"Notifications",     id:"Notifikasi",
+    hi:"सूचनाएं",           ur:"اطلاعات",
+  },
+  settings_saved: {
+    uz:"Saqlandi ✅",   uz_cyr:"Сақланди ✅",
+    en:"Saved ✅",      ru:"Сохранено ✅",
+    tr:"Kaydedildi ✅", ar:"تم الحفظ ✅",
+    kk:"Сақталды ✅",   tg:"Нигоҳ дошта шуд ✅",
+    ky:"Сакталды ✅",   de:"Gespeichert ✅",
+    fr:"Enregistré ✅", id:"Disimpan ✅",
+    hi:"सहेजा गया ✅",  ur:"محفوظ ✅",
+  },
+  settings_hanafi:  { uz:"Hanafiy",uz_cyr:"Ҳанафий",en:"Hanafi",  ru:"Ханафи",  tr:"Hanefi", ar:"حنفي",  kk:"Ханафи",de:"Hanafi",  fr:"Hanafite", id:"Hanafi",  hi:"हनफ़ी",  ur:"حنفی"  },
+  settings_shafii:  { uz:"Shofeiy",uz_cyr:"Шофеий", en:"Shafi'i", ru:"Шафии",   tr:"Şafii",  ar:"شافعي", kk:"Шафии", de:"Schafi'i",fr:"Shaféite", id:"Syafi'i", hi:"शाफ़ई",  ur:"شافعی" },
+  settings_maliki:  { uz:"Molikiy",uz_cyr:"Моликий",en:"Maliki",  ru:"Маликиты",tr:"Maliki", ar:"مالكي", kk:"Малики",de:"Maliki",  fr:"Malikite", id:"Maliki",  hi:"मालिकी", ur:"مالکی"  },
+  settings_hanbali: { uz:"Hanbaliy",uz_cyr:"Ҳанбалий",en:"Hanbali",ru:"Ханбалиты",tr:"Hanbeli",ar:"حنبلي",kk:"Ханбали",de:"Hanbali",fr:"Hanbalite",id:"Hanbali",hi:"हनबली",  ur:"حنبلی"  },
+};
+
+/* ── t(): translate dot-notation key ───────────────────── */
+function t(key, lang) {
+  const parts = key.split('.');
+  let node = I18N;
+  for (const part of parts) {
+    if (!node || typeof node !== 'object') return key;
+    node = node[part];
+  }
+  if (node === undefined || node === null) return key;
+  if (typeof node === 'string') return node;
+  if (Array.isArray(node)) return node;
+  if (typeof node === 'object') {
+    return node[lang] || node['en'] || Object.values(node)[0] || key;
+  }
+  return key;
+}
+
+function applyLangDir(lang) {
+  const dir = RTL_LANGS.has(lang) ? 'rtl' : 'ltr';
+  document.documentElement.setAttribute('dir', dir);
+  document.documentElement.setAttribute('lang', lang);
+}
+
+function getLangFlag(lang) {
+  const m = LANG_META.find(x => x.code === lang);
+  return m ? m.flag : '🌐';
+}
+
+function getLangName(lang) {
+  const m = LANG_META.find(x => x.code === lang);
+  return m ? m.name : lang;
+}

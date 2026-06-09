@@ -1,0 +1,41 @@
+# Environment
+.env
+*.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Large data files — commit hadiths.db explicitly if needed
+# data/hadiths.db
+
+# Temp / test
+*.tmp
+test_*.html
+
+# Claude Code internal memory
+.claude/
+
+# Binary tunnel executables
+scripts/cloudflared.exe
+scripts/ngrok.exe

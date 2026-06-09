@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="uz" dir="ltr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0,
+                 user-scalable=no, viewport-fit=cover"/>
+  <meta name="theme-color" content="#080D1A"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <title>IslamTimeWorldBot</title>
+
+  <!-- Telegram WebApp SDK (must be first) -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/styles.css"/>
+</head>
+<body>
+
+  <div id="app">
+    <!-- Screen 1: Splash -->
+    <div id="screen-splash"    class="screen"></div>
+
+    <!-- Screen 2: Language Selection -->
+    <div id="screen-language"  class="screen"></div>
+
+    <!-- Screen 3: Main Dashboard -->
+    <div id="screen-dashboard" class="screen"></div>
+
+    <!-- Screen 4: Prayer Times -->
+    <div id="screen-prayer"    class="screen"></div>
+
+    <!-- Screen 5: Qibla -->
+    <div id="screen-qibla"     class="screen"></div>
+
+    <!-- Screen 6: Nearby Mosques -->
+    <div id="screen-mosques"   class="screen"></div>
+
+    <!-- Screen 7: Quran -->
+    <div id="screen-quran"     class="screen"></div>
+
+    <!-- Screen 8: Hadith -->
+    <div id="screen-hadith"    class="screen"></div>
+
+    <!-- Screen 9: Duas -->
+    <div id="screen-duas"      class="screen"></div>
+
+    <!-- Screen 10: Dhikr -->
+    <div id="screen-dhikr"     class="screen"></div>
+
+    <!-- Screen 11: Hijri Calendar -->
+    <div id="screen-calendar"  class="screen"></div>
+
+    <!-- Screen 12: 99 Names -->
+    <div id="screen-names"     class="screen"></div>
+
+    <!-- Screen 13: Settings -->
+    <div id="screen-settings"  class="screen"></div>
+  </div>
+
+  <!-- ══ i18n: must load before all screen modules ══ -->
+  <script src="js/i18n.js"></script>
+
+  <!-- ══ Static data ══ -->
+  <script src="data/names_of_allah.js"></script>
+  <script src="data/duas.js"></script>
+
+  <!-- ══ Screen modules ══ -->
+  <script src="js/screens/splash.js"></script>
+  <script src="js/screens/language.js"></script>
+  <script src="js/screens/prayer.js"></script>
+  <script src="js/screens/qibla.js"></script>
+  <script src="js/screens/mosques.js"></script>
+  <script src="js/screens/quran.js"></script>
+  <script src="js/screens/hadith.js"></script>
+  <script src="js/screens/duas.js"></script>
+  <script src="js/screens/dhikr.js"></script>
+  <script src="js/screens/calendar.js"></script>
+  <script src="js/screens/names.js"></script>
+  <script src="js/screens/settings.js"></script>
+  <script src="js/screens/dashboard.js"></script>
+
+  <!-- ══ App controller (must be last) ══ -->
+  <script src="js/app.js"></script>
+
+</body>
+</html>
