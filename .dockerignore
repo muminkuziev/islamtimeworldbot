@@ -1,0 +1,77 @@
+# ── Git ────────────────────────────────────────────────────
+.git/
+.gitignore
+
+# ── Secrets ────────────────────────────────────────────────
+.env
+*.env.local
+
+# ── Python cache ───────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+
+# ── Logs and runtime output ────────────────────────────────
+*.log
+logs/
+*.txt
+tunnel_new.log
+
+# ── Large binary data (not needed at runtime) ──────────────
+data/*.apk
+data/*.zip
+data/*.pdf
+data/apk_extract/
+data/apk_contents/
+data/oltin_extracted/
+data/inno_out/
+
+# ── Large JSON import sources ──────────────────────────────
+# hadiths.db is built from these — it is included; these are not
+data/ara_muslim.json
+data/eng_muslim.json
+data/rus_muslim.json
+data/rus_sample.txt
+
+# ── Temp / debug scripts ───────────────────────────────────
+check_*.py
+inspect_*.py
+extract_*.py
+try_*.py
+import_muslim.py
+inspect_db.py
+
+# ── Test HTML ──────────────────────────────────────────────
+webapp/quran_test.html
+webapp/prayer_test.html
+webapp/card_border_demo.html
+webapp/test_integration.html
+
+# ── Screenshots ────────────────────────────────────────────
+screenshot_*.png
+
+# ── Tests and docs (not needed in container) ───────────────
+tests/
+docs/
+
+# ── Local dev scripts ──────────────────────────────────────
+start_all.ps1
+deploy_render.ps1
+scripts/cloudflared.exe
+scripts/ngrok.exe
+
+# ── IDE / OS ───────────────────────────────────────────────
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+
+# ── Storage placeholders ───────────────────────────────────
+storage/
+
+# ── Claude ─────────────────────────────────────────────────
+.claude/

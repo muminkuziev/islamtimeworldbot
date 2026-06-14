@@ -8,6 +8,21 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from infrastructure.external.aladhan_api import fetch_timings
 from infrastructure.external.geocoding_api import reverse_geocode
 
+# ── Hijri month names in Uzbek (indexed 1–12) ───────────────────────────────
+_HIJRI_MONTHS_UZ = [
+    "", "Muharram", "Safar", "Rabiul-avval", "Rabius-soniy",
+    "Jumodul-avval", "Jumodus-soniy", "Rajab", "Sha'bon",
+    "Ramazon", "Shavvol", "Zulqa'da", "Zulhijja",
+]
+
+def _hijri_month_name(month_obj: dict, lang: str) -> str:
+    """Return Hijri month name localised for lang; fall back to English."""
+    if lang in ("uz", "uz_cyr"):
+        num = month_obj.get("number", 0)
+        if isinstance(num, int) and 1 <= num <= 12:
+            return _HIJRI_MONTHS_UZ[num]
+    return month_obj.get("en", "")
+
 # ── Prayer display order ─────────────────────────────────────────────────────
 PRAYER_KEYS = ["Fajr", "Sunrise", "Dhuhr", "Asr", "Maghrib", "Isha"]
 
@@ -282,8 +297,10 @@ class PrayerService:
         ]
 
         # Hijri & Gregorian date
-        hijri = date_info.get("hijri", {})
-        greg  = date_info.get("gregorian", {})
+        hijri      = date_info.get("hijri", {})
+        hijri_m    = hijri.get("month", {})
+        greg       = date_info.get("gregorian", {})
+        month_name = _hijri_month_name(hijri_m, lang)
 
         return {
             "city":         geo_data.get("city", ""),
@@ -295,10 +312,10 @@ class PrayerService:
             "next_prayer":  next_prayer,
             "hijri": {
                 "day":      hijri.get("day", ""),
-                "month_en": hijri.get("month", {}).get("en", ""),
-                "month_ar": hijri.get("month", {}).get("ar", ""),
+                "month_en": hijri_m.get("en", ""),
+                "month_ar": hijri_m.get("ar", ""),
                 "year":     hijri.get("year", ""),
-                "full":     f"{hijri.get('day','')} {hijri.get('month',{}).get('en','')} {hijri.get('year','')}",
+                "full":     f"{hijri.get('day','')} {month_name} {hijri.get('year','')}",
             },
             "gregorian": {
                 "date":      greg.get("date", ""),

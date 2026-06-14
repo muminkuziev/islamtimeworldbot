@@ -1,14 +1,14 @@
 # IslamTimeWorldBot - One-click startup (PowerShell 5.1)
+# Order: cloudflared → update .env → server.py (webhook mode, handles bot)
+# bot.py is NOT started — server.py handles Telegram via webhook
 
 $ErrorActionPreference = "Continue"
 $env:PYTHONIOENCODING = "utf-8"
 $ROOT    = $PSScriptRoot
 $CF      = "$ROOT\scripts\cloudflared.exe"
 $CF_LOG  = "$env:TEMP\cf_tunnel.log"
-$SRV_OUT = "$ROOT\server_run.log"
-$SRV_ERR = "$ROOT\server_err.log"
-$BOT_OUT = "$ROOT\bot_run.log"
-$BOT_ERR = "$ROOT\bot_err.log"
+$SRV_OUT = "$ROOT\server_out.txt"
+$SRV_ERR = "$ROOT\server_err.txt"
 
 Write-Host ""
 Write-Host "==========================================" -ForegroundColor Cyan
@@ -22,31 +22,16 @@ Get-Process python      -ErrorAction SilentlyContinue | Stop-Process -Force -Err
 Get-Process cloudflared -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 Start-Sleep -Milliseconds 800
 
-# --- 2. Start FastAPI server ---
-Write-Host "2. Starting FastAPI server (port 8080)..." -ForegroundColor Yellow
-
-$srvArgs = @{
-    FilePath               = "python"
-    ArgumentList           = "-u server.py"
-    WorkingDirectory       = $ROOT
-    RedirectStandardOutput = $SRV_OUT
-    RedirectStandardError  = $SRV_ERR
-    WindowStyle            = "Hidden"
-}
-Start-Process @srvArgs
-Start-Sleep -Seconds 4
-
-try {
-    $check = Invoke-WebRequest -Uri "http://localhost:8080/health" -UseBasicParsing -TimeoutSec 5
-    Write-Host "   Server OK ($($check.StatusCode))" -ForegroundColor Green
-} catch {
-    Write-Host "   Server FAILED - check server_err.log" -ForegroundColor Red
-    Get-Content $SRV_ERR -Tail 8 -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "   $_" }
-    exit 1
+# Wait for port 8080 to free up
+$deadline = (Get-Date).AddSeconds(5)
+while ((Get-Date) -lt $deadline) {
+    $inUse = Get-NetTCPConnection -LocalPort 8080 -ErrorAction SilentlyContinue
+    if (-not $inUse) { break }
+    Start-Sleep -Milliseconds 300
 }
 
-# --- 3. Start cloudflared tunnel ---
-Write-Host "3. Starting HTTPS tunnel..." -ForegroundColor Yellow
+# --- 2. Start cloudflared FIRST (so we get the URL before starting server) ---
+Write-Host "2. Starting HTTPS tunnel..." -ForegroundColor Yellow
 
 if (-not (Test-Path $CF)) {
     Write-Host "   ERROR: Not found: $CF" -ForegroundColor Red
@@ -57,7 +42,7 @@ Remove-Item $CF_LOG -ErrorAction SilentlyContinue
 
 $cfArgs = @{
     FilePath              = $CF
-    ArgumentList          = "tunnel --url http://localhost:8080"
+    ArgumentList          = "tunnel --url http://localhost:8080 --protocol http2 --no-autoupdate"
     RedirectStandardError = $CF_LOG
     WindowStyle           = "Hidden"
 }
@@ -65,7 +50,6 @@ Start-Process @cfArgs
 
 Write-Host "   Waiting for tunnel URL (up to 30s)..." -ForegroundColor Gray
 
-# --- 4. Extract tunnel URL (poll up to 30s) ---
 $HTTPS_URL = $null
 for ($i = 1; $i -le 30; $i++) {
     Start-Sleep -Seconds 1
@@ -88,8 +72,8 @@ if (-not $HTTPS_URL) {
 }
 Write-Host "   Tunnel: $HTTPS_URL" -ForegroundColor Green
 
-# --- 5. Update .env with new WEBAPP_URL ---
-Write-Host "4. Updating .env..." -ForegroundColor Yellow
+# --- 3. Update .env with new WEBAPP_URL BEFORE starting server ---
+Write-Host "3. Updating .env with tunnel URL..." -ForegroundColor Yellow
 
 $envFile = "$ROOT\.env"
 if (Test-Path $envFile) {
@@ -101,57 +85,64 @@ if (Test-Path $envFile) {
     }
     $utf8NoBom = New-Object System.Text.UTF8Encoding $false
     [System.IO.File]::WriteAllText($envFile, $envText, $utf8NoBom)
-} else {
-    $utf8NoBom = New-Object System.Text.UTF8Encoding $false
-    [System.IO.File]::WriteAllText($envFile, "WEBAPP_URL=$HTTPS_URL`n", $utf8NoBom)
 }
 Write-Host "   WEBAPP_URL=$HTTPS_URL" -ForegroundColor Green
 
-# --- 6. Start bot ---
-Write-Host "5. Starting Telegram bot..." -ForegroundColor Yellow
+# --- 4. Start FastAPI server (reads updated .env, sets correct webhook) ---
+Write-Host "4. Starting FastAPI server (port 8080)..." -ForegroundColor Yellow
 
-$botArgs = @{
+$srvArgs = @{
     FilePath               = "python"
-    ArgumentList           = "-u bot.py"
+    ArgumentList           = "-u server.py"
     WorkingDirectory       = $ROOT
-    RedirectStandardOutput = $BOT_OUT
-    RedirectStandardError  = $BOT_ERR
+    RedirectStandardOutput = $SRV_OUT
+    RedirectStandardError  = $SRV_ERR
     WindowStyle            = "Hidden"
 }
-Start-Process @botArgs
-Start-Sleep -Seconds 4
+Start-Process @srvArgs
+Start-Sleep -Seconds 5
 
-$botErrLines = Get-Content $BOT_ERR -Tail 3 -ErrorAction SilentlyContinue
-$botErrText  = if ($botErrLines) { $botErrLines -join " " } else { "" }
-if ($botErrText -match "Error|Traceback|ImportError") {
-    Write-Host "   Bot WARNING - check bot_err.log" -ForegroundColor Yellow
-    $botErrLines | ForEach-Object { Write-Host "   $_" -ForegroundColor Yellow }
-} else {
-    Write-Host "   Bot started" -ForegroundColor Green
+try {
+    $check = Invoke-WebRequest -Uri "http://localhost:8080/health" -UseBasicParsing -TimeoutSec 8
+    Write-Host "   Server OK ($($check.StatusCode))" -ForegroundColor Green
+} catch {
+    Write-Host "   Server FAILED - check server_err.txt" -ForegroundColor Red
+    Get-Content $SRV_ERR -Tail 8 -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "   $_" }
+    exit 1
 }
 
-# --- 7. Verify all endpoints ---
+# --- 5. Verify all endpoints via Cloudflare (not localhost) ---
 Write-Host ""
-Write-Host "6. Verifying endpoints..." -ForegroundColor Yellow
+Write-Host "5. Verifying endpoints via Cloudflare tunnel..." -ForegroundColor Yellow
 Start-Sleep -Seconds 3
 
 $allOK = $true
 
-$url1 = $HTTPS_URL + "/"
-$url2 = $HTTPS_URL + "/api/prayer-times?lat=41.3&lon=69.2&lang=uz"
-$url3 = $HTTPS_URL + "/api/hadith?collection=bukhari&page=1&limit=2"
+$tests = @(
+    @{ url = "$HTTPS_URL/";                                      label = "/" }
+    @{ url = "$HTTPS_URL/api/prayer-times?lat=41.3&lon=69.2";   label = "/api/prayer-times" }
+    @{ url = "$HTTPS_URL/api/hadith?collection=bukhari&page=1&limit=2"; label = "/api/hadith" }
+)
 
-foreach ($pair in @("$url1|/", "$url2|/api/prayer-times", "$url3|/api/hadith")) {
-    $parts   = $pair -split "\|"
-    $testUrl = $parts[0]
-    $label   = $parts[1]
+foreach ($t in $tests) {
     try {
-        $resp = Invoke-WebRequest -Uri $testUrl -UseBasicParsing -TimeoutSec 15
-        Write-Host ("   {0} OK ({1})" -f $label, $resp.StatusCode) -ForegroundColor Green
+        $resp = Invoke-WebRequest -Uri $t.url -UseBasicParsing -TimeoutSec 15
+        Write-Host ("   {0} OK ({1})" -f $t.label, $resp.StatusCode) -ForegroundColor Green
     } catch {
-        Write-Host ("   {0} FAILED" -f $label) -ForegroundColor Red
+        Write-Host ("   {0} FAILED: {1}" -f $t.label, $_.Exception.Message) -ForegroundColor Red
         $allOK = $false
     }
+}
+
+# --- Check webhook was registered ---
+Write-Host ""
+Write-Host "6. Checking Telegram webhook..." -ForegroundColor Yellow
+$srvOutContent = Get-Content $SRV_OUT -Raw -ErrorAction SilentlyContinue
+if ($srvOutContent -match "Bot webhook set") {
+    Write-Host "   Webhook set OK" -ForegroundColor Green
+} else {
+    Write-Host "   WARNING: Webhook set confirmation not found in server_out.txt" -ForegroundColor Yellow
+    Write-Host "   Check server_out.txt for details" -ForegroundColor Yellow
 }
 
 # --- Summary ---
@@ -161,6 +152,7 @@ if ($allOK) {
     Write-Host "  ALL SYSTEMS RUNNING!" -ForegroundColor Green
     Write-Host ""
     Write-Host "  WebApp : $HTTPS_URL" -ForegroundColor Cyan
+    Write-Host "  Bot    : server.py handles /start via webhook" -ForegroundColor Cyan
     Write-Host "  Action : Send /start to your bot in Telegram" -ForegroundColor White
     Write-Host "==========================================" -ForegroundColor Green
 } else {

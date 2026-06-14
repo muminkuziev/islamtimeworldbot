@@ -4,9 +4,19 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     plan: free
+    region: oregon
     healthCheckPath: /health
     envVars:
+      # Set these manually in Render Dashboard → Environment
       - key: BOT_TOKEN
-        sync: false
+        sync: false        # paste your real token in Render dashboard
+
       - key: WEBAPP_URL
-        sync: false
+        sync: false        # paste your Render service URL, e.g.:
+                           # https://islamtimeworldbot.onrender.com
+
+      - key: WEBHOOK_MODE
+        value: "true"      # enables webhook bot mode on Render
+
+      - key: PYTHONIOENCODING
+        value: "utf-8"

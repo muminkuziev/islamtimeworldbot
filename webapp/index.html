@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="uz" dir="ltr">
 <head>
   <meta charset="UTF-8"/>
@@ -14,8 +14,13 @@
   <!-- Telegram WebApp SDK (must be first) -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
+  <!-- Fonts: Inter + Amiri (Arabic) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+
   <!-- Styles -->
-  <link rel="stylesheet" href="css/styles.css"/>
+  <link rel="stylesheet" href="css/styles.css?v=53"/>
 </head>
 <body>
 
@@ -25,6 +30,12 @@
 
     <!-- Screen 2: Language Selection -->
     <div id="screen-language"  class="screen"></div>
+
+    <!-- Screen 2b: Mazhab Selection -->
+    <div id="screen-mazhab"    class="screen"></div>
+
+    <!-- Screen 2c: Location Permission -->
+    <div id="screen-location"  class="screen"></div>
 
     <!-- Screen 3: Main Dashboard -->
     <div id="screen-dashboard" class="screen"></div>
@@ -60,30 +71,33 @@
     <div id="screen-settings"  class="screen"></div>
   </div>
 
-  <!-- ══ i18n: must load before all screen modules ══ -->
-  <script src="js/i18n.js"></script>
+  <!-- в•ђв•ђ i18n: must load before all screen modules в•ђв•ђ -->
+  <script src="js/i18n.js?v=53"></script>
 
-  <!-- ══ Static data ══ -->
-  <script src="data/names_of_allah.js"></script>
-  <script src="data/duas.js"></script>
+  <!-- в•ђв•ђ Static data в•ђв•ђ -->
+  <script src="data/names_of_allah.js?v=53"></script>
+  <script src="data/duas.js?v=53"></script>
 
-  <!-- ══ Screen modules ══ -->
-  <script src="js/screens/splash.js"></script>
-  <script src="js/screens/language.js"></script>
-  <script src="js/screens/prayer.js"></script>
-  <script src="js/screens/qibla.js"></script>
-  <script src="js/screens/mosques.js"></script>
-  <script src="js/screens/quran.js"></script>
-  <script src="js/screens/hadith.js"></script>
-  <script src="js/screens/duas.js"></script>
-  <script src="js/screens/dhikr.js"></script>
-  <script src="js/screens/calendar.js"></script>
-  <script src="js/screens/names.js"></script>
-  <script src="js/screens/settings.js"></script>
-  <script src="js/screens/dashboard.js"></script>
+  <!-- в•ђв•ђ Screen modules в•ђв•ђ -->
+  <script src="js/screens/splash.js?v=53"></script>
+  <script src="js/screens/language.js?v=53"></script>
+  <script src="js/screens/mazhab.js?v=53"></script>
+  <script src="js/screens/location.js?v=53"></script>
+  <script src="js/screens/prayer.js?v=53"></script>
+  <script src="js/screens/qibla.js?v=53"></script>
+  <script src="js/screens/mosques.js?v=53"></script>
+  <script src="js/screens/quran.js?v=53"></script>
+  <script src="js/screens/hadith.js?v=53"></script>
+  <script src="js/screens/duas.js?v=53"></script>
+  <script src="js/screens/dhikr.js?v=53"></script>
+  <script src="js/screens/calendar.js?v=53"></script>
+  <script src="js/screens/names.js?v=53"></script>
+  <script src="js/screens/settings.js?v=53"></script>
+  <script src="js/screens/dashboard.js?v=53"></script>
 
-  <!-- ══ App controller (must be last) ══ -->
-  <script src="js/app.js"></script>
+  <!-- в•ђв•ђ App controller (must be last) в•ђв•ђ -->
+  <script src="js/app.js?v=53"></script>
 
 </body>
 </html>
+

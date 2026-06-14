@@ -12,9 +12,13 @@
     tg.ready();
     tg.expand();
     tg.enableClosingConfirmation();
+    try { tg.disableVerticalSwipes(); }      catch (_) {}
     try { tg.setHeaderColor('#080D1A'); }    catch (_) {}
     try { tg.setBackgroundColor('#080D1A'); } catch (_) {}
   }
+
+  /* Allow passive touch scroll in WebView */
+  document.addEventListener('touchmove', function () {}, { passive: true });
 
   /* ── App State ── */
   const state = {
@@ -81,6 +85,8 @@
   /* ── Render all screen shells (builds initial DOM) ── */
   SplashScreen.render();
   LanguageScreen.render();
+  MazhabScreen.render();
+  LocationScreen.render();
   PrayerScreen.render();
   QiblaScreen.render();
   MosquesScreen.render();
@@ -101,8 +107,16 @@
   setTimeout(() => {
     if (state.lang) {
       applyLangDir(state.lang);
-      DashboardScreen.update(state.lang);
-      navigate('screen-dashboard');
+      const madhab    = localStorage.getItem('islamtime_madhab');
+      const locAsked  = localStorage.getItem('islamtime_location_asked');
+      if (madhab && locAsked) {
+        DashboardScreen.update(state.lang);
+        navigate('screen-dashboard');
+      } else if (madhab) {
+        navigate('screen-location');
+      } else {
+        navigate('screen-mazhab');
+      }
     } else {
       navigate('screen-language');
     }

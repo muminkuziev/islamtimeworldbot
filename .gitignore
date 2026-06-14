@@ -1,8 +1,9 @@
-# Environment
+# ── Secrets (NEVER commit) ─────────────────────────────────
 .env
 *.env.local
+*.env.production
 
-# Python
+# ── Python ─────────────────────────────────────────────────
 __pycache__/
 *.py[cod]
 *.pyo
@@ -13,29 +14,82 @@ env/
 dist/
 build/
 
-# Logs
+# ── Logs ───────────────────────────────────────────────────
 *.log
 logs/
+tunnel_new.log
 
-# IDE
+# ── Runtime output files (local dev only) ──────────────────
+bot_out.txt
+bot_out2.txt
+bot_out3.txt
+bot_out4.txt
+bot_err.txt
+bot_err2.txt
+bot_err3.txt
+bot_err4.txt
+server_out.txt
+server_err.txt
+server_test_out.txt
+server_test_err.txt
+cf_out.txt
+cf_err.txt
+cloudflare_out.txt
+cloudflare_err.txt
+
+# ── Temp / debug scripts (local dev only) ──────────────────
+check_*.py
+inspect_*.py
+extract_*.py
+try_*.py
+import_muslim.py
+inspect_db.py
+test_conn.py
+data/import_uz_bukhari.py
+data/pdf_inspect.txt
+data/pdf_pymupdf.txt
+data/rus_sample.txt
+
+# ── Large binary data files (not needed in git) ────────────
+data/*.apk
+data/*.zip
+data/*.pdf
+data/apk_extract/
+data/apk_contents/
+data/oltin_extracted/
+data/inno_out/
+
+# ── Large JSON source files (import artifacts) ─────────────
+# These are used to build hadiths.db — the DB is committed instead
+data/ara_muslim.json
+data/eng_muslim.json
+data/rus_muslim.json
+data/rus_sample.txt
+
+# ── hadiths.db: committed to git (needed on Render free tier) ──────
+# data/hadiths.db   ← DO NOT uncomment — DB must be in the repo
+
+# ── Test / demo HTML ───────────────────────────────────────
+webapp/quran_test.html
+webapp/prayer_test.html
+webapp/card_border_demo.html
+webapp/test_integration.html
+
+# ── Screenshots (large PNGs) ───────────────────────────────
+screenshot_*.png
+
+# ── IDE ────────────────────────────────────────────────────
 .vscode/
 .idea/
 *.swp
 
-# OS
+# ── OS ─────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
 
-# Large data files — commit hadiths.db explicitly if needed
-# data/hadiths.db
-
-# Temp / test
-*.tmp
-test_*.html
-
-# Claude Code internal memory
-.claude/
-
-# Binary tunnel executables
+# ── Binary executables (download separately) ───────────────
 scripts/cloudflared.exe
 scripts/ngrok.exe
+
+# ── Claude Code internal ───────────────────────────────────
+.claude/

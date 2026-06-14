@@ -9,8 +9,23 @@ Production:  uvicorn server:app --host 0.0.0.0 --port $PORT
 import os
 import sys
 import json
+import time
+import asyncio
 from contextlib import asynccontextmanager
 from pathlib import Path
+
+# ── In-process prayer-times cache (5 min TTL) ─────────────────────────────────
+_PT_CACHE: dict = {}
+_PT_TTL = 300   # seconds
+
+def _pt_cache_get(key: str):
+    item = _PT_CACHE.get(key)
+    if item and time.monotonic() < item[1]:
+        return item[0]
+    return None
+
+def _pt_cache_put(key: str, val: dict):
+    _PT_CACHE[key] = (val, time.monotonic() + _PT_TTL)
 
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -40,13 +55,40 @@ def _is_production() -> bool:
 
 async def _init_bot():
     global _bot, _dp
+    import socket
+    import aiohttp
     from aiogram import Bot, Dispatcher, F, types
+    from aiogram.client.session.aiohttp import AiohttpSession
     from aiogram.filters import CommandStart
     from aiogram.types import (
         InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo, BotCommand
     )
 
-    _bot = Bot(token=BOT_TOKEN)
+    _TG_HOST = "api.telegram.org"
+    _TG_IPS  = ["149.154.167.220", "149.154.166.110", "149.154.175.53"]
+
+    class _BypassResolver:
+        async def resolve(self, host, port=0, family=socket.AF_INET):
+            if host == _TG_HOST:
+                print(f"[DNS] {host} → {_TG_IPS[0]}", flush=True)
+                return [{"hostname": host, "host": _TG_IPS[0],
+                         "port": port, "family": socket.AF_INET,
+                         "proto": 0, "flags": 0}]
+            resolver = aiohttp.ThreadedResolver()
+            return await resolver.resolve(host, port, family)
+        async def close(self):
+            pass
+
+    _proxy = os.getenv("PROXY_URL", "").strip() or None
+    if _proxy:
+        session = AiohttpSession(proxy=_proxy)
+        print(f"[OK] Bot proxy: {_proxy}", flush=True)
+    else:
+        session = AiohttpSession()
+        session._connector_init["resolver"] = _BypassResolver()
+        print(f"[OK] Bot DNS bypass: {_TG_HOST} → {_TG_IPS[0]}", flush=True)
+
+    _bot = Bot(token=BOT_TOKEN, session=session)
     _dp  = Dispatcher()
 
     @_dp.message(CommandStart())
@@ -75,13 +117,21 @@ async def _init_bot():
         except Exception:
             pass
 
-    await _bot.set_my_commands([
-        BotCommand(command="start", description="🕌 IslamTimeWorldBot ni ochish"),
-    ])
+    try:
+        await _bot.set_my_commands([
+            BotCommand(command="start", description="🕌 IslamTimeWorldBot ni ochish"),
+        ])
+        print("[OK] set_my_commands done", flush=True)
+    except Exception as e:
+        print(f"[WARN] set_my_commands failed: {e}", flush=True)
 
     webhook_url = f"{WEBAPP_URL.rstrip('/')}/webhook/{BOT_TOKEN}"
-    await _bot.set_webhook(webhook_url, drop_pending_updates=True)
-    print(f"[OK] Bot webhook set: {webhook_url}")
+    try:
+        await _bot.set_webhook(webhook_url, drop_pending_updates=True)
+        print(f"[OK] Bot webhook set: {webhook_url}", flush=True)
+    except Exception as e:
+        print(f"[ERROR] set_webhook failed: {e}", flush=True)
+        import traceback; traceback.print_exc()
 
 
 @asynccontextmanager
@@ -125,6 +175,10 @@ async def index():
 async def test_page():
     return FileResponse(str(WEBAPP_DIR / "test_integration.html"))
 
+@app.get("/prayer-test")
+async def prayer_test_page():
+    return FileResponse(str(WEBAPP_DIR / "prayer_test.html"))
+
 # ── Health check ───────────────────────────────────────────────────────────
 @app.get("/health")
 async def health():
@@ -136,9 +190,13 @@ async def telegram_webhook(token: str, request: Request):
     if not _bot or token != BOT_TOKEN:
         return JSONResponse({"error": "forbidden"}, status_code=403)
     from aiogram.types import Update
-    data   = await request.json()
-    update = Update.model_validate(data)
-    await _dp.feed_update(_bot, update)
+    try:
+        data   = await request.json()
+        update = Update.model_validate(data)
+        await _dp.feed_update(_bot, update)
+    except Exception as e:
+        # Always return 200 to Telegram — retrying a bad update causes flood
+        print(f"[WARN] webhook handler error: {e}", flush=True)
     return {"ok": True}
 
 
@@ -155,14 +213,18 @@ async def api_prayer_times(
     timings · next-prayer countdown · Hijri/Gregorian dates
     city/country · madhhab · weather · AQI · daily ayah · daily hadith
     """
-    import asyncio as _asyncio
     from domain.prayer.service import prayer_service
     from domain.prayer.extras  import fetch_all_extras
+
+    cache_key = f"{round(lat, 2)},{round(lon, 2)},{method},{lang}"
+    cached = _pt_cache_get(cache_key)
+    if cached is not None:
+        return JSONResponse(cached)
 
     prayer_task = prayer_service.get_prayer_data(lat, lon, lang, method)
     extras_task = fetch_all_extras(lat, lon, lang)
 
-    prayer_data, extras = await _asyncio.gather(prayer_task, extras_task)
+    prayer_data, extras = await asyncio.gather(prayer_task, extras_task)
 
     if not prayer_data:
         return JSONResponse(
@@ -170,36 +232,238 @@ async def api_prayer_times(
             status_code=503,
         )
 
-    prayer_data.update(extras)          # merge weather / aqi / ayah / hadith
+    prayer_data.update(extras)
+    # Only cache when weather + aqi loaded; skip cache on partial failures so next
+    # request retries the failing external APIs instead of serving stale nulls.
+    if extras.get('weather') is not None and extras.get('aqi') is not None:
+        _pt_cache_put(cache_key, prayer_data)
     return JSONResponse(prayer_data)
+
+# ── Category → Chapter mapping (Uzbek Bukhari) ─────────────────────────────
+CATEGORY_CHAPTERS: dict = {
+    "Iymon":   [2],
+    "Tahorat": [4, 5, 6, 7],
+    "Namoz":   [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+    "Ro'za":   [25, 26],
+    "Haj":     [21, 22, 23],
+    "Zakot":   [42, 44, 50],
+    "Savdo":   [27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41],
+    "Nikoh":   [144, 145, 146],
+    "Ilm":     [3, 143],
+    "Adab":    [154, 155, 156, 158],
+    "Zikr":    [157, 176],
+    "Qiyomat": [159, 169, 170, 172, 174],
+}
+
+def _muslim_row(r, lang: str) -> dict:
+    """Convert a hadiths_muslim SQLite row to the API response dict."""
+    if lang in ("uz", "uz_cyr"):
+        text = (r["uz_cyr"] if lang == "uz_cyr" else r["uz_text"]) or ""
+    elif lang == "ru":
+        text = r["ru_text"] or ""
+    else:
+        text = r["en_text"] or ""
+    return {
+        "id":            r["id"],
+        "collection":    "muslim",
+        "hadith_number": r["hadith_number"],
+        "narrator":      "",
+        "text":          text,
+        "arabic":        r["arabic"] or "",
+        "chapter":       r["chapter_name"] or "",
+        "chapter_id":    r["book_id"],
+        "jild":          "",
+        "apk_id":        0,
+    }
+
 
 # ── Hadith API ─────────────────────────────────────────────────────────────
 @app.get("/api/hadith")
 async def api_hadith(
-    collection: str = Query("bukhari"),
-    page:       int  = Query(1, ge=1),
-    limit:      int  = Query(20, ge=1, le=50),
-    lang:       str  = Query("en"),
+    collection: str      = Query("bukhari"),
+    page:       int      = Query(1, ge=1),
+    limit:      int      = Query(20, ge=1, le=50),
+    lang:       str      = Query("en"),
+    chapter_id: int|None = Query(None),
 ):
-    """Paginated hadith list from SQLite."""
-    try:
-        import sqlite3, math
-        db_path = BASE_DIR / "data" / "hadiths.db"
-        if not db_path.exists():
-            return JSONResponse({"hadiths": [], "total": 0, "page": page, "pages": 0})
+    """Paginated hadith list. chapter_id filters by specific Bukhari chapter (uz only)."""
+    import math
+    db_path = BASE_DIR / "data" / "hadiths.db"
+    if not db_path.exists():
+        return JSONResponse({"hadiths": [], "total": 0, "page": page, "pages": 0})
+
+    col    = "bukhari" if collection != "muslim" else "muslim"
+    offset = (page - 1) * limit
+    use_uz = lang in ("uz", "uz_cyr") and col == "bukhari"
+
+    def _query():
+        import sqlite3
         con = sqlite3.connect(str(db_path))
         con.row_factory = sqlite3.Row
         cur = con.cursor()
-        col = "bukhari" if collection != "muslim" else "muslim"
-        total  = cur.execute("SELECT COUNT(*) FROM hadiths WHERE collection=?", (col,)).fetchone()[0]
-        offset = (page - 1) * limit
-        rows   = cur.execute(
+
+        if use_uz:
+            tbl_ok = cur.execute(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='hadiths_uz_bukhari'"
+            ).fetchone()[0]
+            if tbl_ok:
+                if chapter_id is not None:
+                    total = cur.execute(
+                        "SELECT COUNT(*) FROM hadiths_uz_bukhari WHERE chapter_id=?",
+                        (chapter_id,)
+                    ).fetchone()[0]
+                    rows = cur.execute(
+                        "SELECT sort_order, apk_id, jild_id, chapter_id, chapter_name, uz_text "
+                        "FROM hadiths_uz_bukhari WHERE chapter_id=? ORDER BY sort_order LIMIT ? OFFSET ?",
+                        (chapter_id, limit, offset)
+                    ).fetchall()
+                else:
+                    total = cur.execute("SELECT COUNT(*) FROM hadiths_uz_bukhari").fetchone()[0]
+                    rows  = cur.execute(
+                        "SELECT sort_order, apk_id, jild_id, chapter_id, chapter_name, uz_text "
+                        "FROM hadiths_uz_bukhari ORDER BY sort_order LIMIT ? OFFSET ?",
+                        (limit, offset)
+                    ).fetchall()
+                result = [{
+                    "id":            r["sort_order"],
+                    "collection":    "bukhari",
+                    "hadith_number": r["sort_order"],
+                    "narrator":      "",
+                    "text":          r["uz_text"],
+                    "arabic":        "",
+                    "chapter":       r["chapter_name"],
+                    "chapter_id":    r["chapter_id"],
+                    "jild":          r["jild_id"],
+                    "apk_id":        r["apk_id"],
+                } for r in rows]
+                con.close()
+                return result, total
+
+        if col == "muslim":
+            if chapter_id is not None:
+                total = cur.execute(
+                    "SELECT COUNT(*) FROM hadiths_muslim WHERE book_id=?", (chapter_id,)
+                ).fetchone()[0]
+                rows = cur.execute(
+                    "SELECT * FROM hadiths_muslim WHERE book_id=? ORDER BY hadith_number LIMIT ? OFFSET ?",
+                    (chapter_id, limit, offset)
+                ).fetchall()
+            else:
+                total = cur.execute("SELECT COUNT(*) FROM hadiths_muslim").fetchone()[0]
+                rows  = cur.execute(
+                    "SELECT * FROM hadiths_muslim ORDER BY hadith_number LIMIT ? OFFSET ?",
+                    (limit, offset)
+                ).fetchall()
+            result = [_muslim_row(r, lang) for r in rows]
+            con.close()
+            return result, total
+
+        total = cur.execute("SELECT COUNT(*) FROM hadiths WHERE collection=?", (col,)).fetchone()[0]
+        rows  = cur.execute(
             "SELECT * FROM hadiths WHERE collection=? ORDER BY hadith_number LIMIT ? OFFSET ?",
             (col, limit, offset)
         ).fetchall()
+        result = [dict(r) for r in rows]
         con.close()
-        return JSONResponse({"hadiths": [dict(r) for r in rows], "total": total,
+        return result, total
+
+    try:
+        rows, total = await asyncio.to_thread(_query)
+        return JSONResponse({"hadiths": rows, "total": total,
                              "page": page, "pages": math.ceil(total / limit)})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@app.get("/api/hadith/categories")
+async def api_hadith_categories(lang: str = Query("en")):
+    """Returns all categories with hadith counts (uz/bukhari only)."""
+    if lang not in ("uz", "uz_cyr"):
+        return JSONResponse({"categories": []})
+    db_path = BASE_DIR / "data" / "hadiths.db"
+    if not db_path.exists():
+        return JSONResponse({"categories": []})
+
+    def _query():
+        import sqlite3
+        con = sqlite3.connect(str(db_path))
+        cur = con.cursor()
+        out = []
+        for name, ids in CATEGORY_CHAPTERS.items():
+            if not ids:
+                continue
+            ph  = ",".join("?" * len(ids))
+            row = cur.execute(
+                f"SELECT COUNT(*) FROM hadiths_uz_bukhari WHERE chapter_id IN ({ph})", ids
+            ).fetchone()
+            out.append({"name": name, "count": row[0] if row else 0, "chapter_count": len(ids)})
+        con.close()
+        return out
+
+    try:
+        cats = await asyncio.to_thread(_query)
+        return JSONResponse({"categories": cats})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@app.get("/api/hadith/muslim/books")
+async def api_hadith_muslim_books():
+    """Returns the 57 Sahih Muslim books with hadith counts."""
+    db_path = BASE_DIR / "data" / "hadiths.db"
+    if not db_path.exists():
+        return JSONResponse({"books": []})
+
+    def _query():
+        import sqlite3
+        con = sqlite3.connect(str(db_path))
+        cur = con.cursor()
+        rows = cur.execute(
+            "SELECT book_id, chapter_name, COUNT(*) "
+            "FROM hadiths_muslim GROUP BY book_id, chapter_name ORDER BY book_id"
+        ).fetchall()
+        con.close()
+        return [{"book_id": r[0], "name": r[1], "count": r[2]} for r in rows]
+
+    try:
+        books = await asyncio.to_thread(_query)
+        return JSONResponse({"books": books})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@app.get("/api/hadith/category")
+async def api_hadith_category(name: str = Query(...), lang: str = Query("en")):
+    """Returns chapters for a named category (uz/bukhari only)."""
+    ids = CATEGORY_CHAPTERS.get(name, [])
+    if lang not in ("uz", "uz_cyr") or not ids:
+        return JSONResponse({"category": name, "chapters": [], "total": 0})
+    db_path = BASE_DIR / "data" / "hadiths.db"
+    if not db_path.exists():
+        return JSONResponse({"category": name, "chapters": [], "total": 0})
+
+    def _query():
+        import sqlite3
+        con = sqlite3.connect(str(db_path))
+        cur = con.cursor()
+        ph  = ",".join("?" * len(ids))
+        rows = cur.execute(
+            f"SELECT chapter_id, chapter_name, jild_id, COUNT(*) "
+            f"FROM hadiths_uz_bukhari WHERE chapter_id IN ({ph}) "
+            f"GROUP BY chapter_id, chapter_name, jild_id ORDER BY chapter_id",
+            ids
+        ).fetchall()
+        total = cur.execute(
+            f"SELECT COUNT(*) FROM hadiths_uz_bukhari WHERE chapter_id IN ({ph})", ids
+        ).fetchone()[0]
+        chapters = [{"chapter_id": r[0], "chapter_name": r[1], "jild": r[2], "count": r[3]}
+                    for r in rows]
+        con.close()
+        return chapters, total
+
+    try:
+        chapters, total = await asyncio.to_thread(_query)
+        return JSONResponse({"category": name, "chapters": chapters, "total": total})
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
 
@@ -216,28 +480,94 @@ async def api_hadith_search(
     collection: str = Query("bukhari"),
     lang:       str = Query("en"),
 ):
-    """Full-text search in hadiths (narrator, Indonesian text, Arabic with harakat stripping)."""
-    try:
+    """Full-text search. For lang=uz/uz_cyr + bukhari: searches Uzbek translation table."""
+    db_path = BASE_DIR / "data" / "hadiths.db"
+    if not db_path.exists():
+        return JSONResponse({"hadiths": [], "total": 0})
+
+    col    = "bukhari" if collection != "muslim" else "muslim"
+    use_uz = lang in ("uz", "uz_cyr") and col == "bukhari"
+
+    def _search():
         import sqlite3
-        db_path = BASE_DIR / "data" / "hadiths.db"
-        if not db_path.exists():
-            return JSONResponse({"hadiths": [], "total": 0})
         con = sqlite3.connect(str(db_path))
         con.row_factory = sqlite3.Row
-        cur = con.cursor()
-        col  = "bukhari" if collection != "muslim" else "muslim"
+        cur  = con.cursor()
         like = f"%{q}%"
 
-        # Fast SQL path: narrator (English) and text (Indonesian)
+        if use_uz:
+            tbl_ok = cur.execute(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='hadiths_uz_bukhari'"
+            ).fetchone()[0]
+            if tbl_ok:
+                # Try numeric search by sort_order
+                try:
+                    num = int(q.strip())
+                    rows = cur.execute(
+                        "SELECT sort_order, apk_id, jild_id, chapter_name, uz_text "
+                        "FROM hadiths_uz_bukhari WHERE sort_order=? LIMIT 1",
+                        (num,)
+                    ).fetchall()
+                except ValueError:
+                    rows = []
+                if not rows:
+                    rows = cur.execute(
+                        "SELECT sort_order, apk_id, jild_id, chapter_name, uz_text "
+                        "FROM hadiths_uz_bukhari "
+                        "WHERE uz_text LIKE ? OR chapter_name LIKE ? LIMIT 50",
+                        (like, like)
+                    ).fetchall()
+                results = [{
+                    "id":            r["sort_order"],
+                    "collection":    "bukhari",
+                    "hadith_number": r["sort_order"],
+                    "narrator":      "",
+                    "text":          r["uz_text"],
+                    "arabic":        "",
+                    "chapter":       r["chapter_name"],
+                    "jild":          r["jild_id"],
+                    "apk_id":        r["apk_id"],
+                } for r in rows]
+                con.close()
+                return results
+
+        if col == "muslim":
+            try:
+                num = int(q.strip())
+                rows = cur.execute(
+                    "SELECT * FROM hadiths_muslim WHERE hadith_number=? LIMIT 1", (num,)
+                ).fetchall()
+            except ValueError:
+                rows = []
+            if not rows:
+                rows = cur.execute(
+                    "SELECT * FROM hadiths_muslim WHERE "
+                    "en_text LIKE ? OR chapter_name LIKE ? LIMIT 50",
+                    (like, like)
+                ).fetchall()
+            q_norm = _strip_harakat(q)
+            if len(rows) < 50 and q_norm and any(0x0600 <= ord(c) <= 0x06FF for c in q_norm):
+                ar_rows = cur.execute(
+                    "SELECT * FROM hadiths_muslim WHERE arabic IS NOT NULL LIMIT 3000"
+                ).fetchall()
+                seen = {r["id"] for r in rows}
+                for row in ar_rows:
+                    if len(rows) >= 50:
+                        break
+                    if row["id"] not in seen and q_norm in _strip_harakat(row["arabic"] or ""):
+                        rows.append(row)
+                        seen.add(row["id"])
+            con.close()
+            return [_muslim_row(r, lang) for r in rows]
+
         sql_rows = cur.execute(
             "SELECT * FROM hadiths WHERE collection=? AND "
             "(narrator LIKE ? OR text LIKE ? OR chapter LIKE ?) LIMIT 50",
             (col, like, like, like)
         ).fetchall()
-        results = [dict(r) for r in sql_rows]
+        results  = [dict(r) for r in sql_rows]
         seen_ids = {r["id"] for r in results}
 
-        # Python-level Arabic search with harakat stripping (for Arabic keyword queries)
         if len(results) < 50:
             q_norm = _strip_harakat(q)
             if q_norm and any(0x0600 <= ord(c) <= 0x06FF for c in q_norm):
@@ -254,6 +584,10 @@ async def api_hadith_search(
                         seen_ids.add(d["id"])
 
         con.close()
+        return results
+
+    try:
+        results = await asyncio.to_thread(_search)
         return JSONResponse({"hadiths": results, "total": len(results)})
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
