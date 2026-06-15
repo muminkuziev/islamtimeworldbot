@@ -10,6 +10,7 @@ const MosquesScreen = (function () {
   const NOMINATIM_URL  = 'https://nominatim.openstreetmap.org/reverse';
   const RADIUS_DEFAULT = 10000;
   const RADIUS_EXPAND  = 20000;
+  const RADIUS_MAX     = 50000;
   const GEO_TIMEOUT    = 10000;   /* ms to wait for browser geolocation */
 
   /* Cache key is per-language so city names are always in the right script */
@@ -27,6 +28,7 @@ const MosquesScreen = (function () {
   let _radius     = RADIUS_DEFAULT;
   let _loading    = false;
   let _noLocation = false;  /* true when no coords could be obtained */
+  let _notFound   = false;  /* true when 50km search returns 0 results */
   let _selIdx     = null;
   let _el         = null;
   let _loadTimer  = null;
@@ -60,6 +62,7 @@ const MosquesScreen = (function () {
     _tab        = 'royxat';
     _selIdx     = null;
     _noLocation = false;
+    _notFound   = false;
     _radius     = RADIUS_DEFAULT;
     _userId     = window.App?.state?.user?.id || null;
   }
@@ -175,7 +178,7 @@ const MosquesScreen = (function () {
       localStorage.removeItem('islamtime_mosques_' + l + '_v2')
     );
     _lat = null; _lon = null; _city = '';
-    _mosques = []; _noLocation = false;
+    _mosques = []; _noLocation = false; _notFound = false;
     _loading = true;
     _refreshBody();
 
@@ -267,15 +270,20 @@ out center tags;`.trim();
         }
       }
 
-      /* Auto-expand: fewer than 5 results at default radius → try wider */
-      if (fresh.length < 5 && radius === RADIUS_DEFAULT && !background) {
-        await _fetchMosques(background, RADIUS_EXPAND);
+      /* Auto-expand: 10km → 20km → 50km when fewer than 5 results */
+      if (fresh.length < 5 && radius < RADIUS_MAX && !background) {
+        const next = radius === RADIUS_DEFAULT ? RADIUS_EXPAND : RADIUS_MAX;
+        await _fetchMosques(background, next);
         return;
       }
 
+      /* All radii exhausted with 0 results */
+      if (fresh.length === 0 && radius >= RADIUS_MAX) {
+        _notFound = true;
+      }
+
       if (fresh.length) {
-        _mosques    = fresh.slice(0, 20);
-        _isFallback = false;
+        _mosques = fresh.slice(0, 20);
         _saveCache();
         if (!_city) _fetchCity();
       }
@@ -352,11 +360,37 @@ out center tags;`.trim();
         </button>
       </div>`;
     }
+    if (_notFound) {
+      return `<div class="ms-noloc">
+        <div class="ms-noloc-icon">🕌</div>
+        <div class="ms-noloc-title">${_T(
+          "Bu hududda masjid topilmadi",
+          "Бу ҳудудда масжид топилмади",
+          "В этом районе мечетей нет",
+          "No mosques found in this area"
+        )}</div>
+        <div class="ms-noloc-text">${_T(
+          "50 km radiusda birorta ham masjid topilmadi. Iltimos, boshqa lokatsiya yuboring.",
+          "50 км радиусда ҳеч қандай масжид топилмади. Илтимос, бошқа локация юборинг.",
+          "В радиусе 50 км мечетей не найдено. Попробуйте другое место.",
+          "No mosques found within 50 km. Please share a different location."
+        )}</div>
+        <button class="ms-noloc-btn" id="ms-request-loc">
+          📍 ${_T("Boshqa lokatsiya yuborish","Бошқа локация юбориш","Другое место","Change Location")}
+        </button>
+      </div>`;
+    }
     if (!_mosques.length) {
       return `<div class="ms-empty">🕌 ${_T('Yaqin atrofda masjid topilmadi','Яқин атрофда масжид топилмади','Мечети не найдены','No mosques found nearby')}</div>`;
     }
+    const rKm = _radius / 1000;
     const expandNotice = (_radius > RADIUS_DEFAULT)
-      ? `<div class="ms-expand-notice">📍 ${_T("Bu hududda yaqin masjidlar kam topildi. Qidiruv radiusi kengaytirildi.","Бу ҳудудда яқин масжидлар кам топилди. Қидирув радиуси кенгайтирилди.","В этом районе мало мечетей. Радиус поиска расширен.","Few mosques nearby. Search radius expanded.")}</div>`
+      ? `<div class="ms-expand-notice">📍 ${_T(
+          `Yaqin atrofda kam masjid topildi. Qidiruv radiusi ${rKm} km ga kengaytirildi.`,
+          `Яқин атрофда кам масжид топилди. Қидирув радиуси ${rKm} км га кенгайтирилди.`,
+          `В этом районе мало мечетей. Радиус расширен до ${rKm} км.`,
+          `Few mosques nearby. Search radius expanded to ${rKm} km.`
+        )}</div>`
       : '';
     const notice = expandNotice;
     if (_tab === 'royxat') return notice + (_selIdx !== null ? _buildDetail() : _buildList());
