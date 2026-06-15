@@ -45,7 +45,11 @@ WEBAPP_DIR = BASE_DIR / "webapp"
 USERS_DB   = BASE_DIR / "data" / "users.db"
 BOT_TOKEN  = os.getenv("BOT_TOKEN", "")
 WEBAPP_URL = os.getenv("WEBAPP_URL", "")
-ADMIN_IDS  = {int(x) for x in os.getenv("ADMIN_IDS", "").split(",") if x.strip().isdigit()}
+_PRIMARY_ADMIN = 310467246
+ADMIN_IDS = {_PRIMARY_ADMIN}
+for _x in os.getenv("ADMIN_IDS", "").split(","):
+    if _x.strip().isdigit():
+        ADMIN_IDS.add(int(_x.strip()))
 
 # ── User tracking (SQLite) ──────────────────────────────────────────────────
 def _init_users_db():
@@ -181,7 +185,8 @@ async def _init_bot():
 
     @_dp.message(Command("stats"))
     async def cmd_stats(message: types.Message):
-        if ADMIN_IDS and message.from_user.id not in ADMIN_IDS:
+        if message.from_user.id not in ADMIN_IDS:
+            await message.answer("⛔ Sizda ushbu buyruqdan foydalanish huquqi yo'q.")
             return
         s = _get_stats()
         if "error" in s:
@@ -216,6 +221,63 @@ async def _init_bot():
             reply_markup=kb,
         )
 
+    @_dp.message(Command("users"))
+    async def cmd_users(message: types.Message):
+        if message.from_user.id not in ADMIN_IDS:
+            await message.answer("⛔ Sizda ushbu buyruqdan foydalanish huquqi yo'q.")
+            return
+        s = _get_stats()
+        if "error" in s:
+            await message.answer(f"❌ {s['error']}")
+            return
+        txt = f"👥 <b>So'nggi foydalanuvchilar:</b>\n\n"
+        for fn, un, lg, jt in s["last_10"]:
+            un_str = f" @{un}" if un else ""
+            txt += f"  {fn or '?'}{un_str} [{lg or '?'}] — {jt}\n"
+        await message.answer(txt, parse_mode="HTML")
+
+    @_dp.message(Command("broadcast"))
+    async def cmd_broadcast(message: types.Message):
+        if message.from_user.id not in ADMIN_IDS:
+            await message.answer("⛔ Sizda ushbu buyruqdan foydalanish huquqi yo'q.")
+            return
+        parts = message.text.split(maxsplit=1)
+        if len(parts) < 2 or not parts[1].strip():
+            await message.answer(
+                "📢 <b>Broadcast:</b>\n<code>/broadcast Xabar matni</code>",
+                parse_mode="HTML",
+            )
+            return
+        text_to_send = parts[1].strip()
+        try:
+            conn = sqlite3.connect(str(USERS_DB))
+            user_ids = [r[0] for r in conn.execute("SELECT user_id FROM users").fetchall()]
+            conn.close()
+        except Exception:
+            user_ids = []
+        if not user_ids:
+            await message.answer("📭 Hali foydalanuvchi yo'q.")
+            return
+        status_msg = await message.answer(f"📤 {len(user_ids)} ta foydalanuvchiga yuborilmoqda...")
+        sent = blocked = failed = 0
+        for uid in user_ids:
+            try:
+                await _bot.send_message(uid, text_to_send, parse_mode="HTML")
+                sent += 1
+            except Exception as e:
+                err = str(e).lower()
+                if "blocked" in err or "deactivated" in err or "chat not found" in err:
+                    blocked += 1
+                else:
+                    failed += 1
+            await asyncio.sleep(0.05)
+        await _bot.edit_message_text(
+            f"✅ <b>Broadcast yakunlandi</b>\n\n"
+            f"📤 Yuborildi: {sent}\n🚫 Bloklangan: {blocked}\n❌ Xatolik: {failed}",
+            chat_id=message.chat.id, message_id=status_msg.message_id,
+            parse_mode="HTML",
+        )
+
     @_dp.message(F.web_app_data)
     async def on_webapp_data(message: types.Message):
         try:
@@ -227,11 +289,25 @@ async def _init_bot():
             pass
 
     try:
+        # Public commands for all users
         await _bot.set_my_commands([
-            BotCommand(command="start",  description="🕌 IslamTimeWorldBot ni ochish"),
-            BotCommand(command="reset",  description="🔄 Sozlamalarni tozalab qayta boshlash"),
-            BotCommand(command="stats",  description="📊 Foydalanuvchilar statistikasi (admin)"),
+            BotCommand(command="start", description="🕌 IslamTimeWorldBot ni ochish"),
+            BotCommand(command="reset", description="🔄 Sozlamalarni tozalab qayta boshlash"),
         ])
+        # Admin-only command menu (per-chat scope)
+        admin_cmds = [
+            BotCommand(command="start",     description="🕌 IslamTimeWorldBot ni ochish"),
+            BotCommand(command="reset",     description="🔄 Sozlamalarni tozalab qayta boshlash"),
+            BotCommand(command="stats",     description="📊 Statistika"),
+            BotCommand(command="users",     description="👥 Foydalanuvchilar ro'yxati"),
+            BotCommand(command="broadcast", description="📢 Barcha userlarga xabar"),
+        ]
+        from aiogram.types import BotCommandScopeChat
+        for admin_id in ADMIN_IDS:
+            try:
+                await _bot.set_my_commands(admin_cmds, scope=BotCommandScopeChat(chat_id=admin_id))
+            except Exception:
+                pass
         print("[OK] set_my_commands done", flush=True)
     except Exception as e:
         print(f"[WARN] set_my_commands failed: {e}", flush=True)
