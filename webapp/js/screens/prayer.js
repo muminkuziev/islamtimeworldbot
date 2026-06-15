@@ -1040,17 +1040,21 @@ const PrayerScreen = (function () {
         }).join('')}
       </div>
 
-      <div class="pm-section-lbl" style="margin-top:14px">${_T('ESLATMA VAQTI (daqiqa)','ЭСЛАТМА ВАҚТИ (дақиқа)','ВРЕМЯ НАПОМИНАНИЯ (мин)','REMINDER TIME (minutes)')}</div>
+      <div class="pm-section-lbl" style="margin-top:14px">${_T('ESLATMA VAQTI (daqiqa oldin)','ЭСЛАТМА ВАҚТИ (дақиқа олдин)','НАПОМИНАНИЕ ЗА (минут)','REMINDER (minutes before)')}</div>
       <div class="pm-timing-list">
         ${prayers.map(p => {
-          const cur = _getTimingPref(p.key);
+          const cur = String(_getTimingPref(p.key));
           return `
             <div class="pm-timing-row">
               <span class="pm-timing-name">${_esc(p.name)}</span>
               <div class="pm-timing-btns">
-                ${['-10','-5','0','+5'].map(v => `
-                  <button class="pm-timing-btn${String(cur) === v ? ' pm-timing-btn--on' : ''}"
-                          data-pkey="${p.key}" data-val="${v}">${v}</button>`).join('')}
+                ${['-30','-15','-10','0'].map(v => {
+                  const lbl = v === '0'
+                    ? _T("Vaqtida","Вақтида","Вовремя","On time")
+                    : `${Math.abs(parseInt(v))} ${_T('daqiqa','дақиқа','мин','min')}`;
+                  return `<button class="pm-timing-btn${cur === v ? ' pm-timing-btn--on' : ''}"
+                                  data-pkey="${p.key}" data-val="${v}">${lbl}</button>`;
+                }).join('')}
               </div>
             </div>`;
         }).join('')}
@@ -1062,15 +1066,41 @@ const PrayerScreen = (function () {
       </div>`;
   }
 
+  /* Save notification preferences to server so the scheduler can deliver them */
+  async function _syncNotifPrefsToServer(enabled) {
+    const userId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || null;
+    if (!userId) return;
+    const prefs   = _getNotifPrefs();
+    const timing  = {};
+    ['fajr','dhuhr','asr','maghrib','isha'].forEach(k => {
+      timing[k] = parseInt(_getTimingPref(k) || '0');
+    });
+    const tzOffset = -(new Date().getTimezoneOffset()); // minutes east of UTC
+    try {
+      await fetch('/api/user/notifications', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          user_id:   userId,
+          enabled:   enabled ? 1 : 0,
+          timing,
+          tz_offset: tzOffset,
+        }),
+        signal: AbortSignal.timeout(5000),
+      });
+    } catch (_e) {}
+  }
+
   function _bindSozlama(el) {
     el.querySelector('#p-btn-refresh')?.addEventListener('click', _onRefresh);
     el.querySelector('#p-btn-changeloc')?.addEventListener('click', _onChangeLoc);
 
     el.querySelectorAll('.pm-toggle').forEach(tog => {
       tog.addEventListener('click', () => {
-        const k = tog.dataset.pref;
+        const k  = tog.dataset.pref;
         const on = tog.classList.toggle('pm-toggle--on');
         _setNotifPref(k, on);
+        if (k === 'push') _syncNotifPrefsToServer(on);  /* register/unregister with server */
         window.Telegram?.WebApp?.HapticFeedback?.selectionChanged();
       });
     });
@@ -1083,6 +1113,8 @@ const PrayerScreen = (function () {
         el.querySelectorAll(`.pm-timing-btn[data-pkey="${pkey}"]`).forEach(b => {
           b.classList.toggle('pm-timing-btn--on', b.dataset.val === val);
         });
+        /* Sync timing changes to server if push is already enabled */
+        if (_getNotifPrefs().push) _syncNotifPrefsToServer(true);
         window.Telegram?.WebApp?.HapticFeedback?.selectionChanged();
       });
     });

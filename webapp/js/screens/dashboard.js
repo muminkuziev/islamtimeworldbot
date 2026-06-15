@@ -217,13 +217,13 @@ const DashboardScreen = (function () {
      City badge
   ══════════════════════════════════════════════ */
   function _loadCity() {
-    /* 1. Mosques cache */
+    /* 1. Per-language mosque cache (correct key: islamtime_mosques_${lang}_v2) */
     try {
-      const mc = JSON.parse(localStorage.getItem('islamtime_mosques_v1') || '{}');
-      if (mc.city) { _setCity(mc.city); return; }
+      const mc = JSON.parse(localStorage.getItem('islamtime_mosques_' + _lang + '_v2') || 'null');
+      if (mc && mc.city) { _setCity(mc.city); return; }
     } catch {}
 
-    /* 2. Stored coords → Nominatim */
+    /* 2. Stored coords → Nominatim (language-aware) */
     const sLat = parseFloat(localStorage.getItem('islamtime_last_lat') || '');
     const sLon = parseFloat(localStorage.getItem('islamtime_last_lon') || '');
     if (sLat && sLon) { _fetchCity(sLat, sLon); return; }
@@ -239,9 +239,18 @@ const DashboardScreen = (function () {
   }
 
   async function _fetchCity(lat, lon) {
+    /* Language-specific Accept-Language so Nominatim returns names in the right script */
+    const acceptLang = (_lang === 'ru' || _lang === 'uz_cyr') ? 'ru,en'
+                     : _lang === 'ar'                         ? 'ar,en'
+                     : _lang === 'en'                         ? 'en'
+                     : _lang === 'tr'                         ? 'tr,en'
+                     : _lang === 'de'                         ? 'de,en'
+                     : _lang === 'fr'                         ? 'fr,en'
+                     :                                          'uz,en';
     try {
       const r = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
+        { headers: { 'Accept-Language': acceptLang } }
       );
       const d = await r.json();
       const a = d.address || {};
@@ -257,12 +266,34 @@ const DashboardScreen = (function () {
   /* ══════════════════════════════════════════════
      Prayer — next prayer card
   ══════════════════════════════════════════════ */
+
+  /* Recalculate which prayer is next using the CURRENT time (not cached countdown).
+     Called every render so the card is never stale even when loaded from cache. */
+  function _recalcNextPrayer(data) {
+    const prayers = (data.prayers || []).filter(p => p.key !== 'sunrise');
+    const now     = new Date();
+    const nowMin  = now.getHours() * 60 + now.getMinutes();
+    const nowSec  = now.getSeconds();
+    for (const p of prayers) {
+      if (!p.time || !p.time.includes(':')) continue;
+      const [h, m]  = p.time.split(':').map(Number);
+      const pMin    = h * 60 + m;
+      if (pMin > nowMin) {
+        return { key: p.key, time: p.time, countdown_seconds: Math.max(0, (pMin - nowMin) * 60 - nowSec) };
+      }
+    }
+    return null;  // all prayers done for today
+  }
+
   function _loadPrayer() {
     const today = new Date().toISOString().slice(0, 10);
-    /* cached? */
+    /* Use cached prayer TIMES (valid all day) but always recalc next_prayer with current time */
     try {
       const c = JSON.parse(localStorage.getItem('islamtime_dash_pt') || '{}');
-      if (c.date === today && c.lang === _lang && c.data) { _renderPrayer(c.data); return; }
+      if (c.date === today && c.lang === _lang && c.data) {
+        _renderPrayer({ ...c.data, next_prayer: _recalcNextPrayer(c.data) });
+        return;
+      }
     } catch {}
 
     /* fetch */
@@ -293,7 +324,7 @@ const DashboardScreen = (function () {
       if (data.error) return;
       const today = new Date().toISOString().slice(0, 10);
       localStorage.setItem('islamtime_dash_pt', JSON.stringify({ date: today, lang: _lang, data }));
-      _renderPrayer(data);
+      _renderPrayer({ ...data, next_prayer: _recalcNextPrayer(data) });
     } catch {}
   }
 

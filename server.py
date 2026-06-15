@@ -69,7 +69,15 @@ def _init_users_db():
             last_active TEXT    NOT NULL
         )""")
         # Migrate existing DBs that lack the location columns
-        for col, typedef in [("last_lat", "REAL"), ("last_lon", "REAL"), ("last_city", "TEXT DEFAULT ''")]:
+        for col, typedef in [
+            ("last_lat",       "REAL"),
+            ("last_lon",       "REAL"),
+            ("last_city",      "TEXT DEFAULT ''"),
+            ("notif_enabled",  "INTEGER DEFAULT 0"),
+            ("notif_timing",   "TEXT DEFAULT '{}'"),
+            ("notif_tz_offset","INTEGER DEFAULT 0"),
+            ("notif_sent",     "TEXT DEFAULT '{}'"),
+        ]:
             try:
                 conn.execute(f"ALTER TABLE users ADD COLUMN {col} {typedef}")
             except Exception:
@@ -125,6 +133,242 @@ def _get_stats() -> dict:
         }
     except Exception as e:
         return {"error": str(e)}
+
+# ── Notification bot (always-on, for sending scheduled reminders) ──────────
+_bot_notif = None   # separate Bot instance used only for sending notifications
+
+# Prayer names keyed by prayer key + lang
+_PRAYER_NOTIF_NAMES: dict[str, dict] = {
+    "fajr":    {"uz":"Bomdod",  "uz_cyr":"Бомдод",  "ru":"Фаджр",  "en":"Fajr",    "tr":"Sabah",  "ar":"الفجر",  "kk":"Таң",     "tg":"Бомдод",  "de":"Fajr",    "fr":"Fajr",    "id":"Subuh",   "hi":"फज्र",    "ur":"فجر"},
+    "dhuhr":   {"uz":"Peshin",  "uz_cyr":"Пешин",   "ru":"Зухр",   "en":"Dhuhr",   "tr":"Öğle",   "ar":"الظهر",  "kk":"Бесін",   "tg":"Пешин",   "de":"Dhuhr",   "fr":"Dhuhr",   "id":"Dzuhur",  "hi":"ज़ुहर",    "ur":"ظہر"},
+    "asr":     {"uz":"Asr",     "uz_cyr":"Аср",     "ru":"Аср",    "en":"Asr",     "tr":"İkindi", "ar":"العصر",  "kk":"Аср",     "tg":"Аср",     "de":"Asr",     "fr":"Asr",     "id":"Ashar",   "hi":"अस्र",    "ur":"عصر"},
+    "maghrib": {"uz":"Shom",    "uz_cyr":"Шом",     "ru":"Магриб", "en":"Maghrib", "tr":"Akşam",  "ar":"المغرب", "kk":"Ақшам",   "tg":"Шом",     "de":"Maghrib", "fr":"Maghrib", "id":"Maghrib", "hi":"मग़रिब",  "ur":"مغرب"},
+    "isha":    {"uz":"Xufton",  "uz_cyr":"Хуфтон",  "ru":"Иша",    "en":"Isha",    "tr":"Yatsı",  "ar":"العشاء", "kk":"Күфтан",  "tg":"Хуфтон",  "de":"Isha",    "fr":"Isha",    "id":"Isya",    "hi":"इशा",     "ur":"عشاء"},
+}
+
+_NOTIF_T = {
+    "before": {
+        "uz":     "🔔 {name} namoziga {min} daqiqa qoldi",
+        "uz_cyr": "🔔 {name} намозига {min} дақиқа қолди",
+        "ru":     "🔔 До намаза {name} осталось {min} минут",
+        "en":     "🔔 {name} prayer in {min} minutes",
+        "tr":     "🔔 {name} namazına {min} dakika kaldı",
+        "ar":     "🔔 تبقى {min} دقيقة على صلاة {name}",
+        "kk":     "🔔 {name} намазына {min} минут қалды",
+        "tg":     "🔔 То намози {name} {min} дақиқа монд",
+        "de":     "🔔 {min} Minuten bis zum {name}-Gebet",
+        "fr":     "🔔 {min} minutes avant la prière {name}",
+        "id":     "🔔 {min} menit lagi sholat {name}",
+        "hi":     "🔔 {name} नमाज़ में {min} मिनट बाकी",
+        "ur":     "🔔 {name} نماز میں {min} منٹ باقی",
+    },
+    "now": {
+        "uz":     "🕌 {name} namozi vaqti keldi!",
+        "uz_cyr": "🕌 {name} намози вақти келди!",
+        "ru":     "🕌 Время намаза {name}!",
+        "en":     "🕌 Time for {name} prayer!",
+        "tr":     "🕌 {name} namaz vakti geldi!",
+        "ar":     "🕌 حان وقت صلاة {name}!",
+        "kk":     "🕌 {name} намаз уақыты келді!",
+        "tg":     "🕌 Вақти намози {name} расид!",
+        "de":     "🕌 Zeit für das {name}-Gebet!",
+        "fr":     "🕌 L'heure de la prière {name}!",
+        "id":     "🕌 Waktu sholat {name} tiba!",
+        "hi":     "🕌 {name} नमाज़ का वक्त आ गया!",
+        "ur":     "🕌 {name} نماز کا وقت آ گیا!",
+    },
+    "dua": {
+        "uz":     "Alloh bizni namozga muvaffaq qilsin.",
+        "uz_cyr": "Аллоҳ бизни намозга муваффақ қилсин.",
+        "ru":     "Да поможет нам Аллах совершить намаз.",
+        "en":     "May Allah help us to pray.",
+        "tr":     "Allah bizi namaza muvaffak eylesin.",
+        "ar":     "تقبل الله صلاتنا.",
+        "kk":     "Аллаh бізге намаз оқуға мүмкіндік берсін.",
+        "tg":     "Аллоҳ моро ба намоз муваффақ кунад.",
+        "de":     "Möge Allah uns beim Gebet helfen.",
+        "fr":     "Qu'Allah nous aide à prier.",
+        "id":     "Semoga Allah memudahkan kita sholat.",
+        "hi":     "अल्लाह हमें नमाज़ पढ़ने की तौफ़ीक़ दे।",
+        "ur":     "اللہ ہمیں نماز کی توفیق عطا فرمائے۔",
+    },
+}
+
+
+def _format_notification(lang: str, prayer_key: str, prayer_time: str, city: str, offset_min: int) -> str:
+    """Format a professional Telegram notification message."""
+    names = _PRAYER_NOTIF_NAMES.get(prayer_key.lower(), {})
+    name  = names.get(lang) or names.get("en") or prayer_key.capitalize()
+    l     = lang if lang in _NOTIF_T["now"] else "uz"
+
+    if offset_min < 0:
+        tmpl  = _NOTIF_T["before"].get(l, _NOTIF_T["before"]["uz"])
+        title = tmpl.format(name=name, min=abs(offset_min))
+    else:
+        tmpl  = _NOTIF_T["now"].get(l, _NOTIF_T["now"]["uz"])
+        title = tmpl.format(name=name)
+
+    dua = _NOTIF_T["dua"].get(l, _NOTIF_T["dua"]["uz"])
+
+    lines = [f"<b>{title}</b>", "", f"🕌 {name}: {prayer_time}"]
+    if city:
+        lines.append(f"📍 {city}")
+    lines += ["", f"<i>{dua}</i>"]
+    return "\n".join(lines)
+
+
+async def _init_notif_bot():
+    """Always-on Bot instance for sending scheduled notifications."""
+    global _bot_notif
+    if not BOT_TOKEN:
+        return
+    try:
+        import socket, aiohttp
+        from aiogram import Bot
+        from aiogram.client.session.aiohttp import AiohttpSession
+
+        _TG_HOST = "api.telegram.org"
+        _TG_IP   = "149.154.167.220"
+
+        class _NR:
+            async def resolve(self, host, port=0, family=socket.AF_INET):
+                if host == _TG_HOST:
+                    return [{"hostname": host, "host": _TG_IP, "port": port,
+                             "family": socket.AF_INET, "proto": 0, "flags": 0}]
+                return await aiohttp.ThreadedResolver().resolve(host, port, family)
+            async def close(self): pass
+
+        session = AiohttpSession()
+        session._connector_init["resolver"] = _NR()
+        _bot_notif = Bot(token=BOT_TOKEN, session=session)
+        print("[OK] Notification bot initialized", flush=True)
+    except Exception as e:
+        print(f"[WARN] _init_notif_bot: {e}", flush=True)
+
+
+async def _process_user_notif(user: dict, utc_minutes: int, today_str: str):
+    user_id   = user["user_id"]
+    lang      = user["language"] or "uz"
+    lat       = user["last_lat"]
+    lon       = user["last_lon"]
+    city      = user["last_city"] or ""
+    tz_offset = user["notif_tz_offset"] or 0
+
+    try:
+        timing = json.loads(user["notif_timing"] or "{}")
+    except Exception:
+        timing = {}
+
+    try:
+        sent_data = json.loads(user["notif_sent"] or "{}")
+    except Exception:
+        sent_data = {}
+
+    # User's local minute-of-day (0–1439)
+    local_minutes = (utc_minutes + tz_offset) % 1440
+
+    # Use in-process prayer cache when possible
+    cache_key = f"{round(lat, 2)},{round(lon, 2)},3,{lang}"
+    data = _pt_cache_get(cache_key)
+    if data is None:
+        try:
+            from domain.prayer.service import prayer_service
+            data = await prayer_service.get_prayer_data(lat, lon, lang, 3)
+            if data:
+                _pt_cache_put(cache_key, data)
+        except Exception:
+            return
+    if not data:
+        return
+
+    prayers = [p for p in (data.get("prayers") or []) if p.get("key") != "sunrise"]
+
+    if sent_data.get("date") != today_str:
+        sent_data = {"date": today_str, "keys": []}
+    sent_keys: set = set(sent_data.get("keys", []))
+
+    new_keys: list = []
+    for p in prayers:
+        key = p.get("key", "")
+        t   = p.get("time", "")
+        if ":" not in t:
+            continue
+        h, m          = t.split(":")
+        prayer_minute = int(h) * 60 + int(m)
+        offset        = int(timing.get(key, 0))   # -30, -15, -10, 0
+        notif_minute  = (prayer_minute + offset) % 1440
+        sent_key      = f"{key}_{offset}"
+
+        if sent_key in sent_keys:
+            continue
+        if notif_minute != local_minutes:
+            continue
+
+        msg = _format_notification(lang, key, t, city, offset)
+        try:
+            await _bot_notif.send_message(user_id, msg, parse_mode="HTML")
+            print(f"[NOTIF] ✓ uid={user_id} {key} offset={offset}", flush=True)
+            new_keys.append(sent_key)
+        except Exception as e:
+            err = str(e).lower()
+            if any(x in err for x in ("blocked", "deactivated", "not found", "chat not found")):
+                try:
+                    c = sqlite3.connect(str(USERS_DB))
+                    c.execute("UPDATE users SET notif_enabled=0 WHERE user_id=?", (user_id,))
+                    c.commit(); c.close()
+                except Exception:
+                    pass
+            print(f"[NOTIF] ✗ uid={user_id} {key}: {e}", flush=True)
+
+    if new_keys:
+        sent_keys.update(new_keys)
+        try:
+            c = sqlite3.connect(str(USERS_DB))
+            c.execute("UPDATE users SET notif_sent=? WHERE user_id=?",
+                      (json.dumps({"date": today_str, "keys": list(sent_keys)}), user_id))
+            c.commit(); c.close()
+        except Exception:
+            pass
+
+
+async def _send_due_notifications():
+    if not _bot_notif:
+        return
+    now_utc     = datetime.utcnow()
+    utc_minutes = now_utc.hour * 60 + now_utc.minute
+    today_str   = now_utc.strftime("%Y-%m-%d")
+    try:
+        conn = sqlite3.connect(str(USERS_DB))
+        conn.row_factory = sqlite3.Row
+        users = conn.execute("""
+            SELECT user_id, language, last_lat, last_lon, last_city,
+                   notif_timing, notif_tz_offset, notif_sent
+            FROM users
+            WHERE notif_enabled=1 AND last_lat IS NOT NULL AND last_lon IS NOT NULL
+        """).fetchall()
+        conn.close()
+        users = [dict(u) for u in users]
+    except Exception as e:
+        print(f"[NOTIF] DB read error: {e}", flush=True)
+        return
+    for user in users:
+        try:
+            await _process_user_notif(user, utc_minutes, today_str)
+        except Exception as e:
+            print(f"[NOTIF] Error for uid={user.get('user_id')}: {e}", flush=True)
+        await asyncio.sleep(0.05)
+
+
+async def _notification_scheduler():
+    """Background asyncio task — fires every 60 seconds."""
+    print("[NOTIF] Scheduler started", flush=True)
+    while True:
+        try:
+            await _send_due_notifications()
+        except Exception as e:
+            print(f"[NOTIF] Unhandled: {e}", flush=True)
+        await asyncio.sleep(60)
+
 
 # ── Bot (webhook mode — only active when WEBAPP_URL is HTTPS) ──────────────
 _bot = None
@@ -333,12 +577,24 @@ async def _init_bot():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     _init_users_db()
+    await _init_notif_bot()                           # always — needed for notifications
     if _is_production():
-        await _init_bot()
+        await _init_bot()                             # webhook + commands (prod only)
+    notif_task = asyncio.create_task(_notification_scheduler())
     yield
+    notif_task.cancel()
+    try:
+        await notif_task
+    except asyncio.CancelledError:
+        pass
     if _bot:
         await _bot.delete_webhook()
         await _bot.session.close()
+    if _bot_notif and _bot_notif is not _bot:
+        try:
+            await _bot_notif.session.close()
+        except Exception:
+            pass
 
 
 # ── App ────────────────────────────────────────────────────────────────────
@@ -436,6 +692,31 @@ async def api_save_user_location(request: Request):
         return {"ok": True}
     except Exception as e:
         print(f"[WARN] api_save_user_location: {e}", flush=True)
+        return {"ok": False, "error": str(e)}
+
+
+# ── User Notification Prefs API ───────────────────────────────────────────
+@app.post("/api/user/notifications")
+async def api_save_notif_prefs(request: Request):
+    try:
+        data      = await request.json()
+        user_id   = int(data.get("user_id", 0))
+        enabled   = int(data.get("enabled", 0))
+        timing    = json.dumps(data.get("timing", {}))
+        tz_offset = int(data.get("tz_offset", 0))
+        if not user_id:
+            return {"ok": False, "error": "missing user_id"}
+        conn = sqlite3.connect(str(USERS_DB))
+        conn.execute("""
+            UPDATE users SET notif_enabled=?, notif_timing=?, notif_tz_offset=?
+            WHERE user_id=?
+        """, (enabled, timing, tz_offset, user_id))
+        conn.commit()
+        conn.close()
+        print(f"[NOTIF] Prefs saved: uid={user_id} enabled={enabled}", flush=True)
+        return {"ok": True}
+    except Exception as e:
+        print(f"[WARN] api_save_notif_prefs: {e}", flush=True)
         return {"ok": False, "error": str(e)}
 
 
