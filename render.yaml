@@ -20,3 +20,6 @@ services:
 
       - key: PYTHONIOENCODING
         value: "utf-8"
+
+      - key: ADMIN_IDS
+        sync: false        # comma-separated Telegram user IDs for /stats access

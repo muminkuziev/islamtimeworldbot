@@ -99,13 +99,20 @@
   SettingsScreen.render();
   DashboardScreen.render();
 
+  /* ── Reset mode: ?reset=1 clears all onboarding state ── */
+  if (new URLSearchParams(window.location.search).get('reset') === '1') {
+    ['islamtime_lang','islamtime_madhab','islamtime_location_asked',
+     'islamtime_last_lat','islamtime_last_lon','islamtime_mosques_v1'].forEach(k => localStorage.removeItem(k));
+  }
+
   /* ── Boot sequence ── */
   navigate('screen-splash');
 
-  const SPLASH_DURATION = state.lang ? 1800 : 2600;
+  const langConfirmed  = !!localStorage.getItem('islamtime_lang');
+  const SPLASH_DURATION = langConfirmed ? 1800 : 2600;
 
   setTimeout(() => {
-    if (state.lang) {
+    if (langConfirmed) {
       applyLangDir(state.lang);
       const madhab    = localStorage.getItem('islamtime_madhab');
       const locAsked  = localStorage.getItem('islamtime_location_asked');

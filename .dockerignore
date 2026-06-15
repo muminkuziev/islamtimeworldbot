@@ -14,11 +14,28 @@ __pycache__/
 venv/
 env/
 
-# ── Logs and runtime output ────────────────────────────────
+# ── Logs ───────────────────────────────────────────────────
 *.log
 logs/
-*.txt
 tunnel_new.log
+
+# ── Runtime output text files (NOT requirements.txt!) ──────
+bot_out.txt
+bot_out2.txt
+bot_out3.txt
+bot_out4.txt
+bot_err.txt
+bot_err2.txt
+bot_err3.txt
+bot_err4.txt
+server_out.txt
+server_err.txt
+server_test_out.txt
+server_test_err.txt
+cf_out.txt
+cf_err.txt
+cloudflare_out.txt
+cloudflare_err.txt
 
 # ── Large binary data (not needed at runtime) ──────────────
 data/*.apk
@@ -30,7 +47,6 @@ data/oltin_extracted/
 data/inno_out/
 
 # ── Large JSON import sources ──────────────────────────────
-# hadiths.db is built from these — it is included; these are not
 data/ara_muslim.json
 data/eng_muslim.json
 data/rus_muslim.json
@@ -43,6 +59,10 @@ extract_*.py
 try_*.py
 import_muslim.py
 inspect_db.py
+test_conn.py
+data/import_uz_bukhari.py
+data/pdf_inspect.txt
+data/pdf_pymupdf.txt
 
 # ── Test HTML ──────────────────────────────────────────────
 webapp/quran_test.html
@@ -53,7 +73,7 @@ webapp/test_integration.html
 # ── Screenshots ────────────────────────────────────────────
 screenshot_*.png
 
-# ── Tests and docs (not needed in container) ───────────────
+# ── Tests and docs ─────────────────────────────────────────
 tests/
 docs/
 

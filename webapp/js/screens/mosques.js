@@ -6,11 +6,17 @@
 
 const MosquesScreen = (function () {
 
-  const OVERPASS_URL  = 'https://overpass-api.de/api/interpreter';
-  const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/reverse';
-  const RADIUS        = 5000;
-  const CACHE_KEY     = 'islamtime_mosques_v1';
-  const LOAD_TIMEOUT  = 3000;
+  const OVERPASS_URL   = 'https://overpass-api.de/api/interpreter';
+  const NOMINATIM_URL  = 'https://nominatim.openstreetmap.org/reverse';
+  const RADIUS_DEFAULT = 10000;
+  const RADIUS_EXPAND  = 20000;
+  const LOAD_TIMEOUT   = 3000;
+
+  /* Cache key is per-language so city names are always in the right script */
+  function _cacheKey() { return 'islamtime_mosques_' + _lang + '_v2'; }
+
+  /* Localized fallback city name (Warsaw demo data) */
+  const FALLBACK_CITY = { uz: 'Varshava', uz_cyr: 'Варшава', ru: 'Варшава', en: 'Warsaw' };
 
   /* ── Warsaw fallback data (shown when location unavailable) ── */
   const FALLBACK_LAT = 52.2297;
@@ -30,6 +36,7 @@ const MosquesScreen = (function () {
   let _lon        = null;
   let _city       = '';
   let _mosques    = [];
+  let _radius     = RADIUS_DEFAULT;
   let _loading    = false;
   let _isFallback = false;
   let _selIdx     = null;
@@ -65,6 +72,7 @@ const MosquesScreen = (function () {
     _tab        = 'royxat';
     _selIdx     = null;
     _isFallback = false;
+    _radius     = RADIUS_DEFAULT;
   }
 
   /* ══════════════════════════════════════════════
@@ -123,7 +131,7 @@ const MosquesScreen = (function () {
     _mosques    = FALLBACK_MOSQUES;
     _lat        = FALLBACK_LAT;
     _lon        = FALLBACK_LON;
-    _city       = 'Warsaw';
+    _city       = FALLBACK_CITY[_lang] || 'Warsaw';
     _refreshBody();
     _updateHeader();
   }
@@ -140,12 +148,14 @@ const MosquesScreen = (function () {
   /* ══════════════════════════════════════════════
      Overpass API fetch
   ══════════════════════════════════════════════ */
-  async function _fetchMosques(background) {
+  async function _fetchMosques(background, radius) {
+    if (radius === undefined) radius = _radius;
+    _radius = radius;
     const query = `[out:json][timeout:20];
 (
-  node["amenity"="place_of_worship"]["religion"="muslim"](around:${RADIUS},${_lat},${_lon});
-  way["amenity"="place_of_worship"]["religion"="muslim"](around:${RADIUS},${_lat},${_lon});
-  relation["amenity"="place_of_worship"]["religion"="muslim"](around:${RADIUS},${_lat},${_lon});
+  node["amenity"="place_of_worship"]["religion"="muslim"](around:${radius},${_lat},${_lon});
+  way["amenity"="place_of_worship"]["religion"="muslim"](around:${radius},${_lat},${_lon});
+  relation["amenity"="place_of_worship"]["religion"="muslim"](around:${radius},${_lat},${_lon});
 );
 out center tags;`.trim();
 
@@ -176,8 +186,14 @@ out center tags;`.trim();
         };
       }).filter(Boolean).sort((a, b) => a.distance - b.distance);
 
+      /* Auto-expand: if <5 results at default radius, retry at expanded radius */
+      if (fresh.length > 0 && fresh.length < 5 && radius === RADIUS_DEFAULT && !background) {
+        await _fetchMosques(background, RADIUS_EXPAND);
+        return;
+      }
+
       if (fresh.length) {
-        _mosques    = fresh;
+        _mosques    = fresh.slice(0, 10);
         _isFallback = false;
         _saveCache();
         if (!_city) _fetchCity();
@@ -194,10 +210,11 @@ out center tags;`.trim();
 
   /* Reverse geocode for city name */
   async function _fetchCity() {
+    const acceptLang = (_lang === 'ru' || _lang === 'uz_cyr') ? 'ru,en' : _lang === 'en' ? 'en' : 'uz,ru,en';
     try {
       const r = await fetch(
         `${NOMINATIM_URL}?lat=${_lat}&lon=${_lon}&format=json&zoom=10`,
-        { headers: { 'Accept-Language': 'en' }, signal: AbortSignal.timeout(5000) }
+        { headers: { 'Accept-Language': acceptLang }, signal: AbortSignal.timeout(5000) }
       );
       const d = await r.json();
       const a = d.address || {};
@@ -240,9 +257,12 @@ out center tags;`.trim();
     if (!_mosques.length) {
       return `<div class="ms-empty">🕌 ${_T('Yaqin atrofda masjid topilmadi','Яқин атрофда масжид топилмади','Мечети не найдены','No mosques found nearby')}</div>`;
     }
+    const expandNotice = (_radius > RADIUS_DEFAULT)
+      ? `<div class="ms-expand-notice">📍 ${_T("Bu hududda yaqin masjidlar kam topildi. Qidiruv radiusi kengaytirildi.","Бу ҳудудда яқин масжидлар кам топилди. Қидирув радиуси кенгайтирилди.","В этом районе мало мечетей. Радиус поиска расширен.","Few mosques nearby. Search radius expanded.")}</div>`
+      : '';
     const notice = _isFallback
       ? `<div class="ms-fallback-notice">📍 ${_T("Lokatsiya aniqlanmadi — Warsaw namunasi ko'rsatildi","Локация аниқланмади — Варшава намунаси кўрсатилди","Местоположение не определено — показан пример Варшавы","Location not found — showing Warsaw example")}</div>`
-      : '';
+      : expandNotice;
     if (_tab === 'royxat') return notice + (_selIdx !== null ? _buildDetail() : _buildList());
     if (_tab === 'xarita') return notice + _buildMap();
     if (_tab === 'jadval') return notice + _buildJadval();
@@ -334,8 +354,8 @@ ${[
     const pts = shown.map((m, i) => {
       const dx   = (m.lon - _lon) * mPerDegLon;
       const dy   = (m.lat - _lat) * mPerDegLat;
-      const svgX = Math.max(8, Math.min(292, 150 + (dx / RADIUS) * 128));
-      const svgY = Math.max(8, Math.min(122, 65  - (dy / RADIUS) * 54));
+      const svgX = Math.max(8, Math.min(292, 150 + (dx / _radius) * 128));
+      const svgY = Math.max(8, Math.min(122, 65  - (dy / _radius) * 54));
       return { ...m, i, svgX, svgY };
     });
     return `
@@ -451,8 +471,9 @@ ${_mosques.slice(0, 8).map(m => {
   }
 
   function _locLine() {
-    const r = `${RADIUS / 1000} km radius`;
-    return _city ? `📍 ${_city} · ${r}` : `📍 ${r}`;
+    const rKm    = _radius / 1000;
+    const rLabel = _T(`${rKm} km radius`, `${rKm} км радиус`, `${rKm} км радиус`, `${rKm} km radius`);
+    return _city ? `📍 ${_city} · ${rLabel}` : `📍 ${rLabel}`;
   }
 
   /* ══════════════════════════════════════════════
@@ -460,7 +481,7 @@ ${_mosques.slice(0, 8).map(m => {
   ══════════════════════════════════════════════ */
   function _loadFromCache() {
     try {
-      const c = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+      const c = JSON.parse(localStorage.getItem(_cacheKey()) || 'null');
       if (c && Array.isArray(c.mosques) && c.mosques.length > 0) {
         _lat = c.lat; _lon = c.lon; _mosques = c.mosques; _city = c.city || '';
         return true;
@@ -471,7 +492,7 @@ ${_mosques.slice(0, 8).map(m => {
 
   function _saveCache() {
     try {
-      localStorage.setItem(CACHE_KEY, JSON.stringify({
+      localStorage.setItem(_cacheKey(), JSON.stringify({
         lat: _lat, lon: _lon, mosques: _mosques, city: _city,
       }));
     } catch (_e) {}

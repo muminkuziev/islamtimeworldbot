@@ -355,6 +355,50 @@ async def fetch_aqi(lat: float, lon: float, lang: str = "en") -> Optional[dict]:
     return result
 
 
+# ── Uzbek Cyrillic → Latin transliteration ───────────────────────────────────
+
+def _uz_cyr_to_lat(text: str) -> str:
+    """Convert Uzbek Cyrillic text to Uzbek Latin script."""
+    return (text
+        .replace('Щ', 'Sh').replace('щ', 'sh')
+        .replace('Ш', 'Sh').replace('ш', 'sh')
+        .replace('Ч', 'Ch').replace('ч', 'ch')
+        .replace('Ю', 'Yu').replace('ю', 'yu')
+        .replace('Я', 'Ya').replace('я', 'ya')
+        .replace('Ё', 'Yo').replace('ё', 'yo')
+        .replace('Ж', 'J') .replace('ж', 'j')
+        .replace('Ъ', "'") .replace('ъ', "'")
+        .replace('Ь', '')  .replace('ь', '')
+        .replace('Ғ', "G'").replace('ғ', "g'")
+        .replace('Қ', 'Q') .replace('қ', 'q')
+        .replace('Ҳ', 'H') .replace('ҳ', 'h')
+        .replace('Ў', "O'").replace('ў', "o'")
+        .replace('А', 'A') .replace('а', 'a')
+        .replace('Б', 'B') .replace('б', 'b')
+        .replace('В', 'V') .replace('в', 'v')
+        .replace('Г', 'G') .replace('г', 'g')
+        .replace('Д', 'D') .replace('д', 'd')
+        .replace('Е', 'E') .replace('е', 'e')
+        .replace('З', 'Z') .replace('з', 'z')
+        .replace('И', 'I') .replace('и', 'i')
+        .replace('Й', 'Y') .replace('й', 'y')
+        .replace('К', 'K') .replace('к', 'k')
+        .replace('Л', 'L') .replace('л', 'l')
+        .replace('М', 'M') .replace('м', 'm')
+        .replace('Н', 'N') .replace('н', 'n')
+        .replace('О', 'O') .replace('о', 'o')
+        .replace('П', 'P') .replace('п', 'p')
+        .replace('Р', 'R') .replace('р', 'r')
+        .replace('С', 'S') .replace('с', 's')
+        .replace('Т', 'T') .replace('т', 't')
+        .replace('У', 'U') .replace('у', 'u')
+        .replace('Ф', 'F') .replace('ф', 'f')
+        .replace('Х', 'X') .replace('х', 'x')
+        .replace('Э', 'E') .replace('э', 'e')
+        .replace('Ц', 'Ts').replace('ц', 'ts')
+    )
+
+
 # ── Daily Ayah (AlQuran.cloud) ────────────────────────────────────────────────
 
 _AYAH_EDITIONS = {
@@ -397,9 +441,12 @@ async def fetch_daily_ayah(lang: str = "en") -> Optional[dict]:
                         ar    = data[0]
                         tr_ed = data[1] if edition and len(data) > 1 else None
                         surah = ar.get("surah", {})
+                        translation = tr_ed.get("text", "") if tr_ed else ""
+                        if lang == "uz" and translation:
+                            translation = _uz_cyr_to_lat(translation)
                         result = {
                             "arabic":       ar.get("text", ""),
-                            "translation":  tr_ed.get("text", "") if tr_ed else "",
+                            "translation":  translation,
                             "surah_en":     surah.get("englishName", ""),
                             "surah_ar":     surah.get("name", ""),
                             "surah_number": surah.get("number", 0),
