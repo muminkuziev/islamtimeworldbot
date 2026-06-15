@@ -5041,6 +5041,7 @@ button {
 .ms-empty { text-align:center; padding:40px 20px; font-family:'Inter',system-ui,sans-serif; font-size:13px; color:rgba(232,223,200,.28); }
 .ms-load-txt { font-family:'Inter',system-ui,sans-serif; font-size:11px; color:rgba(232,223,200,.28); margin-top:10px; }
 .ms-fallback-notice { background:rgba(232,193,90,.07); border:1px solid rgba(232,193,90,.18); border-radius:10px; padding:8px 12px; margin-bottom:10px; font-family:'Inter',system-ui,sans-serif; font-size:10px; color:rgba(232,193,90,.7); }
+.ms-expand-notice   { background:rgba(79,207,160,.07);  border:1px solid rgba(79,207,160,.2);  border-radius:10px; padding:8px 12px; margin-bottom:10px; font-family:'Inter',system-ui,sans-serif; font-size:10px; color:rgba(79,207,160,.8); }
 .ms-sec-lbl { font-family:'Inter',system-ui,sans-serif; font-size:9px; font-weight:700; color:rgba(232,223,200,.28); letter-spacing:1.3px; text-transform:uppercase; margin-bottom:8px; margin-top:4px; }
 
 /* List */

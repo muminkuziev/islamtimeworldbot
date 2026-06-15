@@ -151,11 +151,25 @@ const MosquesScreen = (function () {
   async function _fetchMosques(background, radius) {
     if (radius === undefined) radius = _radius;
     _radius = radius;
-    const query = `[out:json][timeout:20];
+
+    /* Cast a wide net: mosque/prayer_hall/musalla/community_centre/ahmadiyya */
+    const R = radius, LA = _lat, LO = _lon;
+    const query = `[out:json][timeout:25];
 (
-  node["amenity"="place_of_worship"]["religion"="muslim"](around:${radius},${_lat},${_lon});
-  way["amenity"="place_of_worship"]["religion"="muslim"](around:${radius},${_lat},${_lon});
-  relation["amenity"="place_of_worship"]["religion"="muslim"](around:${radius},${_lat},${_lon});
+  node["amenity"="mosque"](around:${R},${LA},${LO});
+  way["amenity"="mosque"](around:${R},${LA},${LO});
+  relation["amenity"="mosque"](around:${R},${LA},${LO});
+  node["amenity"="place_of_worship"]["religion"="muslim"](around:${R},${LA},${LO});
+  way["amenity"="place_of_worship"]["religion"="muslim"](around:${R},${LA},${LO});
+  relation["amenity"="place_of_worship"]["religion"="muslim"](around:${R},${LA},${LO});
+  node["amenity"="prayer_hall"]["religion"="muslim"](around:${R},${LA},${LO});
+  way["amenity"="prayer_hall"]["religion"="muslim"](around:${R},${LA},${LO});
+  node["amenity"="place_of_worship"]["denomination"="ahmadiyya"](around:${R},${LA},${LO});
+  way["amenity"="place_of_worship"]["denomination"="ahmadiyya"](around:${R},${LA},${LO});
+  node["amenity"="community_centre"]["religion"="muslim"](around:${R},${LA},${LO});
+  way["amenity"="community_centre"]["religion"="muslim"](around:${R},${LA},${LO});
+  node["building"="mosque"](around:${R},${LA},${LO});
+  way["building"="mosque"](around:${R},${LA},${LO});
 );
 out center tags;`.trim();
 
@@ -164,36 +178,47 @@ out center tags;`.trim();
         method : 'POST',
         body   : 'data=' + encodeURIComponent(query),
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        signal : AbortSignal.timeout(20000),
+        signal : AbortSignal.timeout(25000),
       });
       if (!resp.ok) throw new Error('http');
       const data = await resp.json();
 
-      const fresh = (data.elements || []).map(e => {
+      const mapped = (data.elements || []).map(e => {
         const lat = e.lat ?? e.center?.lat;
         const lon = e.lon ?? e.center?.lon;
-        if (!lat || !lon) return null;
+        if (lat == null || lon == null) return null;
         const t = e.tags || {};
         return {
           lat, lon,
-          name : t.name || t['name:en'] || t['name:ar'] || '',
+          name : t.name || t['name:en'] || t['name:ar'] || t['name:pl'] || t['name:ru'] || '',
           ar   : t['name:ar'] || '',
           addr : [t['addr:street'], t['addr:housenumber']].filter(Boolean).join(' '),
           opening_hours: t.opening_hours || '',
-          phone: t.phone || t['contact:phone'] || '',
+          phone: t.phone || t['contact:phone'] || t['contact:mobile'] || '',
           juma : t['prayer:friday'] || '',
           distance: _haversine(_lat, _lon, lat, lon),
         };
       }).filter(Boolean).sort((a, b) => a.distance - b.distance);
 
-      /* Auto-expand: if <5 results at default radius, retry at expanded radius */
-      if (fresh.length > 0 && fresh.length < 5 && radius === RADIUS_DEFAULT && !background) {
+      /* Deduplicate: same physical location tagged as node + way/relation */
+      const fresh = [];
+      for (const m of mapped) {
+        const dup = fresh.find(k => _haversine(k.lat, k.lon, m.lat, m.lon) < 30);
+        if (!dup) {
+          fresh.push(m);
+        } else if (!dup.name && m.name) {
+          fresh.splice(fresh.indexOf(dup), 1, m);
+        }
+      }
+
+      /* Auto-expand: fewer than 5 results at default radius → try wider */
+      if (fresh.length < 5 && radius === RADIUS_DEFAULT && !background) {
         await _fetchMosques(background, RADIUS_EXPAND);
         return;
       }
 
       if (fresh.length) {
-        _mosques    = fresh.slice(0, 10);
+        _mosques    = fresh.slice(0, 20);
         _isFallback = false;
         _saveCache();
         if (!_city) _fetchCity();
