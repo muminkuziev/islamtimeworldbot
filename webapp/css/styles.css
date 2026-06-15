@@ -5044,6 +5044,18 @@ button {
 .ms-expand-notice   { background:rgba(79,207,160,.07);  border:1px solid rgba(79,207,160,.2);  border-radius:10px; padding:8px 12px; margin-bottom:10px; font-family:'Inter',system-ui,sans-serif; font-size:10px; color:rgba(79,207,160,.8); }
 .ms-sec-lbl { font-family:'Inter',system-ui,sans-serif; font-size:9px; font-weight:700; color:rgba(232,223,200,.28); letter-spacing:1.3px; text-transform:uppercase; margin-bottom:8px; margin-top:4px; }
 
+/* Change location button */
+.ms-change-loc { background:rgba(79,207,160,.12); border:1px solid rgba(79,207,160,.3); border-radius:8px; color:rgba(79,207,160,.9); font-family:'Inter',system-ui,sans-serif; font-size:10px; font-weight:600; padding:4px 9px; cursor:pointer; margin-left:auto; }
+.ms-change-loc:active { opacity:.7; }
+
+/* No-location state */
+.ms-noloc { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:48px 24px; text-align:center; gap:12px; }
+.ms-noloc-icon  { font-size:44px; }
+.ms-noloc-title { font-family:'Inter',system-ui,sans-serif; font-size:15px; font-weight:700; color:rgba(232,223,200,.85); }
+.ms-noloc-text  { font-family:'Inter',system-ui,sans-serif; font-size:12px; color:rgba(232,223,200,.45); line-height:1.55; max-width:260px; }
+.ms-noloc-btn   { background:linear-gradient(135deg,#4fcfa0,#3ab88a); border:none; border-radius:12px; color:#0a1628; font-family:'Inter',system-ui,sans-serif; font-size:13px; font-weight:700; padding:12px 28px; cursor:pointer; margin-top:6px; }
+.ms-noloc-btn:active { opacity:.82; }
+
 /* List */
 .ms-list { display:flex; flex-direction:column; gap:6px; }
 .ms-card { background:rgba(255,255,255,.025); border:1px solid rgba(232,193,90,.1); border-radius:16px; padding:13px 14px; cursor:pointer; transition:background .15s; }

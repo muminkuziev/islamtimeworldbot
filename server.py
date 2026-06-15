@@ -62,9 +62,18 @@ def _init_users_db():
             language    TEXT    DEFAULT '',
             city        TEXT    DEFAULT '',
             country     TEXT    DEFAULT '',
+            last_lat    REAL,
+            last_lon    REAL,
+            last_city   TEXT    DEFAULT '',
             joined_at   TEXT    NOT NULL,
             last_active TEXT    NOT NULL
         )""")
+        # Migrate existing DBs that lack the location columns
+        for col, typedef in [("last_lat", "REAL"), ("last_lon", "REAL"), ("last_city", "TEXT DEFAULT ''")]:
+            try:
+                conn.execute(f"ALTER TABLE users ADD COLUMN {col} {typedef}")
+            except Exception:
+                pass  # column already exists
         conn.commit()
         conn.close()
         print("[OK] users.db initialized", flush=True)
@@ -386,6 +395,48 @@ async def telegram_webhook(token: str, request: Request):
         # Always return 200 to Telegram — retrying a bad update causes flood
         print(f"[WARN] webhook handler error: {e}", flush=True)
     return {"ok": True}
+
+
+# ── User Location API ─────────────────────────────────────────────────────
+@app.get("/api/user/location")
+async def api_get_user_location(user_id: int = Query(...)):
+    try:
+        conn = sqlite3.connect(str(USERS_DB))
+        row = conn.execute(
+            "SELECT last_lat, last_lon, last_city FROM users WHERE user_id=?",
+            (user_id,)
+        ).fetchone()
+        conn.close()
+        if row and row[0] is not None and row[1] is not None:
+            return {"lat": row[0], "lon": row[1], "city": row[2] or ""}
+        return {"lat": None, "lon": None, "city": ""}
+    except Exception as e:
+        print(f"[WARN] api_get_user_location: {e}", flush=True)
+        return {"lat": None, "lon": None, "city": ""}
+
+
+@app.post("/api/user/location")
+async def api_save_user_location(request: Request):
+    try:
+        data    = await request.json()
+        user_id = int(data.get("user_id", 0))
+        lat     = float(data.get("lat", 0))
+        lon     = float(data.get("lon", 0))
+        city    = str(data.get("city", ""))
+        if not user_id:
+            return {"ok": False, "error": "missing user_id"}
+        print(f"[LOC] user_id={user_id} lat={lat:.4f} lon={lon:.4f} city={city}", flush=True)
+        conn = sqlite3.connect(str(USERS_DB))
+        conn.execute(
+            "UPDATE users SET last_lat=?, last_lon=?, last_city=? WHERE user_id=?",
+            (lat, lon, city, user_id)
+        )
+        conn.commit()
+        conn.close()
+        return {"ok": True}
+    except Exception as e:
+        print(f"[WARN] api_save_user_location: {e}", flush=True)
+        return {"ok": False, "error": str(e)}
 
 
 # ── Prayer Times API (full card data) ─────────────────────────────────────

@@ -10,23 +10,10 @@ const MosquesScreen = (function () {
   const NOMINATIM_URL  = 'https://nominatim.openstreetmap.org/reverse';
   const RADIUS_DEFAULT = 10000;
   const RADIUS_EXPAND  = 20000;
-  const LOAD_TIMEOUT   = 3000;
+  const GEO_TIMEOUT    = 10000;   /* ms to wait for browser geolocation */
 
   /* Cache key is per-language so city names are always in the right script */
   function _cacheKey() { return 'islamtime_mosques_' + _lang + '_v2'; }
-
-  /* Localized fallback city name (Warsaw demo data) */
-  const FALLBACK_CITY = { uz: 'Varshava', uz_cyr: 'Варшава', ru: 'Варшава', en: 'Warsaw' };
-
-  /* ── Warsaw fallback data (shown when location unavailable) ── */
-  const FALLBACK_LAT = 52.2297;
-  const FALLBACK_LON = 21.0122;
-  const FALLBACK_MOSQUES = [
-    { lat:52.1870, lon:21.0450, name:'Warsaw Central Mosque',     ar:'مسجد وارسو المركزي',       addr:'ul. Wiertnicza 103',  opening_hours:'09:00-22:00', phone:'+48 22 648 0123', juma:'13:00', distance:800  },
-    { lat:52.2300, lon:20.9800, name:'Al-Noor Islamic Center',    ar:'مركز النور الإسلامي',       addr:'ul. Żytnia 35',       opening_hours:'08:00-21:00', phone:'+48 22 632 4567', juma:'13:30', distance:1200 },
-    { lat:52.2200, lon:20.9900, name:'Muslim Association Warsaw', ar:'الجمعية الإسلامية في وارسو', addr:'ul. Prosta 51',       opening_hours:'09:00-20:00', phone:'+48 22 620 8901', juma:'14:00', distance:2100 },
-    { lat:52.2100, lon:21.0200, name:'Al-Salam Mosque',           ar:'مسجد السلام',               addr:'ul. Krakowska 12',    opening_hours:'24/7',        phone:'+48 22 611 2345', juma:'13:00', distance:3400 },
-  ];
 
   let _lang       = 'uz';
   let _tab        = 'royxat';
@@ -35,10 +22,11 @@ const MosquesScreen = (function () {
   let _lat        = null;
   let _lon        = null;
   let _city       = '';
+  let _userId     = null;   /* Telegram user ID — for server-side location storage */
   let _mosques    = [];
   let _radius     = RADIUS_DEFAULT;
   let _loading    = false;
-  let _isFallback = false;
+  let _noLocation = false;  /* true when no coords could be obtained */
   let _selIdx     = null;
   let _el         = null;
   let _loadTimer  = null;
@@ -71,67 +59,75 @@ const MosquesScreen = (function () {
     _loadTimer  = null;
     _tab        = 'royxat';
     _selIdx     = null;
-    _isFallback = false;
+    _noLocation = false;
     _radius     = RADIUS_DEFAULT;
+    _userId     = window.App?.state?.user?.id || null;
   }
 
   /* ══════════════════════════════════════════════
      Boot sequence
   ══════════════════════════════════════════════ */
-  function _start() {
-    /* 1. Show cached mosques instantly if available */
+  async function _start() {
+    /* 1. Cached mosque list for this user's location */
     if (_loadFromCache()) {
       _refreshBody();
       _updateHeader();
-      _bgRefresh();   /* silently update in background */
+      _bgRefresh();
       return;
     }
 
-    /* 2. Show spinner; start 3-second safety timer */
     _loading = true;
     _refreshBody();
-    _loadTimer = setTimeout(_applyFallback, LOAD_TIMEOUT);
 
-    /* 3. Try stored coords (instant — no permission needed) */
+    /* 2. localStorage coords (set by Location screen or previous geolocation) */
     const sLat = parseFloat(localStorage.getItem('islamtime_last_lat') || '');
     const sLon = parseFloat(localStorage.getItem('islamtime_last_lon') || '');
     if (sLat && sLon) {
       _lat = sLat; _lon = sLon;
-      clearTimeout(_loadTimer);
-      _fetchMosques(false);
+      await _fetchMosques(false);
       return;
     }
 
-    /* 4. Try browser geolocation — 3 s timeout; permission dialog may show */
+    /* 3. Server-stored location for this Telegram user */
+    if (_userId) {
+      const srv = await _loadLocationFromServer();
+      if (srv) {
+        _lat = srv.lat; _lon = srv.lon;
+        if (srv.city) _city = srv.city;
+        localStorage.setItem('islamtime_last_lat', _lat);
+        localStorage.setItem('islamtime_last_lon', _lon);
+        await _fetchMosques(false);
+        return;
+      }
+    }
+
+    /* 4. Browser geolocation — wait up to GEO_TIMEOUT then show request UI */
     if (navigator.geolocation) {
+      _loadTimer = setTimeout(_showNoLocation, GEO_TIMEOUT);
       navigator.geolocation.getCurrentPosition(
         pos => {
           clearTimeout(_loadTimer);
+          if (_mosques.length) return;  /* already resolved by another path */
           _lat = pos.coords.latitude;
           _lon = pos.coords.longitude;
           localStorage.setItem('islamtime_last_lat', _lat);
           localStorage.setItem('islamtime_last_lon', _lon);
+          _saveLocationToServer(_lat, _lon, '');
           _fetchMosques(false);
         },
-        () => {
-          clearTimeout(_loadTimer);
-          _applyFallback();
-        },
-        { timeout: LOAD_TIMEOUT, maximumAge: 300000, enableHighAccuracy: false }
+        () => { clearTimeout(_loadTimer); _showNoLocation(); },
+        { timeout: GEO_TIMEOUT, maximumAge: 300000, enableHighAccuracy: false }
       );
+    } else {
+      _showNoLocation();
     }
-    /* if no geolocation API, _loadTimer will fire _applyFallback at 3 s */
   }
 
-  /* Show Warsaw fallback data */
-  function _applyFallback() {
+  /* No coords available — ask user to share location */
+  function _showNoLocation() {
     if (_mosques.length) return;   /* real data already arrived */
     _loading    = false;
-    _isFallback = true;
-    _mosques    = FALLBACK_MOSQUES;
-    _lat        = FALLBACK_LAT;
-    _lon        = FALLBACK_LON;
-    _city       = FALLBACK_CITY[_lang] || 'Warsaw';
+    _noLocation = true;
     _refreshBody();
     _updateHeader();
   }
@@ -143,6 +139,63 @@ const MosquesScreen = (function () {
     if (!sLat || !sLon) return;
     _lat = sLat; _lon = sLon;
     await _fetchMosques(true);
+  }
+
+  /* ══════════════════════════════════════════════
+     Server-side location helpers
+  ══════════════════════════════════════════════ */
+  async function _loadLocationFromServer() {
+    if (!_userId) return null;
+    try {
+      const r = await fetch(`/api/user/location?user_id=${_userId}`,
+        { signal: AbortSignal.timeout(5000) });
+      const d = await r.json();
+      if (d.lat) return d;
+    } catch (_e) {}
+    return null;
+  }
+
+  async function _saveLocationToServer(lat, lon, city) {
+    if (!_userId) return;
+    try {
+      fetch('/api/user/location', {
+        method : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body   : JSON.stringify({ user_id: _userId, lat, lon, city }),
+        signal : AbortSignal.timeout(5000),
+      });
+    } catch (_e) {}
+  }
+
+  /* "Lokatsiyani o'zgartirish" — clears all cached coords and re-requests */
+  function _changeLocation() {
+    localStorage.removeItem('islamtime_last_lat');
+    localStorage.removeItem('islamtime_last_lon');
+    ['uz', 'uz_cyr', 'ru', 'en'].forEach(l =>
+      localStorage.removeItem('islamtime_mosques_' + l + '_v2')
+    );
+    _lat = null; _lon = null; _city = '';
+    _mosques = []; _noLocation = false;
+    _loading = true;
+    _refreshBody();
+
+    if (!navigator.geolocation) { _showNoLocation(); return; }
+    _loadTimer = setTimeout(_showNoLocation, GEO_TIMEOUT);
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        clearTimeout(_loadTimer);
+        _lat = pos.coords.latitude;
+        _lon = pos.coords.longitude;
+        localStorage.setItem('islamtime_last_lat', _lat);
+        localStorage.setItem('islamtime_last_lon', _lon);
+        _saveLocationToServer(_lat, _lon, '');
+        _city = '';
+        _fetchMosques(false);
+      },
+      () => { clearTimeout(_loadTimer); _showNoLocation(); },
+      { timeout: GEO_TIMEOUT, enableHighAccuracy: true }
+    );
+    window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('medium');
   }
 
   /* ══════════════════════════════════════════════
@@ -172,6 +225,9 @@ const MosquesScreen = (function () {
   way["building"="mosque"](around:${R},${LA},${LO});
 );
 out center tags;`.trim();
+
+    /* Log for debugging (req 6) */
+    console.log(`[MOSQUES] user_id=${_userId} lat=${_lat?.toFixed(4)} lon=${_lon?.toFixed(4)} city="${_city||'-'}" radius=${radius}m`);
 
     try {
       const resp = await fetch(OVERPASS_URL, {
@@ -246,6 +302,7 @@ out center tags;`.trim();
       _city = a.city || a.town || a.suburb || a.county || '';
       _saveCache();
       _updateHeader();
+      if (_city) _saveLocationToServer(_lat, _lon, _city);
     } catch (_e) {}
   }
 
@@ -260,6 +317,7 @@ out center tags;`.trim();
   <div class="ms-hdr-inner">
     <div class="ms-nav-row">
       <button class="ms-back" id="ms-back">← ${_T('Menyu','Меню','Меню','Menu')}</button>
+      <button class="ms-change-loc" id="ms-change-loc">📍 ${_T("O'zgartirish","Ўзгартириш","Изменить","Change")}</button>
       <div id="ms-status"></div>
     </div>
     <div class="ms-title">${_T('Yaqin masjidlar','Яқин масжидлар','Ближайшие мечети','Nearby Mosques')}</div>
@@ -279,15 +337,28 @@ out center tags;`.trim();
     if (_loading && !_mosques.length) {
       return `<div class="ms-loading"><span class="ms-spinner"></span><div class="ms-load-txt">${_T('Joylashuv aniqlanmoqda...','Жойлашув аниқланмоқда...','Определение местоположения...','Detecting location...')}</div></div>`;
     }
+    if (_noLocation) {
+      return `<div class="ms-noloc">
+        <div class="ms-noloc-icon">📍</div>
+        <div class="ms-noloc-title">${_T("Lokatsiya topilmadi","Локация топилмади","Местоположение не найдено","Location not found")}</div>
+        <div class="ms-noloc-text">${_T(
+          "Yaqin masjidlarni ko'rish uchun lokatsiyangizni yuboring.",
+          "Яқин масжидларни кўриш учун локациянгизни юборинг.",
+          "Поделитесь геолокацией для поиска мечетей.",
+          "Share your location to find nearby mosques."
+        )}</div>
+        <button class="ms-noloc-btn" id="ms-request-loc">
+          📍 ${_T("Lokatsiyani yuborish","Локацияни юбориш","Поделиться геолокацией","Share Location")}
+        </button>
+      </div>`;
+    }
     if (!_mosques.length) {
       return `<div class="ms-empty">🕌 ${_T('Yaqin atrofda masjid topilmadi','Яқин атрофда масжид топилмади','Мечети не найдены','No mosques found nearby')}</div>`;
     }
     const expandNotice = (_radius > RADIUS_DEFAULT)
       ? `<div class="ms-expand-notice">📍 ${_T("Bu hududda yaqin masjidlar kam topildi. Qidiruv radiusi kengaytirildi.","Бу ҳудудда яқин масжидлар кам топилди. Қидирув радиуси кенгайтирилди.","В этом районе мало мечетей. Радиус поиска расширен.","Few mosques nearby. Search radius expanded.")}</div>`
       : '';
-    const notice = _isFallback
-      ? `<div class="ms-fallback-notice">📍 ${_T("Lokatsiya aniqlanmadi — Warsaw namunasi ko'rsatildi","Локация аниқланмади — Варшава намунаси кўрсатилди","Местоположение не определено — показан пример Варшавы","Location not found — showing Warsaw example")}</div>`
-      : expandNotice;
+    const notice = expandNotice;
     if (_tab === 'royxat') return notice + (_selIdx !== null ? _buildDetail() : _buildList());
     if (_tab === 'xarita') return notice + _buildMap();
     if (_tab === 'jadval') return notice + _buildJadval();
@@ -454,6 +525,7 @@ ${_mosques.slice(0, 8).map(m => {
     _el.querySelector('#ms-back')?.addEventListener('click', () => {
       window.App.navigate('screen-dashboard');
     });
+    _el.querySelector('#ms-change-loc')?.addEventListener('click', _changeLocation);
     _el.querySelectorAll('.ms-tab').forEach(btn => {
       btn.addEventListener('click', () => {
         _tab = btn.dataset.tab;
@@ -464,6 +536,7 @@ ${_mosques.slice(0, 8).map(m => {
       });
     });
     _el.querySelector('#ms-body')?.addEventListener('click', e => {
+      if (e.target.closest('#ms-request-loc')) { _changeLocation(); return; }
       if (e.target.closest('#ms-detail-back')) { _selIdx = null; _refreshBody(); return; }
       const mapRow = e.target.closest('.ms-map-row');
       if (mapRow) { _selIdx = parseInt(mapRow.dataset.idx); _refreshBody(); return; }
