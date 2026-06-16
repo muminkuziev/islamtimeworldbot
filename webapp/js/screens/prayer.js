@@ -386,8 +386,19 @@ const PrayerScreen = (function () {
       const json = await resp.json();
       if (json.error) throw new Error(json.error);
       _data = json;
+      _syncLocationToServer(lat, lon, json.city || '');
       _renderFull();
     } catch { _showError(); }
+  }
+
+  function _syncLocationToServer(lat, lon, city) {
+    const uid = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+    if (!uid) return;
+    fetch('/api/user/location', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ user_id: uid, lat, lon, city }),
+    }).catch(() => {});
   }
 
   /* ══════════════════════════════════════════════════════════════

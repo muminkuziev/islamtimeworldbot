@@ -779,6 +779,87 @@ async def _init_bot():
         except Exception as e:
             await message.answer(f"❌ Xatolik: {e}")
 
+    @_dp.message(Command("dbcheck"))
+    async def cmd_dbcheck(message: types.Message):
+        if message.from_user.id not in ADMIN_IDS:
+            await message.answer("⛔ Ruxsat yo'q.")
+            return
+        uid = message.from_user.id
+        try:
+            conn = sqlite3.connect(str(USERS_DB))
+            conn.row_factory = sqlite3.Row
+            row = conn.execute(
+                "SELECT user_id, notif_enabled, notif_timing, notif_tz_offset, "
+                "last_lat, last_lon, last_city, last_active FROM users WHERE user_id=?",
+                (uid,)
+            ).fetchone()
+            total = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+            notif_total = conn.execute(
+                "SELECT COUNT(*) FROM users WHERE notif_enabled=1 AND last_lat IS NOT NULL"
+            ).fetchone()[0]
+            conn.close()
+        except Exception as e:
+            await message.answer(f"❌ DB xatolik: {e}")
+            return
+        if not row:
+            await message.answer(
+                f"❌ <b>Sizning user_id={uid} DB da topilmadi!</b>\n\n"
+                f"Ilovani oching → namoz vaqtlariga kiring → joylashuvni ruxsat bering.\n"
+                f"Keyin sozlamalarda push-ni yoqing.",
+                parse_mode="HTML"
+            )
+            return
+        r = dict(row)
+        lat_str  = f"{r['last_lat']:.4f}" if r['last_lat'] is not None else "NULL ❌"
+        lon_str  = f"{r['last_lon']:.4f}" if r['last_lon'] is not None else "NULL ❌"
+        en_str   = "✅ Yoqilgan" if r['notif_enabled'] else "❌ O'chirilgan"
+        txt = (
+            f"🗄 <b>DB holati</b>\n\n"
+            f"👤 user_id: <code>{r['user_id']}</code>\n"
+            f"🔔 notif_enabled: <b>{en_str}</b>\n"
+            f"⏱ timing: <code>{r['notif_timing']}</code>\n"
+            f"🌍 tz_offset: <b>{r['notif_tz_offset']} daq</b>\n"
+            f"📍 lat: <code>{lat_str}</code>\n"
+            f"📍 lon: <code>{lon_str}</code>\n"
+            f"🏙 city: <b>{r['last_city'] or '—'}</b>\n"
+            f"🕐 last_active: <b>{r['last_active']}</b>\n\n"
+            f"📊 Jami foydalanuvchilar: <b>{total}</b>\n"
+            f"🔔 Bildirishnoma tayyor: <b>{notif_total}</b>"
+        )
+        await message.answer(txt, parse_mode="HTML")
+
+    @_dp.message(Command("testnotif"))
+    async def cmd_testnotif(message: types.Message):
+        if message.from_user.id not in ADMIN_IDS:
+            await message.answer("⛔ Ruxsat yo'q.")
+            return
+        uid = message.from_user.id
+        try:
+            conn = sqlite3.connect(str(USERS_DB))
+            conn.row_factory = sqlite3.Row
+            row = conn.execute(
+                "SELECT user_id, language, last_lat, last_lon, last_city, "
+                "notif_enabled, notif_timing, notif_tz_offset FROM users WHERE user_id=?",
+                (uid,)
+            ).fetchone()
+            conn.close()
+        except Exception as e:
+            await message.answer(f"❌ DB xatolik: {e}")
+            return
+        if not row:
+            await message.answer("❌ DB da topilmadingiz. Avval ilovani oching va joylashuvni ruxsat bering.")
+            return
+        r = dict(row)
+        if not r["last_lat"]:
+            await message.answer("❌ Joylashuv DB da yo'q (last_lat=NULL). Avval namoz ekraniga kiring.")
+            return
+        try:
+            msg = _format_notification(r["language"] or "uz", "isha", "21:30", r["last_city"] or "", 0)
+            await _bot_notif.send_message(uid, msg, parse_mode="HTML")
+            await message.answer("✅ Test bildirishnoma yuborildi! Yuqoridagi xabarni tekshiring.")
+        except Exception as e:
+            await message.answer(f"❌ Yuborish xatosi: {e}")
+
     @_dp.message(F.web_app_data)
     async def on_webapp_data(message: types.Message):
         try:
@@ -803,6 +884,8 @@ async def _init_bot():
             BotCommand(command="users",     description="👥 Foydalanuvchilar ro'yxati"),
             BotCommand(command="broadcast", description="📢 Barcha userlarga xabar"),
             BotCommand(command="testbrief", description="🌤 Test daily briefing yuborish"),
+            BotCommand(command="dbcheck",   description="🗄 DB holati va notif tekshirish"),
+            BotCommand(command="testnotif", description="🔔 Test bildirishnoma yuborish"),
         ]
         from aiogram.types import BotCommandScopeChat
         for admin_id in ADMIN_IDS:

@@ -90,6 +90,7 @@ const SettingsScreen = (function () {
     _view = 'main';
     _loadS();
     _rebuild();
+    if (_s.push) _saveNotifToServer(true);
   }
 
   function _rebuild() {
