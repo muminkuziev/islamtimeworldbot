@@ -112,15 +112,15 @@ const LanguageScreen = (function () {
 
   /* ── Events ───────────────────────────────────────────────── */
   function _bind(el) {
-    el.querySelector('#ls-grid').addEventListener('click', e => {
-      const card = e.target.closest('.ls-card');
-      if (!card) return;
-      _pick(card.dataset.code);
+    /* Direct per-card listeners — avoids closest() + scroll-interception issues in Telegram WebView */
+    el.querySelectorAll('.ls-card').forEach(card => {
+      card.addEventListener('click', () => _pick(card.getAttribute('data-code')));
     });
     el.querySelector('#ls-btn').addEventListener('click', _go);
   }
 
   function _pick(code) {
+    console.log('Language selected:', code);
     if (!code || !LANG_META.find(l => l.code === code)) return;
     if (_selected === code) return;
     _selected = code;

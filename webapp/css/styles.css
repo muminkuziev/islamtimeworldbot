@@ -317,6 +317,7 @@ button {
   cursor:pointer; text-align:center;
   transition:all .18s cubic-bezier(.4,0,.2,1);
   -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
 }
 .ls-card--on {
   background:rgba(245,197,66,.07);
