@@ -781,6 +781,7 @@ async def _init_bot():
 
     @_dp.message(Command("dbcheck"))
     async def cmd_dbcheck(message: types.Message):
+        print(f"[CMD] RECEIVED: /dbcheck from uid={message.from_user.id}", flush=True)
         if message.from_user.id not in ADMIN_IDS:
             await message.answer("⛔ Ruxsat yo'q.")
             return
@@ -830,6 +831,7 @@ async def _init_bot():
 
     @_dp.message(Command("testnotif"))
     async def cmd_testnotif(message: types.Message):
+        print(f"[CMD] RECEIVED: /testnotif from uid={message.from_user.id}", flush=True)
         if message.from_user.id not in ADMIN_IDS:
             await message.answer("⛔ Ruxsat yo'q.")
             return
@@ -869,6 +871,8 @@ async def _init_bot():
                 await message.answer(f"✅ Til saqlandi: <b>{lang}</b>", parse_mode="HTML")
         except Exception:
             pass
+
+    print("[OK] ADMIN HANDLERS LOADED v79: dbcheck testnotif testbrief", flush=True)
 
     try:
         # Public commands for all users

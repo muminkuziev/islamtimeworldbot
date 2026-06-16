@@ -341,6 +341,7 @@ async def cmd_logs(message: types.Message):
 
 @dp.message(Command("dbcheck"))
 async def cmd_dbcheck(message: types.Message):
+    print(f"[CMD] RECEIVED: /dbcheck from uid={message.from_user.id}", flush=True)
     if not await _require_admin(message):
         return
     url = (config.WEBAPP_URL or "").rstrip("/")
@@ -389,6 +390,7 @@ async def cmd_dbcheck(message: types.Message):
 
 @dp.message(Command("testnotif"))
 async def cmd_testnotif(message: types.Message):
+    print(f"[CMD] RECEIVED: /testnotif from uid={message.from_user.id}", flush=True)
     if not await _require_admin(message):
         return
     url = (config.WEBAPP_URL or "").rstrip("/")
@@ -420,6 +422,7 @@ async def cmd_testnotif(message: types.Message):
 
 @dp.message(Command("testbrief"))
 async def cmd_testbrief(message: types.Message):
+    print(f"[CMD] RECEIVED: /testbrief from uid={message.from_user.id}", flush=True)
     if not await _require_admin(message):
         return
     url = (config.WEBAPP_URL or "").rstrip("/")
@@ -508,6 +511,10 @@ async def _set_commands(bot: Bot):
             )
         except Exception as e:
             print(f"[WARN] set_my_commands for admin {admin_id}: {e}", flush=True)
+
+
+# ── Handler registration marker (printed at import / startup) ──────────────
+print("[OK] ADMIN HANDLERS LOADED: dbcheck testnotif testbrief", flush=True)
 
 
 # ══════════════════════════════════════════════════════════════════════════
