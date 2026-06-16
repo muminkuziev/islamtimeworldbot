@@ -272,6 +272,7 @@ async def _process_user_notif(user: dict, utc_minutes: int, today_str: str):
 
     # User's local minute-of-day (0–1439)
     local_minutes = (utc_minutes + tz_offset) % 1440
+    print(f"[NOTIF-CHK] uid={user_id} tz={tz_offset} local_min={local_minutes} timing={timing}", flush=True)
 
     # Use in-process prayer cache when possible
     cache_key = f"{round(lat, 2)},{round(lon, 2)},3,{lang}"
@@ -304,6 +305,10 @@ async def _process_user_notif(user: dict, utc_minutes: int, today_str: str):
         offset        = int(timing.get(key, 0))   # -30, -15, -10, 0
         notif_minute  = (prayer_minute + offset) % 1440
         sent_key      = f"{key}_{offset}"
+
+        delta = (notif_minute - local_minutes) % 1440
+        if delta <= 5 or delta >= 1435:
+            print(f"[NOTIF-DBG] uid={user_id} {key}={t} offset={offset} notif_min={notif_minute} local_min={local_minutes} sent={sent_key in sent_keys}", flush=True)
 
         if sent_key in sent_keys:
             continue
@@ -357,6 +362,7 @@ async def _send_due_notifications():
     except Exception as e:
         print(f"[NOTIF] DB read error: {e}", flush=True)
         return
+    print(f"[NOTIF] tick utc={utc_minutes} notif_users={len(users)}", flush=True)
     for user in users:
         try:
             await _process_user_notif(user, utc_minutes, today_str)
@@ -926,10 +932,15 @@ async def api_save_user_location(request: Request):
             return {"ok": False, "error": "missing user_id"}
         print(f"[LOC] user_id={user_id} lat={lat:.4f} lon={lon:.4f} city={city}", flush=True)
         conn = sqlite3.connect(str(USERS_DB))
-        conn.execute(
-            "UPDATE users SET last_lat=?, last_lon=?, last_city=? WHERE user_id=?",
-            (lat, lon, city, user_id)
-        )
+        conn.execute("""
+            INSERT INTO users (user_id, joined_at, last_active, last_lat, last_lon, last_city)
+            VALUES (?, datetime('now'), datetime('now'), ?, ?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET
+                last_lat=excluded.last_lat,
+                last_lon=excluded.last_lon,
+                last_city=excluded.last_city,
+                last_active=excluded.last_active
+        """, (user_id, lat, lon, city))
         conn.commit()
         conn.close()
         return {"ok": True}
@@ -951,12 +962,17 @@ async def api_save_notif_prefs(request: Request):
             return {"ok": False, "error": "missing user_id"}
         conn = sqlite3.connect(str(USERS_DB))
         conn.execute("""
-            UPDATE users SET notif_enabled=?, notif_timing=?, notif_tz_offset=?
-            WHERE user_id=?
-        """, (enabled, timing, tz_offset, user_id))
+            INSERT INTO users (user_id, joined_at, last_active, notif_enabled, notif_timing, notif_tz_offset)
+            VALUES (?, datetime('now'), datetime('now'), ?, ?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET
+                notif_enabled=excluded.notif_enabled,
+                notif_timing=excluded.notif_timing,
+                notif_tz_offset=excluded.notif_tz_offset,
+                last_active=excluded.last_active
+        """, (user_id, enabled, timing, tz_offset))
         conn.commit()
         conn.close()
-        print(f"[NOTIF] Prefs saved: uid={user_id} enabled={enabled}", flush=True)
+        print(f"[NOTIF] Prefs upserted: uid={user_id} enabled={enabled} timing={timing} tz={tz_offset}", flush=True)
         return {"ok": True}
     except Exception as e:
         print(f"[WARN] api_save_notif_prefs: {e}", flush=True)

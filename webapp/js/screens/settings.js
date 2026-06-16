@@ -728,13 +728,19 @@ const SettingsScreen = (function () {
     const uid = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
     if (!uid) return;
     const tzOff = -new Date().getTimezoneOffset();
+    let prefs = {};
+    try { prefs = JSON.parse(localStorage.getItem('islamtime_notif_v1') || '{}'); } catch {}
+    const timing = {};
+    ['fajr','dhuhr','asr','maghrib','isha'].forEach(k => {
+      timing[k] = parseInt(prefs['timing_' + k] || '0', 10);
+    });
     fetch('/api/user/notifications', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({
         user_id:   uid,
         enabled:   enabled ? 1 : 0,
-        timing:    { fajr:0, dhuhr:0, asr:0, maghrib:0, isha:0 },
+        timing,
         tz_offset: tzOff,
       }),
     }).catch(() => {});

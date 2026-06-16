@@ -474,7 +474,7 @@ const DashboardScreen = (function () {
       feelsLike:   { uz:'His qilinadi',       uz_cyr:'Ҳис қилинади',      ru:'Ощущается',  en:'Feels like' },
       humidity:    { uz:'Namlik',              uz_cyr:'Намлик',             ru:'Влажность',  en:'Humidity'   },
       wind:        { uz:'Shamol',              uz_cyr:'Шамол',              ru:'Ветер',      en:'Wind'       },
-      sunrise:     { uz:'Tong sadag\'i',       uz_cyr:'Тонг садағи',        ru:'Рассвет',    en:'Sunrise'    },
+      sunrise:     { uz:'Quyosh chiqishi',      uz_cyr:'Қуёш чиқиши',       ru:'Рассвет',    en:'Sunrise'    },
       sunset:      { uz:'Quyosh botishi',      uz_cyr:'Қуёш ботиши',       ru:'Закат',      en:'Sunset'     },
     };
     const wt = (k) => (WL[k]?.[_lang] || WL[k]?.en || k);
