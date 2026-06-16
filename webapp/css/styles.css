@@ -4834,6 +4834,14 @@ button {
 .st-send-btn { width:100%; padding:13px; margin-top:8px; border-radius:12px; border:none; cursor:pointer; background:rgba(255,255,255,.06); font-family:'Inter',system-ui,sans-serif; font-size:13px; font-weight:700; color:rgba(232,223,200,.28); transition:all .2s; display:block; }
 .st-send-btn.ready { background:linear-gradient(135deg,#C49A1E,#E8C15A,#F5D98A); color:#09121f; box-shadow:0 4px 16px rgba(232,193,90,.35); }
 .st-send-btn.ready:active { transform:scale(.97); }
+.st-time-input {
+  background:rgba(255,255,255,.06); border:1px solid rgba(232,193,90,.2);
+  border-radius:10px; padding:8px 10px; color:#e8dfc8;
+  font-family:'Inter',system-ui,sans-serif; font-size:13px; font-weight:600;
+  outline:none; cursor:pointer; min-width:90px; text-align:right;
+  color-scheme: dark;
+}
+.st-time-input:focus { border-color:rgba(232,193,90,.5); }
 .st-sent-wrap { text-align:center; padding:14px 0; }
 .st-sent-ic { font-size:32px; margin-bottom:10px; }
 .st-sent-title { font-family:'Inter',system-ui,sans-serif; font-size:14px; font-weight:800; color:#4fcfa0; margin-bottom:5px; }

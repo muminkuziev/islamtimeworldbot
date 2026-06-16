@@ -70,13 +70,19 @@ def _init_users_db():
         )""")
         # Migrate existing DBs that lack the location columns
         for col, typedef in [
-            ("last_lat",       "REAL"),
-            ("last_lon",       "REAL"),
-            ("last_city",      "TEXT DEFAULT ''"),
-            ("notif_enabled",  "INTEGER DEFAULT 0"),
-            ("notif_timing",   "TEXT DEFAULT '{}'"),
-            ("notif_tz_offset","INTEGER DEFAULT 0"),
-            ("notif_sent",     "TEXT DEFAULT '{}'"),
+            ("last_lat",                "REAL"),
+            ("last_lon",                "REAL"),
+            ("last_city",               "TEXT DEFAULT ''"),
+            ("notif_enabled",           "INTEGER DEFAULT 0"),
+            ("notif_timing",            "TEXT DEFAULT '{}'"),
+            ("notif_tz_offset",         "INTEGER DEFAULT 0"),
+            ("notif_sent",              "TEXT DEFAULT '{}'"),
+            ("daily_briefing_enabled",  "INTEGER DEFAULT 0"),
+            ("daily_briefing_time",     "TEXT DEFAULT '06:00'"),
+            ("briefing_weather",        "INTEGER DEFAULT 1"),
+            ("briefing_aqi",            "INTEGER DEFAULT 1"),
+            ("briefing_prayer",         "INTEGER DEFAULT 1"),
+            ("briefing_sent",           "TEXT DEFAULT ''"),
         ]:
             try:
                 conn.execute(f"ALTER TABLE users ADD COLUMN {col} {typedef}")
@@ -359,14 +365,209 @@ async def _send_due_notifications():
         await asyncio.sleep(0.05)
 
 
+def _format_daily_briefing_msg(
+    lang: str, city: str, country: str,
+    prayer_data: dict,
+    weather_data,
+    aqi_data,
+    incl_weather: bool, incl_aqi: bool, incl_prayer: bool,
+) -> str:
+    L = lang if lang in ("uz", "uz_cyr", "ru", "en") else "uz"
+
+    _HDR = {
+        "uz": "🌤 <b>Kunlik ma'lumotlar</b>",
+        "uz_cyr": "🌤 <b>Кунлик маълумотлар</b>",
+        "ru": "🌤 <b>Ежедневная сводка</b>",
+        "en": "🌤 <b>Daily Briefing</b>",
+    }
+    _AIR = {
+        "uz": "🌬 Havo",
+        "uz_cyr": "🌬 Ҳаво",
+        "ru": "🌬 Воздух",
+        "en": "🌬 Air",
+    }
+    _PRAY_HDR = {
+        "uz": "🕌 <b>Bugungi namoz vaqtlari:</b>",
+        "uz_cyr": "🕌 <b>Бугунги намоз вақтлари:</b>",
+        "ru": "🕌 <b>Намаз сегодня:</b>",
+        "en": "🕌 <b>Today's prayers:</b>",
+    }
+
+    lines = [_HDR.get(L, _HDR["uz"]), ""]
+
+    # Date + location
+    hijri = prayer_data.get("hijri_date") or prayer_data.get("hijri") or ""
+    if hijri:
+        lines.append(f"📅 {hijri}")
+    loc = city or prayer_data.get("city", "")
+    ctry = country or prayer_data.get("country", "")
+    if loc:
+        lines.append(f"📍 {loc}{', ' + ctry if ctry else ''}")
+    lines.append("")
+
+    # Weather
+    if incl_weather and weather_data:
+        temp = weather_data.get("temp_c")
+        icon = weather_data.get("icon", "🌡️")
+        desc = weather_data.get("description", "")
+        if temp is not None:
+            lines.append(f"{icon} {temp}°C · {desc}")
+        sr = weather_data.get("sunrise", "")
+        ss = weather_data.get("sunset", "")
+        if sr:
+            lines.append(f"🌅 {sr}  🌇 {ss}")
+
+    # AQI
+    if incl_aqi and aqi_data:
+        aqi_val   = aqi_data.get("aqi", 0)
+        aqi_label = aqi_data.get("label", "")
+        aqi_icon  = aqi_data.get("icon", "")
+        lines.append(f"{_AIR.get(L, _AIR['uz'])}: {aqi_icon} {aqi_label} (AQI {aqi_val})")
+
+    # Prayer times
+    if incl_prayer:
+        prayers = prayer_data.get("prayers", [])
+        prayer_rows = [p for p in prayers if p.get("key", "").lower() != "sunrise"]
+        if prayer_rows:
+            lines += ["", _PRAY_HDR.get(L, _PRAY_HDR["uz"])]
+            for p in prayer_rows:
+                key  = p.get("key", "").lower()
+                name = _PRAYER_NOTIF_NAMES.get(key, {}).get(L) or key.capitalize()
+                lines.append(f"   {name}: {p.get('time', '')}")
+
+    return "\n".join(lines)
+
+
+async def _process_user_daily_briefing(user: dict, utc_minutes: int, today_str: str):
+    user_id       = user["user_id"]
+    lang          = user["language"] or "uz"
+    lat           = user["last_lat"]
+    lon           = user["last_lon"]
+    city          = user["last_city"] or ""
+    tz_offset     = user.get("notif_tz_offset") or 0
+    brief_time    = user.get("daily_briefing_time") or "06:00"
+    incl_weather  = bool(user.get("briefing_weather", 1))
+    incl_aqi      = bool(user.get("briefing_aqi", 1))
+    incl_prayer   = bool(user.get("briefing_prayer", 1))
+    briefing_sent = user.get("briefing_sent") or ""
+
+    if briefing_sent == today_str:
+        return
+
+    try:
+        bh, bm = brief_time.split(":")
+        briefing_minute = int(bh) * 60 + int(bm)
+    except Exception:
+        briefing_minute = 6 * 60
+
+    local_minute = (utc_minutes + tz_offset) % 1440
+    if local_minute != briefing_minute:
+        return
+
+    print(f"[DAILY BRIEFING USER LOADED] uid={user_id} time={brief_time} tz={tz_offset}", flush=True)
+
+    try:
+        from domain.prayer.service import prayer_service
+        prayer_data = await prayer_service.get_prayer_data(lat, lon, lang, 3)
+    except Exception as e:
+        print(f"[DAILY BRIEFING FAILED] uid={user_id}: prayer fetch error: {e}", flush=True)
+        return
+    if not prayer_data:
+        print(f"[DAILY BRIEFING FAILED] uid={user_id}: no prayer data", flush=True)
+        return
+
+    weather_data = None
+    aqi_data     = None
+    if incl_weather or incl_aqi:
+        try:
+            from domain.prayer.extras import fetch_weather, fetch_aqi
+            tasks = []
+            if incl_weather:
+                tasks.append(fetch_weather(lat, lon, lang))
+            if incl_aqi:
+                tasks.append(fetch_aqi(lat, lon, lang))
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            idx = 0
+            if incl_weather:
+                weather_data = results[idx] if not isinstance(results[idx], Exception) else None
+                idx += 1
+            if incl_aqi:
+                aqi_data = results[idx] if not isinstance(results[idx], Exception) else None
+        except Exception:
+            pass
+
+    country = prayer_data.get("country", "") or ""
+    if not city:
+        city = prayer_data.get("city", "")
+
+    msg = _format_daily_briefing_msg(
+        lang, city, country, prayer_data,
+        weather_data, aqi_data,
+        incl_weather, incl_aqi, incl_prayer,
+    )
+
+    try:
+        await _bot_notif.send_message(user_id, msg, parse_mode="HTML")
+        print(f"[DAILY BRIEFING SENT] uid={user_id}", flush=True)
+        conn = sqlite3.connect(str(USERS_DB))
+        conn.execute("UPDATE users SET briefing_sent=? WHERE user_id=?", (today_str, user_id))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"[DAILY BRIEFING FAILED] uid={user_id}: {e}", flush=True)
+        err = str(e).lower()
+        if any(x in err for x in ("blocked", "deactivated", "not found", "chat not found")):
+            try:
+                c = sqlite3.connect(str(USERS_DB))
+                c.execute("UPDATE users SET daily_briefing_enabled=0 WHERE user_id=?", (user_id,))
+                c.commit(); c.close()
+            except Exception:
+                pass
+
+
+async def _send_due_daily_briefings():
+    if not _bot_notif:
+        return
+    now_utc     = datetime.utcnow()
+    utc_minutes = now_utc.hour * 60 + now_utc.minute
+    today_str   = now_utc.strftime("%Y-%m-%d")
+    try:
+        conn = sqlite3.connect(str(USERS_DB))
+        conn.row_factory = sqlite3.Row
+        users = conn.execute("""
+            SELECT user_id, language, last_lat, last_lon, last_city,
+                   daily_briefing_time, briefing_weather, briefing_aqi, briefing_prayer,
+                   notif_tz_offset, briefing_sent
+            FROM users
+            WHERE daily_briefing_enabled=1
+              AND last_lat IS NOT NULL AND last_lon IS NOT NULL
+        """).fetchall()
+        conn.close()
+        users = [dict(u) for u in users]
+    except Exception as e:
+        print(f"[DAILY BRIEFING] DB read error: {e}", flush=True)
+        return
+    for user in users:
+        try:
+            await _process_user_daily_briefing(user, utc_minutes, today_str)
+        except Exception as e:
+            print(f"[DAILY BRIEFING] Error uid={user.get('user_id')}: {e}", flush=True)
+        await asyncio.sleep(0.05)
+
+
 async def _notification_scheduler():
     """Background asyncio task — fires every 60 seconds."""
     print("[NOTIF] Scheduler started", flush=True)
+    print("[DAILY BRIEFING SCHEDULER STARTED]", flush=True)
     while True:
         try:
             await _send_due_notifications()
         except Exception as e:
             print(f"[NOTIF] Unhandled: {e}", flush=True)
+        try:
+            await _send_due_daily_briefings()
+        except Exception as e:
+            print(f"[DAILY BRIEFING] Unhandled: {e}", flush=True)
         await asyncio.sleep(60)
 
 
@@ -531,6 +732,47 @@ async def _init_bot():
             parse_mode="HTML",
         )
 
+    @_dp.message(Command("testbrief"))
+    async def cmd_testbrief(message: types.Message):
+        if message.from_user.id not in ADMIN_IDS:
+            await message.answer("⛔ Sizda ushbu buyruqdan foydalanish huquqi yo'q.")
+            return
+        uid = message.from_user.id
+        try:
+            conn = sqlite3.connect(str(USERS_DB))
+            conn.row_factory = sqlite3.Row
+            row = conn.execute(
+                "SELECT user_id, language, last_lat, last_lon, last_city, notif_tz_offset "
+                "FROM users WHERE user_id=?", (uid,)
+            ).fetchone()
+            conn.close()
+        except Exception as e:
+            await message.answer(f"❌ DB error: {e}")
+            return
+        if not row or row["last_lat"] is None:
+            await message.answer("❌ Joylashuv saqlanmagan. Avval ilovada joylashuvni kiriting.")
+            return
+        user = dict(row)
+        user.update({
+            "daily_briefing_time": "00:00",
+            "briefing_weather": 1,
+            "briefing_aqi": 1,
+            "briefing_prayer": 1,
+            "briefing_sent": "",
+        })
+        now_utc     = datetime.utcnow()
+        utc_minutes = now_utc.hour * 60 + now_utc.minute
+        tz_offset   = user.get("notif_tz_offset") or 0
+        # Override: force local_minute == briefing_minute by setting briefing_minute = local_minute
+        local_minute = (utc_minutes + tz_offset) % 1440
+        user["daily_briefing_time"] = f"{local_minute // 60:02d}:{local_minute % 60:02d}"
+        await message.answer("⏳ Test briefing yuborilmoqda...")
+        try:
+            await _process_user_daily_briefing(user, utc_minutes, "test-" + now_utc.strftime("%H%M%S"))
+            await message.answer("✅ Test briefing yuborildi!")
+        except Exception as e:
+            await message.answer(f"❌ Xatolik: {e}")
+
     @_dp.message(F.web_app_data)
     async def on_webapp_data(message: types.Message):
         try:
@@ -554,6 +796,7 @@ async def _init_bot():
             BotCommand(command="stats",     description="📊 Statistika"),
             BotCommand(command="users",     description="👥 Foydalanuvchilar ro'yxati"),
             BotCommand(command="broadcast", description="📢 Barcha userlarga xabar"),
+            BotCommand(command="testbrief", description="🌤 Test daily briefing yuborish"),
         ]
         from aiogram.types import BotCommandScopeChat
         for admin_id in ADMIN_IDS:
@@ -717,6 +960,37 @@ async def api_save_notif_prefs(request: Request):
         return {"ok": True}
     except Exception as e:
         print(f"[WARN] api_save_notif_prefs: {e}", flush=True)
+        return {"ok": False, "error": str(e)}
+
+
+# ── Daily Briefing Prefs API ─────────────────────────────────────────────
+@app.post("/api/user/daily-briefing")
+async def api_save_daily_briefing(request: Request):
+    try:
+        data      = await request.json()
+        user_id   = int(data.get("user_id", 0))
+        enabled   = int(bool(data.get("enabled", False)))
+        time_str  = str(data.get("time", "06:00"))[:5]
+        weather   = int(bool(data.get("weather", True)))
+        aqi       = int(bool(data.get("aqi", True)))
+        prayer    = int(bool(data.get("prayer", True)))
+        tz_offset = int(data.get("tz_offset", 0))
+        if not user_id:
+            return {"ok": False, "error": "missing user_id"}
+        conn = sqlite3.connect(str(USERS_DB))
+        conn.execute("""
+            UPDATE users SET
+                daily_briefing_enabled=?, daily_briefing_time=?,
+                briefing_weather=?, briefing_aqi=?, briefing_prayer=?,
+                notif_tz_offset=?
+            WHERE user_id=?
+        """, (enabled, time_str, weather, aqi, prayer, tz_offset, user_id))
+        conn.commit()
+        conn.close()
+        print(f"[DAILY BRIEFING] Prefs saved: uid={user_id} enabled={enabled} time={time_str}", flush=True)
+        return {"ok": True}
+    except Exception as e:
+        print(f"[WARN] api_save_daily_briefing: {e}", flush=True)
         return {"ok": False, "error": str(e)}
 
 
