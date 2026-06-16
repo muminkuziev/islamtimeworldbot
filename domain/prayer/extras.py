@@ -427,9 +427,9 @@ async def fetch_daily_ayah(lang: str = "en") -> Optional[dict]:
     ayah_num = (day % 6236) + 1
     edition  = _AYAH_EDITIONS.get(lang, "en.sahih")
     url = (
-        f"https://api.alquran.cloud/v1/ayah/{ayah_num}/editions/quran-uthmani,{edition}"
+        f"https://api.alquran.cloud/v1/ayah/{ayah_num}/editions/quran-uthmani,en.transliteration,{edition}"
         if edition else
-        f"https://api.alquran.cloud/v1/ayah/{ayah_num}/editions/quran-uthmani"
+        f"https://api.alquran.cloud/v1/ayah/{ayah_num}/editions/quran-uthmani,en.transliteration"
     )
     try:
         async with aiohttp.ClientSession() as sess:
@@ -437,21 +437,23 @@ async def fetch_daily_ayah(lang: str = "en") -> Optional[dict]:
                 if resp.status == 200:
                     raw = await resp.json(content_type=None)
                     if raw.get("code") == 200:
-                        data  = raw["data"]
-                        ar    = data[0]
-                        tr_ed = data[1] if edition and len(data) > 1 else None
+                        data        = raw["data"]
+                        ar          = data[0]
+                        translit_ed = data[1] if len(data) > 1 else None
+                        tr_ed       = data[2] if edition and len(data) > 2 else None
                         surah = ar.get("surah", {})
                         translation = tr_ed.get("text", "") if tr_ed else ""
                         if lang == "uz" and translation:
                             translation = _uz_cyr_to_lat(translation)
                         result = {
-                            "arabic":       ar.get("text", ""),
-                            "translation":  translation,
-                            "surah_en":     surah.get("englishName", ""),
-                            "surah_ar":     surah.get("name", ""),
-                            "surah_number": surah.get("number", 0),
-                            "ayah_number":  ar.get("numberInSurah", 0),
-                            "reference":    f"Surah {surah.get('englishName','')} ({surah.get('number','')}:{ar.get('numberInSurah','')})",
+                            "arabic":          ar.get("text", ""),
+                            "transliteration": translit_ed.get("text", "") if translit_ed else "",
+                            "translation":     translation,
+                            "surah_en":        surah.get("englishName", ""),
+                            "surah_ar":        surah.get("name", ""),
+                            "surah_number":    surah.get("number", 0),
+                            "ayah_number":     ar.get("numberInSurah", 0),
+                            "reference":       f"Surah {surah.get('englishName','')} ({surah.get('number','')}:{ar.get('numberInSurah','')})",
                         }
                         _cput(cache_key, result, 86400)  # cache 24 h
                         return result

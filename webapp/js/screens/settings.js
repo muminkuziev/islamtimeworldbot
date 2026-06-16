@@ -724,6 +724,22 @@ const SettingsScreen = (function () {
     });
   }
 
+  function _saveNotifToServer(enabled) {
+    const uid = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+    if (!uid) return;
+    const tzOff = -new Date().getTimezoneOffset();
+    fetch('/api/user/notifications', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        user_id:   uid,
+        enabled:   enabled ? 1 : 0,
+        timing:    { fajr:0, dhuhr:0, asr:0, maghrib:0, isha:0 },
+        tz_offset: tzOff,
+      }),
+    }).catch(() => {});
+  }
+
   function _bindNotifications(el) {
     [
       { id:'st-push-tog',   k:'push'   },
@@ -734,6 +750,7 @@ const SettingsScreen = (function () {
       el.querySelector(`#${id}`)?.addEventListener('click', () => {
         const nv = !_s[k]; _persist(k, nv);
         el.querySelector(`#${id}`)?.classList.toggle('on', nv);
+        if (k === 'push') _saveNotifToServer(nv);
         window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
       });
     });

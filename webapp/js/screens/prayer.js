@@ -1141,11 +1141,16 @@ const PrayerScreen = (function () {
   /* ── Ayah / Hadith cards ────────────────────────────────────── */
   function _buildAyahCard() {
     const ay = _data.daily_ayah;
+    const uzLang = (_lang === 'uz' || _lang === 'uz_cyr');
+    const translationLine = uzLang
+        ? (_lang === 'uz_cyr' ? 'Таржима текшириш жараёнида' : 'Tarjima tekshiruv jarayonida')
+        : _esc(ay.translation || '');
     return `
       <div class="pm-card pm-card--gold">
         <div class="pm-card-label"><span class="pm-card-dot pm-card-dot--gold"></span>${_l('dailyAyah', _lang)}</div>
         <div class="pm-ayah-ar" dir="rtl">${_esc(ay.arabic)}</div>
-        <div class="pm-ayah-tr">${_esc(ay.translation)}</div>
+        ${ay.transliteration ? `<div class="pm-ayah-translit">${_esc(ay.transliteration)}</div>` : ''}
+        <div class="pm-ayah-tr">${translationLine}</div>
         <div class="pm-ayah-ref">— ${_esc(ay.reference)}</div>
       </div>`;
   }
