@@ -156,17 +156,8 @@ const LanguageScreen = (function () {
       window.Telegram?.WebApp?.sendData(JSON.stringify({ action: 'set_language', lang: _selected }));
     } catch (_) {}
 
-    /* Smart routing: skip onboarding steps already completed */
-    const madhab   = localStorage.getItem('islamtime_madhab');
-    const locAsked = localStorage.getItem('islamtime_location_asked');
-    if (madhab && locAsked) {
-      DashboardScreen.update(_selected);
-      window.App.navigate('screen-dashboard');
-    } else if (madhab) {
-      window.App.navigate('screen-location');
-    } else {
-      window.App.navigate('screen-mazhab');
-    }
+    /* After language selection always proceed to Madhab — never skip onboarding */
+    window.App.navigate('screen-mazhab');
   }
 
   return { render };
