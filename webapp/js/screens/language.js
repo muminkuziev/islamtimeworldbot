@@ -1,6 +1,5 @@
 /* ═══════════════════════════════════════════════════
    Language Selection Screen — v3
-   All 14 languages active · full i18n · no WIP
    ═══════════════════════════════════════════════════ */
 
 const LanguageScreen = (function () {
@@ -8,8 +7,8 @@ const LanguageScreen = (function () {
 
   const TILE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Crect width='60' height='60' fill='%230d1829'/%3E%3Cline x1='0' y1='0' x2='60' y2='60' stroke='%23F5C542' stroke-width='0.2' opacity='0.13'/%3E%3Cline x1='60' y1='0' x2='0' y2='60' stroke='%23F5C542' stroke-width='0.2' opacity='0.13'/%3E%3Ccircle cx='30' cy='30' r='8' fill='none' stroke='%23F5C542' stroke-width='0.3' opacity='0.15'/%3E%3C/svg%3E";
 
-  /* All 14 languages are active — no WIP */
-  const WIP_LANGS = new Set([]);
+  /* Active: uz, uz_cyr, ru, en — rest temporarily disabled */
+  const WIP_LANGS = new Set(['tr','ar','kk','tg','ky','de','fr','id','hi','ur']);
 
   /* "Select language" in all 14 languages */
   const SELECT_LABELS = {
@@ -100,19 +99,19 @@ const LanguageScreen = (function () {
   }
 
   function _cardHTML(l) {
-    const active = l.code === _selected;
+    const wip    = WIP_LANGS.has(l.code);
+    const active = !wip && l.code === _selected;
     return `
-      <div class="ls-card${active ? ' ls-card--on' : ''}" data-code="${l.code}">
+      <div class="ls-card${active ? ' ls-card--on' : ''}${wip ? ' ls-card--wip' : ''}" data-code="${l.code}">
         <div class="ls-flag">${l.flag}</div>
         <div class="ls-name">${l.name}</div>
-        <div class="ls-sub">${l.sub || ''}</div>
+        <div class="ls-sub">${wip ? 'tez kunda' : (l.sub || '')}</div>
         <div class="ls-dot${active ? '' : ' ls-dot--off'}"></div>
       </div>`;
   }
 
   /* ── Events ───────────────────────────────────────────────── */
   function _bind(el) {
-    /* Direct per-card listeners — avoids closest() + scroll-interception issues in Telegram WebView */
     el.querySelectorAll('.ls-card').forEach(card => {
       card.addEventListener('click', () => _pick(card.getAttribute('data-code')));
     });
@@ -121,7 +120,8 @@ const LanguageScreen = (function () {
 
   function _pick(code) {
     console.log('Language selected:', code);
-    if (!code || !LANG_META.find(l => l.code === code)) return;
+    if (!code || WIP_LANGS.has(code)) return;
+    if (!LANG_META.find(l => l.code === code)) return;
     if (_selected === code) return;
     _selected = code;
 
