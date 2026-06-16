@@ -1093,6 +1093,100 @@ async def api_save_daily_briefing(request: Request):
         return {"ok": False, "error": str(e)}
 
 
+# ── Admin REST API (called by local bot.py → proxies to Render DB) ────────
+@app.get("/api/admin/dbcheck")
+async def api_admin_dbcheck(admin_id: int = Query(0)):
+    if admin_id not in ADMIN_IDS:
+        return JSONResponse({"error": "forbidden"}, status_code=403)
+    try:
+        conn = sqlite3.connect(str(USERS_DB))
+        conn.row_factory = sqlite3.Row
+        row = conn.execute(
+            "SELECT user_id, notif_enabled, notif_timing, notif_tz_offset, "
+            "last_lat, last_lon, last_city, last_active FROM users WHERE user_id=?",
+            (admin_id,)
+        ).fetchone()
+        total       = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+        notif_ready = conn.execute(
+            "SELECT COUNT(*) FROM users WHERE notif_enabled=1 AND last_lat IS NOT NULL"
+        ).fetchone()[0]
+        conn.close()
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+    return JSONResponse({
+        "my_row":     dict(row) if row else None,
+        "total":      total,
+        "notif_ready": notif_ready,
+    })
+
+
+@app.post("/api/admin/testnotif")
+async def api_admin_testnotif(request: Request):
+    try:
+        data     = await request.json()
+        admin_id = int(data.get("admin_id", 0))
+        if admin_id not in ADMIN_IDS:
+            return JSONResponse({"error": "forbidden"}, status_code=403)
+        if not _bot_notif:
+            return JSONResponse({"error": "bot_notif not initialized"}, status_code=503)
+        conn = sqlite3.connect(str(USERS_DB))
+        conn.row_factory = sqlite3.Row
+        row = conn.execute(
+            "SELECT user_id, language, last_lat, last_lon, last_city FROM users WHERE user_id=?",
+            (admin_id,)
+        ).fetchone()
+        conn.close()
+        if not row:
+            return JSONResponse({"error": "user_not_in_db",
+                                 "hint": "Open the webapp and go to prayer times first"})
+        r = dict(row)
+        if not r["last_lat"]:
+            return JSONResponse({"error": "no_location",
+                                 "hint": "last_lat is NULL — go to prayer screen first"})
+        msg = _format_notification(r["language"] or "uz", "isha", "21:30", r["last_city"] or "", 0)
+        await _bot_notif.send_message(admin_id, msg, parse_mode="HTML")
+        print(f"[NOTIF] test sent to uid={admin_id}", flush=True)
+        return JSONResponse({"ok": True})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@app.post("/api/admin/testbrief")
+async def api_admin_testbrief(request: Request):
+    try:
+        data     = await request.json()
+        admin_id = int(data.get("admin_id", 0))
+        if admin_id not in ADMIN_IDS:
+            return JSONResponse({"error": "forbidden"}, status_code=403)
+        conn = sqlite3.connect(str(USERS_DB))
+        conn.row_factory = sqlite3.Row
+        row = conn.execute(
+            "SELECT user_id, language, last_lat, last_lon, last_city, notif_tz_offset "
+            "FROM users WHERE user_id=?", (admin_id,)
+        ).fetchone()
+        conn.close()
+        if not row:
+            return JSONResponse({"error": "user_not_in_db",
+                                 "hint": "Open the webapp and go to prayer times first"})
+        r = dict(row)
+        if not r["last_lat"]:
+            return JSONResponse({"error": "no_location",
+                                 "hint": "last_lat is NULL — go to prayer screen first"})
+        user = dict(r)
+        user.update({"daily_briefing_time": "00:00", "briefing_weather": 1,
+                     "briefing_aqi": 1, "briefing_prayer": 1, "briefing_sent": ""})
+        now_utc      = datetime.utcnow()
+        utc_minutes  = now_utc.hour * 60 + now_utc.minute
+        tz_offset    = user.get("notif_tz_offset") or 0
+        local_minute = (utc_minutes + tz_offset) % 1440
+        user["daily_briefing_time"] = f"{local_minute // 60:02d}:{local_minute % 60:02d}"
+        await _process_user_daily_briefing(user, utc_minutes, "test-" + now_utc.strftime("%H%M%S"))
+        print(f"[BRIEF] test sent to uid={admin_id}", flush=True)
+        return JSONResponse({"ok": True})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
 # ── Prayer Times API (full card data) ─────────────────────────────────────
 @app.get("/api/prayer-times")
 async def api_prayer_times(

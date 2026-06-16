@@ -339,6 +339,116 @@ async def cmd_logs(message: types.Message):
     await message.answer(text, parse_mode="HTML")
 
 
+@dp.message(Command("dbcheck"))
+async def cmd_dbcheck(message: types.Message):
+    if not await _require_admin(message):
+        return
+    url = (config.WEBAPP_URL or "").rstrip("/")
+    if not url or url == "https://your-domain.com":
+        await message.answer("❌ WEBAPP_URL sozlanmagan (.env ni tekshiring)")
+        return
+    try:
+        async with aiohttp.ClientSession() as s:
+            async with s.get(
+                f"{url}/api/admin/dbcheck?admin_id={message.from_user.id}",
+                timeout=aiohttp.ClientTimeout(total=10)
+            ) as r:
+                data = await r.json()
+    except Exception as e:
+        await message.answer(f"❌ Render API xatolik: {e}")
+        return
+    if "error" in data:
+        await message.answer(f"❌ {data['error']}")
+        return
+    my = data.get("my_row")
+    if not my:
+        await message.answer(
+            f"❌ <b>user_id={message.from_user.id} Render DB da yo'q!</b>\n\n"
+            "Ilovani Telegram ichida oching → Namoz vaqtlari ekraniga o'ting → "
+            "Joylashuvni ruxsat bering → Sozlamalar → Push yoqing.",
+            parse_mode="HTML"
+        )
+        return
+    lat_s = f"{my['last_lat']:.4f}" if my['last_lat'] else "NULL ❌"
+    lon_s = f"{my['last_lon']:.4f}" if my['last_lon'] else "NULL ❌"
+    en_s  = "✅ Yoqilgan" if my["notif_enabled"] else "❌ O'chirilgan"
+    txt = (
+        f"🗄 <b>Render DB holati</b>\n\n"
+        f"👤 user_id: <code>{my['user_id']}</code>\n"
+        f"🔔 notif_enabled: <b>{en_s}</b>\n"
+        f"⏱ timing: <code>{my['notif_timing']}</code>\n"
+        f"🌍 tz_offset: <b>{my['notif_tz_offset']} daq</b>\n"
+        f"📍 lat: <code>{lat_s}</code>\n"
+        f"📍 lon: <code>{lon_s}</code>\n"
+        f"🏙 city: <b>{my['last_city'] or '—'}</b>\n"
+        f"🕐 last_active: <b>{my['last_active']}</b>\n\n"
+        f"📊 Jami: <b>{data['total']}</b> · 🔔 Tayyor: <b>{data['notif_ready']}</b>"
+    )
+    await message.answer(txt, parse_mode="HTML")
+
+
+@dp.message(Command("testnotif"))
+async def cmd_testnotif(message: types.Message):
+    if not await _require_admin(message):
+        return
+    url = (config.WEBAPP_URL or "").rstrip("/")
+    if not url or url == "https://your-domain.com":
+        await message.answer("❌ WEBAPP_URL sozlanmagan")
+        return
+    await message.answer("⏳ Render ga so'rov yuborilmoqda...")
+    try:
+        async with aiohttp.ClientSession() as s:
+            async with s.post(
+                f"{url}/api/admin/testnotif",
+                json={"admin_id": message.from_user.id},
+                timeout=aiohttp.ClientTimeout(total=15)
+            ) as r:
+                data = await r.json()
+    except Exception as e:
+        await message.answer(f"❌ Render API xatolik: {e}")
+        return
+    if data.get("ok"):
+        await message.answer("✅ Test bildirishnoma Render orqali yuborildi!")
+    else:
+        hint = data.get("hint", "")
+        await message.answer(
+            f"❌ <b>{data.get('error', '?')}</b>\n"
+            + (f"💡 {hint}" if hint else ""),
+            parse_mode="HTML"
+        )
+
+
+@dp.message(Command("testbrief"))
+async def cmd_testbrief(message: types.Message):
+    if not await _require_admin(message):
+        return
+    url = (config.WEBAPP_URL or "").rstrip("/")
+    if not url or url == "https://your-domain.com":
+        await message.answer("❌ WEBAPP_URL sozlanmagan")
+        return
+    await message.answer("⏳ Test briefing yuborilmoqda...")
+    try:
+        async with aiohttp.ClientSession() as s:
+            async with s.post(
+                f"{url}/api/admin/testbrief",
+                json={"admin_id": message.from_user.id},
+                timeout=aiohttp.ClientTimeout(total=20)
+            ) as r:
+                data = await r.json()
+    except Exception as e:
+        await message.answer(f"❌ Render API xatolik: {e}")
+        return
+    if data.get("ok"):
+        await message.answer("✅ Test briefing Render orqali yuborildi!")
+    else:
+        hint = data.get("hint", "")
+        await message.answer(
+            f"❌ <b>{data.get('error', '?')}</b>\n"
+            + (f"💡 {hint}" if hint else ""),
+            parse_mode="HTML"
+        )
+
+
 @dp.message(Command("restart"))
 async def cmd_restart(message: types.Message):
     if not await _require_admin(message):
@@ -390,6 +500,9 @@ async def _set_commands(bot: Bot):
                     BotCommand(command="broadcast", description="📢 Barcha userlarga xabar"),
                     BotCommand(command="logs",      description="📋 Bot log fayli"),
                     BotCommand(command="restart",   description="🔄 Restart yo'riqnomasi"),
+                    BotCommand(command="dbcheck",   description="🗄 Render DB holati (notif tekshirish)"),
+                    BotCommand(command="testnotif", description="🔔 Test bildirishnoma (Render orqali)"),
+                    BotCommand(command="testbrief", description="🌤 Test briefing (Render orqali)"),
                 ],
                 scope=types.BotCommandScopeChat(chat_id=admin_id),
             )
