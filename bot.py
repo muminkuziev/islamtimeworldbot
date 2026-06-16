@@ -171,12 +171,14 @@ async def cmd_start(message: types.Message):
     print(f"[DEBUG] /start from {u.id} @{u.username}", flush=True)
     try:
         if _webapp_url_valid():
+            # ?start=1 tells the webapp to always show Language Selection
+            start_url = config.WEBAPP_URL.rstrip("/") + "?start=1"
             await message.answer(
                 "🌙 <b>IslamTimeWorldBot</b>\n\n"
                 "Assalomu alaykum! Ilovani ochish uchun quyidagi tugmani bosing.\n\n"
                 "<i>Assalamu Alaikum! Tap the button below to open the app.</i>",
                 parse_mode="HTML",
-                reply_markup=_webapp_keyboard(),
+                reply_markup=_webapp_keyboard(url=start_url),
             )
         else:
             await message.answer(

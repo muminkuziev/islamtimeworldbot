@@ -34,12 +34,7 @@ const HadithScreen = (function () {
 
   let _el           = null;
   let _lang         = 'uz';
-  function _T(lat, cyr, ru, en) {
-    if (_lang === 'uz_cyr') return cyr;
-    if (_lang === 'ru' && ru !== undefined) return ru;
-    if (_lang === 'en' && en !== undefined) return en;
-    return lat;
-  }
+  function _T(lat, cyr, ru, en) { return _resolveT(lat, cyr, ru, en, _lang); }
   function _bLbl(b) { return _T(b.label, b.label_cyr, b.label_ru, b.label_en || b.label_ru); }
   function _bImam(b) { return _T(b.imam, b.imam_cyr, b.imam_ru, b.imam_en || b.imam); }
   function _cy(t) {
@@ -80,35 +75,92 @@ const HadithScreen = (function () {
   let _katView      = 'grid'; // 'grid' | 'chapters' | 'muslim-books'
 
   /* ══════════════════════════════════════════════
+     Under-Verification screen (MVP)
+  ══════════════════════════════════════════════ */
+  function _underVerificationHTML() {
+    const isAr  = _lang === 'ar';
+    const _ML = (map) => map[_lang] || map.uz;
+    const title = _ML({
+      uz:'Ilmiy va huquqiy tekshiruv ostida', uz_cyr:'Илмий ва ҳуқуқий текшируv остида',
+      ru:'На научной и юридической проверке',  en:'Under Scholarly and Legal Review',
+      tr:'İlmi ve hukuki inceleme altında',    ar:'قيد المراجعة العلمية والقانونية',
+      kk:'Ғылыми және заңдық тексеруде',       tg:'Таҳти баррасии илмӣ ва ҳуқуқӣ',
+      ky:'Илимий жана юридикалык текшерүүдө', de:'Unter wissenschaftlicher und rechtlicher Prüfung',
+      fr:'En cours d\'examen scientifique et juridique', id:'Di Bawah Tinjauan Ilmiah dan Hukum',
+      hi:'वैज्ञानिक और कानूनी समीक्षा के अंतर्गत', ur:'علمی اور قانونی جائزے کے مرحلے میں',
+    });
+    const body1 = _ML({
+      uz:     "Hadislar bo'limi ilmiy va huquqiy tekshiruvdan o'tmoqda.",
+      uz_cyr: "Ҳадислар бўлими илмий ва ҳуқуқий текширувдан ўтмоқда.",
+      ru:     "Раздел хадисов проходит научную и юридическую проверку.",
+      en:     "Hadith module is under scholarly and legal review.",
+      tr:     "Hadis bölümü ilmî ve hukuki inceleme sürecindedir.",
+      ar:     "قسم الأحاديث قيد المراجعة العلمية والقانونية.",
+      kk:     "Хадис бөлімі ғылыми және құқықтық тексерістен өтіп жатыр.",
+      tg:     "Бахши ҳадисҳо дар ҳоли санҷиши илмӣ ва ҳуқуқӣ аст.",
+      ky:     "Хадис бөлүмү илимий жана укуктук текшерүүдөн өтүүдө.",
+      de:     "Der Hadith-Bereich befindet sich in wissenschaftlicher und rechtlicher Prüfung.",
+      fr:     "Le module des hadiths est en cours de vérification scientifique et juridique.",
+      id:     "Modul Hadis sedang dalam proses verifikasi ilmiah dan hukum.",
+      hi:     "हदीस अनुभाग शैक्षिक और कानूनी सत्यापन प्रक्रिया में है।",
+      ur:     "حدیث کا شعبہ علمی اور قانونی تصدیق کے مرحلے میں ہے۔",
+    });
+    const body2 = _ML({
+      uz:     "Faqat tekshirilgan va litsenziyalangan manbalar nashr etiladi.",
+      uz_cyr: "Фақат текширилган ва лицензияланган манбалар нашр этилади.",
+      ru:     "Будут опубликованы только проверенные и лицензированные источники.",
+      en:     "Only verified and licensed sources will be published.",
+      tr:     "Yalnızca doğrulanmış ve lisanslı kaynaklar yayınlanacaktır.",
+      ar:     "ستُنشر فقط المصادر الموثقة والمرخصة.",
+      kk:     "Тек тексерілген және лицензияланған көздер жарияланады.",
+      tg:     "Танҳо сарчашмаҳои тасдиқшуда ва иҷозатнома дошта нашр мешаванд.",
+      ky:     "Текшерилген жана лицензияланган булактар гана жарыяланат.",
+      de:     "Nur geprüfte und lizenzierte Quellen werden veröffentlicht.",
+      fr:     "Seules les sources vérifiées et licenciées seront publiées.",
+      id:     "Hanya sumber yang terverifikasi dan berlisensi yang akan diterbitkan.",
+      hi:     "केवल सत्यापित और लाइसेंस प्राप्त स्रोत प्रकाशित किए जाएंगे।",
+      ur:     "صرف تصدیق شدہ اور لائسنس یافتہ ذرائع شائع کیے جائیں گے۔",
+    });
+    const backLbl = _ML({uz:'Menyu',uz_cyr:'Меню',ru:'Меню',en:'Menu',tr:'Menü',ar:'القائمة',
+      kk:'Мәзір',tg:'Меню',ky:'Меню',de:'Menü',fr:'Menu',id:'Menu',hi:'मेनू',ur:'مینو'});
+    return `<div class="screen-inner" style="padding:0">
+  <div class="hd-hdr" style="min-height:80px">
+    <div class="nm-tile-bg"></div>
+    <div class="nm-tile-ov" style="background:rgba(9,18,31,0.65)"></div>
+    <div class="hd-hdr-inner">
+      <div class="hd-nav-row">
+        <button class="hd-back" id="hd-verify-back">← ${backLbl}</button>
+      </div>
+      <div class="hd-title">${_T('Hadis kitoblari','Ҳадис китоблари','Книги хадисов','Hadith Books')}</div>
+      <div class="hd-ar-sub">كتب الحديث الشريف</div>
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:50vh;padding:32px 24px;text-align:${isAr ? 'right' : 'center'}" dir="${isAr ? 'rtl' : 'ltr'}">
+    <div style="font-size:52px;margin-bottom:18px">🚧</div>
+    <div style="font-size:18px;font-weight:700;color:#E8C15A;margin-bottom:12px">${title}</div>
+    <div style="font-size:14px;color:rgba(232,223,200,.75);line-height:1.65;max-width:300px;margin-bottom:8px">${body1}</div>
+    <div style="font-size:13px;color:rgba(232,223,200,.5);line-height:1.65;max-width:300px">${body2}</div>
+  </div>
+</div>`;
+  }
+
+  /* ══════════════════════════════════════════════
      Entry points
   ══════════════════════════════════════════════ */
   function render() {
     _lang = window.App?.state?.lang || 'uz';
-    _collection = 'bukhari'; _tab = 'hadiths'; _page = 1;
-    _pageHadiths = []; _selIdx = null; _katFilter = null; _searchVal = '';
-    _catCounts = {}; _catChapters = []; _muslimBooks = []; _selChapterId = null; _katView = 'grid';
     _el = document.getElementById('screen-hadith');
     if (!_el) return;
-    _el.innerHTML = _buildHTML();
-    _bind();
-    _fetchPage();
-    _fetchCatCounts();
+    _el.innerHTML = _underVerificationHTML();
+    _el.querySelector('#hd-verify-back')?.addEventListener('click', () => window.App.navigate('screen-dashboard'));
   }
 
   function load(lang) {
     _lang = lang;
-    _selIdx = null; _selChapterId = null; _katView = 'grid';
-    _katFilter = null; _catChapters = [];
     _el = document.getElementById('screen-hadith');
     if (!_el) return;
-    _el.innerHTML = _buildHTML();
-    _bind();
-    if (_pageHadiths.length > 0) {
-      _refreshBody();
-    } else {
-      _fetchPage();
-    }
-    if (!Object.keys(_catCounts).length) _fetchCatCounts();
+    _el.innerHTML = _underVerificationHTML();
+    _el.querySelector('#hd-verify-back')?.addEventListener('click', () => window.App.navigate('screen-dashboard'));
   }
 
   /* ══════════════════════════════════════════════

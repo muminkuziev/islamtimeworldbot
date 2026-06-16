@@ -26,6 +26,8 @@ const SettingsScreen = (function () {
   ];
   function _mzLabel(mz) {
     if (!mz) return '';
+    const e = I18N['settings_' + mz.k];
+    if (e && e[_lang]) return e[_lang];
     if (_lang === 'uz_cyr') return mz.lc || mz.l;
     if (_lang === 'ru') return mz.lr || mz.l;
     if (_lang === 'en') return mz.le || mz.l;
@@ -36,7 +38,7 @@ const SettingsScreen = (function () {
             'interface' | 'notifications' | 'cloudsync' |
             'contact' | 'about'                               */
   let _lang = 'uz';
-  function _T(lat, cyr, ru, en) { if (_lang === 'uz_cyr') return cyr; if (_lang === 'ru' && ru !== undefined) return ru; if (_lang === 'en' && en !== undefined) return en; return lat; }
+  function _T(lat, cyr, ru, en) { return _resolveT(lat, cyr, ru, en, _lang); }
   let _s    = {};
   let _view = 'main';
 
@@ -254,7 +256,7 @@ const SettingsScreen = (function () {
           <span class="st-tema-ic">🌙</span>
           <div class="st-rb">
             <div class="st-rl">${_T('Tungi rejim','Тунги режим','Тёмный режим','Dark mode')}</div>
-            <div class="st-rs">Navy + oltin — ${_T('hozirgi','ҳозирги','текущий','current')}</div>
+            <div class="st-rs">${_T('Navy + oltin (hozirgi)','Navy + олтин (ҳозирги)','Navy + золото (текущий)','Navy + gold (current)')}</div>
           </div>
           ${_s.theme === 'dark' ? '<div class="st-check">✓</div>' : ''}
         </div>
@@ -265,7 +267,7 @@ const SettingsScreen = (function () {
             <div class="st-rl st-muted">${_T('Kunduzgi rejim','Кундузги режим','Светлый режим','Light mode')}</div>
             <div class="st-rs">${_T('Tez orada...','Тез орада...','Скоро...','Coming soon...')}</div>
           </div>
-          <span class="st-soon-badge">Soon</span>
+          <span class="st-soon-badge">${_T('Tez orada','Тез орада','Скоро','Soon')}</span>
         </div>
       </div>`;
   }
@@ -355,22 +357,110 @@ const SettingsScreen = (function () {
   }
 
   function _htmlAbout() {
+    const features = [
+      _T('Aniq namoz vaqtlari',    'Аниқ намоз вақтлари',    'Точное время намаза',          'Accurate prayer times'),
+      _T("Qibla yo'nalishi",       'Қибла йўналиши',          'Направление Киблы',            'Qibla direction'),
+      _T('Yaqin masjidlar',        'Яқин масжидлар',          'Ближайшие мечети',             'Nearby mosques'),
+      _T("Qur'on",                 "Қуръон",                  'Коран',                        'Quran'),
+      _T('Hadis',                  'Ҳадис',                   'Хадис',                        'Hadith'),
+      _T("Du'olar",                "Дуолар",                  'Дуа',                          "Du'as"),
+      _T('Zikr va Salavot',        'Зикр ва Салавот',         'Зикр и Салавот',               'Dhikr & Salawat'),
+      _T('Hijriy taqvim',          'Ҳижрий тақвим',           'Исламский календарь',          'Hijri calendar'),
+      _T("Allohning 99 ismi",      'Аллоҳнинг 99 исми',       '99 имён Аллаха',               '99 Names of Allah'),
+    ];
+
     return `
-      <div class="st-sect" style="margin-bottom:28px">
-        <div class="st-plain-row">
-          <div class="st-rb">
-            <div class="st-rl">IslamTimeWorldBot ${_T('haqida','ҳақида','о приложении','about')}</div>
-            <div class="st-rs">${_T("Namoz · Qibla · Qur'on · Hadis · Zikr · Du'o","Намоз · Қибла · Қуръон · Ҳадис · Зикр · Дуо","Намаз · Кибла · Коран · Хадис · Зикр · Дуа","Prayer · Qibla · Quran · Hadith · Dhikr · Dua")}</div>
-          </div>
+      <!-- Hero ─────────────────────────────────── -->
+      <div class="ab-hero">
+        <div class="ab-hero-topline"></div>
+        <div class="ab-hero-crescent">🌙</div>
+        <div class="ab-hero-name">IslamTimeWorldBot</div>
+        <div class="ab-hero-tag">${_T(
+          "Global Islomiy Ibodat va Turmush Platformasi",
+          "Глобал Исломий Ибодат ва Турмуш Платформаси",
+          "Глобальная исламская молитвенная платформа",
+          "Global Islamic Prayer & Lifestyle Platform"
+        )}</div>
+        <div class="ab-hero-divider"></div>
+        <div class="ab-hero-meta">
+          🌍 14 ${_T('til','тил','языков','languages')} &nbsp;·&nbsp;
+          📦 10 ${_T('modul','модул','модулей','modules')} &nbsp;·&nbsp;
+          v1.0 Beta
         </div>
-        <div class="st-div"></div>
-        <div class="st-plain-row">
-          <div class="st-rb">
-            <div class="st-rl">${_T('Versiya','Версия','Версия','Version')}</div>
-            <div class="st-rs">1.0 beta · 14 ${_T('til','тил','яз.','lang')} · 10 ${_T('modul','модул','мод.','mod')} · 4 ${_T('mazhab','мазҳаб','мазх.','madhab')}</div>
-          </div>
+      </div>
+
+      <!-- Mission hadith ─────────────────────── -->
+      <div class="ab-hadith-card">
+        <div class="ab-hadith-lbl">${_T('MISSIYA','МИССИЯ','МИССИЯ','MISSION')}</div>
+        <div class="ab-hadith-quote">"${_T(
+          "Kim bir yaxshilikka sababchi bo'lsa, uni qilgan kabi ajr oladi.",
+          "Ким бир яхшиликка сабабчи бўлса, уни қилган каби ажр олади.",
+          "Тот, кто указал на благое, получит такую же награду.",
+          "Whoever guides to goodness will have a reward like the one who does it."
+        )}"</div>
+        <div class="ab-hadith-ref">— ${_T('Muslim, 2671','Муслим, 2671','Муслим, 2671','Muslim, 2671')}</div>
+      </div>
+
+      <!-- Stats grid ─────────────────────────── -->
+      <div class="ab-stats-grid">
+        <div class="ab-stat-box">
+          <div class="ab-stat-num">14</div>
+          <div class="ab-stat-lbl">${_T('Tillar','Тиллар','Языков','Languages')}</div>
         </div>
-        <div class="st-div"></div>
+        <div class="ab-stat-box">
+          <div class="ab-stat-num">10</div>
+          <div class="ab-stat-lbl">${_T('Modullar','Модуллар','Модулей','Modules')}</div>
+        </div>
+        <div class="ab-stat-box ab-stat-box--blue">
+          <div class="ab-stat-num ab-stat-num--sm">Telegram<br>WebApp</div>
+          <div class="ab-stat-lbl">${_T('Platforma','Платформа','Платформа','Platform')}</div>
+        </div>
+        <div class="ab-stat-box ab-stat-box--green">
+          <div class="ab-stat-num ab-stat-num--sm">Public<br>Beta</div>
+          <div class="ab-stat-lbl">${_T('Holat','Ҳолат','Статус','Status')}</div>
+        </div>
+      </div>
+
+      <!-- Purpose / Features ─────────────────── -->
+      <div class="ab-feat-card">
+        <div class="ab-feat-lbl">${_T('MAQSAD','МАҚСАД','ЦЕЛЬ','PURPOSE')}</div>
+        <div class="ab-feat-desc">${_T(
+          "IslamTimeWorldBot butun dunyo musulmonlariga quyidagilarda yordam beradi:",
+          "IslamTimeWorldBot бутун дунё мусулмонларига қуйидагиларда ёрдам беради:",
+          "IslamTimeWorldBot помогает мусульманам по всему миру:",
+          "IslamTimeWorldBot helps Muslims around the world with:"
+        )}</div>
+        <div class="ab-feat-list">
+          ${features.map(f => `
+            <div class="ab-feat-item">
+              <span class="ab-feat-bullet">•</span>
+              <span class="ab-feat-text">${f}</span>
+            </div>`).join('')}
+        </div>
+      </div>
+
+      <!-- Developer ──────────────────────────── -->
+      <div class="ab-dev-card">
+        <div class="ab-dev-lbl">${_lang === 'ar'
+          ? 'مؤسس وصاحب المشروع'
+          : _T('ASOSCHI VA LOYIHA MUALLIFI','АСОСЧИ ВА ЛОЙИҲА МУАЛЛИФИ','ОСНОВАТЕЛЬ И АВТОР ПРОЕКТА','FOUNDER & PROJECT AUTHOR')
+        }</div>
+        <div class="ab-dev-name">Mumin Kuziev</div>
+        <div class="ab-dev-handle" id="ab-dev-handle">@islamtimeworldsupport</div>
+      </div>
+
+      <!-- Data sources ───────────────────────── -->
+      <div class="ab-sources-card">
+        <div class="ab-sources-lbl">${_T("MA'LUMOT MANBALARI","МАЪЛУМОТ МАНБАЛАРИ","ИСТОЧНИКИ ДАННЫХ","DATA SOURCES")}</div>
+        <div class="ab-sources-list">
+          Aladhan API &nbsp;·&nbsp; Al-Quran Cloud &nbsp;·&nbsp;
+          HadithAPI &nbsp;·&nbsp; OpenStreetMap &nbsp;·&nbsp;
+          Open-Meteo &nbsp;·&nbsp; OpenAQ
+        </div>
+      </div>
+
+      <!-- Legal links ────────────────────────── -->
+      <div class="st-sect" style="margin-bottom:12px">
         <div class="st-contact-row" id="st-privacy-btn">
           <div class="st-rb">
             <div class="st-rl">${_T('Maxfiylik siyosati','Махфийлик сиёсати','Политика конфиденциальности','Privacy Policy')}</div>
@@ -384,22 +474,15 @@ const SettingsScreen = (function () {
           </div>
           <span class="st-arr">›</span>
         </div>
-        <div class="st-div"></div>
-        <div class="st-plain-row">
-          <div class="st-rb">
-            <div class="st-rl">${_T("Ma'lumot manbalari","Маълумот манбалари","Источники данных",'Data sources')}</div>
-            <div class="st-rs">Aladhan API · Al-Quran Cloud · HadithAPI</div>
-          </div>
-        </div>
-        <div class="st-div"></div>
-        <div class="st-contact-row" id="st-policy-btn">
-          <div class="st-rb">
-            <div class="st-rl">${_T('Islomiy kontent siyosati','Исломий контент сиёсати','Политика исламского контента','Islamic content policy')}</div>
-            <div class="st-rs">${_T('Sahih manbalarga asoslanadi','Саҳиҳ манбаларга асосланади','Основано на достоверных источниках','Based on authentic sources')}</div>
-          </div>
-          <span class="st-arr">›</span>
-        </div>
-      </div>`;
+      </div>
+
+      <!-- Footer ─────────────────────────────── -->
+      <div class="ab-footer">${_T(
+        "Butun dunyo muslim jamoasi uchun samimiyat bilan yaratilgan.",
+        "Бутун дунё муслим жамоаси учун самимийлик билан яратилган.",
+        "Создано с искренностью для мусульманской общины всего мира.",
+        "Developed with sincerity for the global Muslim community."
+      )}</div>`;
   }
 
   /* ── Events ──────────────────────────────────────────────── */
@@ -549,6 +632,11 @@ const SettingsScreen = (function () {
   }
 
   function _bindAbout(el) {
+    el.querySelector('#ab-dev-handle')?.addEventListener('click', () => {
+      const tg = window.Telegram?.WebApp;
+      if (tg?.openTelegramLink) tg.openTelegramLink('https://t.me/islamtimeworldsupport');
+      else window.open('https://t.me/islamtimeworldsupport', '_blank');
+    });
     el.querySelector('#st-privacy-btn')?.addEventListener('click', () => {
       const tg = window.Telegram?.WebApp;
       if (tg?.openLink) tg.openLink('https://islamtimeworld.com/privacy');
@@ -558,9 +646,6 @@ const SettingsScreen = (function () {
       const tg = window.Telegram?.WebApp;
       if (tg?.openLink) tg.openLink('https://islamtimeworld.com/terms');
       else window.open('https://islamtimeworld.com/terms', '_blank');
-    });
-    el.querySelector('#st-policy-btn')?.addEventListener('click', () => {
-      _toast(_T('Barcha kontent sahih manbalarga asoslanadi','Барча контент саҳиҳ манбаларга асосланади','Весь контент основан на достоверных источниках','All content is based on authentic sources'));
     });
   }
 

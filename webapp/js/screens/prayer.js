@@ -21,12 +21,30 @@ const PrayerScreen = (function () {
 
   /* ── Local AQI levels (0–500 WHO scale) ─────────────────────── */
   const AQI_LEVELS = [
-    { max:50,  label:'Yaxshi',                label_cyr:'Яхши',                label_ru:'Хорошо',              label_en:'Good',                  color:'#4fcfa0', safe:true  },
-    { max:100, label:"O'rtacha",              label_cyr:'Ўртача',              label_ru:'Умеренно',             label_en:'Moderate',              color:'#a3e635', safe:true  },
-    { max:150, label:'Sezgirlar uchun zarar', label_cyr:'Сезгирлар учун зарар',label_ru:'Вредно (чувствит.)', label_en:'Sensitive Groups',      color:'#f59e0b', safe:false },
-    { max:200, label:'Zararli',               label_cyr:'Зарарли',             label_ru:'Вредно',               label_en:'Unhealthy',             color:'#f97316', safe:false },
-    { max:300, label:'Juda zararli',          label_cyr:'Жуда зарарли',        label_ru:'Очень вредно',         label_en:'Very Unhealthy',        color:'#e05555', safe:false },
-    { max:500, label:'Xavfli',               label_cyr:'Хавфли',              label_ru:'Опасно',               label_en:'Hazardous',             color:'#c084fc', safe:false },
+    { max:50,  label:'Yaxshi',               label_cyr:'Яхши',                label_ru:'Хорошо',            label_en:'Good',
+               label_tr:'İyi',              label_ar:'جيد',                 label_kk:'Жақсы',            label_tg:'Хуб',
+               label_ky:'Жакшы',            label_de:'Gut',                 label_fr:'Bon',               label_id:'Baik',
+               label_hi:'अच्छा',             label_ur:'اچھا',                color:'#4fcfa0', safe:true  },
+    { max:100, label:"O'rtacha",             label_cyr:'Ўртача',              label_ru:'Умеренно',          label_en:'Moderate',
+               label_tr:'Orta',             label_ar:'معتدل',               label_kk:'Орташа',           label_tg:'Мӯтадил',
+               label_ky:'Орто',             label_de:'Mäßig',               label_fr:'Modéré',            label_id:'Sedang',
+               label_hi:'मध्यम',             label_ur:'درمیانہ',             color:'#a3e635', safe:true  },
+    { max:150, label:'Sezgirlar uchun zarar',label_cyr:'Сезгирлар учун зарар',label_ru:'Вредно (чувствит.)',label_en:'Sensitive Groups',
+               label_tr:'Hassaslar için',   label_ar:'ضار بالحساسين',       label_kk:'Сезімталдарға зиян',label_tg:'Барои ҳассосон',
+               label_ky:'Сезгирлер үчүн',  label_de:'Empfindliche Gruppen',label_fr:'Groupes sensibles',label_id:'Sensitif',
+               label_hi:'संवेदनशील समूह',   label_ur:'حساس گروہ',           color:'#f59e0b', safe:false },
+    { max:200, label:'Zararli',              label_cyr:'Зарарли',             label_ru:'Вредно',            label_en:'Unhealthy',
+               label_tr:'Sağlıksız',        label_ar:'ضار',                 label_kk:'Зиянды',           label_tg:'Зарарнок',
+               label_ky:'Зыяндуу',          label_de:'Ungesund',            label_fr:'Malsain',           label_id:'Tidak sehat',
+               label_hi:'अस्वस्थ',           label_ur:'نقصاندہ',             color:'#f97316', safe:false },
+    { max:300, label:'Juda zararli',         label_cyr:'Жуда зарарли',        label_ru:'Очень вредно',      label_en:'Very Unhealthy',
+               label_tr:'Çok sağlıksız',    label_ar:'ضار جداً',            label_kk:'Өте зиянды',       label_tg:'Хеле зарарнок',
+               label_ky:'Абдан зыяндуу',   label_de:'Sehr ungesund',       label_fr:'Très malsain',      label_id:'Sangat tidak sehat',
+               label_hi:'बहुत अस्वस्थ',     label_ur:'بہت نقصاندہ',         color:'#e05555', safe:false },
+    { max:500, label:'Xavfli',              label_cyr:'Хавфли',              label_ru:'Опасно',            label_en:'Hazardous',
+               label_tr:'Tehlikeli',        label_ar:'خطر',                 label_kk:'Қауіпті',          label_tg:'Хатарнок',
+               label_ky:'Кооптуу',          label_de:'Gefährlich',          label_fr:'Dangereux',         label_id:'Berbahaya',
+               label_hi:'खतरनाक',            label_ur:'خطرناک',              color:'#c084fc', safe:false },
   ];
 
   function _getAqiLevel(v) {
@@ -192,8 +210,8 @@ const PrayerScreen = (function () {
     const d = L[key];
     return d ? (d[lang] || d.en || Object.values(d)[0]) : key;
   }
-  function _T(lat, cyr, ru, en) { if (_lang === 'uz_cyr') return cyr; if (_lang === 'ru' && ru !== undefined) return ru; if (_lang === 'en' && en !== undefined) return en; return lat; }
-  function _aqiLabel(lvl) { if (_lang === 'uz_cyr') return lvl.label_cyr; if (_lang === 'ru') return lvl.label_ru || lvl.label; if (_lang === 'en') return lvl.label_en || lvl.label; return lvl.label; }
+  function _T(lat, cyr, ru, en) { return _resolveT(lat, cyr, ru, en, _lang); }
+  function _aqiLabel(lvl) { return lvl['label_' + _lang] || lvl['label_' + _lang.split('_')[0]] || lvl.label_en || lvl.label; }
 
   /* ── Render shell ───────────────────────────────────────────── */
   function render() {

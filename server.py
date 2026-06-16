@@ -814,7 +814,7 @@ async def api_hadith(
 
     col    = "bukhari" if collection != "muslim" else "muslim"
     offset = (page - 1) * limit
-    use_uz = lang in ("uz", "uz_cyr") and col == "bukhari"
+    use_uz = False  # hadiths_uz_bukhari disabled — source under license verification
 
     def _query():
         import sqlite3
@@ -1006,7 +1006,7 @@ async def api_hadith_search(
         return JSONResponse({"hadiths": [], "total": 0})
 
     col    = "bukhari" if collection != "muslim" else "muslim"
-    use_uz = lang in ("uz", "uz_cyr") and col == "bukhari"
+    use_uz = False  # hadiths_uz_bukhari disabled — source under license verification
 
     def _search():
         import sqlite3

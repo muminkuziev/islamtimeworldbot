@@ -11,15 +11,38 @@
 const DashboardScreen = (function () {
 
   /* ── Calendar data ── */
-  const DAYS_UZ  = ['Yakshanba','Dushanba','Seshanba','Chorshanba','Payshanba','Juma','Shanba'];
-  const DAYS_CYR = ['Якшанба','Душанба','Сешанба','Чоршанба','Пайшанба','Жума','Шанба'];
-  const MONTHS_UZ  = ['Yanvar','Fevral','Mart','Aprel','May','Iyun',
-                      'Iyul','Avgust','Sentyabr','Oktyabr','Noyabr','Dekabr'];
-  const MONTHS_CYR = ['Январ','Феврал','Март','Апрел','Май','Июн',
-                      'Июл','Август','Сентябр','Октябр','Ноябр','Декабр'];
-  const DAYS_RU   = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
-  const MONTHS_RU = ['Январь','Февраль','Март','Апрель','Май','Июнь',
-                     'Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  const DAYS_MAP = {
+    uz:     ['Yakshanba','Dushanba','Seshanba','Chorshanba','Payshanba','Juma','Shanba'],
+    uz_cyr: ['Якшанба','Душанба','Сешанба','Чоршанба','Пайшанба','Жума','Шанба'],
+    ru:     ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'],
+    en:     ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
+    tr:     ['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'],
+    ar:     ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'],
+    kk:     ['Жексенбі','Дүйсенбі','Сейсенбі','Сәрсенбі','Бейсенбі','Жұма','Сенбі'],
+    tg:     ['Якшанбе','Душанбе','Сешанбе','Чоршанбе','Панҷшанбе','Ҷумъа','Шанбе'],
+    ky:     ['Жекшемби','Дүйшөмбү','Шейшемби','Шаршемби','Бейшемби','Жума','Ишемби'],
+    de:     ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'],
+    fr:     ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'],
+    id:     ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'],
+    hi:     ['रविवार','सोमवार','मंगलवार','बुधवार','गुरुवार','शुक्रवार','शनिवार'],
+    ur:     ['اتوار','پیر','منگل','بدھ','جمعرات','جمعہ','ہفتہ'],
+  };
+  const MONTHS_MAP = {
+    uz:     ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentyabr','Oktyabr','Noyabr','Dekabr'],
+    uz_cyr: ['Январ','Феврал','Март','Апрел','Май','Июн','Июл','Август','Сентябр','Октябр','Ноябр','Декабр'],
+    ru:     ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'],
+    en:     ['January','February','March','April','May','June','July','August','September','October','November','December'],
+    tr:     ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'],
+    ar:     ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'],
+    kk:     ['Қаңтар','Ақпан','Наурыз','Сәуір','Мамыр','Маусым','Шілде','Тамыз','Қыркүйек','Қазан','Қараша','Желтоқсан'],
+    tg:     ['Январ','Феврал','Март','Апрел','Май','Июн','Июл','Август','Сентябр','Октябр','Ноябр','Декабр'],
+    ky:     ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'],
+    de:     ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'],
+    fr:     ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'],
+    id:     ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'],
+    hi:     ['जनवरी','फ़रवरी','मार्च','अप्रैल','मई','जून','जुलाई','अगस्त','सितंबर','अक्तूबर','नवंबर','दिसंबर'],
+    ur:     ['جنوری','فروری','مارچ','اپریل','مئی','جون','جولائی','اگست','ستمبر','اکتوبر','نومبر','دسمبر'],
+  };
   const HIJRI_MONTHS_AR = [
     'محرم','صفر','ربيع الأول','ربيع الآخر',
     'جمادى الأولى','جمادى الآخرة','رجب','شعبان',
@@ -28,16 +51,86 @@ const DashboardScreen = (function () {
 
   /* ── Module definitions ── */
   const MODULES = [
-    { key:'prayer',   sub:'5 vaqt · Ob-havo · AQI',         sub_cyr:'5 вақт · Об-ҳаво · AQI',       sub_ru:'5 намазов · Погода · AQI',            sub_en:'5 Prayers · Weather · AQI'           },
-    { key:'qibla',    sub:"Kompas · Ka'ba masofasi",         sub_cyr:'Компас · Каъба масофаси',       sub_ru:'Компас · Расстояние до Каабы',        sub_en:"Compass · Ka'bah Distance"           },
-    { key:'mosques',  sub:"Xarita · Yo'nalish · Jadval",     sub_cyr:'Харита · Йўналиш · Жадвал',    sub_ru:'Карта · Маршрут · Расписание',        sub_en:'Map · Directions · Schedule'         },
-    { key:'quran',    sub:'114 sura · Audio · Qori',         sub_cyr:'114 сура · Аудио · Қори',       sub_ru:'114 сур · Аудио · Чтец',             sub_en:'114 Surahs · Audio · Reciter'        },
-    { key:'hadith',   sub:'Buxoriy · Muslim · Tarjima',      sub_cyr:'Бухорий · Муслим · Таржима',    sub_ru:'Бухари · Муслим · Перевод',           sub_en:'Bukhari · Muslim · Translation'      },
-    { key:'duas',     sub:'Kundalik · Mavzuli · Saqlash',    sub_cyr:'Кундалик · Мавзули · Сақлаш',  sub_ru:'Утро/Вечер · По теме · Сохранённые', sub_en:'Morning/Evening · Topics · Saved'    },
-    { key:'dhikr',    sub:'Hisoblagich · Ertalab · Kechki',  sub_cyr:'Ҳисоблагич · Эрталаб · Кечки', sub_ru:'Счётчик · Утренние · Вечерние',       sub_en:'Counter · Morning · Evening'         },
-    { key:'calendar', sub:'1447 · Islomiy kunlar',           sub_cyr:'1447 · Исломий кунлар',         sub_ru:'1447 · Исламские даты',              sub_en:'1447 · Islamic dates'                },
-    { key:'names',    sub:'Arabcha · Tafsir · Zikr',         sub_cyr:'Арабча · Тафсир · Зикр',        sub_ru:'Арабский · Тафсир · Зикр',           sub_en:'Arabic · Tafsir · Dhikr'             },
-    { key:'settings', sub:'Til · Tema · Qori · GPS',         sub_cyr:'Тил · Тема · Қори · GPS',       sub_ru:'Язык · Тема · Чтец · GPS',           sub_en:'Language · Theme · Reciter · GPS'    },
+    { key:'prayer',
+      sub:     '5 vaqt · Ob-havo · AQI',   sub_cyr:'5 вақт · Об-ҳаво · AQI',
+      sub_ru:  '5 намазов · Погода · AQI', sub_en: '5 Prayers · Weather · AQI',
+      sub_tr:  '5 Vakit · Hava · AQI',     sub_ar: '٥ صلوات · الطقس · AQI',
+      sub_kk:  '5 уақыт · Ауа райы · AQI',sub_tg: '5 вақт · Ҳаво · AQI',
+      sub_ky:  '5 убак · Аба ырай · AQI', sub_de: '5 Gebete · Wetter · AQI',
+      sub_fr:  '5 Prières · Météo · AQI',  sub_id: '5 Waktu · Cuaca · AQI',
+      sub_hi:  '५ वक़्त · मौसम · AQI',    sub_ur: '۵ نماز · موسم · AQI' },
+    { key:'qibla',
+      sub:     "Kompas · Ka'ba masofasi",   sub_cyr:'Компас · Каъба масофаси',
+      sub_ru:  'Компас · Расстояние до Каабы', sub_en:"Compass · Ka'bah Distance",
+      sub_tr:  "Pusula · Kâbe Mesafesi",   sub_ar: 'البوصلة · المسافة للكعبة',
+      sub_kk:  'Компас · Кааба қашықтығы', sub_tg: 'Компас · Масофа то Каъба',
+      sub_ky:  'Компас · Кааба аралыгы',  sub_de: 'Kompass · Kaaba-Entfernung',
+      sub_fr:  "Boussole · Distance Kaaba",sub_id: "Kompas · Jarak Ka'bah",
+      sub_hi:  'कम्पास · काबा दूरी',       sub_ur: 'کمپاس · کعبہ فاصلہ' },
+    { key:'mosques',
+      sub:     "Xarita · Yo'nalish · Jadval", sub_cyr:'Харита · Йўналиш · Жадвал',
+      sub_ru:  'Карта · Маршрут · Расписание',sub_en:'Map · Directions · Schedule',
+      sub_tr:  'Harita · Yön · Program',   sub_ar: 'الخريطة · الاتجاه · الجدول',
+      sub_kk:  'Карта · Бағыт · Кесте',   sub_tg: 'Харита · Самт · Ҷадвал',
+      sub_ky:  'Карта · Багыт · Жадвал',  sub_de: 'Karte · Richtung · Zeitplan',
+      sub_fr:  'Carte · Itinéraire · Horaires',sub_id:'Peta · Arah · Jadwal',
+      sub_hi:  'नक्शा · दिशा · समय',       sub_ur: 'نقشہ · سمت · شیڈول' },
+    { key:'quran',
+      sub:     '114 sura · Audio · Qori',  sub_cyr:'114 сура · Аудио · Қори',
+      sub_ru:  '114 сур · Аудио · Чтец',  sub_en: '114 Surahs · Audio · Reciter',
+      sub_tr:  '114 Sure · Ses · Kâri',   sub_ar: '١١٤ سورة · صوت · القارئ',
+      sub_kk:  '114 сүре · Аудио · Қари', sub_tg: '114 сура · Аудио · Қори',
+      sub_ky:  '114 сура · Аудио · Қори', sub_de: '114 Suren · Audio · Rezitator',
+      sub_fr:  '114 Sourates · Audio · Récitant',sub_id:'114 Surah · Audio · Qari',
+      sub_hi:  '११४ सूरत · ऑडियो · क़ारी', sub_ur: '۱۱۴ سورتیں · آڈیو · قاری' },
+    { key:'hadith',
+      sub:     'Buxoriy · Muslim · Tarjima', sub_cyr:'Бухорий · Муслим · Таржима',
+      sub_ru:  'Бухари · Муслим · Перевод', sub_en:'Bukhari · Muslim · Translation',
+      sub_tr:  'Buhari · Müslim · Tercüme', sub_ar: 'البخاري · مسلم · الترجمة',
+      sub_kk:  'Бухари · Муслим · Аударма', sub_tg: 'Бухорӣ · Муслим · Тарҷума',
+      sub_ky:  'Бухарий · Муслим · Котормо',sub_de: 'Bukhari · Muslim · Übersetzung',
+      sub_fr:  'Boukhari · Muslim · Trad.', sub_id: 'Bukhari · Muslim · Terjemahan',
+      sub_hi:  'बुखारी · मुस्लिम · अनुवाद',  sub_ur: 'بخاری · مسلم · ترجمہ' },
+    { key:'duas',
+      sub:     'Kundalik · Mavzuli · Saqlash', sub_cyr:'Кундалик · Мавзули · Сақлаш',
+      sub_ru:  'Утро/Вечер · По теме · Сохранённые',sub_en:'Morning/Evening · Topics · Saved',
+      sub_tr:  'Sabah/Akşam · Konular · Kayıtlı',sub_ar:'الصباح/المساء · مواضيع · محفوظة',
+      sub_kk:  'Таңертең/Кеш · Тақырып · Сақталған',sub_tg:'Субҳ/Шом · Мавзуҳо · Захира',
+      sub_ky:  'Эртең/Кеч · Темалар · Сакталган',sub_de:'Morgen/Abend · Themen · Gespeichert',
+      sub_fr:  'Matin/Soir · Thèmes · Sauvegardées',sub_id:'Pagi/Sore · Topik · Tersimpan',
+      sub_hi:  'सुबह/शाम · विषय · सहेजे गए',  sub_ur: 'صبح/شام · موضوع · محفوظ' },
+    { key:'dhikr',
+      sub:     'Hisoblagich · Ertalab · Kechki', sub_cyr:'Ҳисоблагич · Эрталаб · Кечки',
+      sub_ru:  'Счётчик · Утренние · Вечерние', sub_en:'Counter · Morning · Evening',
+      sub_tr:  'Sayaç · Sabah · Akşam',      sub_ar: 'العداد · الصباح · المساء',
+      sub_kk:  'Есептегіш · Таңертең · Кеш', sub_tg: 'Ҳисобкунак · Субҳ · Шом',
+      sub_ky:  'Эсептегич · Эртең · Кеч',   sub_de: 'Zähler · Morgen · Abend',
+      sub_fr:  'Compteur · Matin · Soir',    sub_id: 'Penghitung · Pagi · Sore',
+      sub_hi:  'काउंटर · सुबह · शाम',         sub_ur: 'کاؤنٹر · صبح · شام' },
+    { key:'calendar',
+      sub:     '1447 · Islomiy kunlar',     sub_cyr:'1447 · Исломий кунлар',
+      sub_ru:  '1447 · Исламские даты',    sub_en: '1447 · Islamic dates',
+      sub_tr:  '1447 · İslam Takvimi',     sub_ar: '١٤٤٧ · التقويم الهجري',
+      sub_kk:  '1447 · Ислам мерзімдері', sub_tg: '1447 · Санаҳои исломӣ',
+      sub_ky:  '1447 · Ислам күндөрү',    sub_de: '1447 · Islamische Daten',
+      sub_fr:  '1447 · Dates islamiques',  sub_id: '1447 · Kalender Islam',
+      sub_hi:  '१४४७ · इस्लामी तिथियाँ',   sub_ur: '۱۴۴۷ · اسلامی تاریخیں' },
+    { key:'names',
+      sub:     'Arabcha · Tafsir · Zikr',  sub_cyr:'Арабча · Тафсир · Зикр',
+      sub_ru:  'Арабский · Тафсир · Зикр', sub_en: 'Arabic · Tafsir · Dhikr',
+      sub_tr:  'Arapça · Tefsir · Zikir',  sub_ar: 'العربية · التفسير · الذكر',
+      sub_kk:  'Арабша · Тафсир · Зікір', sub_tg: 'Арабӣ · Тафсир · Зикр',
+      sub_ky:  'Арабча · Тафсир · Зикр',  sub_de: 'Arabisch · Tafsir · Dhikr',
+      sub_fr:  'Arabe · Tafsir · Dhikr',  sub_id: 'Arab · Tafsir · Dzikir',
+      sub_hi:  'अरबी · तफ़सीर · ज़िक्र',    sub_ur: 'عربی · تفسیر · ذکر' },
+    { key:'settings',
+      sub:     'Til · Tema · Qori · GPS',  sub_cyr:'Тил · Тема · Қори · GPS',
+      sub_ru:  'Язык · Тема · Чтец · GPS', sub_en: 'Language · Theme · Reciter · GPS',
+      sub_tr:  'Dil · Tema · Kâri · GPS',  sub_ar: 'اللغة · المظهر · القارئ · GPS',
+      sub_kk:  'Тіл · Тема · Қари · GPS', sub_tg: 'Забон · Тема · Қори · GPS',
+      sub_ky:  'Тил · Тема · Қори · GPS', sub_de: 'Sprache · Thema · Rezitator · GPS',
+      sub_fr:  'Langue · Thème · Récitant · GPS',sub_id:'Bahasa · Tema · Qari · GPS',
+      sub_hi:  'भाषा · थीम · क़ारी · GPS',   sub_ur: 'زبان · تھیم · قاری · GPS' },
   ];
 
   let _el      = null;
@@ -88,7 +181,7 @@ const DashboardScreen = (function () {
     const flag  = getLangFlag(_lang);
     const tiles = MODULES.map(mod => {
       const title = t('modules_list.' + mod.key, _lang);
-      const sub   = _lang === 'uz_cyr' ? (mod.sub_cyr || mod.sub) : _lang === 'ru' ? (mod.sub_ru || mod.sub) : _lang === 'en' ? (mod.sub_en || mod.sub) : mod.sub;
+      const sub   = mod['sub_' + _lang] || (_lang === 'uz_cyr' ? mod.sub_cyr : null) || mod['sub_' + _lang.split('_')[0]] || mod.sub_en || mod.sub;
       return `
         <div class="db-tile-wrap">
           <div class="db-cell" data-module="${mod.key}" role="button" tabindex="0">
@@ -183,8 +276,8 @@ const DashboardScreen = (function () {
     if (!uzEl || !arEl) return;
 
     const n = new Date();
-    const days   = _lang === 'uz_cyr' ? DAYS_CYR   : _lang === 'ru' ? DAYS_RU   : DAYS_UZ;
-    const months = _lang === 'uz_cyr' ? MONTHS_CYR : _lang === 'ru' ? MONTHS_RU : MONTHS_UZ;
+    const days   = DAYS_MAP[_lang]   || DAYS_MAP.en;
+    const months = MONTHS_MAP[_lang] || MONTHS_MAP.en;
     uzEl.textContent = `${days[n.getDay()]}, ${String(n.getDate()).padStart(2,'0')} ${months[n.getMonth()]} ${n.getFullYear()}`;
 
     const h = _toHijri(n);

@@ -20,6 +20,10 @@
   /* Allow passive touch scroll in WebView */
   document.addEventListener('touchmove', function () {}, { passive: true });
 
+  /* ── URL parameters (read once at load) ── */
+  const _urlParams   = new URLSearchParams(window.location.search);
+  const _isStartFlow = _urlParams.get('start') === '1';
+
   /* ── App State ── */
   const state = {
     lang:          localStorage.getItem('islamtime_lang') || _detectLang(),
@@ -100,7 +104,7 @@
   DashboardScreen.render();
 
   /* ── Reset mode: ?reset=1 clears all onboarding state ── */
-  if (new URLSearchParams(window.location.search).get('reset') === '1') {
+  if (_urlParams.get('reset') === '1') {
     ['islamtime_lang','islamtime_madhab','islamtime_location_asked',
      'islamtime_last_lat','islamtime_last_lon','islamtime_mosques_v1'].forEach(k => localStorage.removeItem(k));
   }
@@ -108,24 +112,29 @@
   /* ── Boot sequence ── */
   navigate('screen-splash');
 
-  const langConfirmed  = !!localStorage.getItem('islamtime_lang');
-  const SPLASH_DURATION = langConfirmed ? 1800 : 2600;
+  const langConfirmed   = !!localStorage.getItem('islamtime_lang');
+  /* Shorter splash for returning users; first-timers see full animation */
+  const SPLASH_DURATION = langConfirmed ? 1600 : 2600;
 
   setTimeout(() => {
-    if (langConfirmed) {
-      applyLangDir(state.lang);
-      const madhab    = localStorage.getItem('islamtime_madhab');
-      const locAsked  = localStorage.getItem('islamtime_location_asked');
-      if (madhab && locAsked) {
-        DashboardScreen.update(state.lang);
-        navigate('screen-dashboard');
-      } else if (madhab) {
-        navigate('screen-location');
-      } else {
-        navigate('screen-mazhab');
-      }
-    } else {
+    /* ?start=1 → user pressed the /start button: always show Language screen.
+       This ensures Language Selection is never bypassed regardless of cached state. */
+    if (_isStartFlow || !langConfirmed) {
       navigate('screen-language');
+      return;
+    }
+
+    /* Direct webapp access (no ?start=1): restore previous session normally */
+    applyLangDir(state.lang);
+    const madhab   = localStorage.getItem('islamtime_madhab');
+    const locAsked = localStorage.getItem('islamtime_location_asked');
+    if (madhab && locAsked) {
+      DashboardScreen.update(state.lang);
+      navigate('screen-dashboard');
+    } else if (madhab) {
+      navigate('screen-location');
+    } else {
+      navigate('screen-mazhab');
     }
   }, SPLASH_DURATION);
 

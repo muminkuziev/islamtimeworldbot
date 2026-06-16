@@ -761,6 +761,279 @@ function t(key, lang) {
   return key;
 }
 
+/* ── _resolveT(): full 14-language _T resolver ──────────────── */
+const _EXTRA_T = {
+  'Done':               { tr:'Tamamlandı',           ar:'تم',              id:'Selesai',       kk:'Орындалды',        tg:'Анҷом ёфт',         ky:'Аяктады',       de:'Erledigt',       fr:'Terminé',     hi:'हो गया',       ur:'مکمل'           },
+  'left':               { tr:'kaldı',                ar:'باقي',            id:'tersisa',       kk:'қалды',            tg:'монд',              ky:'калды',         de:'übrig',          fr:'restant',     hi:'शेष',          ur:'باقی'           },
+  'Location':           { tr:'Konum',                ar:'الموقع',           id:'Lokasi',        kk:'Орналасуы',        tg:'Мавқеъ',            ky:'Жайгашуу',      de:'Standort',       fr:'Localisation',hi:'स्थान',        ur:'مقام'           },
+  'Language and Madhab':{ tr:'Dil ve Mezhep',        ar:'اللغة والمذهب',   id:'Bahasa dan Mazhab', kk:'Тіл және мазхаб', tg:'Забон ва мазҳаб', ky:'Тил жана мазхаб', de:'Sprache und Madhab', fr:'Langue et Madhab', hi:'भाषा और मज़हब', ur:'زبان اور مذہب' },
+  'Interface':          { tr:'Arayüz',               ar:'الواجهة',          id:'Antarmuka',     kk:'Интерфейс',        tg:'Интерфейс',         ky:'Интерфейс',     de:'Oberfläche',     fr:'Interface',   hi:'इंटरफ़ेस',     ur:'انٹرفیس'        },
+  'Cloud Sync':         { tr:'Bulut Senkronizasyonu',ar:'مزامنة السحابة',  id:'Sinkronisasi Cloud', kk:'Бұлтпен синхрондау', tg:'Синхронизатсияи абр', ky:'Булут синхрондоо', de:'Cloud-Sync', fr:'Sync cloud', hi:'क्लाउड सिंक', ur:'کلاؤڈ سنک'  },
+  'Contact & Support':  { tr:'İletişim ve Destek',   ar:'التواصل والدعم',  id:'Kontak & Dukungan', kk:'Байланыс және қолдау', tg:'Тамос ва дастгирӣ', ky:'Байланыш жана колдоо', de:'Kontakt & Support', fr:'Contact & Support', hi:'संपर्क और सहायता', ur:'رابطہ اور مدد' },
+  'About':              { tr:'Hakkında',             ar:'حول التطبيق',      id:'Tentang',       kk:'Туралы',           tg:'Дар бораи',         ky:'Жөнүндө',       de:'Über',           fr:'À propos',    hi:'के बारे में',  ur:'بارے میں'       },
+  'Previous':           { tr:'Önceki',               ar:'السابق',           id:'Sebelumnya',    kk:'Алдыңғы',          tg:'Қаблӣ',             ky:'Мурунку',       de:'Zurück',         fr:'Précédent',   hi:'पिछला',        ur:'پچھلا'          },
+  'Next':               { tr:'Sonraki',              ar:'التالي',           id:'Berikutnya',    kk:'Келесі',           tg:'Навбатӣ',           ky:'Кийинки',       de:'Weiter',         fr:'Suivant',     hi:'अगला',         ur:'اگلا'           },
+  'TAFSIR':             { tr:'TEFSİR',               ar:'التفسير',           id:'TAFSIR',        kk:'ТАФСИР',           tg:'ТАФСИР',            ky:'ТАФСИР',        de:'TAFSIR',         fr:'TAFSIR',      hi:'तफ़सीर',       ur:'تفسیر'          },
+  'DHIKR COUNTER':      { tr:'ZİKİR SAYACI',         ar:'عداد الذكر',       id:'PENGHITUNG DZIKIR', kk:'ЗІКІР ЕСЕПТЕГІШ', tg:'ШУМУРАНДАИ ЗИКР', ky:'ЗИКР ЭСЕПТЕГИЧ', de:'ZÄHLER',      fr:'COMPTEUR',    hi:'ज़िक्र काउंटर',ur:'ذکر کاؤنٹر'     },
+  'times recited':      { tr:'kez zikredildi',       ar:'مرات ذُكر',       id:'kali dibaca',   kk:'рет айтылды',      tg:'маротиба гуфта шуд',ky:'жолу айтылды',  de:'mal gesagt',     fr:'fois récité', hi:'बार पढ़ा गया',  ur:'بار پڑھا گیا'  },
+  'Menu':               { tr:'Menü',                 ar:'القائمة',           id:'Menu',          kk:'Мәзір',            tg:'Меню',              ky:'Меню',          de:'Menü',           fr:'Menu',        hi:'मेनू',         ur:'مینو'           },
+  'Names':              { tr:'İsimler',              ar:'الأسماء',           id:'Nama-nama',     kk:'Атаулар',          tg:'Номҳо',             ky:'Аттар',         de:'Namen',          fr:'Noms',        hi:'नाम',          ur:'نام'            },
+  'Dhikr:':             { tr:'Zikir:',               ar:'الذكر:',            id:'Dzikir:',       kk:'Зікір:',           tg:'Зикр:',             ky:'Зикр:',         de:'Dhikr:',         fr:'Dhikr:',      hi:'ज़िक्र:',      ur:'ذکر:'           },
+  'Reset':              { tr:'Sıfırla',              ar:'إعادة',            id:'Reset',         kk:'Қайта орнату',     tg:'Барқарор кардан',   ky:'Кайра коюу',    de:'Zurücksetzen',   fr:'Réinitialiser',hi:'रीसेट',       ur:'ری سیٹ'         },
+  'Search name...':     { tr:'İsim ara...',          ar:'ابحث عن اسم...',   id:'Cari nama...',  kk:'Атауын іздеу...',  tg:'Ном ҷустуҷӯ...',    ky:'Атын издөө...',  de:'Name suchen...',  fr:'Rechercher...', hi:'नाम खोजें...', ur:'نام تلاش کریں...' },
+  'names':              { tr:'isim',                 ar:'اسم',              id:'nama',          kk:'атау',             tg:'ном',               ky:'ат',            de:'Namen',          fr:'noms',        hi:'नाम',          ur:'نام'            },
+  'Error occurred':     { tr:'Hata oluştu',          ar:'حدث خطأ',          id:'Terjadi kesalahan', kk:'Қате орын алды', tg:'Хато рух дод',    ky:'Ката болду',    de:'Fehler aufgetreten', fr:'Erreur survenue', hi:'त्रुटि आई', ur:'خطا آئی'     },
+  'Retry':              { tr:'Tekrar dene',           ar:'إعادة المحاولة',   id:'Coba lagi',     kk:'Қайталап көру',    tg:'Аз нав кӯшиш',      ky:'Кайра аракет',  de:'Erneut versuchen', fr:'Réessayer',  hi:'पुनः प्रयास',  ur:'دوبارہ کوشش'   },
+  'Hadith Books':       { tr:'Hadis Kitapları',      ar:'كتب الحديث',       id:'Kitab Hadis',   kk:'Хадис кітаптары',  tg:'Китобҳои ҳадис',    ky:'Хадис китептери', de:'Hadith-Bücher', fr:'Livres de hadith', hi:'हदीस किताबें', ur:'حدیث کی کتابیں' },
+  'Narrator':           { tr:'Ravici',               ar:'الراوي',            id:'Perawi',        kk:'Риуаятшы',         tg:'Ровӣ',              ky:'Риваятчы',      de:'Überlieferer',   fr:'Rapporteur',  hi:'रावी',         ur:'راوی'           },
+  'Vol.':               { tr:'Cilt',                 ar:'مجلد',             id:'Jilid',         kk:'Том',              tg:'Ҷилд',              ky:'Том',           de:'Bd.',            fr:'Vol.',        hi:'खंड',          ur:'جلد'            },
+  'Hadith not found':        { tr:'Hadis bulunamadı',     ar:'الحديث غير موجود', id:'Hadis tidak ditemukan', kk:'Хадис табылмады', tg:'Ҳадис ёфт нашуд', ky:'Хадис табылган жок', de:'Hadith nicht gefunden', fr:'Hadith introuvable', hi:'हदीस नहीं मिली', ur:'حدیث نہیں ملی' },
+  'Navy + gold (current)':   { tr:'Navy + altın (geçerli)', ar:'Navy + ذهبي (الحالي)', kk:'Navy + алтын (ағымдағы)', tg:'Navy + тиллоӣ (ҷорӣ)', ky:'Navy + алтын (учурдагы)', de:'Navy + Gold (aktuell)', fr:'Navy + or (actuel)', id:'Navy + emas (saat ini)', hi:'नेवी + गोल्ड (वर्तमान)', ur:'Navy + سنہری (موجودہ)' },
+  'Navy + oltin (hozirgi)':  { tr:'Navy + altın (geçerli)', ar:'Navy + ذهبي (الحالي)', kk:'Navy + алтын (ағымдағы)', tg:'Navy + тиллоӣ (ҷорӣ)', ky:'Navy + алтын (учурдагы)', de:'Navy + Gold (aktuell)', fr:'Navy + or (actuel)', id:'Navy + emas (saat ini)', hi:'नेवी + गोल्ड (वर्तमान)', ur:'Navy + سنہری (موجودہ)' },
+
+  /* ── Additional UI strings (critical visible fallbacks) ── */
+  'Detecting location...': { tr:'Konum algılanıyor...', ar:'جاري تحديد الموقع...', kk:'Орын анықталуда...', tg:'Мавқеат муайян мешавад...', ky:'Жайгашкан жер аныкталууда...', de:'Standort wird ermittelt...', fr:'Localisation en cours...', id:'Mendeteksi lokasi...', hi:'स्थान पता लगाया जा रहा है...', ur:'مقام تلاش ہو رہا ہے...' },
+  'Detecting...':          { tr:'Algılanıyor...', ar:'جاري الكشف...', kk:'Анықталуда...', tg:'Муайян мешавад...', ky:'Аныкталууда...', de:'Wird ermittelt...', fr:'Détection...', id:'Mendeteksi...', hi:'पता लगाया जा रहा है...', ur:'معلوم ہو رہا ہے...' },
+  'Nothing saved yet':     { tr:'Henüz kaydedilen yok', ar:'لا يوجد محفوظ بعد', kk:'Әлі ешнәрсе сақталмаған', tg:'Ҳанӯз чизе нигоҳ дошта нашудааст', ky:'Азырынча эч нерсе сакталган жок', de:'Noch nichts gespeichert', fr:'Rien de sauvegardé', id:'Belum ada yang tersimpan', hi:'अभी कुछ सहेजा नहीं', ur:'ابھی کچھ محفوظ نہیں' },
+  'Islamic dates':         { tr:'İslami Tarihler', ar:'التواريخ الإسلامية', kk:'Ислам мерзімдері', tg:'Санаҳои исломӣ', ky:'Ислам күндөрү', de:'Islamische Daten', fr:'Dates islamiques', id:'Tanggal Islam', hi:'इस्लामी तिथियाँ', ur:'اسلامی تاریخیں' },
+  'For prayer times and Qibla': { tr:'Namaz vakitleri ve kıble için', ar:'لأوقات الصلاة والقبلة', kk:'Намаз уақыты мен қибла үшін', tg:'Барои вақтҳои намоз ва қибла', ky:'Намаз убактары жана кыбла үчүн', de:'Für Gebetszeiten und Qibla', fr:'Pour les heures de prière et la qibla', id:'Untuk waktu sholat dan kiblat', hi:'नमाज़ के वक़्त और क़िबला के लिए', ur:'نماز کے اوقات اور قبلہ کے لیے' },
+  'For better accuracy, move your phone': { tr:'Daha iyi doğruluk için telefonunuzu hareket ettirin', ar:'لدقة أفضل، حرّك هاتفك', kk:'Жақсы дәлдік үшін телефонды жылжытыңыз', tg:'Барои дақиқии беҳтар, телефонро ҳаракат диҳед', ky:'Жакшы тактык үчүн телефонду жылдырыңыз', de:'Bewegen Sie das Handy für bessere Genauigkeit', fr:'Déplacez le téléphone pour plus de précision', id:'Gerakkan ponsel untuk akurasi lebih baik', hi:'बेहतर सटीकता के लिए फ़ोन हिलाएं', ur:'بہتر درستگی کے لیے فون کو حرکت دیں' },
+  'Location not saved':    { tr:'Konum kaydedilmedi', ar:'الموقع غير محفوظ', kk:'Орын сақталмаған', tg:'Мавқеат нигоҳ дошта нашудааст', ky:'Жайгашкан жер сакталган жок', de:'Standort nicht gespeichert', fr:'Localisation non enregistrée', id:'Lokasi belum disimpan', hi:'स्थान सहेजा नहीं', ur:'مقام محفوظ نہیں' },
+  'Update location':       { tr:'Konumu güncelle', ar:'تحديث الموقع', kk:'Орынды жаңарту', tg:'Мавқеатро навсоз кунед', ky:'Жайгашкан жерди жаңыртуу', de:'Standort aktualisieren', fr:'Mettre à jour la localisation', id:'Perbarui lokasi', hi:'स्थान अपडेट करें', ur:'مقام اپ ڈیٹ کریں' },
+  'GPS management':        { tr:'GPS yönetimi', ar:'إدارة GPS', kk:'GPS басқармасы', tg:'Идораи GPS', ky:'GPS башкаруу', de:'GPS-Verwaltung', fr:'Gestion GPS', id:'Manajemen GPS', hi:'GPS प्रबंधन', ur:'GPS انتظام' },
+  'GPS location':          { tr:'GPS konumu', ar:'موقع GPS', kk:'GPS орны', tg:'Мавқеати GPS', ky:'GPS жайгашуу', de:'GPS-Standort', fr:'Position GPS', id:'Lokasi GPS', hi:'GPS स्थान', ur:'GPS مقام' },
+  'Settings':              { tr:'Ayarlar', ar:'الإعدادات', kk:'Параметрлер', tg:'Танзимот', ky:'Жөндөөлөр', de:'Einstellungen', fr:'Paramètres', id:'Pengaturan', hi:'सेटिंग्स', ur:'ترتیبات' },
+  'Language':              { tr:'Dil', ar:'اللغة', kk:'Тіл', tg:'Забон', ky:'Тил', de:'Sprache', fr:'Langue', id:'Bahasa', hi:'भाषा', ur:'زبان' },
+  'Madhab':                { tr:'Mezhep', ar:'المذهب', kk:'Мазхаб', tg:'Мазҳаб', ky:'Мазхаб', de:'Madhab', fr:'Madhab', id:'Mazhab', hi:'मज़हब', ur:'مذہب' },
+  'Dark mode':             { tr:'Karanlık mod', ar:'الوضع المظلم', kk:'Қараңғы режим', tg:'Режими торик', ky:'Карангы режим', de:'Dunkelmodus', fr:'Mode sombre', id:'Mode gelap', hi:'डार्क मोड', ur:'ڈارک موڈ' },
+  'Light mode':            { tr:'Açık mod', ar:'الوضع الفاتح', kk:'Жарық режим', tg:'Режими равшан', ky:'Жарык режим', de:'Hellmodus', fr:'Mode clair', id:'Mode terang', hi:'लाइट मोड', ur:'لائٹ موڈ' },
+  'Coming soon...':        { tr:'Çok yakında...', ar:'قريباً...', kk:'Жақын арада...', tg:'Ба зудӣ...', ky:'Жакында...', de:'Demnächst...', fr:'Bientôt...', id:'Segera hadir...', hi:'जल्द आ रहा है...', ur:'جلد آ رہا ہے...' },
+  'Soon':                  { tr:'Yakında', ar:'قريباً', kk:'Жақында', tg:'Ба зудӣ', ky:'Жакында', de:'Bald', fr:'Bientôt', id:'Segera', hi:'जल्द', ur:'جلد' },
+  'Prayer reminders':      { tr:'Namaz hatırlatıcıları', ar:'تنبيهات الصلاة', kk:'Намаз еске салулары', tg:'Хотиркунандаи намоз', ky:'Намаз эскертүүлөрү', de:'Gebetserinnerungen', fr:'Rappels de prière', id:'Pengingat sholat', hi:'नमाज़ अनुस्मारक', ur:'نماز یاددہانیاں' },
+  'Notification for each prayer': { tr:'Her namaz için bildirim', ar:'إشعار لكل صلاة', kk:'Әрбір намаз үшін хабарлама', tg:'Огоҳинома барои ҳар намоз', ky:'Ар намаз үчүн билдирме', de:'Benachrichtigung für jedes Gebet', fr:'Notification pour chaque prière', id:'Notifikasi setiap sholat', hi:'हर नमाज़ के लिए सूचना', ur:'ہر نماز کے لیے اطلاع' },
+  'Daily verse':           { tr:'Günlük ayet', ar:'آية اليوم', kk:'Күнделікті аят', tg:'Ояти рӯзона', ky:'Күнүмдүк аят', de:'Täglicher Vers', fr:'Verset quotidien', id:'Ayat harian', hi:'दैनिक आयत', ur:'روزانہ آیت' },
+  'Daily hadith':          { tr:'Günlük hadis', ar:'حديث اليوم', kk:'Күнделікті хадис', tg:'Ҳадиси рӯзона', ky:'Күнүмдүк хадис', de:'Tägliches Hadith', fr:'Hadith quotidien', id:'Hadits harian', hi:'दैनिक हदीस', ur:'روزانہ حدیث' },
+  'Morning and evening':   { tr:'Sabah ve akşam', ar:'الصباح والمساء', kk:'Таңертең мен кеш', tg:'Субҳ ва шом', ky:'Эртең жана кеч', de:'Morgen und Abend', fr:'Matin et soir', id:'Pagi dan sore', hi:'सुबह और शाम', ur:'صبح اور شام' },
+  'Offline mode':          { tr:'Çevrimdışı mod', ar:'الوضع غير المتصل', kk:'Офлайн режим', tg:'Режими офлайн', ky:'Офлайн режим', de:'Offline-Modus', fr:'Mode hors ligne', id:'Mode offline', hi:'ऑफ़लाइन मोड', ur:'آف لائن موڈ' },
+  'Sync status':           { tr:'Senkronizasyon durumu', ar:'حالة المزامنة', kk:'Синхрондау күйі', tg:'Ҳолати синхронизатсия', ky:'Синхрондоо абалы', de:'Synchronisierungsstatus', fr:'État de synchronisation', id:'Status sinkronisasi', hi:'सिंक स्थिति', ur:'سنک کی حالت' },
+  'Send settings to server': { tr:'Ayarları sunucuya gönder', ar:'إرسال الإعدادات للخادم', kk:'Параметрлерді серверге жіберу', tg:'Танзимотро ба сервер фиристодан', ky:'Жөндөөлөрдү серверге жөнөтүү', de:'Einstellungen an Server senden', fr:'Envoyer les paramètres au serveur', id:'Kirim pengaturan ke server', hi:'सेटिंग्स सर्वर को भेजें', ur:'ترتیبات سرور کو بھیجیں' },
+  'Report an error':       { tr:'Hata bildir', ar:'الإبلاغ عن خطأ', kk:'Қателік туралы хабарлау', tg:'Хато ҳақида хабар додан', ky:'Ката жөнүндө билдирүү', de:'Fehler melden', fr:'Signaler une erreur', id:'Laporkan error', hi:'त्रुटि रिपोर्ट करें', ur:'خطا کی اطلاع دیں' },
+  'Describe a bug or issue': { tr:'Bir hata veya sorunu açıklayın', ar:'وصف الخطأ أو المشكلة', kk:'Қате немесе мәселені сипаттаңыз', tg:'Хато ё мушкилотро тавсиф кунед', ky:'Ката же маселени сүрөттөңүз', de:'Fehler oder Problem beschreiben', fr:'Décrire un bug ou un problème', id:'Jelaskan bug atau masalah', hi:'बग या समस्या का वर्णन करें', ur:'خطا یا مسئلے کو بیان کریں' },
+  'Send feedback / suggestion': { tr:'Geri bildirim / öneri gönder', ar:'إرسال ملاحظة / اقتراح', kk:'Пікір / ұсыныс жіберу', tg:'Фикру мулоҳиза / пешниҳод фиристодан', ky:'Пикир / сунуш жөнөтүү', de:'Feedback / Vorschlag senden', fr:'Envoyer un commentaire / suggestion', id:'Kirim umpan balik / saran', hi:'फ़ीडबैक / सुझाव भेजें', ur:'فیڈبیک / تجویز بھیجیں' },
+  'Help improve the app':  { tr:'Uygulamayı geliştirmeye yardım edin', ar:'ساعد في تحسين التطبيق', kk:'Қосымшаны жетілдіруге көмектесіңіз', tg:'Ба беҳтар кардани барнома кӯмак кунед', ky:'Колдонмону жакшыртууга жардам бериңиз', de:'Helfen Sie, die App zu verbessern', fr:"Aidez à améliorer l'application", id:'Bantu tingkatkan aplikasi', hi:'ऐप बेहतर बनाने में मदद करें', ur:'ایپ کو بہتر بنانے میں مدد کریں' },
+  'SELECT CALCULATION METHOD': { tr:'HESAPLAMA YÖNTEMİ SEÇ', ar:'اختر طريقة الحساب', kk:'ЕСЕПТЕУ ӘДІСІН ТАҢДАҢЫЗ', tg:'УСУЛИ ҲИСОБРО ИНТИХОБ КУНЕД', ky:'ЭСЕПТӨÖ ЫЧКЫБАСТЫ ТАНДАҢЫЗ', de:'BERECHNUNGSMETHODE WÄHLEN', fr:'CHOISIR LA MÉTHODE DE CALCUL', id:'PILIH METODE PERHITUNGAN', hi:'गणना विधि चुनें', ur:'حساب کا طریقہ منتخب کریں' },
+  'Prayer Calculation Method': { tr:'Namaz Hesaplama Yöntemi', ar:'طريقة حساب مواقيت الصلاة', kk:'Намаз есептеу әдісі', tg:'Усули ҳисоби намоз', ky:'Намаз эсептөö усулу', de:'Gebetszeitberechnungsmethode', fr:'Méthode de calcul des prières', id:'Metode Hitung Sholat', hi:'नमाज़ गणना विधि', ur:'نماز حساب کا طریقہ' },
+  'Select':                { tr:'Seçin', ar:'اختر', kk:'Таңдаңыз', tg:'Интихоб кунед', ky:'Тандаңыз', de:'Auswählen', fr:'Sélectionner', id:'Pilih', hi:'चुनें', ur:'منتخب کریں' },
+  'Weather loading…':      { tr:'Hava durumu yükleniyor…', ar:'جاري تحميل الطقس…', kk:'Ауа райы жүктелуде…', tg:'Ҳаво бор карда мешавад…', ky:'Аба ырай жүктөлүүдө…', de:'Wetter wird geladen…', fr:'Météo en chargement…', id:'Cuaca memuat…', hi:'मौसम लोड हो रहा है…', ur:'موسم لوڈ ہو رہا ہے…' },
+  'Air quality loading…':  { tr:'Hava kalitesi yükleniyor…', ar:'جاري تحميل جودة الهواء…', kk:'Ауа сапасы жүктелуде…', tg:'Сифати ҳаво бор карда мешавад…', ky:'Аба сапаты жүктөлүүдө…', de:'Luftqualität wird geladen…', fr:'Qualité de l\'air en chargement…', id:'Kualitas udara memuat…', hi:'वायु गुणवत्ता लोड हो रही है…', ur:'ہوا کا معیار لوڈ ہو رہا ہے…' },
+  'HOURLY FORECAST':       { tr:'SAATLİK TAHMİN', ar:'التوقعات بالساعة', kk:'САҒАТТЫҚ БОЛЖАМ', tg:'ПЕШГӮИИ СОАТОНА', ky:'СААТТА БОЛЖОМ', de:'STÜNDLICHE VORHERSAGE', fr:'PRÉVISIONS HORAIRES', id:'PRAKIRAAN PER JAM', hi:'प्रति घंटा पूर्वानुमान', ur:'گھنٹہ وار پیشن گوئی' },
+  '5-DAY FORECAST':        { tr:'5 GÜNLÜK TAHMİN', ar:'توقعات ٥ أيام', kk:'5 КҮНДІК БОЛЖАМ', tg:'ПЕШГӮИИ 5 РӮЗ', ky:'5 КҮНДҮК БОЛЖОМ', de:'5-TAGE-VORHERSAGE', fr:'PRÉVISIONS SUR 5 JOURS', id:'PRAKIRAAN 5 HARI', hi:'5 दिन का पूर्वानुमान', ur:'۵ دن کی پیشن گوئی' },
+  'AIR QUALITY':           { tr:'HAVA KALİTESİ', ar:'جودة الهواء', kk:'АУА САПАСЫ', tg:'СИФАТИ ҲАВО', ky:'АБА САПАТЫ', de:'LUFTQUALITÄT', fr:'QUALITÉ DE L\'AIR', id:'KUALITAS UDARA', hi:'वायु गुणवत्ता', ur:'ہوا کا معیار' },
+  'PARTICLES AND GASES':   { tr:'PARTIKÜLLER VE GAZLAR', ar:'الجسيمات والغازات', kk:'БӨЛШЕКТЕР МЕН ГАЗДАР', tg:'ЗАРРАҲО ВА ГАЗҲО', ky:'БӨЛҮКЧӨЛӨР ЖАНА ГАЗДАР', de:'PARTIKEL UND GASE', fr:'PARTICULES ET GAZ', id:'PARTIKEL DAN GAS', hi:'कण और गैसें', ur:'ذرات اور گیسیں' },
+  'HEALTH RECOMMENDATIONS': { tr:'SAĞLIK TAVSİYELERİ', ar:'التوصيات الصحية', kk:'ДЕНСАУЛЫҚ ҰСЫНЫСТАРЫ', tg:'ТАВСИЯҲОИ ТАНДУРУСТӢ', ky:'ДЕН СООЛУК СУНУШТАРЫ', de:'GESUNDHEITSEMPFEHLUNGEN', fr:'RECOMMANDATIONS SANTÉ', id:'REKOMENDASI KESEHATAN', hi:'स्वास्थ्य सिफारिशें', ur:'صحت کی سفارشات' },
+  'RECOMMENDED ACTIONS':   { tr:'ÖNERİLEN EYLEMLER', ar:'الإجراءات الموصى بها', kk:'ҰСЫНЫЛАТЫН ШАРАЛАР', tg:'АМАЛҲОИ ТАВСИЯШУДА', ky:'СУНУШТАЛГАН АРАКЕТТЕР', de:'EMPFOHLENE MASSNAHMEN', fr:'ACTIONS RECOMMANDÉES', id:'TINDAKAN YANG DIANJURKAN', hi:'अनुशंसित कार्रवाइयाँ', ur:'تجویز کردہ اقدامات' },
+  'Fine particles':        { tr:'İnce partiküller', ar:'الجسيمات الدقيقة', kk:'Ұсақ бөлшектер', tg:'Зарраҳои майда', ky:'Майда бөлүкчөлөр', de:'Feinpartikel', fr:'Particules fines', id:'Partikel halus', hi:'सूक्ष्म कण', ur:'باریک ذرات' },
+  'Coarse particles':      { tr:'Kaba partiküller', ar:'الجسيمات الخشنة', kk:'Ірі бөлшектер', tg:'Зарраҳои дағал', ky:'Ири бөлүкчөлөр', de:'Grobpartikel', fr:'Particules grossières', id:'Partikel kasar', hi:'मोटे कण', ur:'موٹے ذرات' },
+  'Nitrogen dioxide':      { tr:'Azot dioksit', ar:'ثاني أكسيد النيتروجين', kk:'Азот диоксиді', tg:'Диоксиди азот', ky:'Азот диоксиди', de:'Stickstoffdioxid', fr:'Dioxyde d\'azote', id:'Nitrogen dioksida', hi:'नाइट्रोजन डाइऑक्साइड', ur:'نائٹروجن ڈائی آکسائیڈ' },
+  'Ozone':                 { tr:'Ozon', ar:'الأوزون', kk:'Озон', tg:'Озон', ky:'Озон', de:'Ozon', fr:'Ozone', id:'Ozon', hi:'ओज़ोन', ur:'اوزون' },
+  'Sulfur dioxide':        { tr:'Kükürt dioksit', ar:'ثاني أكسيد الكبريت', kk:'Күкірт диоксиді', tg:'Диоксиди сулфур', ky:'Күкүрт диоксиди', de:'Schwefeldioxid', fr:'Dioxyde de soufre', id:'Sulfur dioksida', hi:'सल्फर डाइऑक्साइड', ur:'سلفر ڈائی آکسائیڈ' },
+  'Carbon monoxide':       { tr:'Karbon monoksit', ar:'أول أكسيد الكربون', kk:'Көміртегі тотығы', tg:'Оксиди карбон', ky:'Карбон монооксиди', de:'Kohlenmonoxid', fr:'Monoxyde de carbone', id:'Karbon monoksida', hi:'कार्बन मोनोऑक्साइड', ur:'کاربن مونو آکسائیڈ' },
+  'Wind':                  { tr:'Rüzgar', ar:'الريح', kk:'Жел', tg:'Шамол', ky:'Шамал', de:'Wind', fr:'Vent', id:'Angin', hi:'हवा', ur:'ہوا' },
+  'Humidity':              { tr:'Nem', ar:'الرطوبة', kk:'Ылғалдылық', tg:'Намӣ', ky:'Нымдуулук', de:'Luftfeuchtigkeit', fr:'Humidité', id:'Kelembaban', hi:'नमी', ur:'نمی' },
+  'Pressure':              { tr:'Basınç', ar:'الضغط', kk:'Қысым', tg:'Фишор', ky:'Басым', de:'Luftdruck', fr:'Pression', id:'Tekanan', hi:'दबाव', ur:'دباؤ' },
+  'UV index':              { tr:'UV endeksi', ar:'مؤشر الأشعة فوق البنفسجية', kk:'УК индексі', tg:'Индекси UV', ky:'УК индекси', de:'UV-Index', fr:'Indice UV', id:'Indeks UV', hi:'यूवी सूचकांक', ur:'UV انڈیکس' },
+  'Dew point':             { tr:'Çiğ noktası', ar:'نقطة الندى', kk:'Шық нүктесі', tg:'Нуқтаи шабнам', ky:'Шүүдүрүм чекит', de:'Taupunkt', fr:'Point de rosée', id:'Titik embun', hi:'ओस बिंदु', ur:'شبنم نقطہ' },
+  'Feels like':            { tr:'Hissedilen', ar:'الحرارة المحسوسة', kk:'Сезілетіні', tg:'Ҳис карда мешавад', ky:'Сезилгени', de:'Gefühlt', fr:'Ressenti', id:'Terasa', hi:'महसूस होता है', ur:'محسوس ہوتا ہے' },
+  'Max.':                  { tr:'Maks.', ar:'الحد الأقصى', kk:'Макс.', tg:'Макс.', ky:'Макс.', de:'Max.', fr:'Max.', id:'Maks.', hi:'अधिकतम', ur:'زیادہ سے زیادہ' },
+  'Min.':                  { tr:'Min.', ar:'الحد الأدنى', kk:'Мин.', tg:'Мин.', ky:'Мин.', de:'Min.', fr:'Min.', id:'Min.', hi:'न्यूनतम', ur:'کم سے کم' },
+  'Updated':               { tr:'Güncellendi', ar:'تم التحديث', kk:'Жаңартылды', tg:'Навсоз шуд', ky:'Жаңыртылды', de:'Aktualisiert', fr:'Mis à jour', id:'Diperbarui', hi:'अपडेट किया गया', ur:'اپ ڈیٹ ہوا' },
+  'DETAILS':               { tr:'AYRINTILAR', ar:'التفاصيل', kk:'ЕГЖЕЙ-ТЕГЖЕЙ', tg:'ТАФСИЛОТ', ky:'ДЕТАЛДАР', de:'DETAILS', fr:'DÉTAILS', id:'DETAIL', hi:'विवरण', ur:'تفصیلات' },
+  'Comfortable level':     { tr:'Konforlu seviye', ar:'مستوى مريح', kk:'Ыңғайлы деңгей', tg:'Сатҳи роҳат', ky:'Ыңгайлуу деңгей', de:'Komfortabler Pegel', fr:'Niveau confortable', id:'Tingkat nyaman', hi:'आरामदायक स्तर', ur:'آرام دہ سطح' },
+  'Comfortable':           { tr:'Konforlu', ar:'مريح', kk:'Ыңғайлы', tg:'Роҳат', ky:'Ыңгайлуу', de:'Angenehm', fr:'Confortable', id:'Nyaman', hi:'आरामदायक', ur:'آرام دہ' },
+  'hPa · Stable':          { tr:'hPa · Kararlı', ar:'hPa · مستقر', kk:'hPa · Тұрақты', tg:'hPa · Устувор', ky:'hPa · Туруктуу', de:'hPa · Stabil', fr:'hPa · Stable', id:'hPa · Stabil', hi:'hPa · स्थिर', ur:'hPa · مستحکم' },
+  'Recommended':           { tr:'Tavsiye edilir', ar:'موصى به', kk:'Ұсынылады', tg:'Тавсия мешавад', ky:'Сунушталат', de:'Empfohlen', fr:'Recommandé', id:'Disarankan', hi:'अनुशंसित', ur:'تجویز کردہ' },
+  'Not recommended':       { tr:'Önerilmez', ar:'غير موصى به', kk:'Ұсынылмайды', tg:'Тавсия намешавад', ky:'Сунушталбайт', de:'Nicht empfohlen', fr:'Non recommandé', id:'Tidak disarankan', hi:'अनुशंसित नहीं', ur:'تجویز نہیں' },
+  'Outdoor activity':      { tr:'Dışarı aktivitesi', ar:'نشاط خارجي', kk:'Сыртқы белсенділік', tg:'Фаъолияти берун', ky:'Тышкы иш-чара', de:'Outdoor-Aktivität', fr:'Activité extérieure', id:'Aktivitas luar', hi:'बाहरी गतिविधि', ur:'بیرونی سرگرمی' },
+  'Going to mosque':       { tr:'Camiye gitmek', ar:'الذهاب للمسجد', kk:'Мешітке бару', tg:'Рафтан ба масҷид', ky:'Мечитке бару', de:'Zur Moschee gehen', fr:'Aller à la mosquée', id:'Pergi ke masjid', hi:'मस्जिद जाना', ur:'مسجد جانا' },
+  'Open windows':          { tr:'Pencere aç', ar:'افتح النوافذ', kk:'Терезелерді ашу', tg:'Тирезаҳоро кушодан', ky:'Терезелерди ачуу', de:'Fenster öffnen', fr:'Ouvrir les fenêtres', id:'Buka jendela', hi:'खिड़कियाँ खोलें', ur:'کھڑکیاں کھولیں' },
+  'Sensitive groups':      { tr:'Hassas gruplar', ar:'المجموعات الحساسة', kk:'Сезімтал топтар', tg:'Гурӯҳҳои ҳассос', ky:'Сезгир топтор', de:'Empfindliche Gruppen', fr:'Groupes sensibles', id:'Kelompok sensitif', hi:'संवेदनशील समूह', ur:'حساس گروہ' },
+  'No special precautions needed': { tr:'Özel önlem gerekmez', ar:'لا تحتاج احترازات خاصة', kk:'Арнайы сақтық шаралар қажет емес', tg:'Тадбирҳои махсус лозим нест', ky:'Атайын сактык чаралары керек эмес', de:'Keine besonderen Vorsichtsmaßnahmen', fr:'Aucune précaution spéciale', id:'Tidak perlu tindakan khusus', hi:'कोई विशेष सावधानी की जरूरत नहीं', ur:'کوئی خاص احتیاط کی ضرورت نہیں' },
+  'Accurate prayer times': { tr:'Doğru namaz vakitleri', ar:'أوقات صلاة دقيقة', kk:'Дәл намаз уақыттары', tg:'Вақтҳои дақиқи намоз', ky:'Так намаз убактары', de:'Genaue Gebetszeiten', fr:'Heures de prière précises', id:'Waktu sholat akurat', hi:'सटीक नमाज़ के वक़्त', ur:'درست نماز کے اوقات' },
+  'Qibla direction':       { tr:'Kıble yönü', ar:'اتجاه القبلة', kk:'Қибла бағыты', tg:'Самти қибла', ky:'Кыбла багыты', de:'Qibla-Richtung', fr:'Direction de la qibla', id:'Arah kiblat', hi:'क़िबला दिशा', ur:'قبلہ سمت' },
+
+  /* ── Prayer.js extras ── */
+  'Clear':                 { tr:'Açık', ar:'صافٍ', kk:'Ашық', tg:'Тоза', ky:'Ачык', de:'Klar', fr:'Clair', id:'Cerah', hi:'साफ', ur:'صاف' },
+  'Weather is favorable — good conditions for the mosque': { tr:'Hava elverişli — camiye gitmek için iyi koşullar', ar:'الطقس ملائم — ظروف جيدة للمسجد', kk:'Ауа-райы қолайлы — мешітке баруға жақсы жағдай', tg:'Ҳаво мусоид аст — барои рафтан ба масҷид шароити хуб', ky:'Аба ырайы ылайыктуу — мечитке барууга жакшы шарт', de:'Das Wetter ist günstig — gute Bedingungen für die Moschee', fr:"La météo est favorable — bonnes conditions pour la mosquée", id:'Cuaca mendukung — kondisi baik untuk ke masjid', hi:'मौसम अनुकूल है — मस्जिद के लिए अच्छी स्थिति', ur:'موسم سازگار ہے — مسجد کے لیے اچھے حالات' },
+  'Push notifications':    { tr:'Anlık bildirimler', ar:'الإشعارات الفورية', kk:'Push хабарламалар', tg:'Огоҳиномаҳои фаврӣ', ky:'Push билдирмелер', de:'Push-Benachrichtigungen', fr:'Notifications push', id:'Notifikasi push', hi:'पुश सूचनाएं', ur:'پُش اطلاعات' },
+  'Reminder for each prayer': { tr:'Her namaz için hatırlatma', ar:'تذكير لكل صلاة', kk:'Әрбір намазға еске салу', tg:'Хотиркунанда барои ҳар намоз', ky:'Ар намаз үчүн эскертүү', de:'Erinnerung für jedes Gebet', fr:'Rappel pour chaque prière', id:'Pengingat setiap sholat', hi:'हर नमाज़ के लिए याद दिलाना', ur:'ہر نماز کے لیے یاد دہانی' },
+  'Prayer times without internet': { tr:'İnternetsiz namaz vakitleri', ar:'أوقات الصلاة بدون إنترنت', kk:'Интернетсіз намаз уақыттары', tg:'Вақтҳои намоз бе интернет', ky:'Интернетсиз намаз убактары', de:'Gebetszeiten ohne Internet', fr:'Horaires de prière sans internet', id:'Waktu sholat tanpa internet', hi:'बिना इंटरनेट नमाज़ के वक़्त', ur:'بغیر انٹرنیٹ نماز کے اوقات' },
+  'AQI alert':             { tr:'AQI uyarısı', ar:'تنبيه جودة الهواء', kk:'AQI ескерту', tg:'Огоҳии AQI', ky:'AQI эскертүүсү', de:'AQI-Warnung', fr:'Alerte IQA', id:'Peringatan AQI', hi:'AQI चेतावनी', ur:'AQI انتباہ' },
+  'LOCATION AND DATE':     { tr:'KONUM VE TARİH', ar:'الموقع والتاريخ', kk:'ОРЫН ЖӘНЕ КҮН', tg:'МАВҚЕАТ ВА САНА', ky:'ЖАЙГАШУУ ЖАНА КҮНҮ', de:'STANDORT UND DATUM', fr:'LOCALISATION ET DATE', id:'LOKASI DAN TANGGAL', hi:'स्थान और तारीख', ur:'مقام اور تاریخ' },
+  'NOTIFICATIONS':         { tr:'BİLDİRİMLER', ar:'الإشعارات', kk:'ХАБАРЛАМАЛАР', tg:'ОГОҲИНОМАҲО', ky:'БИЛДИРМЕЛЕР', de:'BENACHRICHTIGUNGEN', fr:'NOTIFICATIONS', id:'NOTIFIKASI', hi:'सूचनाएं', ur:'اطلاعات' },
+  'REMINDER (minutes before)': { tr:'HATIRLATMA (dakika önce)', ar:'التذكير (قبل بالدقائق)', kk:'ЕСКЕ САЛУ (минут бұрын)', tg:'ХОТИРКУНАНДА (дақиқа пеш)', ky:'ЭСКЕРТҮҮ (мүнөт мурун)', de:'ERINNERUNG (Minuten vorher)', fr:'RAPPEL (minutes avant)', id:'PENGINGAT (menit sebelumnya)', hi:'अनुस्मारक (मिनट पहले)', ur:'یاد دہانی (منٹ پہلے)' },
+  'min':                   { tr:'dk', ar:'د', kk:'мин', tg:'дақ', ky:'мүн', de:'min', fr:'min', id:'mnt', hi:'मि', ur:'منٹ' },
+
+  /* ── Settings.js extras ── */
+  'enabled':               { tr:'etkin', ar:'مفعّل', kk:'қосылған', tg:'фаъол', ky:'иштетилген', de:'aktiviert', fr:'activé', id:'aktif', hi:'सक्षम', ur:'فعال' },
+  'Bugs, feedback, help':  { tr:'Hatalar, geri bildirim, yardım', ar:'الأخطاء والتغذية الراجعة والمساعدة', kk:'Қателер, пікір, көмек', tg:'Хатоҳо, бозхӯрд, кӯмак', ky:'Каталар, пикир, жардам', de:'Fehler, Feedback, Hilfe', fr:'Bugs, commentaires, aide', id:'Bug, masukan, bantuan', hi:'बग, फीडबैक, सहायता', ur:'خرابیاں، فیڈبیک، مدد' },
+  'languages':             { tr:'dil', ar:'لغات', kk:'тіл', tg:'забон', ky:'тил', de:'Sprachen', fr:'langues', id:'bahasa', hi:'भाषाएं', ur:'زبانیں' },
+  'modules':               { tr:'modül', ar:'وحدات', kk:'модуль', tg:'модул', ky:'модуль', de:'Module', fr:'modules', id:'modul', hi:'मॉड्यूल', ur:'ماڈیول' },
+  'MISSION':               { tr:'MİSYON', ar:'المهمة', kk:'МИССИЯ', tg:'МИССИЯ', ky:'МИССИЯ', de:'MISSION', fr:'MISSION', id:'MISI', hi:'मिशन', ur:'مشن' },
+  'Languages':             { tr:'Diller', ar:'اللغات', kk:'Тілдер', tg:'Забонҳо', ky:'Тилдер', de:'Sprachen', fr:'Langues', id:'Bahasa', hi:'भाषाएं', ur:'زبانیں' },
+  'Platform':              { tr:'Platform', ar:'المنصة', kk:'Платформа', tg:'Платформа', ky:'Платформа', de:'Plattform', fr:'Plateforme', id:'Platform', hi:'प्लेटफ़ॉर्म', ur:'پلیٹ فارم' },
+  'Status':                { tr:'Durum', ar:'الحالة', kk:'Күй', tg:'Ҳолат', ky:'Абал', de:'Status', fr:'Statut', id:'Status', hi:'स्थिति', ur:'حیثیت' },
+  'PURPOSE':               { tr:'AMAÇ', ar:'الغرض', kk:'МАҚСАТ', tg:'МАҚСАД', ky:'МАКСАТ', de:'ZWECK', fr:'OBJECTIF', id:'TUJUAN', hi:'उद्देश्य', ur:'مقصد' },
+  'FOUNDER & PROJECT AUTHOR': { tr:'KURUCU VE PROJE YAZARI', ar:'المؤسس ومؤلف المشروع', kk:'НЕГІЗШІ ЖӘНЕ ЖОБА АВТОРЫ', tg:'АСОСГУЗОР ВА МУАЛЛИФИ ЛОИҲА', ky:'НЕГИЗДӨӨЧҮ ЖАНА ДОЛБООР АВТОРУ', de:'GRÜNDER & PROJEKTAUTOR', fr:'FONDATEUR ET AUTEUR DU PROJET', id:'PENDIRI & PENULIS PROYEK', hi:'संस्थापक और परियोजना लेखक', ur:'بانی اور پروجیکٹ مصنف' },
+  'Privacy Policy':        { tr:'Gizlilik Politikası', ar:'سياسة الخصوصية', kk:'Құпиялылық саясаты', tg:'Сиёсати махфият', ky:'Купуялык саясаты', de:'Datenschutzrichtlinie', fr:'Politique de confidentialité', id:'Kebijakan Privasi', hi:'गोपनीयता नीति', ur:'رازداری کی پالیسی' },
+  'Terms of Use':          { tr:'Kullanım Koşulları', ar:'شروط الاستخدام', kk:'Пайдалану шарттары', tg:'Шартҳои истифода', ky:'Колдонуу шарттары', de:'Nutzungsbedingungen', fr:"Conditions d'utilisation", id:'Syarat Penggunaan', hi:'उपयोग की शर्तें', ur:'استعمال کی شرائط' },
+  'Permission denied':     { tr:'İzin verilmedi', ar:'الإذن مرفوض', kk:'Рұқсат жоқ', tg:'Иҷозат дода нашуд', ky:'Уруксат берилген жок', de:'Zugriff verweigert', fr:'Permission refusée', id:'Izin ditolak', hi:'अनुमति अस्वीकृत', ur:'اجازت نامنظور' },
+  'Prayer method saved':   { tr:'Namaz yöntemi kaydedildi', ar:'تم حفظ طريقة الصلاة', kk:'Намаз әдісі сақталды', tg:'Усули намоз нигоҳ дошта шуд', ky:'Намаз усулу сакталды', de:'Gebetsmethode gespeichert', fr:'Méthode de prière enregistrée', id:'Metode sholat tersimpan', hi:'नमाज़ विधि सहेजी गई', ur:'نماز کا طریقہ محفوظ ہوا' },
+  'Syncing...':            { tr:'Senkronize ediliyor...', ar:'جاري المزامنة...', kk:'Синхрондалуда...', tg:'Синхронизатсия мешавад...', ky:'Синхрондолуп жатат...', de:'Wird synchronisiert...', fr:'Synchronisation...', id:'Menyinkronkan...', hi:'सिंक हो रहा है...', ur:'سنک ہو رہا ہے...' },
+  'Successfully synced':   { tr:'Başarıyla senkronize edildi', ar:'تمت المزامنة بنجاح', kk:'Сәтті синхрондалды', tg:'Бомуваффақият синхронизатсия шуд', ky:'Ийгиликтүү синхрондолду', de:'Erfolgreich synchronisiert', fr:'Synchronisation réussie', id:'Berhasil disinkronkan', hi:'सफलतापूर्वक सिंक हुआ', ur:'کامیابی سے سنک ہوا' },
+  'Settings synced':       { tr:'Ayarlar senkronize edildi', ar:'تمت مزامنة الإعدادات', kk:'Параметрлер синхрондалды', tg:'Танзимот синхронизатсия шуд', ky:'Жөндөөлөр синхрондолду', de:'Einstellungen synchronisiert', fr:'Paramètres synchronisés', id:'Pengaturan disinkronkan', hi:'सेटिंग्स सिंक हुईं', ur:'ترتیبات سنک ہوئیں' },
+  'Describe the error or issue...': { tr:'Hatayı veya sorunu açıklayın...', ar:'صف الخطأ أو المشكلة...', kk:'Қатені немесе мәселені сипаттаңыз...', tg:'Хато ё мушкилотро тавсиф кунед...', ky:'Ката же маселени сүрөттөңүз...', de:'Fehler oder Problem beschreiben...', fr:'Décrire l\'erreur ou le problème...', id:'Jelaskan error atau masalah...', hi:'त्रुटि या समस्या का वर्णन करें...', ur:'خطا یا مسئلہ بیان کریں...' },
+  'Write your feedback or suggestion...': { tr:'Geri bildiriminizi veya önerinizi yazın...', ar:'اكتب ملاحظتك أو اقتراحك...', kk:'Пікіріңізді немесе ұсынысыңызды жазыңыз...', tg:'Фикру мулоҳиза ё пешниҳодатонро нависед...', ky:'Пикириңизди же сунушунузду жазыңыз...', de:'Schreiben Sie Ihr Feedback oder Ihren Vorschlag...', fr:'Écrivez votre commentaire ou suggestion...', id:'Tulis masukan atau saran Anda...', hi:'अपना फ़ीडबैक या सुझाव लिखें...', ur:'اپنی رائے یا تجویز لکھیں...' },
+  'Send →':                { tr:'Gönder →', ar:'إرسال →', kk:'Жіберу →', tg:'Фиристодан →', ky:'Жөнөтүү →', de:'Senden →', fr:'Envoyer →', id:'Kirim →', hi:'भेजें →', ur:'بھیجیں →' },
+  'Message sent!':         { tr:'Mesaj gönderildi!', ar:'تم إرسال الرسالة!', kk:'Хабарлама жіберілді!', tg:'Паём фиристода шуд!', ky:'Билдирүү жөнөтүлдү!', de:'Nachricht gesendet!', fr:'Message envoyé !', id:'Pesan terkirim!', hi:'संदेश भेज दिया गया!', ur:'پیغام بھیج دیا گیا!' },
+  'We will respond soon':  { tr:'En kısa sürede yanıt vereceğiz', ar:'سنرد قريباً', kk:'Жақын арада жауап береміз', tg:'Ба зудӣ ҷавоб медиҳем', ky:'Жакында жооп беребиз', de:'Wir werden bald antworten', fr:'Nous répondrons bientôt', id:'Kami akan segera merespons', hi:'हम जल्द जवाब देंगे', ur:'ہم جلد جواب دیں گے' },
+  'Muslim, 2671':          { tr:'Müslim, 2671', ar:'مسلم، 2671', kk:'Муслим, 2671', tg:'Муслим, 2671', ky:'Муслим, 2671', de:'Muslim, 2671', fr:'Muslim, 2671', id:'Muslim, 2671', hi:'मुस्लिम, 2671', ur:'مسلم، 2671' },
+
+  /* ── Qibla.js extras ── */
+  'Compass':               { tr:'Pusula', ar:'البوصلة', kk:'Компас', tg:'Компас', ky:'Компас', de:'Kompass', fr:'Boussole', id:'Kompas', hi:'कंपास', ur:'قطب نما' },
+  'Map':                   { tr:'Harita', ar:'الخريطة', kk:'Карта', tg:'Харита', ky:'Карта', de:'Karte', fr:'Carte', id:'Peta', hi:'नक्शा', ur:'نقشہ' },
+  'Qibla found':           { tr:'Kıble bulundu', ar:'تم العثور على القبلة', kk:'Қибла табылды', tg:'Қибла ёфт шуд', ky:'Кыбла табылды', de:'Qibla gefunden', fr:'Qibla trouvée', id:'Kiblat ditemukan', hi:'क़िबला मिला', ur:'قبلہ مل گیا' },
+  'Qibla angle':           { tr:'Kıble açısı', ar:'زاوية القبلة', kk:'Қибла бұрышы', tg:'Кунҷи қибла', ky:'Кыбла бурчу', de:'Qibla-Winkel', fr:'Angle de la qibla', id:'Sudut kiblat', hi:'क़िबला कोण', ur:'قبلہ زاویہ' },
+  'From North':            { tr:'Kuzeyden', ar:'من الشمال', kk:'Солтүстіктен', tg:'Аз шимол', ky:'Түндүктөн', de:'Von Norden', fr:'Du Nord', id:'Dari Utara', hi:'उत्तर से', ur:'شمال سے' },
+  'Accuracy':              { tr:'Doğruluk', ar:'الدقة', kk:'Дәлдік', tg:'Дақиқӣ', ky:'Тактык', de:'Genauigkeit', fr:'Précision', id:'Akurasi', hi:'सटीकता', ur:'درستگی' },
+  'You':                   { tr:'Siz', ar:'أنت', kk:'Сіз', tg:'Шумо', ky:'Сиз', de:'Sie', fr:'Vous', id:'Anda', hi:'आप', ur:'آپ' },
+  'Makkah':                { tr:'Mekke', ar:'مكة', kk:'Мекке', tg:'Макка', ky:'Мекке', de:'Mekka', fr:'La Mecque', id:'Makkah', hi:'मक्का', ur:'مکہ' },
+  'Your location':         { tr:'Konumunuz', ar:'موقعك', kk:'Орналасқан жеріңіз', tg:'Мавқеати шумо', ky:'Жайгашкан жериңиз', de:'Ihr Standort', fr:'Votre position', id:'Lokasi Anda', hi:'आपका स्थान', ur:'آپ کا مقام' },
+  'Makkah al-Mukarramah, Saudi Arabia': { tr:'Mekke el-Mükerreme, Suudi Arabistan', ar:'مكة المكرمة، المملكة العربية السعودية', kk:'Мекке әл-Мүкаррама, Сауд Арабиясы', tg:'Макка ал-Мукаррама, Арабистони Саудӣ', ky:'Мекке аль-Мукаррама, Сауд Аравиясы', de:'Mekka al-Mukarrama, Saudi-Arabien', fr:'La Mecque al-Mukarrama, Arabie Saoudite', id:'Makkah al-Mukarramah, Arab Saudi', hi:'मक्का अल-मुकर्रमा, सऊदी अरब', ur:'مکہ المکرمہ، سعودی عرب' },
+  'Calculation method':    { tr:'Hesaplama yöntemi', ar:'طريقة الحساب', kk:'Есептеу әдісі', tg:'Усули ҳисоб', ky:'Эсептөө усулу', de:'Berechnungsmethode', fr:'Méthode de calcul', id:'Metode perhitungan', hi:'गणना विधि', ur:'حساب کا طریقہ' },
+  'GPS accuracy':          { tr:'GPS doğruluğu', ar:'دقة GPS', kk:'GPS дәлдігі', tg:'Дақиқии GPS', ky:'GPS тактыгы', de:'GPS-Genauigkeit', fr:'Précision GPS', id:'Akurasi GPS', hi:'GPS सटीकता', ur:'GPS درستگی' },
+  'ABOUT QIBLA':           { tr:'KIBLE HAKKINDA', ar:'عن القبلة', kk:'ҚИБЛА ТУРАЛЫ', tg:'ДАР БОРАИ ҚИБЛА', ky:'КЫБЛА ЖӨНҮНДӨ', de:'ÜBER DIE QIBLA', fr:'À PROPOS DE LA QIBLA', id:'TENTANG KIBLAT', hi:'क़िबला के बारे में', ur:'قبلہ کے بارے میں' },
+  'Turn your face toward Masjid al-Haram': { tr:'Yüzünüzü Mescid-i Haram\'a doğru çevirin', ar:'وجّه وجهك نحو المسجد الحرام', kk:'Бетіңізді Масджид әл-Харамға қарай бұрыңыз', tg:'Рӯятонро ба тарафи Масҷид ал-Ҳаром гардонед', ky:'Бетиңизди Масжид ал-Харамга карата буруңуз', de:'Wenden Sie Ihr Gesicht zur Masjid al-Haram', fr:'Tournez votre visage vers la Masjid al-Haram', id:'Hadapkan wajah Anda ke Masjid al-Haram', hi:'अपना मुँह मस्जिद अल-हराम की ओर करें', ur:'اپنا چہرہ مسجد الحرام کی طرف کریں' },
+  'Found':                 { tr:'Bulundu', ar:'تم العثور', kk:'Табылды', tg:'Ёфт шуд', ky:'Табылды', de:'Gefunden', fr:'Trouvé', id:'Ditemukan', hi:'मिला', ur:'ملا' },
+
+  /* ── Mosques.js extras ── */
+  'Schedule':              { tr:'Program', ar:'الجدول', kk:'Кесте', tg:'Ҷадвал', ky:'Жадвал', de:'Zeitplan', fr:'Horaire', id:'Jadwal', hi:'शेड्यूल', ur:'شیڈول' },
+  'No mosques found nearby': { tr:'Yakında cami bulunamadı', ar:'لا توجد مساجد قريبة', kk:'Жақын маңда мешіт табылмады', tg:'Дар наздикӣ масҷид ёфт нашуд', ky:'Жакын жерде мечит табылган жок', de:'Keine Moscheen in der Nähe gefunden', fr:'Aucune mosquée trouvée à proximité', id:'Tidak ada masjid ditemukan di dekat sini', hi:'पास में कोई मस्जिद नहीं मिली', ur:'قریب کوئی مسجد نہیں ملی' },
+  'Open':                  { tr:'Açık', ar:'مفتوح', kk:'Ашық', tg:'Кушода', ky:'Ачык', de:'Offen', fr:'Ouvert', id:'Buka', hi:'खुला', ur:'کھلا' },
+  'Closed':                { tr:'Kapalı', ar:'مغلق', kk:'Жабық', tg:'Пӯшида', ky:'Жабык', de:'Geschlossen', fr:'Fermé', id:'Tutup', hi:'बंद', ur:'بند' },
+  'min walk':              { tr:'dk yürüyüş', ar:'د مشياً', kk:'мин жаяу', tg:'дақ пиёдагардӣ', ky:'мүн жаяу', de:'min Fußweg', fr:'min à pied', id:'mnt jalan', hi:'मि पैदल', ur:'منٹ پیدل' },
+  'Address':               { tr:'Adres', ar:'العنوان', kk:'Мекенжай', tg:'Суроға', ky:'Дарек', de:'Adresse', fr:'Adresse', id:'Alamat', hi:'पता', ur:'پتہ' },
+  'Opening hours':         { tr:'Çalışma saatleri', ar:'أوقات العمل', kk:'Жұмыс уақыты', tg:'Соатҳои кор', ky:'Иш убактары', de:'Öffnungszeiten', fr:"Heures d'ouverture", id:'Jam buka', hi:'खुलने का समय', ur:'کھلنے کے اوقات' },
+  'Phone':                 { tr:'Telefon', ar:'الهاتف', kk:'Телефон', tg:'Телефон', ky:'Телефон', de:'Telefon', fr:'Téléphone', id:'Telepon', hi:'फ़ोन', ur:'فون' },
+  'Walking':               { tr:'Yürüyüş', ar:'مشياً', kk:'Жаяу жүру', tg:'Пиёдагардӣ', ky:'Жаяу жүрүү', de:'Zu Fuß', fr:'À pied', id:'Jalan', hi:'पैदल', ur:'پیدل' },
+  'Bus':                   { tr:'Otobüs', ar:'حافلة', kk:'Автобус', tg:'Автобус', ky:'Автобус', de:'Bus', fr:'Bus', id:'Bus', hi:'बस', ur:'بس' },
+  'Car':                   { tr:'Araba', ar:'سيارة', kk:'Көлік', tg:'Мошин', ky:'Машина', de:'Auto', fr:'Voiture', id:'Mobil', hi:'कार', ur:'گاڑی' },
+  'PRAYER SCHEDULE (FRIDAY)': { tr:'NAMAZ PROGRAMI (CUMA)', ar:'جدول الصلاة (الجمعة)', kk:'НАМАЗ КЕСТЕСІ (ЖҰМА)', tg:'ҶАДВАЛИ НАМОЗ (ҶУМА)', ky:'НАМАЗ ЖАДВАЛЫ (ЖУМА)', de:'GEBETSPLAN (FREITAG)', fr:'PROGRAMME DES PRIÈRES (VENDREDI)', id:'JADWAL SHOLAT (JUMAT)', hi:'नमाज़ शेड्यूल (जुमा)', ur:'نماز شیڈول (جمعہ)' },
+  'Walk':                  { tr:'Yürüme', ar:'مشياً', kk:'Жаяу', tg:'Пиёда', ky:'Жаяу', de:'Gehen', fr:'Marche', id:'Jalan', hi:'पैदल', ur:'پیدل' },
+  'found':                 { tr:'bulundu', ar:'وُجد', kk:'табылды', tg:'ёфт шуд', ky:'табылды', de:'gefunden', fr:'trouvé', id:'ditemukan', hi:'मिला', ur:'ملا' },
+
+  /* ── Duas.js extras ── */
+  'Categories':            { tr:'Kategoriler', ar:'الفئات', kk:'Санаттар', tg:'Гурӯҳҳо', ky:'Категориялар', de:'Kategorien', fr:'Catégories', id:'Kategori', hi:'श्रेणियाँ', ur:'اقسام' },
+  'Saved':                 { tr:'Kaydedilmiş', ar:'المحفوظات', kk:'Сақталған', tg:'Нигоҳ дошташуда', ky:'Сакталган', de:'Gespeichert', fr:'Sauvegardé', id:'Tersimpan', hi:'सहेजा गया', ur:'محفوظ' },
+  'SEARCH':                { tr:'ARAMA', ar:'البحث', kk:'ІЗДЕУ', tg:'ҶУСТУҶӮ', ky:'ИЗДӨӨ', de:'SUCHE', fr:'RECHERCHE', id:'CARI', hi:'खोज', ur:'تلاش' },
+  'RESULTS':               { tr:'SONUÇ', ar:'نتائج', kk:'НӘТИЖЕ', tg:'НАТИҶАҲО', ky:'НАТЫЙЖАЛАР', de:'ERGEBNISSE', fr:'RÉSULTATS', id:'HASIL', hi:'परिणाम', ur:'نتائج' },
+  'Nothing found':         { tr:'Hiçbir şey bulunamadı', ar:'لا شيء وُجد', kk:'Ештеңе табылмады', tg:'Ҳеҷ чиз ёфт нашуд', ky:'Эч нерсе табылган жок', de:'Nichts gefunden', fr:'Rien trouvé', id:'Tidak ada yang ditemukan', hi:'कुछ नहीं मिला', ur:'کچھ نہیں ملا' },
+  'Source':                { tr:'Kaynak', ar:'المصدر', kk:'Дереккөз', tg:'Манба', ky:'Булак', de:'Quelle', fr:'Source', id:'Sumber', hi:'स्रोत', ur:'ماخذ' },
+  'SAVED':                 { tr:'KAYDEDİLMİŞ', ar:'المحفوظات', kk:'САҚТАЛҒАН', tg:'НИГОҳ ДОШТАШУДА', ky:'САКТАЛГАН', de:'GESPEICHERT', fr:'SAUVEGARDÉS', id:'TERSIMPAN', hi:'सहेजे गए', ur:'محفوظات' },
+
+  /* ── Calendar.js extras ── */
+  'Islamic Calendar':      { tr:'İslam Takvimi', ar:'التقويم الإسلامي', kk:'Ислам күнтізбесі', tg:'Тақвими исломӣ', ky:'Ислам күнтөркүнү', de:'Islamischer Kalender', fr:'Calendrier islamique', id:'Kalender Islam', hi:'इस्लामी कैलेंडर', ur:'اسلامی کیلنڈر' },
+  'Calendar':              { tr:'Takvim', ar:'التقويم', kk:'Күнтізбе', tg:'Тақвим', ky:'Күнтөркүн', de:'Kalender', fr:'Calendrier', id:'Kalender', hi:'कैलेंडर', ur:'کیلنڈر' },
+  'Islamic':               { tr:'İslami', ar:'إسلامي', kk:'Ислами', tg:'Исломӣ', ky:'Ислами', de:'Islamisch', fr:'Islamique', id:'Islami', hi:'इस्लामी', ur:'اسلامی' },
+  'Converter':             { tr:'Dönüştürücü', ar:'المحوّل', kk:'Түрлендіргіш', tg:'Конвертор', ky:'Конвертор', de:'Konverter', fr:'Convertisseur', id:'Konverter', hi:'कनवर्टर', ur:'کنورٹر' },
+  'SELECTED DAY':          { tr:'SEÇİLEN GÜN', ar:'اليوم المحدد', kk:'ТАҢДАЛҒАН КҮН', tg:'РӮЗИ ИНТИХОБШУДА', ky:'ТАНДАЛГАН КҮН', de:'AUSGEWÄHLTER TAG', fr:'JOUR SÉLECTIONNÉ', id:'HARI YANG DIPILIH', hi:'चुना हुआ दिन', ur:'منتخب دن' },
+  'HOLIDAY':               { tr:'TATİL', ar:'العطلة', kk:'МЕЙ РАМ', tg:'ИДОНА', ky:'МАЙРАМ', de:'FEIERTAG', fr:'FÊTE', id:'HARI LIBUR', hi:'छुट्टी', ur:'چھٹی' },
+  'IMPORTANT':             { tr:'ÖNEMLİ', ar:'مهم', kk:'МАҢЫЗДЫ', tg:'МУҲИМ', ky:'МААНИЛҮҮ', de:'WICHTIG', fr:'IMPORTANT', id:'PENTING', hi:'महत्वपूर्ण', ur:'اہم' },
+  'GREGORIAN → HIJRI':     { tr:'MİLADİ → HİCRİ', ar:'الميلادي ← الهجري', kk:'ГРЕГ. → ХИЖРА', tg:'МИЛОДӢ → ҲИҶРӢ', ky:'ГРИГ. → ХИЖРА', de:'GREG. → HIJRI', fr:'GRÉGORIEN → HIJRI', id:'MASEHI → HIJRIAH', hi:'ग्रेगोरियन → हिजरी', ur:'عیسوی ← ہجری' },
+  'Day':                   { tr:'Gün', ar:'اليوم', kk:'Күн', tg:'Рӯз', ky:'Күн', de:'Tag', fr:'Jour', id:'Hari', hi:'दिन', ur:'دن' },
+  'Month':                 { tr:'Ay', ar:'الشهر', kk:'Ай', tg:'Моҳ', ky:'Ай', de:'Monat', fr:'Mois', id:'Bulan', hi:'महीना', ur:'مہینہ' },
+  'Year':                  { tr:'Yıl', ar:'السنة', kk:'Жыл', tg:'Сол', ky:'Жыл', de:'Jahr', fr:'Année', id:'Tahun', hi:'साल', ur:'سال' },
+  'Calculate →':           { tr:'Hesapla →', ar:'احسب →', kk:'Есептеу →', tg:'Ҳисоблаш →', ky:'Эсептөө →', de:'Berechnen →', fr:'Calculer →', id:'Hitung →', hi:'गणना करें →', ur:'حساب کریں →' },
+  'HIJRI → GREGORIAN':     { tr:'HİCRİ → MİLADİ', ar:'الهجري → الميلادي', kk:'ХИЖРА → ГРЕГ.', tg:'ҲИҶРӢ → МИЛОДӢ', ky:'ХИЖРА → ГРИГ.', de:'HIJRI → GREG.', fr:'HIJRI → GRÉGORIEN', id:'HIJRIAH → MASEHI', hi:'हिजरी → ग्रेगोरियन', ur:'ہجری → عیسوی' },
+  'MOST IMPORTANT':        { tr:'ÇOK ÖNEMLİ', ar:'الأهم', kk:'ЕҢ МАҢЫЗДЫСЫ', tg:'МУҲИМТАРИН', ky:'ЭҢ МААНИЛҮҮСҮ', de:'AM WICHTIGSTEN', fr:'LE PLUS IMPORTANT', id:'TERPENTING', hi:'सबसे महत्वपूर्ण', ur:'سب سے اہم' },
+  'Main':                  { tr:'Ana', ar:'الرئيسي', kk:'Негізгі', tg:'Асосӣ', ky:'Негизги', de:'Haupt', fr:'Principal', id:'Utama', hi:'मुख्य', ur:'اصل' },
+  'Actions':               { tr:'Eylemler', ar:'الأعمال', kk:'Амалдар', tg:'Амалҳо', ky:'Иш-аракеттер', de:'Handlungen', fr:'Actions', id:'Amalan', hi:'कार्य', ur:'اعمال' },
+  'Dua':                   { tr:'Dua', ar:'الدعاء', kk:'Дұға', tg:'Дуо', ky:'Дуба', de:'Dua', fr:'Doua', id:'Doa', hi:'दुआ', ur:'دعا' },
+  'rem.':                  { tr:'hat.', ar:'تذ.', kk:'еск.', tg:'ёд.', ky:'эск.', de:'Erin.', fr:'rap.', id:'ing.', hi:'याद.', ur:'یاد.' },
+  'Remind':                { tr:'Hatırlat', ar:'ذكّرني', kk:'Еске сал', tg:'Ёдовар кун', ky:'Эскерт', de:'Erinnern', fr:'Rappeler', id:'Ingatkan', hi:'याद दिलाएं', ur:'یاد دلائیں' },
+  'Hijri':                 { tr:'Hicri', ar:'هجري', kk:'Хижра', tg:'Ҳиҷрӣ', ky:'Хижра', de:'Hijri', fr:'Hijri', id:'Hijriah', hi:'हिजरी', ur:'ہجری' },
+  'Gregorian':             { tr:'Miladi', ar:'ميلادي', kk:'Григориан', tg:'Милодӣ', ky:'Григориандык', de:'Gregorianisch', fr:'Grégorien', id:'Masehi', hi:'ग्रेगोरियन', ur:'عیسوی' },
+  '1 day before':          { tr:'1 gün önce', ar:'قبل يوم', kk:'1 күн бұрын', tg:'1 рӯз пеш', ky:'1 күн мурун', de:'1 Tag vorher', fr:'1 jour avant', id:'1 hari sebelum', hi:'1 दिन पहले', ur:'1 دن پہلے' },
+  '3 days before':         { tr:'3 gün önce', ar:'قبل 3 أيام', kk:'3 күн бұрын', tg:'3 рӯз пеш', ky:'3 күн мурун', de:'3 Tage vorher', fr:'3 jours avant', id:'3 hari sebelum', hi:'3 दिन पहले', ur:'3 دن پہلے' },
+  '1 week before':         { tr:'1 hafta önce', ar:'قبل أسبوع', kk:'1 апта бұрын', tg:'1 ҳафта пеш', ky:'1 ҳафта мурун', de:'1 Woche vorher', fr:'1 semaine avant', id:'1 minggu sebelum', hi:'1 सप्ताह पहले', ur:'1 ہفتہ پہلے' },
+  'IMPORTANT NOTE':        { tr:'ÖNEMLİ NOT', ar:'ملاحظة مهمة', kk:'МАҢЫЗДЫ ЕСКЕРТПЕ', tg:'ҚАЙД И МУҲИМ', ky:'МААНИЛҮҮ ЭСКЕРТМЕ', de:'WICHTIGER HINWEIS', fr:'NOTE IMPORTANTE', id:'CATATAN PENTING', hi:'महत्वपूर्ण नोट', ur:'اہم نوٹ' },
+  'BRIEF DESCRIPTION':     { tr:'KISA AÇIKLAMA', ar:'وصف موجز', kk:'ҚЫСҚА СИПАТТАМА', tg:'ТАВСИФИ МУХТАСАР', ky:'КЫСКАЧА СҮРӨТТӨМӨ', de:'KURZBESCHREIBUNG', fr:'DESCRIPTION BRÈVE', id:'DESKRIPSI SINGKAT', hi:'संक्षिप्त विवरण', ur:'مختصر تفصیل' },
+  'SIGNIFICANCE':          { tr:'ÖNEMİ', ar:'الأهمية', kk:'МАҢЫЗДЫЛЫҒЫ', tg:'АҲАМИЯТИ', ky:'МААНИЛҮҮЛҮГҮ', de:'BEDEUTUNG', fr:'IMPORTANCE', id:'PENTINGNYA', hi:'महत्व', ur:'اہمیت' },
+  'Authentic hadiths and Islamic jurisprudence': { tr:'Sahih hadisler ve İslam fıkhı', ar:'الأحاديث الصحيحة والفقه الإسلامي', kk:'Сахих хадистер мен ислам фикхі', tg:'Ҳадисҳои саҳеҳ ва фиқҳи исломӣ', ky:'Сахих хадистер жана ислам фикхи', de:'Authentische Hadithe und islamische Rechtswissenschaft', fr:'Hadiths authentiques et jurisprudence islamique', id:'Hadits shahih dan fikih Islam', hi:'प्रामाणिक हदीसें और इस्लामी न्यायशास्त्र', ur:'صحیح احادیث اور اسلامی فقہ' },
+  'HADITH':                { tr:'HADİS', ar:'الحديث', kk:'ХАДИС', tg:'ҲАДИС', ky:'ХАДИС', de:'HADITH', fr:'HADITH', id:'HADITS', hi:'हदीस', ur:'حدیث' },
+  'RECOMMENDED DUA':       { tr:'TAVSİYE EDİLEN DUA', ar:'الدعاء المستحب', kk:'ҰСЫНЫЛАТЫН ДҰҒ А', tg:'ДУО И ТАВСИЯШУДА', ky:'СУНУШТАЛГАН ДУБА', de:'EMPFOHLENES DUA', fr:'DOUA RECOMMANDÉE', id:'DOA YANG DIANJURKAN', hi:'अनुशंसित दुआ', ur:'تجویز کردہ دعا' },
+
+  /* ── Hadith.js extras ── */
+  'hadiths':               { tr:'hadis', ar:'أحاديث', kk:'хадис', tg:'ҳадис', ky:'хадис', de:'Hadithe', fr:'hadiths', id:'hadits', hi:'हदीसें', ur:'احادیث' },
+  'Hadiths':               { tr:'Hadisler', ar:'الأحاديث', kk:'Хадистер', tg:'Ҳадисҳо', ky:'Хадистер', de:'Hadithe', fr:'Hadiths', id:'Hadits', hi:'हदीसें', ur:'احادیث' },
+  'Search':                { tr:'Ara', ar:'ابحث', kk:'Іздеу', tg:'Ҷустуҷӯ', ky:'Издөө', de:'Suchen', fr:'Rechercher', id:'Cari', hi:'खोजें', ur:'تلاش' },
+  'Al-Bukhari':            { tr:'El-Buhârî', ar:'البخاري', kk:'әл-Бұхари', tg:'ал-Бухорӣ', ky:'аль-Бухари', de:'Al-Buchari', fr:'Al-Boukhari', id:'Al-Bukhari', hi:'अल-बुख़ारी', ur:'البخاری' },
+  'Books':                 { tr:'Kitaplar', ar:'الكتب', kk:'Кітаптар', tg:'Китобҳо', ky:'Китептер', de:'Bücher', fr:'Livres', id:'Kitab', hi:'किताबें', ur:'کتابیں' },
+  'Book':                  { tr:'Kitap', ar:'الكتاب', kk:'Кітап', tg:'Китоб', ky:'Китеп', de:'Buch', fr:'Livre', id:'Kitab', hi:'किताब', ur:'کتاب' },
+  'Search error':          { tr:'Arama hatası', ar:'خطأ في البحث', kk:'Іздеу қатесі', tg:'Хатои ҷустуҷӯ', ky:'Издөө катасы', de:'Suchfehler', fr:'Erreur de recherche', id:'Kesalahan pencarian', hi:'खोज त्रुटि', ur:'تلاش کی خطا' },
+
+  /* ── Names.js extras ── */
+  'names':                 { tr:'isim', ar:'اسم', kk:'ат', tg:'ном', ky:'ат', de:'Namen', fr:'noms', id:'nama', hi:'नाम', ur:'نام' },
+
+  /* ── Settings misc ── */
+  'Help: @islamtimeworldsupport': { tr:'Yardım: @islamtimeworldsupport', ar:'المساعدة: @islamtimeworldsupport', kk:'Көмек: @islamtimeworldsupport', tg:'Кӯмак: @islamtimeworldsupport', ky:'Жардам: @islamtimeworldsupport', de:'Hilfe: @islamtimeworldsupport', fr:'Aide: @islamtimeworldsupport', id:'Bantuan: @islamtimeworldsupport', hi:'सहायता: @islamtimeworldsupport', ur:'مدد: @islamtimeworldsupport' },
+
+  /* ── Dhikr / Tasbih extras ── */
+  'TAP DHIKR — TASBIH MODE OPENS': { tr:'ZİKRE DOK. — TESBİH MODU AÇILIR', ar:'اضغط الذكر — يفتح وضع التسبيح', kk:'ЗІКІРДІ БАС — ТАСБИХ РЕЖИМІ АШЫЛАДЫ', tg:'ЗИКРРО ПАХШ КУН — ТАСБЕҲ РЕЖИМ МЕКУШОЯД', ky:'ЗИКРДИ БАС — ТАСБИХ РЕЖИМИ АЧЫЛАТ', de:'ZIKR TIPPEN — TASBIH-MODUS ÖFFNET', fr:'APPUYEZ DHIKR — MODE TASBIH OUVRE', id:'KETUK DZIKIR — MODE TASBIH TERBUKA', hi:'ज़िक्र दबाएं — तस्बीह मोड खुलेगा', ur:'ذکر دبائیں — تسبیح موڈ کھلے گا' },
+  'TASBIH':                { tr:'TESBİH', ar:'التسبيح', kk:'ТАСБИХ', tg:'ТАСБЕҲ', ky:'ТАСБИХ', de:'TASBIH', fr:'TASBIH', id:'TASBIH', hi:'तस्बीह', ur:'تسبیح' },
+  'Congratulations!':      { tr:'Tebrikler!', ar:'مبروك!', kk:'Құттықтаймыз!', tg:'Табрик!', ky:'Куттуктайбыз!', de:'Herzlichen Glückwunsch!', fr:'Félicitations !', id:'Selamat!', hi:'बधाई!', ur:'مبارک ہو!' },
+  'You reached your goal!': { tr:'Hedefinize ulaştınız!', ar:'لقد بلغت هدفك!', kk:'Сіз мақсатыңызға жеттіңіз!', tg:'Шумо ба ҳадафатон расидед!', ky:'Сиз максатыңызга жеттиңиз!', de:'Sie haben Ihr Ziel erreicht!', fr:'Vous avez atteint votre objectif !', id:'Anda mencapai tujuan!', hi:'आपने अपना लक्ष्य प्राप्त किया!', ur:'آپ نے اپنا ہدف حاصل کر لیا!' },
+  ' goal reached!':        { tr:'. hedefe ulaşıldı!', ar:'. تم بلوغ الهدف!', kk:'-мақсатқа жетілді!', tg:'-ҳадаф расидед!', ky:'-максатка жетилди!', de:'. Ziel erreicht!', fr:'. objectif atteint !', id:'. tujuan tercapai!', hi:'. लक्ष्य प्राप्त!', ur:'. ہدف پہنچ گیا!' },
+  'May Allah accept':      { tr:'Allah kabul etsin', ar:'تقبل الله', kk:'Алла қабылдасын', tg:'Аллоҳ қабул кунад', ky:'Аллах кабыл алсын', de:'Allah möge es annehmen', fr:'Qu\'Allah accepte', id:'Semoga Allah terima', hi:'अल्लाह क़बूल करे', ur:'اللہ قبول فرمائے' },
+  'First':                 { tr:'Birinci', ar:'الأول', kk:'Бірінші', tg:'Аввал', ky:'Биринчи', de:'Erstes', fr:'Premier', id:'Pertama', hi:'पहला', ur:'پہلا' },
+  'Second':                { tr:'İkinci', ar:'الثاني', kk:'Екінші', tg:'Дуюм', ky:'Экинчи', de:'Zweites', fr:'Deuxième', id:'Kedua', hi:'दूसरा', ur:'دوسرا' },
+  'Halfway':               { tr:'Yarı yolda', ar:'منتصف الطريق', kk:'Жарты жолда', tg:'Нимроҳ', ky:'Жарты жолдо', de:'Halbzeit', fr:'À mi-chemin', id:'Setengah jalan', hi:'आधा रास्ता', ur:'آدھا راستہ' },
+  'Goal':                  { tr:'Hedef', ar:'الهدف', kk:'Мақсат', tg:'Ҳадаф', ky:'Максат', de:'Ziel', fr:'Objectif', id:'Tujuan', hi:'लक्ष्य', ur:'ہدف' },
+  'Again':                 { tr:'Tekrar', ar:'مرة أخرى', kk:'Қайта', tg:'Боз', ky:'Кайра', de:'Nochmal', fr:'Encore', id:'Lagi', hi:'फिर से', ur:'دوبارہ' },
+  'Finish':                { tr:'Bitir', ar:'أنهِ', kk:'Аяқта', tg:'Тамом кун', ky:'Бүтүр', de:'Beenden', fr:'Terminer', id:'Selesai', hi:'समाप्त', ur:'ختم کرو' },
+  'Start over':            { tr:'Yeniden başla', ar:'ابدأ من جديد', kk:'Қайтадан бастау', tg:'Аз нав оғоз кун', ky:'Кайрадан баштоо', de:'Von vorne starten', fr:'Recommencer', id:'Mulai ulang', hi:'फिर से शुरू', ur:'دوبارہ شروع کریں' },
+  'On':                    { tr:'Açık', ar:'مشغّل', kk:'Қосулы', tg:'Фаъол', ky:'Жандыруу', de:'Ein', fr:'Activé', id:'Aktif', hi:'चालू', ur:'آن' },
+  'Done':                  { tr:'Tamam', ar:'تم', kk:'Дайын', tg:'Тайёр', ky:'Бүттү', de:'Fertig', fr:'Terminé', id:'Selesai', hi:'हो गया', ur:'مکمل' },
+  'Today:':                { tr:'Bugün:', ar:'اليوم:', kk:'Бүгін:', tg:'Имрӯз:', ky:'Бүгүн:', de:'Heute:', fr:"Aujourd'hui:", id:'Hari ini:', hi:'आज:', ur:'آج:' },
+
+  /* ── Qibla compass North label ── */
+  'N':                     { tr:'K', ar:'ش', kk:'С', tg:'Ш', ky:'Т', de:'N', fr:'N', id:'U', hi:'उ', ur:'ش' },
+
+  /* ── Mosques/Qibla distance ── */
+  'Distance':              { tr:'Mesafe', ar:'المسافة', kk:'Қашықтық', tg:'Масофа', ky:'Аралык', de:'Entfernung', fr:'Distance', id:'Jarak', hi:'दूरी', ur:'فاصلہ' },
+
+  /* ── Hadith book name ── */
+  'Muslim':                { tr:'Müslim', ar:'مسلم', kk:'Муслим', tg:'Муслим', ky:'Муслим', de:'Muslim', fr:'Muslim', id:'Muslim', hi:'मुस्लिम', ur:'مسلم' },
+};
+
+const _I18N_EN_IDX = {};
+(function _idx(node, depth) {
+  if (!node || typeof node !== 'object' || Array.isArray(node) || depth > 5) return;
+  if (typeof node.en === 'string' && node.en) _I18N_EN_IDX[node.en] = node;
+  for (const v of Object.values(node)) {
+    if (typeof v === 'object' && !Array.isArray(v)) _idx(v, depth + 1);
+  }
+})(I18N, 0);
+
+function _resolveT(lat, cyr, ru, en, lang) {
+  if (lang === 'uz_cyr') return cyr !== undefined ? cyr : lat;
+  if (lang === 'ru')     return ru  !== undefined ? ru  : lat;
+  if (lang === 'en')     return en  !== undefined ? en  : lat;
+  if (lang === 'uz')     return lat;
+  const node = _I18N_EN_IDX[en] || _EXTRA_T[en];
+  if (node && node[lang]) return node[lang];
+  return lat;
+}
+
 function applyLangDir(lang) {
   const dir = RTL_LANGS.has(lang) ? 'rtl' : 'ltr';
   document.documentElement.setAttribute('dir', dir);

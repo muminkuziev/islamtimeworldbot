@@ -13,7 +13,7 @@ const NamesScreen = (function () {
   let _search = '';
   let _counts = {};
 
-  function _T(lat, cyr, ru, en) { if (_lang === 'uz_cyr') return cyr; if (_lang === 'ru' && ru !== undefined) return ru; if (_lang === 'en' && en !== undefined) return en; return lat; }
+  function _T(lat, cyr, ru, en) { return _resolveT(lat, cyr, ru, en, _lang); }
   function _cy(t) {
     if (!t || _lang !== 'uz_cyr') return t;
     return t
@@ -209,6 +209,12 @@ const NamesScreen = (function () {
         <div class="nm-taf-card">
           <div class="nm-sec-lbl">${_T('TAFSIR','ТАФСИР','ТАФСИР','TAFSIR')}</div>
           <div class="nm-taf-txt">${_esc(tafsir)}</div>
+        </div>` : ''}
+
+        ${ism.ref ? `
+        <div class="src-card">
+          <span class="src-icon">📚</span>
+          <span class="src-ref"><strong>${ism.ref}</strong></span>
         </div>` : ''}
 
         <!-- Zikr counter -->

@@ -1117,7 +1117,7 @@ button {
 *::-webkit-scrollbar { display: none; }
 
 /* ─────────────────────────────────────
-   RTL SUPPORT
+   RTL SUPPORT (Arabic + Urdu)
 ───────────────────────────────────── */
 [dir="rtl"] .lang-name,
 [dir="rtl"] .module-name {
@@ -1128,6 +1128,54 @@ button {
   left: 8px;
   right: auto;
 }
+
+/* Urdu: use Noto Nastaliq if available, fall back to Naskh */
+:lang(ur) {
+  font-family: 'Noto Nastaliq Urdu', 'Noto Naskh Arabic', 'Amiri', serif;
+}
+
+/* Full RTL layout overrides for Arabic */
+[dir="rtl"] .screen-inner,
+[dir="rtl"] .dash-body,
+[dir="rtl"] .module-card,
+[dir="rtl"] .setting-row,
+[dir="rtl"] .hd-list,
+[dir="rtl"] .du-list {
+  direction: rtl;
+  text-align: right;
+}
+
+[dir="rtl"] .nm-nav-row,
+[dir="rtl"] .nm-zkr-row,
+[dir="rtl"] .du-hdr-row,
+[dir="rtl"] .hd-hdr-row {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .nm-back-btn,
+[dir="rtl"] .du-back,
+[dir="rtl"] .hd-back,
+[dir="rtl"] .qb-back,
+[dir="rtl"] .ms-back,
+[dir="rtl"] .hc-back,
+[dir="rtl"] .pr-back,
+[dir="rtl"] .q-back-btn {
+  direction: rtl;
+}
+
+[dir="rtl"] .nm-card-n { left: auto; right: 10px; }
+[dir="rtl"] .nm-card-c { right: auto; left: 9px; }
+
+[dir="rtl"] .setting-row-right { margin-left: 0; margin-right: auto; }
+[dir="rtl"] .setting-row-left  { text-align: right; }
+
+[dir="rtl"] .src-card {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+[dir="rtl"] .du-detail-translit { text-align: right; direction: rtl; }
+[dir="rtl"] .dua-transliteration { text-align: right; direction: rtl; }
 
 /* ─────────────────────────────────────
    RESPONSIVE / SAFE AREA
@@ -4795,6 +4843,62 @@ button {
 .st-app-info { background:rgba(232,193,90,.05); border:1px solid rgba(232,193,90,.1); border-radius:14px; padding:14px; text-align:center; }
 .st-app-name { font-family:'Amiri',serif; font-size:16px; color:#E8C15A; margin-bottom:6px; }
 .st-app-det { font-family:'Inter',system-ui,sans-serif; font-size:10px; color:rgba(232,223,200,.55); line-height:1.8; }
+
+/* ── About App page  (ab-*)  ──────────────────────────────────────── */
+.ab-hero { background:linear-gradient(145deg,rgba(232,193,90,.12),rgba(232,193,90,.04)); border:1px solid rgba(232,193,90,.22); border-radius:18px; padding:22px 18px 18px; text-align:center; position:relative; overflow:hidden; margin-bottom:12px; }
+.ab-hero-topline { position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,#E8C15A,transparent); }
+.ab-hero-crescent { font-size:38px; margin-bottom:8px; line-height:1; }
+.ab-hero-name { font-family:'Inter',system-ui,sans-serif; font-size:20px; font-weight:800; color:#E8C15A; letter-spacing:-.4px; margin-bottom:5px; }
+.ab-hero-tag { font-family:'Inter',system-ui,sans-serif; font-size:11px; color:rgba(232,223,200,.55); line-height:1.55; max-width:240px; margin:0 auto 12px; }
+.ab-hero-divider { width:40px; height:1px; background:rgba(232,193,90,.3); margin:0 auto 10px; }
+.ab-hero-meta { font-family:'Inter',system-ui,sans-serif; font-size:10px; font-weight:600; color:rgba(232,193,90,.7); letter-spacing:.3px; }
+
+.ab-hadith-card { background:rgba(79,207,160,.07); border:1px solid rgba(79,207,160,.2); border-radius:16px; padding:16px; margin-bottom:12px; }
+.ab-hadith-lbl { font-family:'Inter',system-ui,sans-serif; font-size:8px; font-weight:700; color:rgba(79,207,160,.6); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:10px; }
+.ab-hadith-quote { font-family:'Inter',system-ui,sans-serif; font-size:13px; font-weight:600; color:#e8dfc8; line-height:1.65; font-style:italic; margin-bottom:8px; }
+.ab-hadith-ref { font-family:'Inter',system-ui,sans-serif; font-size:10px; color:rgba(79,207,160,.6); font-weight:600; }
+
+.ab-stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
+.ab-stat-box { background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.07); border-radius:14px; padding:14px 10px; text-align:center; }
+.ab-stat-box--blue  { background:rgba(91,155,213,.07); border-color:rgba(91,155,213,.2); }
+.ab-stat-box--green { background:rgba(79,207,160,.07); border-color:rgba(79,207,160,.2); }
+.ab-stat-num { font-family:'Inter',system-ui,sans-serif; font-size:30px; font-weight:800; color:#E8C15A; line-height:1; letter-spacing:-1.5px; margin-bottom:5px; }
+.ab-stat-num--sm { font-size:12px; letter-spacing:0; line-height:1.3; }
+.ab-stat-box--blue  .ab-stat-num { color:#5b9bd5; }
+.ab-stat-box--green .ab-stat-num { color:#4fcfa0; }
+.ab-stat-lbl { font-family:'Inter',system-ui,sans-serif; font-size:9px; font-weight:600; color:rgba(232,223,200,.32); text-transform:uppercase; letter-spacing:.8px; }
+
+.ab-feat-card { background:#111e33; border:1px solid rgba(232,193,90,.1); border-radius:16px; padding:16px; margin-bottom:12px; }
+.ab-feat-lbl { font-family:'Inter',system-ui,sans-serif; font-size:8px; font-weight:700; color:rgba(232,193,90,.5); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:8px; }
+.ab-feat-desc { font-family:'Inter',system-ui,sans-serif; font-size:11px; color:rgba(232,223,200,.5); line-height:1.55; margin-bottom:12px; }
+.ab-feat-list { display:flex; flex-direction:column; gap:7px; }
+.ab-feat-item { display:flex; align-items:baseline; gap:9px; }
+.ab-feat-bullet { color:#E8C15A; font-size:15px; flex-shrink:0; }
+.ab-feat-text { font-family:'Inter',system-ui,sans-serif; font-size:12px; font-weight:600; color:#e8dfc8; line-height:1.45; }
+
+.ab-dev-card { background:rgba(91,155,213,.07); border:1px solid rgba(91,155,213,.18); border-radius:16px; padding:16px; margin-bottom:12px; text-align:center; }
+.ab-dev-lbl { font-family:'Inter',system-ui,sans-serif; font-size:8px; font-weight:700; color:rgba(91,155,213,.55); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:9px; }
+.ab-dev-name { font-family:'Inter',system-ui,sans-serif; font-size:17px; font-weight:800; color:#e8dfc8; margin-bottom:4px; }
+.ab-dev-handle { font-family:'Inter',system-ui,sans-serif; font-size:11px; color:rgba(91,155,213,.85); font-weight:600; cursor:pointer; text-decoration:underline; text-decoration-color:rgba(91,155,213,.35); text-underline-offset:3px; }
+
+.ab-sources-card { background:rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.06); border-radius:14px; padding:14px 14px; margin-bottom:12px; }
+.ab-sources-lbl { font-family:'Inter',system-ui,sans-serif; font-size:8px; font-weight:700; color:rgba(232,223,200,.25); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:8px; }
+.ab-sources-list { font-family:'Inter',system-ui,sans-serif; font-size:10px; color:rgba(232,223,200,.42); line-height:1.9; }
+
+.ab-footer { text-align:center; font-family:'Inter',system-ui,sans-serif; font-size:10px; color:rgba(232,223,200,.25); line-height:1.75; padding:2px 12px 20px; font-style:italic; }
+
+/* ── Global Source Card ── */
+.src-card { background:rgba(255,255,255,.025); border:1px solid rgba(232,193,90,.12); border-radius:12px; padding:10px 14px; margin:8px 0 4px; display:flex; align-items:center; gap:10px; }
+.src-icon { font-size:16px; flex-shrink:0; }
+.src-ref  { font-family:'Inter',system-ui,sans-serif; font-size:11px; color:rgba(232,223,200,.55); line-height:1.5; }
+.src-ref strong { color:rgba(232,193,90,.7); font-weight:600; }
+
+/* ── OSM Attribution ── */
+.ms-osm-attr { text-align:center; font-family:'Inter',system-ui,sans-serif; font-size:10px; color:rgba(232,223,200,.3); padding:8px 0 16px; }
+.ms-osm-attr a { color:rgba(91,155,213,.6); text-decoration:none; }
+
+/* ── Dhikr Ref ── */
+.zk-ref { color:rgba(232,193,90,.45); font-size:10px; }
 
 /* Toast */
 .st-toast { position:fixed; bottom:80px; left:50%; transform:translateX(-50%) translateY(16px); background:rgba(15,32,64,.96); border:1px solid rgba(232,193,90,.25); border-radius:12px; padding:8px 18px; font-family:'Inter',system-ui,sans-serif; font-size:11px; font-weight:600; color:#e8dfc8; opacity:0; transition:opacity .25s, transform .25s; z-index:9999; pointer-events:none; white-space:nowrap; }

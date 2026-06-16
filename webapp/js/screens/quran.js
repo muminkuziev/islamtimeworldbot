@@ -150,11 +150,12 @@ const QuranScreen = (function () {
   };
   const _uz = s => UZ[s[0]] || s[1];
 
+  /* Translations disabled — sources under license verification (MVP) */
   const TRANSLATIONS = {
-    uz:'uz.sodik', uz_cyr:'uz.sodik', en:'en.sahih', ru:'ru.kuliev',
-    tr:'tr.diyanet', ar:null, kk:'ru.kuliev', tg:'ru.kuliev',
-    ky:'ru.kuliev', de:'de.aburida', fr:'fr.hamidullah',
-    id:'id.indonesian', hi:'hi.hindi', ur:'ur.ahmedali'
+    uz:null, uz_cyr:null, en:null, ru:null,
+    tr:null, ar:null, kk:null, tg:null,
+    ky:null, de:null, fr:null,
+    id:null, hi:null, ur:null
   };
 
   const RECITER = { id:'ar.alafasy', name:'Mishary Rashid al-Afasy', flag:'🇰🇼' };
@@ -162,6 +163,33 @@ const QuranScreen = (function () {
   /* ── State ── */
   let _lang         = 'uz';
   let _tab          = 'suralar';
+
+  /* ── Quran UI strings (all 14 languages) ── */
+  const QT = {
+    back:         { uz:'← Menyu',      uz_cyr:'← Меню',      ru:'← Меню',         en:'← Menu',         tr:'← Menü',        ar:'← القائمة',    kk:'← Мәзір',        tg:'← Меню',          ky:'← Меню',       de:'← Menü',                   fr:'← Menu',              id:'← Menu',          hi:'← मेनू',          ur:'← مینو'           },
+    title:        { uz:"Al-Qur'on",    uz_cyr:'Ал-Қуръон',   ru:'Аль-Куран',       en:'Al-Quran',       tr:"Kur'an-ı Kerim", ar:'القرآن الكريم', kk:'Ал-Құран',       tg:'Қуръони Карим',   ky:'Ал-Куран',     de:'Der Heilige Quran',        fr:'Le Saint Coran',      id:'Al-Qur\'an',      hi:'अल-क़ुरआन',      ur:'قرآنِ کریم'       },
+    subtitle:     { uz:"القرآن الكريم · 114 sura · 6 236 oyat", uz_cyr:'القرآن الكريم · 114 сура · 6 236 оят', ru:'القرآن الكريم · 114 сур · 6 236 аятов', en:'القرآن الكريم · 114 Surahs · 6,236 Verses', tr:"القرآن الكريم · 114 sure · 6.236 ayet", ar:'القرآن الكريم · ١١٤ سورة · ٦٢٣٦ آية', kk:'القرآن الكريم · 114 сура · 6 236 аят', tg:'القرآن الكريم · 114 сура · 6 236 оят', ky:'القرآن الكريم · 114 сура · 6 236 аят', de:'القرآن الكريم · 114 Suren · 6.236 Verse', fr:'القرآن الكريم · 114 Sourates · 6 236 Versets', id:'القرآن الكريم · 114 Surah · 6.236 Ayat', hi:'القرآن الكريم · ११४ सूरत · ६,२३६ आयात', ur:'القرآن الكريم · ۱۱۴ سورتیں · ۶,۲۳۶ آیات' },
+    tabSura:      { uz:'📖 Suralar',   uz_cyr:'📖 Суралар',  ru:'📖 Суры',         en:'📖 Surahs',      tr:'📖 Sureler',     ar:'📖 السور',      kk:'📖 Сүрелер',     tg:'📖 Сураҳо',       ky:'📖 Суралар',   de:'📖 Suren',                 fr:'📖 Sourates',         id:'📖 Surah',        hi:'📖 सूरतें',      ur:'📖 سورتیں'        },
+    tabQori:      { uz:'🎙 Qori',      uz_cyr:'🎙 Қори',     ru:'🎙 Чтец',         en:'🎙 Reciter',     tr:'🎙 Kâri',        ar:'🎙 القارئ',     kk:'🎙 Қари',        tg:'🎙 Қори',         ky:'🎙 Окурман',   de:'🎙 Rezitator',             fr:'🎙 Récitant',         id:'🎙 Qari',         hi:'🎙 क़ारी',       ur:'🎙 قاری'          },
+    tabSaved:     { uz:'🔖 Saqlangan', uz_cyr:'🔖 Сақланган',ru:'🔖 Сохранённые',  en:'🔖 Saved',       tr:'🔖 Kaydedilenler',ar:'🔖 المحفوظات', kk:'🔖 Сақталған',   tg:'🔖 Захира шуда',  ky:'🔖 Сакталган', de:'🔖 Gespeichert',           fr:'🔖 Sauvegardés',      id:'🔖 Tersimpan',    hi:'🔖 सहेजे गए',    ur:'🔖 محفوظ'         },
+    continue:     { uz:'Davom ettirish',uz_cyr:'Давом эттириш',ru:'Продолжить',     en:'Continue reading',tr:'Okumaya devam et',ar:'متابعة القراءة',kk:'Оқуды жалғастыру',tg:'Хондани идома додан',ky:'Окууну улантуу',de:'Weiterlesen',              fr:'Reprendre la lecture',id:'Lanjutkan membaca',hi:'पढ़ना जारी रखें',ur:'پڑھنا جاری رکھیں'},
+    verses:       { uz:'oyat',         uz_cyr:'оят',          ru:'аят',             en:'verse',          tr:'ayet',           ar:'آية',           kk:'аят',            tg:'оят',             ky:'аят',          de:'Vers',                     fr:'verset',              id:'ayat',            hi:'आयत',            ur:'آیت'              },
+    juz:          { uz:'Juz',          uz_cyr:'Жуз',          ru:'Джуз',            en:'Juz',            tr:'Cüz',            ar:'جزء',           kk:'Жүз',            tg:'Ҷузъ',            ky:'Жуз',          de:'Juz',                      fr:'Juz',                 id:'Juz',             hi:'जुज़',           ur:'جز'               },
+    makka:        { uz:'🕋 Makkiy',    uz_cyr:'🕋 Маккий',   ru:'🕋 Мекканская',   en:'🕋 Meccan',      tr:'🕋 Mekkî',       ar:'🕋 مكية',       kk:'🕋 Меккелік',    tg:'🕋 Маккӣ',        ky:'🕋 Меккелик',  de:'🕋 Mekkanisch',            fr:'🕋 Meccoise',         id:'🕋 Makkiyah',    hi:'🕋 मक्की',       ur:'🕋 مکی'           },
+    madina:       { uz:'🕌 Madaniy',   uz_cyr:'🕌 Маданий',  ru:'🕌 Мединская',    en:'🕌 Medinan',     tr:'🕌 Medenî',      ar:'🕌 مدنية',      kk:'🕌 Мединелік',   tg:'🕌 Мадинӣ',       ky:'🕌 Мединелик', de:'🕌 Medinisch',             fr:'🕌 Médinoise',        id:'🕌 Madaniyah',   hi:'🕌 मदनी',        ur:'🕌 مدنی'          },
+    all:          { uz:'Barchasi',     uz_cyr:'Барчаси',      ru:'Все',             en:'All',            tr:'Tümü',           ar:'الكل',          kk:'Барлығы',        tg:'Ҳама',            ky:'Баары',        de:'Alle',                     fr:'Tous',                id:'Semua',           hi:'सभी',            ur:'سب'               },
+    searchPh:     { uz:'Sura nomi yoki raqami...', uz_cyr:'Сура номи ёки рақами...', ru:'Название или номер...', en:'Surah name or number...', tr:'Sure adı veya no...', ar:'اسم السورة أو رقمها...', kk:'Сүре атауы немесе №...', tg:'Номи сура ё рақам...', ky:'Суранын аты же номери...', de:'Surenname oder Nr...', fr:'Nom ou N° de sourate...', id:'Nama atau nomor surah...', hi:'सूरत का नाम या नंबर...', ur:'سورت کا نام یا نمبر...' },
+    chooseRec:    { uz:'QORI TANLASH', uz_cyr:'ҚОРИ ТАНЛАШ', ru:'ВЫБОР ЧТЕЦА',     en:'CHOOSE RECITER', tr:'KÂRİ SEÇ',       ar:'اختيار القارئ', kk:'ҚАРИ ТАҢДАУ',    tg:'ИНТИХОБИ ҚОРИ',   ky:'ОКУРМАН ТАНДОО',de:'REZITATOR WÄHLEN',         fr:'CHOISIR UN RÉCITANT', id:'PILIH QARI',      hi:'क़ारी चुनें',    ur:'قاری منتخب کریں'  },
+    moreRec:      { uz:"Keyingi versiyada ko'proq qorilar qo'shiladi.", uz_cyr:"Кейинги версияда кўпроқ қорилар қўшилади.", ru:'В следующей версии будет больше чтецов.', en:'More reciters in next version.', tr:'Sonraki sürümde daha fazla kâri.', ar:'سيتم إضافة قراء آخرين في الإصدار القادم.', kk:'Келесі нұсқада қосымша қарилар.', tg:'Дар нусхаи оянда қориёни бештар.', ky:'Кийинки версияда кошумча окурмандар.', de:'Weitere Rezitatoren in der nächsten Version.', fr:"Plus de récitants dans la prochaine version.", id:'Lebih banyak qari di versi berikutnya.', hi:'अगले संस्करण में और क़ारी।', ur:'اگلے ورژن میں مزید قاری۔' },
+    noSaved:      { uz:'🔖 Hali hech narsa saqlanmagan', uz_cyr:'🔖 Ҳали ҳеч нарса сақланмаган', ru:'🔖 Ничего не сохранено', en:'🔖 Nothing saved yet', tr:'🔖 Henüz kaydedilen yok', ar:'🔖 لا توجد محفوظات بعد', kk:'🔖 Әлі ешнәрсе сақталмаған', tg:'🔖 Ҳанӯз чизе захира нашуда', ky:'🔖 Азырынча эч нерсе сакталган жок', de:'🔖 Noch nichts gespeichert', fr:'🔖 Rien de sauvegardé', id:'🔖 Belum ada yang tersimpan', hi:'🔖 अभी कुछ सहेजा नहीं', ur:'🔖 ابھی کچھ محفوظ نہیں' },
+    savedLbl:     { uz:'SAQLANGAN',    uz_cyr:'САҚЛАНГАН',    ru:'СОХРАНЁННЫЕ',     en:'SAVED',          tr:'KAYDEDİLENLER',  ar:'المحفوظات',     kk:'САҚТАЛҒАН',      tg:'ЗАХИРА ШУДА',     ky:'САКТАЛГАН',    de:'GESPEICHERT',              fr:'SAUVEGARDÉS',         id:'TERSIMPAN',       hi:'सहेजे गए',       ur:'محفوظ'            },
+    savedV:       { uz:'ta oyat saqlangan', uz_cyr:'та оят сақланган', ru:'аятов сохранено', en:'verses saved', tr:'ayet kaydedildi', ar:'آيات محفوظة', kk:'аят сақталды', tg:'оят захира шуд', ky:'аят сакталды', de:'Verse gespeichert', fr:'versets sauvegardés', id:'ayat tersimpan', hi:'आयतें सहेजी गईं', ur:'آیتیں محفوظ' },
+    loading:      { uz:'Yuklanmoqda...', uz_cyr:'Юкланмоқда...', ru:'Загрузка...', en:'Loading...', tr:'Yükleniyor...', ar:'جاري التحميل...', kk:'Жүктелуде...', tg:'Бор карда мешавад...', ky:'Жүктөлүүдө...', de:'Wird geladen...', fr:'Chargement...', id:'Memuat...', hi:'लोड हो रहा है...', ur:'لوڈ ہو رہا ہے...' },
+    loadErr:      { uz:'Yuklanmadi.',  uz_cyr:'Юкланмади.',   ru:'Не удалось загрузить.', en:'Failed to load.', tr:'Yüklenemedi.', ar:'فشل التحميل.', kk:'Жүктелмеді.', tg:'Бор карда нашуд.', ky:'Жүктөлгөн жок.', de:'Laden fehlgeschlagen.', fr:'Chargement échoué.', id:'Gagal memuat.', hi:'लोड नहीं हुआ।', ur:'لوڈ نہیں ہوا۔' },
+    retry:        { uz:'Qayta urinish',uz_cyr:'Қайта уриниш',ru:'Повторить',       en:'Retry',          tr:'Tekrar dene',    ar:'إعادة المحاولة', kk:'Қайталап көру',  tg:'Аз нав кӯшиш',    ky:'Кайра аракет',  de:'Erneut versuchen',         fr:'Réessayer',           id:'Coba lagi',       hi:'पुनः प्रयास',    ur:'دوبارہ کوشش'      },
+    tafsirLoad:   { uz:'Tafsir yuklanmoqda...', uz_cyr:'Тафсир юкланмоқда...', ru:'Тафсир загружается...', en:'Tafsir loading...', tr:'Tefsir yükleniyor...', ar:'جاري تحميل التفسير...', kk:'Тафсир жүктелуде...', tg:'Тафсир бор карда мешавад...', ky:'Тафсир жүктөлүүдө...', de:'Tafsir wird geladen...', fr:'Tafsir en chargement...', id:'Tafsir memuat...', hi:'तफ़सीर लोड हो रही है...', ur:'تفسیر لوڈ ہو رہی ہے...' },
+  };
+  function _qt(k) { const n = QT[k]; return n ? (n[_lang] || n.en || '') : ''; }
   let _view         = 'list';
   let _surahIdx     = 0;
   let _filter       = 'all';
@@ -209,21 +237,21 @@ const QuranScreen = (function () {
       <div class="screen-inner q-screen">
         <div class="q-header">
           <div class="q-nav-row">
-            <button id="quran-back" class="q-back-btn">← Menyu</button>
+            <button id="quran-back" class="q-back-btn">${_qt('back')}</button>
             <div class="q-qori-badge">
               <span>${RECITER.flag}</span>
               <span>${RECITER.name.split(' ')[0]}</span>
             </div>
           </div>
           <div class="q-title-block">
-            <div class="q-title-main">Al-Qur'on al-Karim</div>
-            <div class="q-title-sub">القرآن الكريم · 114 sura · 6,236 oyat</div>
+            <div class="q-title-main">${_qt('title')}</div>
+            <div class="q-title-sub">${_qt('subtitle')}</div>
           </div>
           <div class="q-divider"></div>
           <div class="q-tabs-row">
-            <button class="q-tab-btn${_tab==='suralar'?' active':''}" data-tab="suralar">📖 Suralar</button>
-            <button class="q-tab-btn${_tab==='qori'?' active':''}" data-tab="qori">🎙 Qori</button>
-            <button class="q-tab-btn${_tab==='saqlangan'?' active':''}" data-tab="saqlangan">🔖 Saqlangan</button>
+            <button class="q-tab-btn${_tab==='suralar'?' active':''}" data-tab="suralar">${_qt('tabSura')}</button>
+            <button class="q-tab-btn${_tab==='qori'?' active':''}" data-tab="qori">${_qt('tabQori')}</button>
+            <button class="q-tab-btn${_tab==='saqlangan'?' active':''}" data-tab="saqlangan">${_qt('tabSaved')}</button>
           </div>
         </div>
         <div class="q-content" id="q-content">${_tabContent()}</div>
@@ -248,7 +276,7 @@ const QuranScreen = (function () {
         <div class="q-continue-banner" id="quran-continue-btn">
           <span>📖</span>
           <div style="flex:1">
-            <div class="q-banner-title">Davom ettirish</div>
+            <div class="q-banner-title">${_qt('continue')}</div>
             <div class="q-banner-sub">${_uz(s)} · ${s[0]}-sura</div>
           </div>
           <span class="q-banner-arrow">›</span>
@@ -266,7 +294,7 @@ const QuranScreen = (function () {
           <div class="q-sura-num">${num}</div>
           <div class="q-sura-info">
             <div class="q-sura-name">${_uz(s)}</div>
-            <div class="q-sura-meta">${verses} oyat · Juz ${juz} · ${type==='M'?'🕋':'🕌'} ${type==='M'?'Makka':'Madina'}</div>
+            <div class="q-sura-meta">${verses} ${_qt('verses')} · ${_qt('juz')} ${juz} · ${type==='M'?_qt('makka'):_qt('madina')}</div>
           </div>
           <div class="q-sura-ar">${ar}</div>
           <button class="q-bm-btn${hasBm?' bm-on':''}" data-bm="${num}">🔖</button>
@@ -278,11 +306,11 @@ const QuranScreen = (function () {
       <div class="q-search-box">
         <span class="q-search-icon">🔍</span>
         <input id="quran-search" class="q-search-input" type="text"
-               placeholder="Sura nomi yoki raqami..." autocomplete="off"/>
+               placeholder="${_qt('searchPh')}" autocomplete="off"/>
         <button id="q-search-clear" class="q-search-clear" style="display:none">✕</button>
       </div>
       <div class="q-filters-row">
-        ${[['all','Barchasi'],['makka','🕋 Makkiy'],['madina','🕌 Madaniy'],['juz30','Juz 30']].map(
+        ${[['all',_qt('all')],['makka',_qt('makka')],['madina',_qt('madina')],['juz30',`${_qt('juz')} 30`]].map(
           ([k,l]) => `<button class="q-filter-btn${_filter===k?' active':''}" data-filter="${k}">${l}</button>`
         ).join('')}
       </div>
@@ -293,7 +321,7 @@ const QuranScreen = (function () {
   /* ── Tab: Qori ── */
   function _qoriHTML() {
     return `
-      <div class="q-section-label" style="margin-bottom:8px">QORI TANLASH</div>
+      <div class="q-section-label" style="margin-bottom:8px">${_qt('chooseRec')}</div>
       <div class="q-qori-card active">
         <span class="q-qori-flag">${RECITER.flag}</span>
         <div class="q-qori-info">
@@ -302,20 +330,20 @@ const QuranScreen = (function () {
         </div>
         <div class="q-qori-check">✓</div>
       </div>
-      <div class="q-qori-note">Keyingi versiyada ko'proq qorilar qo'shiladi.</div>`;
+      <div class="q-qori-note">${_qt('moreRec')}</div>`;
   }
 
   /* ── Tab: Saqlangan ── */
   function _saqlanganHTML() {
     const bm      = _getBM();
     const entries = Object.values(bm);
-    if (!entries.length) return '<div class="q-empty">🔖 Hali hech narsa saqlanmagan</div>';
+    if (!entries.length) return `<div class="q-empty">${_qt('noSaved')}</div>`;
 
     const bysurah = {};
     entries.forEach(b => { bysurah[b.surah] = (bysurah[b.surah] || 0) + 1; });
 
     return `
-      <div class="q-section-label" style="margin-bottom:8px">SAQLANGAN · ${entries.length} ta oyat</div>
+      <div class="q-section-label" style="margin-bottom:8px">${_qt('savedLbl')} · ${entries.length} ${_qt('savedV')}</div>
       ${Object.entries(bysurah).map(([sn, cnt]) => {
         const s = SURAHS.find(x => x[0] === parseInt(sn));
         if (!s) return '';
@@ -324,7 +352,7 @@ const QuranScreen = (function () {
             <div class="q-bm-num">${sn}</div>
             <div class="q-bm-info">
               <div class="q-bm-name">${_uz(s)}</div>
-              <div class="q-bm-sub">${cnt} ta oyat saqlangan</div>
+              <div class="q-bm-sub">${cnt} ${_qt('savedV')}</div>
             </div>
             <button class="q-bm-del" data-surah="${sn}">✕</button>
           </div>`;
@@ -492,8 +520,8 @@ const QuranScreen = (function () {
     } catch {
       const body = el.querySelector('#quran-reader-body');
       if (body) body.innerHTML = `
-        <div class="quran-loading">❌ Yuklanmadi.
-          <button class="quran-retry-btn" id="quran-retry">Qayta urinish</button>
+        <div class="quran-loading">❌ ${_qt('loadErr')}
+          <button class="quran-retry-btn" id="quran-retry">${_qt('retry')}</button>
         </div>`;
       el.querySelector('#quran-retry')?.addEventListener('click', () => _openSurah(el));
     }
@@ -502,7 +530,7 @@ const QuranScreen = (function () {
   function _buildReaderShell(s) {
     const [num,, ar, verses, juz, type] = s;
     const nameUz    = _uz(s);
-    const typeLabel = type === 'M' ? '🕋 Makkiy' : '🕌 Madaniy';
+    const typeLabel = type === 'M' ? _qt('makka') : _qt('madina');
     const wave = Array.from({length:12}, (_, i) =>
       `<div class="quran-wave-bar" style="animation-delay:${(i*0.07).toFixed(2)}s"></div>`).join('');
 
@@ -518,8 +546,8 @@ const QuranScreen = (function () {
             <div class="q-sura-title-ar">${ar}</div>
             <div class="q-sura-title-uz">${nameUz}</div>
             <div class="q-sura-badges">
-              <span class="q-sura-badge">${verses} oyat</span>
-              <span class="q-sura-badge">Juz ${juz}</span>
+              <span class="q-sura-badge">${verses} ${_qt('verses')}</span>
+              <span class="q-sura-badge">${_qt('juz')} ${juz}</span>
               <span class="q-sura-badge">${typeLabel}</span>
               <span class="q-sura-badge">${_surahIdx+1}/114</span>
             </div>
@@ -555,7 +583,7 @@ const QuranScreen = (function () {
         </div>
 
         <div class="quran-reader-body" id="quran-reader-body">
-          <div class="quran-loading"><span class="quran-spinner"></span> Yuklanmoqda...</div>
+          <div class="quran-loading"><span class="quran-spinner"></span> ${_qt('loading')}</div>
         </div>
       </div>`;
   }
@@ -636,15 +664,26 @@ const QuranScreen = (function () {
             <div class="quran-ayah-translit"${(_showTranslit || _lang === 'uz') ? '' : ' style="display:none"'}>
               ${_esc(translit[i])}
             </div>` : ''}
-          ${translation[i]
-            ? `<div class="quran-ayah-tr">${_esc(translation[i])}</div>`
-            : ((_lang === 'uz' || _lang === 'uz_cyr')
-                ? `<div class="quran-ayah-tr" style="opacity:.45;font-style:italic">${_lang === 'uz_cyr' ? 'Ушбу таржима ҳозирча мавжуд эмас.' : "Ushbu tarjima hozircha mavjud emas."}</div>`
-                : '')}
+          <div class="quran-ayah-tr" style="opacity:.35;font-style:italic;font-size:12px">🚧 ${{
+              uz:     "Qur'on tarjimasi tekshirilmoqda va tasdiqlanmoqda.",
+              uz_cyr: "Қуръон таржимаси текширилмоқда ва тасдиқланмоқда.",
+              ru:     "Перевод Корана проходит проверку.",
+              en:     "Quran translation is under verification.",
+              tr:     "Kur'an tercümesi doğrulama sürecindedir.",
+              ar:     "ترجمة القرآن قيد المراجعة والتحقق.",
+              kk:     "Құран аудармасы тексеріліп жатыр.",
+              tg:     "Тарҷумаи Қуръон дар ҳоли санҷиш аст.",
+              ky:     "Курандың котормосу текшерилүүдө.",
+              de:     "Die Koranübersetzung wird derzeit überprüft.",
+              fr:     "La traduction du Coran est en cours de vérification.",
+              id:     "Terjemahan Al-Quran sedang dalam proses verifikasi.",
+              hi:     "क़ुरआन का अनुवाद सत्यापन प्रक्रिया में है।",
+              ur:     "قرآن کا ترجمہ تصدیق کے مرحلے میں ہے۔",
+            }[_lang]||"Qur'on tarjimasi tekshirilmoqda va tasdiqlanmoqda."}</div>
           <div class="quran-tafsir-wrap" id="tafsir-${n}" style="display:none">
             <div class="quran-tafsir-loading">
               <span class="quran-spinner" style="width:14px;height:14px;border-width:2px"></span>
-              Tafsir yuklanmoqda...
+              ${_qt('tafsirLoad')}
             </div>
           </div>
         </div>`;
@@ -695,27 +734,22 @@ const QuranScreen = (function () {
     if (!wrap) return;
     if (wrap.style.display !== 'none') { wrap.style.display = 'none'; return; }
     wrap.style.display = 'block';
-    const cKey   = `tafsir_${surahNum}_${ayahNum}`;
-    const cached = localStorage.getItem(cKey);
-    if (cached) {
-      wrap.innerHTML = `<div class="quran-tafsir-text">${_esc(cached)}</div>
-        <div class="quran-tafsir-source">📚 Maududi Tafsir (English)</div>`;
-      return;
-    }
-    try {
-      const resp = await fetch(`https://api.alquran.cloud/v1/ayah/${surahNum}:${ayahNum}/en.maududi`);
-      const data = await resp.json();
-      if (data.code === 200 && data.data?.text) {
-        const text = data.data.text;
-        try { localStorage.setItem(cKey, text); } catch {}
-        wrap.innerHTML = `<div class="quran-tafsir-text">${_esc(text)}</div>
-          <div class="quran-tafsir-source">📚 Maududi Tafsir (English)</div>`;
-      } else {
-        wrap.innerHTML = `<div class="quran-tafsir-text quran-tafsir-na">Ushbu oyat uchun tafsir hozircha mavjud emas.</div>`;
-      }
-    } catch {
-      wrap.innerHTML = `<div class="quran-tafsir-text quran-tafsir-na">Tafsir yuklanmadi. Internet aloqasini tekshiring.</div>`;
-    }
+    wrap.innerHTML = `<div class="quran-tafsir-text quran-tafsir-na">🚧 ${{
+      uz:     "Tafsir bo'limi tekshirilmoqda.",
+      uz_cyr: "Тафсир бўлими текширилмоқда.",
+      ru:     "Раздел тафсира проходит проверку.",
+      en:     "Tafsir section is under verification.",
+      tr:     "Tefsir bölümü inceleme aşamasındadır.",
+      ar:     "قسم التفسير قيد المراجعة.",
+      kk:     "Тафсир бөлімі тексеріліп жатыр.",
+      tg:     "Бахши тафсир дар ҳоли санҷиш аст.",
+      ky:     "Тафсир бөлүмү текшерилүүдө.",
+      de:     "Der Tafsir-Bereich wird derzeit überprüft.",
+      fr:     "La section tafsir est en cours de vérification.",
+      id:     "Bagian tafsir sedang diverifikasi.",
+      hi:     "तफ़सीर अनुभाग सत्यापन प्रक्रिया में है।",
+      ur:     "تفسیر سیکشن تصدیق کے مرحلے میں ہے۔",
+    }[_lang]||"Tafsir tekshiruvda."}</div>`;
   }
 
   /* ════════════════════════════════════════════════════════

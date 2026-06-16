@@ -15,15 +15,20 @@ const DhikrScreen = (function () {
   const PURPLE = '#c084fc';
 
   const ZIKIRLAR = [
-    { id:'k5', ar:'أَسْتَغْفِرُ اللّٰهُ',            tr:'Astaghfirullah',           uz:"Allohdan mag'firat so'rayman",      uz_cyr:'Аллоҳдан мағфират сўрайман',       ru:'Прошу прощения у Аллаха',          t:100, c:RED,    ms:[33,66,100] },
-    { id:'k7', ar:'سُبْحَانَ اللّٰهِ وَبِحَمْدِهِ',  tr:'Subhanallah wa bihamdihi', uz:'Alloh pokdir va hamd Uniki',         uz_cyr:'Аллоҳ покдир ва ҳамд Уники',        ru:'Аллах пречист, и Ему вся хвала',   t:100, c:GREEN,  ms:[33,66,100] },
-    { id:'k2', ar:'الْحَمْدُ لِلّٰهِ',               tr:'Alhamdulillah',            uz:'Barcha hamdlar Allohga xos',         uz_cyr:'Барча ҳамдлар Аллоҳга хос',        ru:'Вся хвала принадлежит Аллаху',     t:33,  c:BLUE,   ms:[11,22,33]  },
-    { id:'k3', ar:'اللّٰهُ أَكْبَرُ',                tr:'Allahu Akbar',             uz:"Alloh eng Ulug'dir",                 uz_cyr:"Аллоҳ энг Улуғдир",               ru:'Аллах Велик',                      t:34,  c:GOLD,   ms:[17,34]     },
-    { id:'k4', ar:'لَا إِلٰهَ إِلَّا اللّٰهُ',       tr:'La ilaha illallah',        uz:"Allohdan boshqa haqiqiy iloh yo'q", uz_cyr:"Аллоҳдан бошқа ҳақиқий илоҳ йўқ", ru:'Нет божества, кроме Аллаха',       t:100, c:PURPLE, ms:[33,66,100] },
+    { id:'k5', ar:'أَسْتَغْفِرُ اللّٰهُ',            tr:'Astaghfirullah',           uz:"Allohdan mag'firat so'rayman",      uz_cyr:'Аллоҳдан мағфират сўрайман',       ru:'Прошу прощения у Аллаха',          t:100, c:RED,    ms:[33,66,100], ref:'Bukhari 6307' },
+    { id:'k7', ar:'سُبْحَانَ اللّٰهِ وَبِحَمْدِهِ',  tr:'Subhanallah wa bihamdihi', uz:'Alloh pokdir va hamd Uniki',         uz_cyr:'Аллоҳ покдир ва ҳамд Уники',        ru:'Аллах пречист, и Ему вся хвала',   t:100, c:GREEN,  ms:[33,66,100], ref:'Bukhari 6405' },
+    { id:'k2', ar:'الْحَمْدُ لِلّٰهِ',               tr:'Alhamdulillah',            uz:'Barcha hamdlar Allohga xos',         uz_cyr:'Барча ҳамдлар Аллоҳга хос',        ru:'Вся хвала принадлежит Аллаху',     t:33,  c:BLUE,   ms:[11,22,33],  ref:'Muslim 2137' },
+    { id:'k3', ar:'اللّٰهُ أَكْبَرُ',                tr:'Allahu Akbar',             uz:"Alloh eng Ulug'dir",                 uz_cyr:"Аллоҳ энг Улуғдир",               ru:'Аллах Велик',                      t:34,  c:GOLD,   ms:[17,34],     ref:'Bukhari 6406' },
+    { id:'k4', ar:'لَا إِلٰهَ إِلَّا اللّٰهُ',       tr:'La ilaha illallah',        uz:"Allohdan boshqa haqiqiy iloh yo'q", uz_cyr:"Аллоҳдан бошқа ҳақиқий илоҳ йўқ", ru:'Нет божества, кроме Аллаха',       t:100, c:PURPLE, ms:[33,66,100], ref:'Muslim 2693' },
   ];
 
-  function _T(lat, cyr, ru, en) { if (_lang === 'uz_cyr') return cyr; if (_lang === 'ru' && ru !== undefined) return ru; if (_lang === 'en' && en !== undefined) return en; return lat; }
-  function _zUz(z) { if (_lang === 'uz_cyr') return z.uz_cyr || z.uz; if (_lang === 'ru') return z.ru || z.uz; if (_lang === 'en') return z.uz; return z.uz; }
+  function _T(lat, cyr, ru, en) { return _resolveT(lat, cyr, ru, en, _lang); }
+  function _zUz(z) {
+    if (_lang === 'uz')     return z.uz     || z.tr;
+    if (_lang === 'uz_cyr') return z.uz_cyr || z.uz || z.tr;
+    if (_lang === 'ru')     return z.ru     || z.tr;
+    return z.tr || z.uz;
+  }
 
   const LS      = 'dhikr_counts_v3';
   const LS_PREF = 'dhikr_prefs_v1';
@@ -145,7 +150,7 @@ const DhikrScreen = (function () {
           <div class="zk-info">
             <div class="zk-ar-row${done ? ' zk-done-text' : ''}">${z.ar}</div>
             <div class="zk-tr-row" style="color:${z.c}">${z.tr}</div>
-            <div class="zk-sub">×${z.t} · ${done ? '✓ ' + _T('Bajarildi','Бажарилди','Выполнено','Done') : `${z.t - cnt} ${_T('qoldi','қолди','осталось','left')}`}</div>
+            <div class="zk-sub">×${z.t} · ${done ? '✓ ' + _T('Bajarildi','Бажарилди','Выполнено','Done') : `${z.t - cnt} ${_T('qoldi','қолди','осталось','left')}`} · <span class="zk-ref">📚 ${z.ref}</span></div>
           </div>
           <div class="zk-row-ico">📿</div>
         </div>`;

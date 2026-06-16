@@ -13,7 +13,7 @@ const DuasScreen = (function () {
   let _selCat   = null;         // category key e.g. 'morning'
   let _selDuaId = null;         // dua id string
 
-  function _T(lat, cyr, ru, en) { if (_lang === 'uz_cyr') return cyr; if (_lang === 'ru' && ru !== undefined) return ru; if (_lang === 'en' && en !== undefined) return en; return lat; }
+  function _T(lat, cyr, ru, en) { return _resolveT(lat, cyr, ru, en, _lang); }
   function _cy(t) {
     if (!t || _lang !== 'uz_cyr') return t;
     return t

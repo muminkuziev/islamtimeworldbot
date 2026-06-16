@@ -29,6 +29,62 @@ const CalendarScreen = (function () {
                      'Ramadan','Shawwal',"Dhu al-Qi'dah",'Dhu al-Hijjah'];
   const MONTHS_EN = ['January','February','March','April','May','June',
                      'July','August','September','October','November','December'];
+  const OYLAR_AR  = ['مُحَرَّم','صَفَر','رَبِيع الأَوَّل','رَبِيع الآخِر',
+                     'جُمَادَى الأُولَى','جُمَادَى الآخِرَة','رَجَب','شَعْبَان',
+                     'رَمَضَان','شَوَّال','ذُو القَعْدَة','ذُو الحِجَّة'];
+  const MONTHS_AR = ['يناير','فبراير','مارس','أبريل','مايو','يونيو',
+                     'يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  const OYLAR_TR  = ['Muharrem','Safer','Rebîülevvel','Rebîülâhir',
+                     'Cemâziyelevvel','Cemâziyelâhir','Recep','Şaban',
+                     'Ramazan','Şevval','Zilkade','Zilhicce'];
+  const MONTHS_TR = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran',
+                     'Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+  const OYLAR_KK  = ['Мухаррам','Сафар','Раби\' ул-Авуал','Раби\' ул-Ахир',
+                     'Жумадал-Ула','Жумадал-Ахира','Ражаб','Шабан',
+                     'Рамазан','Шаввал','Зул-Қаъда','Зул-Хижжа'];
+  const MONTHS_KK = ['Қаңтар','Ақпан','Наурыз','Сәуір','Мамыр','Маусым',
+                     'Шілде','Тамыз','Қыркүйек','Қазан','Қараша','Желтоқсан'];
+  const OYLAR_TG  = ['Муҳаррам','Сафар','Рабиул-аввал','Рабиул-охир',
+                     'Ҷумадал-ула','Ҷумадал-охира','Раҷаб','Шаъбон',
+                     'Рамазон','Шаввол','Зулқаъда','Зулҳижжа'];
+  const MONTHS_TG = ['Январ','Феврал','Март','Апрел','Май','Июн',
+                     'Июл','Август','Сентябр','Октябр','Ноябр','Декабр'];
+  const OYLAR_KY  = ['Мухаррам','Сафар','Рабиул-авал','Рабиул-ахир',
+                     'Жумадал-уля','Жумадал-ахира','Ражаб','Шаабан',
+                     'Рамазан','Шаввал','Зул-каада','Зул-хижжа'];
+  const MONTHS_KY = ['Январь','Февраль','Март','Апрель','Май','Июнь',
+                     'Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  const OYLAR_DE  = ['Muharram','Safar','Rabi\' al-Awwal','Rabi\' al-Thani',
+                     'Dschum. al-Ula','Dschum. al-Akhira','Rajab','Scha\'ban',
+                     'Ramadan','Shawwal','Dhul-Qi\'dah','Dhul-Hijjah'];
+  const MONTHS_DE = ['Januar','Februar','März','April','Mai','Juni',
+                     'Juli','August','September','Oktober','November','Dezember'];
+  const OYLAR_FR  = ['Mouharram','Safar','Rabi\' al-Awwal','Rabi\' al-Thani',
+                     'Djoumada I','Djoumada II','Rajab','Chaabane',
+                     'Ramadan','Chawwal','Dhou al-Qi\'da','Dhou al-Hijja'];
+  const MONTHS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin',
+                     'Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  const OYLAR_ID  = ['Muharram','Safar','Rabiul Awal','Rabiul Akhir',
+                     'Jumadil Ula','Jumadil Akhir','Rajab','Sya\'ban',
+                     'Ramadhan','Syawwal','Dzulqa\'dah','Dzulhijjah'];
+  const MONTHS_ID = ['Januari','Februari','Maret','April','Mei','Juni',
+                     'Juli','Agustus','September','Oktober','November','Desember'];
+  const OYLAR_HI  = ['मुहर्रम','सफ़र','रबी अल-अव्वल','रबी अल-आखिर',
+                     'जमादा अल-उला','जमादा अल-आखिर','रजब','शाबान',
+                     'रमज़ान','शव्वाल','ज़ुल-क़अदह','ज़ुल-हिज्जा'];
+  const MONTHS_HI = ['जनवरी','फ़रवरी','मार्च','अप्रैल','मई','जून',
+                     'जुलाई','अगस्त','सितंबर','अक्तूबर','नवंबर','दिसंबर'];
+  const OYLAR_UR  = ['محرم','صفر','ربیع الاول','ربیع الثانی',
+                     'جمادی الاولیٰ','جمادی الثانی','رجب','شعبان',
+                     'رمضان','شوال','ذوالقعدہ','ذوالحجہ'];
+  const MONTHS_UR = ['جنوری','فروری','مارچ','اپریل','مئی','جون',
+                     'جولائی','اگست','ستمبر','اکتوبر','نومبر','دسمبر'];
+  const _HIJRI_MAP = { uz:OYLAR, uz_cyr:OYLAR_CYR, ru:OYLAR_RU, en:OYLAR_EN,
+    ar:OYLAR_AR, tr:OYLAR_TR, kk:OYLAR_KK, tg:OYLAR_TG, ky:OYLAR_KY,
+    de:OYLAR_DE, fr:OYLAR_FR, id:OYLAR_ID, hi:OYLAR_HI, ur:OYLAR_UR };
+  const _GREG_MAP  = { uz:MONTHS_UZ, uz_cyr:MONTHS_CYR, ru:MONTHS_RU, en:MONTHS_EN,
+    ar:MONTHS_AR, tr:MONTHS_TR, kk:MONTHS_KK, tg:MONTHS_TG, ky:MONTHS_KY,
+    de:MONTHS_DE, fr:MONTHS_FR, id:MONTHS_ID, hi:MONTHS_HI, ur:MONTHS_UR };
 
   /* ── Full event data (9 events) ── */
   const HIJRI_EVENTS = [
@@ -149,7 +205,7 @@ const CalendarScreen = (function () {
   ];
 
   /* ── Language helpers ── */
-  function _T(lat, cyr, ru, en) { if (_lang === 'uz_cyr') return cyr; if (_lang === 'ru' && ru !== undefined) return ru; if (_lang === 'en' && en !== undefined) return en; return lat; }
+  function _T(lat, cyr, ru, en) { return _resolveT(lat, cyr, ru, en, _lang); }
   function _cy(t) {
     if (!t || _lang !== 'uz_cyr') return t;
     return t
@@ -199,18 +255,8 @@ const CalendarScreen = (function () {
     const v = obj[field] || '';
     return _lang === 'uz_cyr' ? _cy(v) : v;
   }
-  function _gMonth(idx) {
-    if (_lang === 'uz_cyr') return MONTHS_CYR[idx] || '';
-    if (_lang === 'ru') return MONTHS_RU[idx] || '';
-    if (_lang === 'en') return MONTHS_EN[idx] || '';
-    return MONTHS_UZ[idx] || '';
-  }
-  function _hMonth(idx) {
-    if (_lang === 'uz_cyr') return OYLAR_CYR[idx] || '';
-    if (_lang === 'ru') return OYLAR_RU[idx] || '';
-    if (_lang === 'en') return OYLAR_EN[idx] || '';
-    return OYLAR[idx] || '';
-  }
+  function _gMonth(idx) { return (_GREG_MAP[_lang]  || MONTHS_EN)[idx] || ''; }
+  function _hMonth(idx) { return (_HIJRI_MAP[_lang] || OYLAR_EN)[idx]  || ''; }
 
   /* ══════════════════════════════════════════════
      Math functions (unchanged from v1)

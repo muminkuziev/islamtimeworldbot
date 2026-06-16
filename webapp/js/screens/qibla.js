@@ -17,7 +17,7 @@ const QiblaScreen = (function () {
   let _lang        = 'uz';
   let _tab         = 'kompas';
 
-  function _T(lat, cyr, ru, en) { if (_lang === 'uz_cyr') return cyr; if (_lang === 'ru' && ru !== undefined) return ru; if (_lang === 'en' && en !== undefined) return en; return lat; }
+  function _T(lat, cyr, ru, en) { return _resolveT(lat, cyr, ru, en, _lang); }
   let _lat         = null;
   let _lon         = null;
   let _city        = '';
@@ -523,14 +523,24 @@ const QiblaScreen = (function () {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
 
+  const DIR_MAP = {
+    uz:     ['Shimol',"Shimoli-sharq",'Sharq','Janubi-sharq','Janub',"Janubi-g'arb","G'arb","Shimoli-g'arb"],
+    uz_cyr: ['Шимол','Шимоли-шарқ','Шарқ','Жанубий-шарқ','Жануб','Жанубий-ғарб','Ғарб','Шимоли-ғарб'],
+    ru:     ['Север','Северо-восток','Восток','Юго-восток','Юг','Юго-запад','Запад','Северо-запад'],
+    en:     ['North','Northeast','East','Southeast','South','Southwest','West','Northwest'],
+    tr:     ['Kuzey','Kuzeydoğu','Doğu','Güneydoğu','Güney','Güneybatı','Batı','Kuzeybatı'],
+    ar:     ['شمال','شمال شرق','شرق','جنوب شرق','جنوب','جنوب غرب','غرب','شمال غرب'],
+    kk:     ['Солтүстік','Солтүстік-шығыс','Шығыс','Оңтүстік-шығыс','Оңтүстік','Оңтүстік-батыс','Батыс','Солтүстік-батыс'],
+    tg:     ['Шимол','Шимоли-шарқ','Шарқ','Ҷанубу-шарқ','Ҷануб','Ҷанубу-ғарб','Ғарб','Шимоли-ғарб'],
+    ky:     ['Түндүк','Түндүк-чыгыш','Чыгыш','Түштүк-чыгыш','Түштүк','Түштүк-батыш','Батыш','Түндүк-батыш'],
+    de:     ['Nord','Nordost','Ost','Südost','Süd','Südwest','West','Nordwest'],
+    fr:     ['Nord','Nord-est','Est','Sud-est','Sud','Sud-ouest','Ouest','Nord-ouest'],
+    id:     ['Utara','Timur Laut','Timur','Tenggara','Selatan','Barat Daya','Barat','Barat Laut'],
+    hi:     ['उत्तर','उत्तर-पूर्व','पूर्व','दक्षिण-पूर्व','दक्षिण','दक्षिण-पश्चिम','पश्चिम','उत्तर-पश्चिम'],
+    ur:     ['شمال','شمال مشرق','مشرق','جنوب مشرق','جنوب','جنوب مغرب','مغرب','شمال مغرب'],
+  };
   function _dirLabel(a) {
-    const d = _lang === 'uz_cyr'
-      ? ['Шимол','Шимоли-шарқ','Шарқ','Жанубий-шарқ','Жануб','Жанубий-ғарб','Ғарб','Шимоли-ғарб']
-      : _lang === 'ru'
-      ? ['Север','Северо-восток','Восток','Юго-восток','Юг','Юго-запад','Запад','Северо-запад']
-      : _lang === 'en'
-      ? ['North','Northeast','East','Southeast','South','Southwest','West','Northwest']
-      : ['Shimol','Shimoli-sharq','Sharq','Janubi-sharq','Janub',"Janubi-g'arb","G'arb","Shimoli-g'arb"];
+    const d = DIR_MAP[_lang] || DIR_MAP.en;
     return d[Math.round(a / 45) % 8];
   }
 

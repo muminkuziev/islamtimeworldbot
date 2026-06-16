@@ -19,7 +19,7 @@ const MosquesScreen = (function () {
   let _lang       = 'uz';
   let _tab        = 'royxat';
 
-  function _T(lat, cyr, ru, en) { if (_lang === 'uz_cyr') return cyr; if (_lang === 'ru' && ru !== undefined) return ru; if (_lang === 'en' && en !== undefined) return en; return lat; }
+  function _T(lat, cyr, ru, en) { return _resolveT(lat, cyr, ru, en, _lang); }
   let _lat        = null;
   let _lon        = null;
   let _city       = '';
@@ -174,7 +174,7 @@ const MosquesScreen = (function () {
   function _changeLocation() {
     localStorage.removeItem('islamtime_last_lat');
     localStorage.removeItem('islamtime_last_lon');
-    ['uz', 'uz_cyr', 'ru', 'en'].forEach(l =>
+    ['uz','uz_cyr','ru','en','tr','ar','kk','tg','ky','de','fr','id','hi','ur'].forEach(l =>
       localStorage.removeItem('islamtime_mosques_' + l + '_v2')
     );
     _lat = null; _lon = null; _city = '';
@@ -425,7 +425,8 @@ out center tags;`.trim();
     ${m.opening_hours && !txt ? `<span class="ms-card-hours">${_esc(m.opening_hours.substring(0, 16))}</span>` : ''}
   </div>
 </div>`;
-    }).join('')}</div>`;
+    }).join('')}</div>
+<div class="ms-osm-attr">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</div>`;
   }
 
   /* ── Detail ── */
@@ -473,7 +474,8 @@ ${[
     <div class="ms-route-dist">${dist}</div>
   </div>
   <div class="ms-route-time" style="color:${r.c}">${r.t}</div>
-</a>`).join('')}`;
+</a>`).join('')}
+<div class="ms-osm-attr">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</div>`;
   }
 
   /* ── SVG map ── */
