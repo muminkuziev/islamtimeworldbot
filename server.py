@@ -1033,6 +1033,21 @@ async def api_prayer_times(
         _pt_cache_put(cache_key, prayer_data)
     return JSONResponse(prayer_data)
 
+
+@app.get("/api/weather")
+async def api_weather(
+    lat:  float = Query(..., ge=-90,  le=90),
+    lon:  float = Query(..., ge=-180, le=180),
+    lang: str   = Query("uz"),
+):
+    """Return only weather data for given coordinates (no prayer data)."""
+    from domain.prayer.extras import fetch_weather
+    w = await fetch_weather(lat, lon, lang)
+    if w is None:
+        return JSONResponse({"error": "weather_unavailable"}, status_code=503)
+    return JSONResponse(w)
+
+
 # ── Category → Chapter mapping (Uzbek Bukhari) ─────────────────────────────
 CATEGORY_CHAPTERS: dict = {
     "Iymon":   [2],

@@ -7,12 +7,13 @@ const PrayerScreen = (function () {
   'use strict';
 
   /* ── State ─────────────────────────────────────────────────── */
-  let _data        = null;
-  let _countdownId = null;
-  let _lang        = 'uz';
-  let _lat         = null;
-  let _lon         = null;
-  let _tab         = 'vaqt';
+  let _data           = null;
+  let _countdownId    = null;
+  let _lang           = 'uz';
+  let _lat            = null;
+  let _lon            = null;
+  let _tab            = 'vaqt';
+  let _weatherRetries = 0;
 
   const PRAYER_AR = {
     fajr:'الفجر', sunrise:'الشروق', dhuhr:'الظهر',
@@ -285,6 +286,7 @@ const PrayerScreen = (function () {
     _lang = lang || window.App?.state?.lang || 'uz';
     _stopCountdown();
     _tab = 'vaqt';
+    _weatherRetries = 0;
 
     const titleEl = document.getElementById('prayer-title');
     if (titleEl) titleEl.textContent = _l('title', _lang);
@@ -715,23 +717,41 @@ const PrayerScreen = (function () {
   function _buildObHavoTab() {
     const w = _data.weather;
     if (!w) {
-      setTimeout(function() {
-        if (_data && !_data.weather && _lat && _lon) {
-          var el = document.getElementById('prayer-obhavo-loading');
-          if (el) el.textContent = _T('Yuklanmoqda…','Юкланмоқда…','Загрузка…','Loading…');
-          _fetchPrayerTimes(_lat, _lon);
-        }
-      }, 2000);
-      return `
+      if (_weatherRetries < 3 && _lat && _lon) {
+        _weatherRetries++;
+        setTimeout(async function() {
+          if (_data && !_data.weather) {
+            try {
+              const r = await fetch(
+                `${window.location.origin}/api/weather?lat=${_lat}&lon=${_lon}&lang=${_lang}`,
+                { signal: AbortSignal.timeout(8000) }
+              );
+              if (r.ok) {
+                const wd = await r.json();
+                if (!wd.error && wd.temp_c !== undefined) {
+                  _data.weather = wd;
+                  if (_tab === 'obhavo') _renderTabContent();
+                } else if (_tab === 'obhavo') _renderTabContent();
+              } else if (_tab === 'obhavo') _renderTabContent();
+            } catch { if (_tab === 'obhavo') _renderTabContent(); }
+          }
+        }, 2500);
+        return `
         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:16px;text-align:center">
           <div style="width:44px;height:44px;border:3px solid rgba(91,155,213,.15);border-top-color:#5b9bd5;border-radius:50%;animation:spin 1s linear infinite"></div>
-          <div id="prayer-obhavo-loading" style="font-size:13px;color:rgba(232,223,200,.5)">${_T('Ob-havo yuklanmoqda…','Об-ҳаво юкланмоқда…','Погода загружается…','Weather loading…')}</div>
-          <button onclick="(function(){var b=document.getElementById('prayer-obhavo-btn');if(b)b.disabled=true;PrayerScreen._retryWeather&&PrayerScreen._retryWeather();})()" id="prayer-obhavo-btn"
-            style="background:rgba(91,155,213,.12);border:1px solid rgba(91,155,213,.25);border-radius:12px;color:#5b9bd5;font-size:12px;font-weight:700;padding:8px 20px;cursor:pointer;margin-top:4px">
+          <div style="font-size:13px;color:rgba(232,223,200,.5)">${_T('Ob-havo yuklanmoqda…','Об-ҳаво юкланмоқда…','Погода загружается…','Weather loading…')}</div>
+        </div>`;
+      }
+      /* All retries exhausted — show error state */
+      return `
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:14px;text-align:center">
+          <div style="font-size:36px">🌦️</div>
+          <div style="font-size:13px;color:rgba(232,223,200,.55);line-height:1.6">${_T("Ob-havo ma'lumoti vaqtincha mavjud emas","Об-ҳаво маълумоти вақтинча мавжуд эмас","Данные о погоде временно недоступны","Weather data temporarily unavailable")}</div>
+          <button onclick="PrayerScreen._retryWeatherFull&&PrayerScreen._retryWeatherFull()"
+            style="background:rgba(91,155,213,.12);border:1px solid rgba(91,155,213,.25);border-radius:12px;color:#5b9bd5;font-size:12px;font-weight:700;padding:8px 20px;cursor:pointer">
             ${_l('refresh',_lang)}
           </button>
-        </div>`
-      ;
+        </div>`;
     }
     const now  = new Date();
     const nowH = now.getHours();
@@ -1229,5 +1249,10 @@ const PrayerScreen = (function () {
     }
   }
 
-  return { render, load, _retryWeather };
+  function _retryWeatherFull() {
+    _weatherRetries = 0;
+    _retryWeather();
+  }
+
+  return { render, load, _retryWeather, _retryWeatherFull };
 })();

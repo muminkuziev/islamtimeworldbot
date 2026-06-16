@@ -244,6 +244,8 @@ const DashboardScreen = (function () {
   </div>
 </div>
 
+<div id="db-weather-wrap" style="padding:0 12px 4px;display:none"></div>
+
 <div class="db-body">
   <div class="db-section-lbl">${_l('services')}</div>
   <div class="db-grid">${tiles}</div>
@@ -456,6 +458,53 @@ const DashboardScreen = (function () {
     const secs = np.countdown_seconds;
     if (secs != null && secs > 0) _startCountdown(secs, remainEl);
     else remainEl.textContent = _l('allDone');
+
+    /* weather widget */
+    _renderWeather(data.weather);
+  }
+
+  function _renderWeather(w) {
+    const wrap = _el?.querySelector('#db-weather-wrap');
+    if (!wrap) return;
+    if (!w || w.error) {
+      wrap.style.display = 'none';
+      return;
+    }
+    const WL = {
+      feelsLike:   { uz:'His qilinadi',       uz_cyr:'Ҳис қилинади',      ru:'Ощущается',  en:'Feels like' },
+      humidity:    { uz:'Namlik',              uz_cyr:'Намлик',             ru:'Влажность',  en:'Humidity'   },
+      wind:        { uz:'Shamol',              uz_cyr:'Шамол',              ru:'Ветер',      en:'Wind'       },
+      sunrise:     { uz:'Tong sadag\'i',       uz_cyr:'Тонг садағи',        ru:'Рассвет',    en:'Sunrise'    },
+      sunset:      { uz:'Quyosh botishi',      uz_cyr:'Қуёш ботиши',       ru:'Закат',      en:'Sunset'     },
+    };
+    const wt = (k) => (WL[k]?.[_lang] || WL[k]?.en || k);
+    wrap.style.display = 'block';
+    wrap.innerHTML = `
+      <div style="background:linear-gradient(135deg,rgba(91,155,213,.1),rgba(91,155,213,.04));border:1px solid rgba(91,155,213,.2);border-radius:14px;padding:12px 14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div>
+            <div style="font-size:30px;font-weight:800;color:#e8dfc8;line-height:1;letter-spacing:-1px">${w.temp_c}°</div>
+            <div style="font-size:11px;color:rgba(232,223,200,.65);margin-top:3px">${_esc(w.description || '')}</div>
+          </div>
+          <div style="text-align:right;font-size:11px;color:rgba(232,223,200,.45);line-height:1.8">
+            <div>${wt('feelsLike')}: <span style="color:#e8dfc8;font-weight:600">${w.feels_like_c}°</span></div>
+            <div>💧 ${wt('humidity')}: <span style="color:#e8dfc8;font-weight:600">${w.humidity}%</span></div>
+            <div>💨 ${wt('wind')}: <span style="color:#e8dfc8;font-weight:600">${w.wind_kmph} km/h</span></div>
+          </div>
+        </div>
+        ${(w.sunrise || w.sunset) ? `
+        <div style="display:flex;gap:12px;border-top:1px solid rgba(91,155,213,.12);padding-top:8px">
+          <div style="flex:1;text-align:center">
+            <div style="font-size:9px;color:rgba(232,223,200,.35);margin-bottom:2px">🌅 ${wt('sunrise')}</div>
+            <div style="font-size:13px;font-weight:700;color:#E8C15A">${w.sunrise || '—'}</div>
+          </div>
+          <div style="width:1px;background:rgba(91,155,213,.12)"></div>
+          <div style="flex:1;text-align:center">
+            <div style="font-size:9px;color:rgba(232,223,200,.35);margin-bottom:2px">🌇 ${wt('sunset')}</div>
+            <div style="font-size:13px;font-weight:700;color:#5b9bd5">${w.sunset || '—'}</div>
+          </div>
+        </div>` : ''}
+      </div>`;
   }
 
   function _startCountdown(initSecs, el) {
