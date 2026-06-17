@@ -55,7 +55,7 @@ const SettingsScreen = (function () {
       hadith:            (localStorage.getItem('islamtime_notif_hadith')         ?? 'true')  === 'true',
       dua:               (localStorage.getItem('islamtime_notif_dua')            ?? 'false') === 'true',
       daily_briefing:    (localStorage.getItem('islamtime_daily_briefing')       ?? 'false') === 'true',
-      briefing_time:     localStorage.getItem('islamtime_briefing_time')         || '06:00',
+      briefing_time:     localStorage.getItem('islamtime_briefing_time')         || '04:00',
       briefing_weather:  (localStorage.getItem('islamtime_briefing_weather')     ?? 'true')  === 'true',
       briefing_aqi:      (localStorage.getItem('islamtime_briefing_aqi')         ?? 'true')  === 'true',
       briefing_prayer:   (localStorage.getItem('islamtime_briefing_prayer')      ?? 'true')  === 'true',

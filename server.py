@@ -78,7 +78,7 @@ def _init_users_db():
             ("notif_tz_offset",         "INTEGER DEFAULT 0"),
             ("notif_sent",              "TEXT DEFAULT '{}'"),
             ("daily_briefing_enabled",  "INTEGER DEFAULT 0"),
-            ("daily_briefing_time",     "TEXT DEFAULT '06:00'"),
+            ("daily_briefing_time",     "TEXT DEFAULT '04:00'"),
             ("briefing_weather",        "INTEGER DEFAULT 1"),
             ("briefing_aqi",            "INTEGER DEFAULT 1"),
             ("briefing_prayer",         "INTEGER DEFAULT 1"),
@@ -371,78 +371,131 @@ async def _send_due_notifications():
         await asyncio.sleep(0.05)
 
 
+def _get_random_hadith(lang: str) -> dict:
+    """Returns dict with 'text' and 'source' for a random hadith from hadiths_muslim."""
+    import random as _random
+    db_path = BASE_DIR / "data" / "hadiths.db"
+    if not db_path.exists():
+        return {}
+    _col = {"uz": "uz_text", "uz_cyr": "uz_cyr", "ru": "ru_text", "en": "en_text"}
+    col = _col.get(lang, "uz_text")
+    try:
+        conn = sqlite3.connect(str(db_path))
+        row = conn.execute(
+            f"SELECT {col}, source FROM hadiths_muslim WHERE {col} IS NOT NULL AND {col} != '' ORDER BY RANDOM() LIMIT 1"
+        ).fetchone()
+        conn.close()
+        if row:
+            src_raw = row[1] or ""
+            src = "Sahih Muslim" if "muslim" in src_raw.lower() else (src_raw or "Sahih Muslim")
+            return {"text": row[0], "source": src}
+    except Exception:
+        pass
+    return {}
+
+
 def _format_daily_briefing_msg(
     lang: str, city: str, country: str,
     prayer_data: dict,
     weather_data,
     aqi_data,
     incl_weather: bool, incl_aqi: bool, incl_prayer: bool,
+    hadith_data: dict = None,
 ) -> str:
     L = lang if lang in ("uz", "uz_cyr", "ru", "en") else "uz"
 
-    _HDR = {
-        "uz": "🌤 <b>Kunlik ma'lumotlar</b>",
-        "uz_cyr": "🌤 <b>Кунлик маълумотлар</b>",
-        "ru": "🌤 <b>Ежедневная сводка</b>",
-        "en": "🌤 <b>Daily Briefing</b>",
+    _GREET = {
+        "uz":     "🕌 <b>Assalomu alaykum!</b>",
+        "uz_cyr": "🕌 <b>Ассалому алайкум!</b>",
+        "ru":     "🕌 <b>Ассаляму алейкум!</b>",
+        "en":     "🕌 <b>Assalamu alaykum!</b>",
     }
-    _AIR = {
-        "uz": "🌬 Havo",
-        "uz_cyr": "🌬 Ҳаво",
-        "ru": "🌬 Воздух",
-        "en": "🌬 Air",
+    _WEATHER_LBL = {
+        "uz": "Ob-havo", "uz_cyr": "Об-ҳаво", "ru": "Погода", "en": "Weather",
+    }
+    _AQI_LBL = {
+        "uz": "Havo sifati", "uz_cyr": "Ҳаво сифати", "ru": "Качество воздуха", "en": "Air quality",
     }
     _PRAY_HDR = {
-        "uz": "🕌 <b>Bugungi namoz vaqtlari:</b>",
+        "uz":     "🕌 <b>Bugungi namoz vaqtlari:</b>",
         "uz_cyr": "🕌 <b>Бугунги намоз вақтлари:</b>",
-        "ru": "🕌 <b>Намаз сегодня:</b>",
-        "en": "🕌 <b>Today's prayers:</b>",
+        "ru":     "🕌 <b>Намаз сегодня:</b>",
+        "en":     "🕌 <b>Today's prayers:</b>",
+    }
+    _HADITH_HDR = {
+        "uz":     "📚 <b>Kun hadisi:</b>",
+        "uz_cyr": "📚 <b>Кун ҳадиси:</b>",
+        "ru":     "📚 <b>Хадис дня:</b>",
+        "en":     "📚 <b>Hadith of the Day:</b>",
+    }
+    _BLESSING = {
+        "uz":     "🤲 <i>Alloh bugungi kuningizni barakali qilsin!</i>",
+        "uz_cyr": "🤲 <i>Аллоҳ бугунги куннингизни баракали қилсин!</i>",
+        "ru":     "🤲 <i>Пусть Аллах сделает ваш день благодатным!</i>",
+        "en":     "🤲 <i>May Allah bless your day!</i>",
+    }
+    _PRAYER_EMOJI = {
+        "fajr": "🌅", "dhuhr": "☀️", "asr": "🌇", "maghrib": "🌆", "isha": "🌙",
     }
 
-    lines = [_HDR.get(L, _HDR["uz"]), ""]
+    lines = [_GREET.get(L, _GREET["uz"]), ""]
 
-    # Date + location
-    _hijri_raw = prayer_data.get("hijri") or {}
-    hijri = _hijri_raw.get("full", "") if isinstance(_hijri_raw, dict) else str(_hijri_raw)
-    if not hijri:
-        hijri = prayer_data.get("hijri_date", "")
-    if hijri:
-        lines.append(f"📅 {hijri}")
+    # Location
     loc = city or prayer_data.get("city", "")
     ctry = country or prayer_data.get("country", "")
     if loc:
         lines.append(f"📍 {loc}{', ' + ctry if ctry else ''}")
+
+    # Gregorian + Hijri date
+    greg = datetime.utcnow().strftime("%d.%m.%Y")
+    _hijri_raw = prayer_data.get("hijri") or {}
+    hijri = _hijri_raw.get("full", "") if isinstance(_hijri_raw, dict) else str(_hijri_raw)
+    if not hijri:
+        hijri = prayer_data.get("hijri_date", "")
+    date_line = f"📅 {greg}"
+    if hijri:
+        date_line += f"  🌙 {hijri}"
+    lines.append(date_line)
     lines.append("")
 
-    # Weather
+    # Weather + AQI on one line
+    weather_parts = []
     if incl_weather and weather_data:
         temp = weather_data.get("temp_c")
-        icon = weather_data.get("icon", "🌡️")
-        desc = weather_data.get("description", "")
+        icon = weather_data.get("icon", "🌤")
         if temp is not None:
-            lines.append(f"{icon} {temp}°C · {desc}")
-        sr = weather_data.get("sunrise", "")
-        ss = weather_data.get("sunset", "")
-        if sr:
-            lines.append(f"🌅 {sr}  🌇 {ss}")
-
-    # AQI
+            weather_parts.append(f"{icon} {_WEATHER_LBL.get(L, 'Ob-havo')}: {temp}°C")
     if incl_aqi and aqi_data:
-        aqi_val   = aqi_data.get("aqi", 0)
-        aqi_label = aqi_data.get("label", "")
-        aqi_icon  = aqi_data.get("icon", "")
-        lines.append(f"{_AIR.get(L, _AIR['uz'])}: {aqi_icon} {aqi_label} (AQI {aqi_val})")
+        aqi_val  = aqi_data.get("aqi", 0)
+        aqi_icon = aqi_data.get("icon", "🌬")
+        weather_parts.append(f"{aqi_icon} {_AQI_LBL.get(L, 'Havo sifati')}: AQI {aqi_val}")
+    if weather_parts:
+        lines.append("  ".join(weather_parts))
+        lines.append("")
 
-    # Prayer times
+    # Prayer times — inline with emojis
     if incl_prayer:
         prayers = prayer_data.get("prayers", [])
-        prayer_rows = [p for p in prayers if p.get("key", "").lower() != "sunrise"]
+        prayer_rows = [p for p in prayers if p.get("key", "").lower() not in ("sunrise",)]
         if prayer_rows:
-            lines += ["", _PRAY_HDR.get(L, _PRAY_HDR["uz"])]
+            lines.append(_PRAY_HDR.get(L, _PRAY_HDR["uz"]))
+            parts = []
             for p in prayer_rows:
                 key  = p.get("key", "").lower()
                 name = _PRAYER_NOTIF_NAMES.get(key, {}).get(L) or key.capitalize()
-                lines.append(f"   {name}: {p.get('time', '')}")
+                emoji = _PRAYER_EMOJI.get(key, "🕌")
+                parts.append(f"{emoji} {name}: {p.get('time', '')}")
+            lines.append("  ".join(parts))
+            lines.append("")
+
+    # Hadith
+    if hadith_data and hadith_data.get("text"):
+        lines.append(_HADITH_HDR.get(L, _HADITH_HDR["uz"]))
+        lines.append(hadith_data["text"])
+        lines.append(f"📖 {hadith_data.get('source', 'Sahih Muslim')}")
+        lines.append("")
+
+    lines.append(_BLESSING.get(L, _BLESSING["uz"]))
 
     return "\n".join(lines)
 
@@ -454,7 +507,7 @@ async def _process_user_daily_briefing(user: dict, utc_minutes: int, today_str: 
     lon           = user["last_lon"]
     city          = user["last_city"] or ""
     tz_offset     = user.get("notif_tz_offset") or 0
-    brief_time    = user.get("daily_briefing_time") or "06:00"
+    brief_time    = user.get("daily_briefing_time") or "04:00"
     incl_weather  = bool(user.get("briefing_weather", 1))
     incl_aqi      = bool(user.get("briefing_aqi", 1))
     incl_prayer   = bool(user.get("briefing_prayer", 1))
@@ -467,7 +520,7 @@ async def _process_user_daily_briefing(user: dict, utc_minutes: int, today_str: 
         bh, bm = brief_time.split(":")
         briefing_minute = int(bh) * 60 + int(bm)
     except Exception:
-        briefing_minute = 6 * 60
+        briefing_minute = 4 * 60
 
     local_minute = (utc_minutes + tz_offset) % 1440
     if local_minute != briefing_minute:
@@ -509,10 +562,13 @@ async def _process_user_daily_briefing(user: dict, utc_minutes: int, today_str: 
     if not city:
         city = prayer_data.get("city", "")
 
+    hadith_data = _get_random_hadith(lang)
+
     msg = _format_daily_briefing_msg(
         lang, city, country, prayer_data,
         weather_data, aqi_data,
         incl_weather, incl_aqi, incl_prayer,
+        hadith_data=hadith_data,
     )
 
     try:
