@@ -402,7 +402,10 @@ def _format_daily_briefing_msg(
     lines = [_HDR.get(L, _HDR["uz"]), ""]
 
     # Date + location
-    hijri = prayer_data.get("hijri_date") or prayer_data.get("hijri") or ""
+    _hijri_raw = prayer_data.get("hijri") or {}
+    hijri = _hijri_raw.get("full", "") if isinstance(_hijri_raw, dict) else str(_hijri_raw)
+    if not hijri:
+        hijri = prayer_data.get("hijri_date", "")
     if hijri:
         lines.append(f"📅 {hijri}")
     loc = city or prayer_data.get("city", "")
@@ -866,9 +869,28 @@ async def _init_bot():
     async def on_webapp_data(message: types.Message):
         try:
             data = json.loads(message.web_app_data.data)
-            if data.get("action") == "set_language":
+            action = data.get("action")
+            uid = message.from_user.id
+            if action == "set_language":
                 lang = data.get("lang", "uz")
+                try:
+                    c = sqlite3.connect(str(USERS_DB))
+                    c.execute("UPDATE users SET language=? WHERE user_id=?", (lang, uid))
+                    c.commit(); c.close()
+                    print(f"[LANG] uid={uid} language={lang}", flush=True)
+                except Exception:
+                    pass
                 await message.answer(f"✅ Til saqlandi: <b>{lang}</b>", parse_mode="HTML")
+            elif action == "sync_settings":
+                lang = data.get("lang", "")
+                if lang:
+                    try:
+                        c = sqlite3.connect(str(USERS_DB))
+                        c.execute("UPDATE users SET language=? WHERE user_id=?", (lang, uid))
+                        c.commit(); c.close()
+                        print(f"[LANG] sync uid={uid} language={lang}", flush=True)
+                    except Exception:
+                        pass
         except Exception:
             pass
 
