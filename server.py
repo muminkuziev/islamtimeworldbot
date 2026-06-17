@@ -763,10 +763,9 @@ _bot = None
 _dp  = None
 
 def _is_production() -> bool:
-    # Render.com sets RENDER=true automatically; also support explicit WEBHOOK_MODE=true
     on_render = os.getenv("RENDER", "").lower() == "true"
     webhook   = os.getenv("WEBHOOK_MODE", "").lower() == "true"
-    return bool((on_render or webhook) and WEBAPP_URL.startswith("https://") and BOT_TOKEN)
+    return bool((on_render or webhook) and BOT_TOKEN)
 
 async def _init_bot():
     global _bot, _dp
@@ -1184,14 +1183,15 @@ async def _init_bot():
     except Exception as e:
         print(f"[WARN] set_my_commands failed: {e}", flush=True)
 
-    webhook_url = f"{WEBAPP_URL.rstrip('/')}/webhook/{BOT_TOKEN}"
+    base_url = WEBAPP_URL.rstrip("/") if WEBAPP_URL.startswith("https://") else "https://islamtimeworldbot-dbup.onrender.com"
+    webhook_url = f"{base_url}/webhook/{BOT_TOKEN}"
+    print(f"[BOT] webhook_url={webhook_url[:80]}", flush=True)
     try:
-        await _bot.set_webhook(webhook_url, drop_pending_updates=True)
-        print(f"[OK] Bot webhook set: {webhook_url}", flush=True)
+        await _bot.set_webhook(webhook_url, drop_pending_updates=False)
+        print(f"[OK] Bot webhook set", flush=True)
     except Exception as e:
         _flog.error(f"set_webhook failed: {e}", exc_info=True)
-        print(f"[ERROR] set_webhook failed: {e}", flush=True)
-        return
+        print(f"[WARN] set_webhook failed (handlers still active): {e}", flush=True)
 
     # Verify webhook via getWebhookInfo
     try:
@@ -1200,7 +1200,7 @@ async def _init_bot():
         _WEBHOOK_INFO["set_at"]   = datetime.utcnow().isoformat()
         _WEBHOOK_INFO["verified"] = (wh_info.url == webhook_url)
         pending = wh_info.pending_update_count or 0
-        print(f"[OK] Webhook verified: match={_WEBHOOK_INFO['verified']} pending={pending}", flush=True)
+        print(f"[OK] Webhook verified: match={_WEBHOOK_INFO['verified']} url={wh_info.url[-40:]} pending={pending}", flush=True)
     except Exception as e:
         print(f"[WARN] Webhook verify failed: {e}", flush=True)
 
@@ -1310,27 +1310,88 @@ async def health():
 # ── Telegram Bot Webhook ──────────────────────────────────────────────────
 @app.post("/webhook/{token}")
 async def telegram_webhook(token: str, request: Request):
-    if not _bot or token != BOT_TOKEN:
+    if token != BOT_TOKEN:
         return JSONResponse({"error": "forbidden"}, status_code=403)
-    from aiogram.types import Update
+
     try:
-        data   = await request.json()
-        update = Update.model_validate(data)
-        # Log incoming update type
-        uid = upd_type = "?"
-        if update.message:
-            uid      = update.message.from_user.id if update.message.from_user else "?"
-            txt_pre  = (update.message.text or "")[:30]
-            upd_type = f"msg:{txt_pre or '(no text)'}"
-        elif update.web_app_data:
-            upd_type = "web_app_data"
-        elif update.callback_query:
-            upd_type = "callback"
-        print(f"[WH] id={update.update_id} uid={uid} type={upd_type}", flush=True)
-        await _dp.feed_update(_bot, update)
+        data = await request.json()
     except Exception as e:
-        _flog.error(f"Webhook error update_id={getattr(update,'update_id','?')}: {e}", exc_info=True)
-        print(f"[WH] Error: {e}", flush=True)
+        print(f"[WH] JSON parse error: {e}", flush=True)
+        return {"ok": True}
+
+    # ── Direct /start handler (uses _bot_notif, bypasses dispatcher) ──────
+    msg = data.get("message") or {}
+    txt = msg.get("text", "") or ""
+    if txt == "/start" or txt.startswith("/start "):
+        chat_id = msg.get("chat", {}).get("id")
+        from_u  = msg.get("from", {})
+        user_id = from_u.get("id")
+        lang    = from_u.get("language_code") or "uz"
+        print(f"[START] user_id={user_id} lang={lang}", flush=True)
+        # track user safely
+        try:
+            if user_id:
+                _track_user(
+                    user_id,
+                    from_u.get("username") or "",
+                    from_u.get("first_name") or "",
+                    lang,
+                )
+        except Exception as te:
+            _flog.error(f"[START] track user_id={user_id}: {te}", exc_info=True)
+        # send reply via _bot_notif (always initialized)
+        sent = False
+        if chat_id and _bot_notif:
+            try:
+                from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
+                ts      = int(time.time())
+                app_url = f"https://islamtimeworldbot-dbup.onrender.com/?v=90&t={ts}&user_id={user_id}"
+                kb = InlineKeyboardMarkup(inline_keyboard=[[
+                    InlineKeyboardButton(text="🕌 Ilovani ochish", web_app=WebAppInfo(url=app_url))
+                ]])
+                await _bot_notif.send_message(
+                    chat_id,
+                    "Assalomu alaykum! IslamTimeWorldBot ishlayapti.",
+                    reply_markup=kb,
+                )
+                sent = True
+                print(f"[START] user_id={user_id} success=True", flush=True)
+            except Exception as e:
+                _flog.error(f"[START] send user_id={user_id}: {e}", exc_info=True)
+                print(f"[START] user_id={user_id} btn_failed={e}", flush=True)
+                # ultimate fallback — plain text, no keyboard
+                try:
+                    await _bot_notif.send_message(chat_id, "Assalomu alaykum! IslamTimeWorldBot ishlayapti.")
+                    sent = True
+                    print(f"[START] user_id={user_id} fallback=True", flush=True)
+                except Exception as e2:
+                    _flog.error(f"[START] fallback user_id={user_id}: {e2}", exc_info=True)
+                    print(f"[START] user_id={user_id} success=False err={e2}", flush=True)
+        if not sent:
+            print(f"[START] user_id={user_id} NOT SENT (bot_notif={_bot_notif is not None} chat_id={chat_id})", flush=True)
+        return {"ok": True}
+
+    # ── All other updates → aiogram dispatcher ─────────────────────────────
+    if _bot and _dp:
+        from aiogram.types import Update
+        try:
+            update   = Update.model_validate(data)
+            uid      = upd_type = "?"
+            if update.message:
+                uid      = update.message.from_user.id if update.message.from_user else "?"
+                upd_type = f"msg:{(update.message.text or '')[:30]}"
+            elif update.callback_query:
+                upd_type = "callback"
+            elif update.web_app_data:
+                upd_type = "web_app_data"
+            print(f"[WH] id={update.update_id} uid={uid} type={upd_type}", flush=True)
+            await _dp.feed_update(_bot, update)
+        except Exception as e:
+            _flog.error(f"[WH] feed_update: {e}", exc_info=True)
+            print(f"[WH] Error: {e}", flush=True)
+    else:
+        upd_id = data.get("update_id", "?")
+        print(f"[WH] update_id={upd_id} dp=None — skipped", flush=True)
     return {"ok": True}
 
 
