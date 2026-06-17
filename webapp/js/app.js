@@ -87,21 +87,15 @@
   window.App = { navigate, state };
 
   /* ── Render all screen shells (builds initial DOM) ── */
-  SplashScreen.render();
-  LanguageScreen.render();
-  MazhabScreen.render();
-  LocationScreen.render();
-  PrayerScreen.render();
-  QiblaScreen.render();
-  MosquesScreen.render();
-  QuranScreen.render();
-  HadithScreen.render();
-  DuasScreen.render();
-  DhikrScreen.render();
-  CalendarScreen.render();
-  NamesScreen.render();
-  SettingsScreen.render();
-  DashboardScreen.render();
+  const _screens = [
+    SplashScreen, LanguageScreen, MazhabScreen, LocationScreen,
+    PrayerScreen, QiblaScreen, MosquesScreen, QuranScreen,
+    HadithScreen, DuasScreen, DhikrScreen, CalendarScreen,
+    NamesScreen, SettingsScreen, DashboardScreen,
+  ];
+  for (const s of _screens) {
+    try { s.render(); } catch (e) { console.error('render failed:', e); }
+  }
 
   /* ── Reset mode: ?reset=1 clears all onboarding state ── */
   if (_urlParams.get('reset') === '1') {

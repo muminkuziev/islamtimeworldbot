@@ -10,11 +10,31 @@ import os
 import sys
 import json
 import time
+import shutil
+import logging
 import asyncio
 import sqlite3
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
+
+# ── Runtime state ─────────────────────────────────────────────────────────────
+_START_TIME     = time.monotonic()
+_START_DT       = datetime.now(timezone.utc)
+_SCHED_STATUS: dict = {"ticks": 0, "last_tick": None, "errors": 0, "running": False}
+_WEBHOOK_INFO: dict = {"url": None, "set_at": None, "verified": False}
+
+# ── File error logger ──────────────────────────────────────────────────────────
+_LOG_FILE = Path(__file__).parent / "server_err.log"
+_flog = logging.getLogger("islamtimebot")
+_flog.setLevel(logging.ERROR)
+try:
+    _fh = logging.FileHandler(str(_LOG_FILE), encoding="utf-8")
+    _fh.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s",
+                                        datefmt="%Y-%m-%d %H:%M:%S"))
+    _flog.addHandler(_fh)
+except Exception:
+    pass
 
 # ── In-process prayer-times cache (5 min TTL) ─────────────────────────────────
 _PT_CACHE: dict = {}
@@ -77,30 +97,70 @@ def _init_users_db():
             ("notif_timing",            "TEXT DEFAULT '{}'"),
             ("notif_tz_offset",         "INTEGER DEFAULT 0"),
             ("notif_sent",              "TEXT DEFAULT '{}'"),
-            ("daily_briefing_enabled",  "INTEGER DEFAULT 0"),
+            ("daily_briefing_enabled",  "INTEGER DEFAULT 1"),
             ("daily_briefing_time",     "TEXT DEFAULT '04:00'"),
-            ("briefing_weather",        "INTEGER DEFAULT 1"),
-            ("briefing_aqi",            "INTEGER DEFAULT 1"),
-            ("briefing_prayer",         "INTEGER DEFAULT 1"),
             ("briefing_sent",           "TEXT DEFAULT ''"),
         ]:
             try:
                 conn.execute(f"ALTER TABLE users ADD COLUMN {col} {typedef}")
             except Exception:
                 pass  # column already exists
+        # One-time upgrade: enable briefing for existing users who never received one
+        conn.execute("""
+            UPDATE users SET daily_briefing_enabled=1
+            WHERE (daily_briefing_enabled=0 OR daily_briefing_enabled IS NULL)
+              AND (briefing_sent IS NULL OR briefing_sent='')
+        """)
         conn.commit()
         conn.close()
         print("[OK] users.db initialized", flush=True)
     except Exception as e:
         print(f"[WARN] users.db init: {e}", flush=True)
 
+
+def _db_connect(retries: int = 5, delay: float = 0.4) -> sqlite3.Connection:
+    """Connect to users.db with automatic retry on lock."""
+    last_err: Exception = RuntimeError("no attempt")
+    for i in range(retries):
+        try:
+            conn = sqlite3.connect(str(USERS_DB), timeout=15)
+            conn.execute("PRAGMA journal_mode=WAL")
+            return conn
+        except sqlite3.OperationalError as e:
+            last_err = e
+            if i < retries - 1:
+                time.sleep(delay * (i + 1))
+    raise last_err
+
+
+def _backup_db():
+    """Daily backup of users.db — skips if today's file already exists."""
+    try:
+        if not USERS_DB.exists():
+            return
+        backup_dir = USERS_DB.parent / "backup"
+        backup_dir.mkdir(exist_ok=True)
+        today = datetime.utcnow().strftime("%Y-%m-%d")
+        dest  = backup_dir / f"users_{today}.db"
+        if not dest.exists():
+            shutil.copy2(str(USERS_DB), str(dest))
+            print(f"[DB] Backup created: {dest.name}", flush=True)
+        # Keep only last 30 daily backups
+        for old in sorted(backup_dir.glob("users_*.db"))[:-30]:
+            try: old.unlink()
+            except Exception: pass
+    except Exception as e:
+        print(f"[DB] Backup failed: {e}", flush=True)
+
+
 def _track_user(user_id: int, username: str = "", first_name: str = "", language: str = ""):
     now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
     try:
         conn = sqlite3.connect(str(USERS_DB))
         conn.execute("""
-        INSERT INTO users (user_id, username, first_name, language, joined_at, last_active)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO users (user_id, username, first_name, language, joined_at, last_active,
+                           daily_briefing_enabled, daily_briefing_time)
+        VALUES (?, ?, ?, ?, ?, ?, 1, '04:00')
         ON CONFLICT(user_id) DO UPDATE SET
             username    = excluded.username,
             first_name  = excluded.first_name,
@@ -399,7 +459,6 @@ def _format_daily_briefing_msg(
     prayer_data: dict,
     weather_data,
     aqi_data,
-    incl_weather: bool, incl_aqi: bool, incl_prayer: bool,
     hadith_data: dict = None,
     send_minute: int = -1,
 ) -> str:
@@ -482,56 +541,56 @@ def _format_daily_briefing_msg(
         lines.append(f"🌙 {hijri}")
     lines.append("")
 
-    # Weather on its own line, AQI on its own line
-    if incl_weather and weather_data:
+    # Weather
+    if weather_data:
         temp = weather_data.get("temp_c")
         icon = weather_data.get("icon", "🌤")
         if temp is not None:
             lines.append(f"{icon} Ob-havo: {temp}°C" if L in ("uz","uz_cyr") else
                          f"{icon} Погода: {temp}°C" if L == "ru" else
                          f"{icon} Weather: {temp}°C")
-    if incl_aqi and aqi_data:
+    # AQI
+    if aqi_data:
         aqi_val  = aqi_data.get("aqi", 0)
         aqi_icon = aqi_data.get("icon", "🌬")
         lines.append(f"{aqi_icon} Havo sifati: AQI {aqi_val}" if L in ("uz","uz_cyr") else
                      f"{aqi_icon} Качество воздуха: AQI {aqi_val}" if L == "ru" else
                      f"{aqi_icon} Air quality: AQI {aqi_val}")
-    if incl_weather or incl_aqi:
+    if weather_data or aqi_data:
         lines.append("")
 
     # Prayer times — one per line, with emoji
-    if incl_prayer:
-        prayers = prayer_data.get("prayers", [])
-        prayer_rows = [p for p in prayers if p.get("key", "").lower() != "sunrise"]
-        if prayer_rows:
-            lines.append(_PRAY_HDR.get(L, _PRAY_HDR["uz"]))
-            for p in prayer_rows:
-                key   = p.get("key", "").lower()
-                name  = _PRAYER_NOTIF_NAMES.get(key, {}).get(L) or key.capitalize()
-                emoji = _PRAYER_EMOJI.get(key, "🕌")
-                lines.append(f"{emoji} {name}: {p.get('time', '')}")
-            lines.append("")
+    prayers = prayer_data.get("prayers", [])
+    prayer_rows = [p for p in prayers if p.get("key", "").lower() != "sunrise"]
+    if prayer_rows:
+        lines.append(_PRAY_HDR.get(L, _PRAY_HDR["uz"]))
+        for p in prayer_rows:
+            key   = p.get("key", "").lower()
+            name  = _PRAYER_NOTIF_NAMES.get(key, {}).get(L) or key.capitalize()
+            emoji = _PRAYER_EMOJI.get(key, "🕌")
+            lines.append(f"{emoji} {name}: {p.get('time', '')}")
+        lines.append("")
 
-            # Next prayer + countdown
-            if send_minute >= 0:
-                next_p = None
-                left   = 0
-                for p in prayer_rows:
-                    pm = _time_to_min(p.get("time", ""))
-                    if pm > send_minute:
-                        next_p = p
-                        left   = pm - send_minute
-                        break
-                if not next_p:
-                    next_p = prayer_rows[0]
-                    pm     = _time_to_min(next_p.get("time", ""))
-                    left   = (1440 - send_minute) + pm
-                if next_p:
-                    key  = next_p.get("key", "").lower()
-                    name = _PRAYER_NOTIF_NAMES.get(key, {}).get(L) or key.capitalize()
-                    lines.append(f"🕐 {_NEXT_LBL.get(L,'Keyingi namoz')}: {name}")
-                    lines.append(f"⏳ {_LEFT_LBL.get(L,'Qoldi')}: {_fmt_left(left)}")
-                    lines.append("")
+        # Next prayer + countdown
+        if send_minute >= 0:
+            next_p = None
+            left   = 0
+            for p in prayer_rows:
+                pm = _time_to_min(p.get("time", ""))
+                if pm > send_minute:
+                    next_p = p
+                    left   = pm - send_minute
+                    break
+            if not next_p:
+                next_p = prayer_rows[0]
+                pm     = _time_to_min(next_p.get("time", ""))
+                left   = (1440 - send_minute) + pm
+            if next_p:
+                key  = next_p.get("key", "").lower()
+                name = _PRAYER_NOTIF_NAMES.get(key, {}).get(L) or key.capitalize()
+                lines.append(f"🕐 {_NEXT_LBL.get(L,'Keyingi namoz')}: {name}")
+                lines.append(f"⏳ {_LEFT_LBL.get(L,'Qoldi')}: {_fmt_left(left)}")
+                lines.append("")
 
     # Hadith
     if hadith_data and hadith_data.get("text"):
@@ -553,9 +612,6 @@ async def _process_user_daily_briefing(user: dict, utc_minutes: int, today_str: 
     city          = user["last_city"] or ""
     tz_offset     = user.get("notif_tz_offset") or 0
     brief_time    = user.get("daily_briefing_time") or "04:00"
-    incl_weather  = bool(user.get("briefing_weather", 1))
-    incl_aqi      = bool(user.get("briefing_aqi", 1))
-    incl_prayer   = bool(user.get("briefing_prayer", 1))
     briefing_sent = user.get("briefing_sent") or ""
 
     if briefing_sent == today_str:
@@ -571,7 +627,7 @@ async def _process_user_daily_briefing(user: dict, utc_minutes: int, today_str: 
     if local_minute != briefing_minute:
         return
 
-    print(f"[DAILY BRIEFING USER LOADED] uid={user_id} time={brief_time} tz={tz_offset}", flush=True)
+    print(f"[DAILY BRIEFING] uid={user_id} time={brief_time} tz={tz_offset} local={local_minute}", flush=True)
 
     try:
         from domain.prayer.service import prayer_service
@@ -585,23 +641,17 @@ async def _process_user_daily_briefing(user: dict, utc_minutes: int, today_str: 
 
     weather_data = None
     aqi_data     = None
-    if incl_weather or incl_aqi:
-        try:
-            from domain.prayer.extras import fetch_weather, fetch_aqi
-            tasks = []
-            if incl_weather:
-                tasks.append(fetch_weather(lat, lon, lang))
-            if incl_aqi:
-                tasks.append(fetch_aqi(lat, lon, lang))
-            results = await asyncio.gather(*tasks, return_exceptions=True)
-            idx = 0
-            if incl_weather:
-                weather_data = results[idx] if not isinstance(results[idx], Exception) else None
-                idx += 1
-            if incl_aqi:
-                aqi_data = results[idx] if not isinstance(results[idx], Exception) else None
-        except Exception:
-            pass
+    try:
+        from domain.prayer.extras import fetch_weather, fetch_aqi
+        results = await asyncio.gather(
+            fetch_weather(lat, lon, lang),
+            fetch_aqi(lat, lon, lang),
+            return_exceptions=True,
+        )
+        weather_data = results[0] if not isinstance(results[0], Exception) else None
+        aqi_data     = results[1] if not isinstance(results[1], Exception) else None
+    except Exception:
+        pass
 
     country = prayer_data.get("country", "") or ""
     if not city:
@@ -612,7 +662,6 @@ async def _process_user_daily_briefing(user: dict, utc_minutes: int, today_str: 
     msg = _format_daily_briefing_msg(
         lang, city, country, prayer_data,
         weather_data, aqi_data,
-        incl_weather, incl_aqi, incl_prayer,
         hadith_data=hadith_data,
         send_minute=local_minute,
     )
@@ -647,8 +696,7 @@ async def _send_due_daily_briefings():
         conn.row_factory = sqlite3.Row
         users = conn.execute("""
             SELECT user_id, language, last_lat, last_lon, last_city,
-                   daily_briefing_time, briefing_weather, briefing_aqi, briefing_prayer,
-                   notif_tz_offset, briefing_sent
+                   daily_briefing_time, notif_tz_offset, briefing_sent
             FROM users
             WHERE daily_briefing_enabled=1
               AND last_lat IS NOT NULL AND last_lon IS NOT NULL
@@ -667,19 +715,47 @@ async def _send_due_daily_briefings():
 
 
 async def _notification_scheduler():
-    """Background asyncio task — fires every 60 seconds."""
-    print("[NOTIF] Scheduler started", flush=True)
-    print("[DAILY BRIEFING SCHEDULER STARTED]", flush=True)
+    """Background asyncio task — fires every 60 s. Never crashes the server."""
+    global _SCHED_STATUS
+    _SCHED_STATUS["running"] = True
+    print("[SCHED] Scheduler started", flush=True)
+
+    # Daily backup ticker (runs once per day)
+    _last_backup_day: str = ""
+
     while True:
+        tick_start = time.monotonic()
+        now_utc    = datetime.utcnow()
+        utc_min    = now_utc.hour * 60 + now_utc.minute
+        today_str  = now_utc.strftime("%Y-%m-%d")
+
+        # Daily backup (once per day at ~00:01 UTC)
+        if today_str != _last_backup_day and utc_min >= 1:
+            _backup_db()
+            _last_backup_day = today_str
+
+        print(f"[SCHED] tick={_SCHED_STATUS['ticks']} utc={utc_min}", flush=True)
+
         try:
             await _send_due_notifications()
         except Exception as e:
-            print(f"[NOTIF] Unhandled: {e}", flush=True)
+            _SCHED_STATUS["errors"] += 1
+            _flog.error(f"Notification scheduler: {e}", exc_info=True)
+            print(f"[SCHED] Notif error: {e}", flush=True)
+
         try:
             await _send_due_daily_briefings()
         except Exception as e:
-            print(f"[DAILY BRIEFING] Unhandled: {e}", flush=True)
-        await asyncio.sleep(60)
+            _SCHED_STATUS["errors"] += 1
+            _flog.error(f"Briefing scheduler: {e}", exc_info=True)
+            print(f"[SCHED] Brief error: {e}", flush=True)
+
+        _SCHED_STATUS["ticks"]     += 1
+        _SCHED_STATUS["last_tick"]  = now_utc.isoformat()
+
+        # Sleep for the remainder of 60 s (drift-safe)
+        elapsed = time.monotonic() - tick_start
+        await asyncio.sleep(max(0, 60 - elapsed))
 
 
 # ── Bot (webhook mode — only active when WEBAPP_URL is HTTPS) ──────────────
@@ -733,20 +809,31 @@ async def _init_bot():
     @_dp.message(CommandStart())
     async def cmd_start(message: types.Message):
         u = message.from_user
-        _track_user(u.id, u.username or "", u.first_name or "", u.language_code or "")
-        kb = InlineKeyboardMarkup(inline_keyboard=[[
-            InlineKeyboardButton(
-                text="🕌 IslamTimeWorldBot — Open",
-                web_app=WebAppInfo(url=WEBAPP_URL),
+        print(f"[/start] uid={u.id} @{u.username or ''} fn={u.first_name or ''}", flush=True)
+        try:
+            _track_user(u.id, u.username or "", u.first_name or "", u.language_code or "")
+            start_url = WEBAPP_URL.rstrip("/") + "?start=1"
+            kb = InlineKeyboardMarkup(inline_keyboard=[[
+                InlineKeyboardButton(
+                    text="🕌 IslamTimeWorldBot — Open",
+                    web_app=WebAppInfo(url=start_url),
+                )
+            ]])
+            await message.answer(
+                "🌙 <b>IslamTimeWorldBot</b>\n\n"
+                "Assalomu alaykum! Ilovani ochish uchun quyidagi tugmani bosing.\n\n"
+                "<i>Assalamu Alaikum! Tap the button below to open the app.</i>",
+                parse_mode="HTML",
+                reply_markup=kb,
             )
-        ]])
-        await message.answer(
-            "🌙 <b>IslamTimeWorldBot</b>\n\n"
-            "Assalomu alaykum! Ilovani ochish uchun quyidagi tugmani bosing.\n\n"
-            "<i>Assalamu Alaikum! Tap the button below to open the app.</i>",
-            parse_mode="HTML",
-            reply_markup=kb,
-        )
+            print(f"[/start] OK uid={u.id}", flush=True)
+        except Exception as e:
+            _flog.error(f"/start uid={u.id}: {e}", exc_info=True)
+            print(f"[/start] ERROR uid={u.id}: {e}", flush=True)
+            try:
+                await message.answer("🌙 IslamTimeWorldBot — Assalomu alaykum! ✅")
+            except Exception:
+                pass
 
     @_dp.message(Command("stats"))
     async def cmd_stats(message: types.Message):
@@ -866,9 +953,6 @@ async def _init_bot():
         user = dict(row)
         user.update({
             "daily_briefing_time": "00:00",
-            "briefing_weather": 1,
-            "briefing_aqi": 1,
-            "briefing_prayer": 1,
             "briefing_sent": "",
         })
         now_utc     = datetime.utcnow()
@@ -967,6 +1051,79 @@ async def _init_bot():
         except Exception as e:
             await message.answer(f"❌ Yuborish xatosi: {e}")
 
+    # ── /health ───────────────────────────────────────────────────────────────
+    @_dp.message(Command("health"))
+    async def cmd_health_bot(message: types.Message):
+        if message.from_user.id not in ADMIN_IDS:
+            await message.answer("⛔ Ruxsat yo'q.")
+            return
+        uptime_s = int(time.monotonic() - _START_TIME)
+        h, r = divmod(uptime_s, 3600); m, s = divmod(r, 60)
+        try:
+            conn = _db_connect(); conn.row_factory = sqlite3.Row
+            cnt   = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+            bcnt  = conn.execute("SELECT COUNT(*) FROM users WHERE daily_briefing_enabled=1").fetchone()[0]
+            ncnt  = conn.execute("SELECT COUNT(*) FROM users WHERE notif_enabled=1 AND last_lat IS NOT NULL").fetchone()[0]
+            conn.close()
+            db_str = f"✅ OK · {cnt} users · {bcnt} briefing ON · {ncnt} notif ON"
+        except Exception as e:
+            db_str = f"❌ {e}"
+        sched_ok  = _SCHED_STATUS["running"]
+        sched_str = (f"✅ Running · ticks={_SCHED_STATUS['ticks']} · errors={_SCHED_STATUS['errors']}"
+                     if sched_ok else "❌ Not running")
+        bot_str   = "✅ Webhook active" if _bot else "⚠️ Not initialized"
+        wh_url    = (_WEBHOOK_INFO.get("url") or "?")
+        wh_ok     = "✅" if _WEBHOOK_INFO.get("verified") else "⚠️"
+        await message.answer(
+            f"🏥 <b>IslamTimeWorldBot Health</b>\n\n"
+            f"⏱ Uptime: <b>{h}h {m}m {s}s</b>\n"
+            f"🤖 Bot: {bot_str}\n"
+            f"📅 Scheduler: {sched_str}\n"
+            f"🗄 DB: {db_str}\n"
+            f"🔗 Webhook: {wh_ok} <code>{wh_url[-50:]}</code>",
+            parse_mode="HTML",
+        )
+
+    # ── /restartinfo ──────────────────────────────────────────────────────────
+    @_dp.message(Command("restartinfo"))
+    async def cmd_restartinfo(message: types.Message):
+        if message.from_user.id not in ADMIN_IDS:
+            await message.answer("⛔ Ruxsat yo'q.")
+            return
+        uptime_s = int(time.monotonic() - _START_TIME)
+        h, r = divmod(uptime_s, 3600); m, s = divmod(r, 60)
+        started = _START_DT.strftime("%Y-%m-%d %H:%M:%S UTC")
+        lt      = _SCHED_STATUS.get("last_tick") or "—"
+        await message.answer(
+            f"🔄 <b>Restart Info</b>\n\n"
+            f"🚀 Started: <b>{started}</b>\n"
+            f"⏱ Uptime: <b>{h}h {m}m {s}s</b>\n"
+            f"📊 Ticks: <b>{_SCHED_STATUS['ticks']}</b>\n"
+            f"⚠️ Sched errors: <b>{_SCHED_STATUS['errors']}</b>\n"
+            f"🕐 Last tick: <code>{lt[:19]}</code>\n"
+            f"✅ Webhook verified: <b>{'Yes' if _WEBHOOK_INFO.get('verified') else 'No'}</b>",
+            parse_mode="HTML",
+        )
+
+    # ── /logs ─────────────────────────────────────────────────────────────────
+    @_dp.message(Command("logs"))
+    async def cmd_logs(message: types.Message):
+        if message.from_user.id not in ADMIN_IDS:
+            await message.answer("⛔ Ruxsat yo'q.")
+            return
+        try:
+            if _LOG_FILE.exists():
+                lines = _LOG_FILE.read_text(encoding="utf-8", errors="replace").splitlines()
+                last  = "\n".join(lines[-30:]) if lines else "(empty)"
+            else:
+                last = "(no error log yet — all good! 🎉)"
+        except Exception as e:
+            last = f"Read error: {e}"
+        await message.answer(
+            f"📋 <b>Last errors (server_err.log):</b>\n<pre>{last[-3500:]}</pre>",
+            parse_mode="HTML",
+        )
+
     @_dp.message(F.web_app_data)
     async def on_webapp_data(message: types.Message):
         try:
@@ -996,24 +1153,24 @@ async def _init_bot():
         except Exception:
             pass
 
-    print("[OK] ADMIN HANDLERS LOADED v79: dbcheck testnotif testbrief", flush=True)
+    print("[OK] ADMIN HANDLERS LOADED: health restartinfo logs dbcheck testnotif testbrief", flush=True)
 
     try:
-        # Public commands for all users
         await _bot.set_my_commands([
             BotCommand(command="start", description="🕌 IslamTimeWorldBot ni ochish"),
-            BotCommand(command="reset", description="🔄 Sozlamalarni tozalab qayta boshlash"),
+            BotCommand(command="reset", description="🔄 Sozlamalarni qayta boshlash"),
         ])
-        # Admin-only command menu (per-chat scope)
         admin_cmds = [
-            BotCommand(command="start",     description="🕌 IslamTimeWorldBot ni ochish"),
-            BotCommand(command="reset",     description="🔄 Sozlamalarni tozalab qayta boshlash"),
-            BotCommand(command="stats",     description="📊 Statistika"),
-            BotCommand(command="users",     description="👥 Foydalanuvchilar ro'yxati"),
-            BotCommand(command="broadcast", description="📢 Barcha userlarga xabar"),
-            BotCommand(command="testbrief", description="🌤 Test daily briefing yuborish"),
-            BotCommand(command="dbcheck",   description="🗄 DB holati va notif tekshirish"),
-            BotCommand(command="testnotif", description="🔔 Test bildirishnoma yuborish"),
+            BotCommand(command="start",       description="🕌 IslamTimeWorldBot ni ochish"),
+            BotCommand(command="health",      description="🏥 Bot va server holati"),
+            BotCommand(command="restartinfo", description="🔄 Uptime va restart ma'lumotlari"),
+            BotCommand(command="users",       description="👥 Foydalanuvchilar ro'yxati"),
+            BotCommand(command="dbcheck",     description="🗄 DB holati"),
+            BotCommand(command="testbrief",   description="🌤 Test daily briefing"),
+            BotCommand(command="testnotif",   description="🔔 Test bildirishnoma"),
+            BotCommand(command="logs",        description="📋 So'nggi xatolar"),
+            BotCommand(command="broadcast",   description="📢 Barcha userlarga xabar"),
+            BotCommand(command="reset",       description="🔄 Sozlamalarni qayta boshlash"),
         ]
         from aiogram.types import BotCommandScopeChat
         for admin_id in ADMIN_IDS:
@@ -1030,17 +1187,31 @@ async def _init_bot():
         await _bot.set_webhook(webhook_url, drop_pending_updates=True)
         print(f"[OK] Bot webhook set: {webhook_url}", flush=True)
     except Exception as e:
+        _flog.error(f"set_webhook failed: {e}", exc_info=True)
         print(f"[ERROR] set_webhook failed: {e}", flush=True)
-        import traceback; traceback.print_exc()
+        return
+
+    # Verify webhook via getWebhookInfo
+    try:
+        wh_info = await _bot.get_webhook_info()
+        _WEBHOOK_INFO["url"]      = wh_info.url
+        _WEBHOOK_INFO["set_at"]   = datetime.utcnow().isoformat()
+        _WEBHOOK_INFO["verified"] = (wh_info.url == webhook_url)
+        pending = wh_info.pending_update_count or 0
+        print(f"[OK] Webhook verified: match={_WEBHOOK_INFO['verified']} pending={pending}", flush=True)
+    except Exception as e:
+        print(f"[WARN] Webhook verify failed: {e}", flush=True)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     _init_users_db()
+    _backup_db()                                      # daily backup on every (re)start
     await _init_notif_bot()                           # always — needed for notifications
     if _is_production():
         await _init_bot()                             # webhook + commands (prod only)
     notif_task = asyncio.create_task(_notification_scheduler())
+    print(f"[OK] Server ready — uptime tracking started", flush=True)
     yield
     notif_task.cancel()
     try:
@@ -1081,7 +1252,10 @@ app.mount("/assets", StaticFiles(directory=str(WEBAPP_DIR / "assets")), name="as
 # ── WebApp entry point ─────────────────────────────────────────────────────
 @app.get("/")
 async def index():
-    return FileResponse(str(WEBAPP_DIR / "index.html"))
+    return FileResponse(
+        str(WEBAPP_DIR / "index.html"),
+        headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache"},
+    )
 
 # ── Dev test page ──────────────────────────────────────────────────────────
 @app.get("/test")
@@ -1095,7 +1269,37 @@ async def prayer_test_page():
 # ── Health check ───────────────────────────────────────────────────────────
 @app.get("/health")
 async def health():
-    return JSONResponse({"status": "ok", "service": "IslamTimeWorldBot"})
+    uptime_s = int(time.monotonic() - _START_TIME)
+    h, r = divmod(uptime_s, 3600); m, s = divmod(r, 60)
+    # DB check
+    db_status = "ok"
+    db_users  = 0
+    try:
+        conn = sqlite3.connect(str(USERS_DB), timeout=3)
+        db_users = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+        conn.close()
+    except Exception as e:
+        db_status = f"error: {e}"
+    return JSONResponse({
+        "status":       "ok",
+        "service":      "IslamTimeWorldBot",
+        "uptime":       f"{h}h {m}m {s}s",
+        "started_at":   _START_DT.isoformat(),
+        "db_status":    db_status,
+        "db_users":     db_users,
+        "bot_status":   "webhook_active" if _bot else "not_initialized",
+        "scheduler":    {
+            "running":   _SCHED_STATUS["running"],
+            "ticks":     _SCHED_STATUS["ticks"],
+            "last_tick": _SCHED_STATUS["last_tick"],
+            "errors":    _SCHED_STATUS["errors"],
+        },
+        "webhook": {
+            "url":      (_WEBHOOK_INFO.get("url") or "")[-60:],
+            "verified": _WEBHOOK_INFO.get("verified", False),
+            "set_at":   _WEBHOOK_INFO.get("set_at"),
+        },
+    })
 
 # ── Telegram Bot Webhook ──────────────────────────────────────────────────
 @app.post("/webhook/{token}")
@@ -1106,10 +1310,21 @@ async def telegram_webhook(token: str, request: Request):
     try:
         data   = await request.json()
         update = Update.model_validate(data)
+        # Log incoming update type
+        uid = upd_type = "?"
+        if update.message:
+            uid      = update.message.from_user.id if update.message.from_user else "?"
+            txt_pre  = (update.message.text or "")[:30]
+            upd_type = f"msg:{txt_pre or '(no text)'}"
+        elif update.web_app_data:
+            upd_type = "web_app_data"
+        elif update.callback_query:
+            upd_type = "callback"
+        print(f"[WH] id={update.update_id} uid={uid} type={upd_type}", flush=True)
         await _dp.feed_update(_bot, update)
     except Exception as e:
-        # Always return 200 to Telegram — retrying a bad update causes flood
-        print(f"[WARN] webhook handler error: {e}", flush=True)
+        _flog.error(f"Webhook error update_id={getattr(update,'update_id','?')}: {e}", exc_info=True)
+        print(f"[WH] Error: {e}", flush=True)
     return {"ok": True}
 
 
@@ -1198,27 +1413,20 @@ async def api_save_daily_briefing(request: Request):
         user_id   = int(data.get("user_id", 0))
         enabled   = int(bool(data.get("enabled", True)))
         time_str  = str(data.get("time", "04:00"))[:5]
-        weather   = int(bool(data.get("weather", True)))
-        aqi       = int(bool(data.get("aqi", True)))
-        prayer    = int(bool(data.get("prayer", True)))
         tz_offset = int(data.get("tz_offset", 0))
         if not user_id:
             return {"ok": False, "error": "missing user_id"}
         conn = sqlite3.connect(str(USERS_DB))
         conn.execute("""
             INSERT INTO users (user_id, joined_at, last_active,
-                daily_briefing_enabled, daily_briefing_time,
-                briefing_weather, briefing_aqi, briefing_prayer, notif_tz_offset)
-            VALUES (?, datetime('now'), datetime('now'), ?, ?, ?, ?, ?, ?)
+                daily_briefing_enabled, daily_briefing_time, notif_tz_offset)
+            VALUES (?, datetime('now'), datetime('now'), ?, ?, ?)
             ON CONFLICT(user_id) DO UPDATE SET
                 daily_briefing_enabled=excluded.daily_briefing_enabled,
                 daily_briefing_time=excluded.daily_briefing_time,
-                briefing_weather=excluded.briefing_weather,
-                briefing_aqi=excluded.briefing_aqi,
-                briefing_prayer=excluded.briefing_prayer,
                 notif_tz_offset=excluded.notif_tz_offset,
                 last_active=datetime('now')
-        """, (user_id, enabled, time_str, weather, aqi, prayer, tz_offset))
+        """, (user_id, enabled, time_str, tz_offset))
         conn.commit()
         conn.close()
         print(f"[DAILY BRIEFING] Prefs saved: uid={user_id} enabled={enabled} time={time_str}", flush=True)
@@ -1308,8 +1516,7 @@ async def api_admin_testbrief(request: Request):
             return JSONResponse({"error": "no_location",
                                  "hint": "last_lat is NULL — go to prayer screen first"})
         user = dict(r)
-        user.update({"daily_briefing_time": "00:00", "briefing_weather": 1,
-                     "briefing_aqi": 1, "briefing_prayer": 1, "briefing_sent": ""})
+        user.update({"daily_briefing_time": "00:00", "briefing_sent": ""})
         now_utc      = datetime.utcnow()
         utc_minutes  = now_utc.hour * 60 + now_utc.minute
         tz_offset    = user.get("notif_tz_offset") or 0

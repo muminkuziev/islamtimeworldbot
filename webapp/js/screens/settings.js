@@ -56,9 +56,6 @@ const SettingsScreen = (function () {
       dua:               (localStorage.getItem('islamtime_notif_dua')            ?? 'false') === 'true',
       daily_briefing:    (localStorage.getItem('islamtime_daily_briefing')       ?? 'true')  === 'true',
       briefing_time:     localStorage.getItem('islamtime_briefing_time')         || '04:00',
-      briefing_weather:  (localStorage.getItem('islamtime_briefing_weather')     ?? 'true')  === 'true',
-      briefing_aqi:      (localStorage.getItem('islamtime_briefing_aqi')         ?? 'true')  === 'true',
-      briefing_prayer:   (localStorage.getItem('islamtime_briefing_prayer')      ?? 'true')  === 'true',
     };
   }
 
@@ -69,9 +66,6 @@ const SettingsScreen = (function () {
       ayah:'islamtime_notif_ayah', hadith:'islamtime_notif_hadith', dua:'islamtime_notif_dua',
       daily_briefing:   'islamtime_daily_briefing',
       briefing_time:    'islamtime_briefing_time',
-      briefing_weather: 'islamtime_briefing_weather',
-      briefing_aqi:     'islamtime_briefing_aqi',
-      briefing_prayer:  'islamtime_briefing_prayer',
     };
     if (map[key]) localStorage.setItem(map[key], String(val));
     _s[key] = val;
@@ -114,7 +108,7 @@ const SettingsScreen = (function () {
       cloudsync:     _T('Bulut sinxronizatsiyasi','Булут синхронизацияси','Синхронизация с облаком',    'Cloud Sync'),
       contact:       _T('Aloqa va yordam',       'Алоқа ва ёрдам',       'Контакты и помощь',           'Contact & Support'),
       about:         _T('Ilova haqida',          'Илова ҳақида',         'О приложении',                'About'),
-      briefing:      _T("Kunlik ma'lumotlar",    'Кунлик маълумотлар',   'Ежедневная сводка',           'Daily Briefing'),
+      briefing:      _T('Kunlik briefing',       'Кунлик брифинг',       'Ежедневная сводка',           'Daily Briefing'),
     };
 
     const langs = typeof LANG_META !== 'undefined' ? LANG_META : [];
@@ -181,7 +175,7 @@ const SettingsScreen = (function () {
       { v:'langmazhab',    t:_T('Til va Mazhab',          'Тил ва Мазҳаб',          'Язык и Мазхаб',             'Language and Madhab'),   s: `${lm ? lm.flag+' '+lm.name : ''} · ${_mzLabel(mz)}` },
       { v:'interface',     t:_T('Interfeys',              'Интерфейс',              'Интерфейс',                 'Interface'),             s: _s.theme === 'dark' ? _T('Tungi rejim','Тунги режим','Тёмный режим','Dark mode') : _T('Kunduzgi rejim','Кундузги режим','Светлый режим','Light mode') },
       { v:'notifications', t:_T('Bildirishnomalar',       'Билдиришномалар',        'Уведомления',               'Notifications'),         s: `${notifN} ${_T('ta yoqilgan','та ёқилган','вкл.','enabled')}` },
-      { v:'briefing',      t:_T("Kunlik ma'lumotlar",    'Кунлик маълумотлар',     'Ежедневная сводка',         'Daily Briefing'),        s: _s.daily_briefing ? `${_T("Yoqilgan","Ёқилган","Включено","Enabled")} · ${_s.briefing_time}` : _T("O'chirilgan","Ўчирилган","Отключено","Disabled") },
+      { v:'briefing',      t:_T('Kunlik briefing',       'Кунлик брифинг',         'Ежедневная сводка',         'Daily Briefing'),        s: _s.daily_briefing ? `${_T("Yoqilgan","Ёқилган","Включено","Enabled")} · ${_s.briefing_time}` : _T("O'chirilgan","Ўчирилган","Отключено","Disabled") },
       { v:'cloudsync',     t:_T('Bulut sinxronizatsiyasi','Булут синхронизацияси',  'Синхронизация с облаком',   'Cloud Sync'),            s: online ? _T("Bog'langan","Боғланган","Подключён",'Connected') : _T('Offline rejim','Офлайн режим','Режим офлайн','Offline mode') },
       { v:'contact',       t:_T('Aloqa va yordam',        'Алоқа ва ёрдам',        'Контакты и помощь',          'Contact & Support'),     s: _T('Xato, fikr, yordam','Хато, фикр, ёрдам','Ошибки, отзывы, помощь','Bugs, feedback, help') },
       { v:'about',         t:_T('Ilova haqida',           'Илова ҳақида',           'О приложении',              'About'),                 s: 'v1.0 beta · 14 lang · 10 mod' },
@@ -316,42 +310,18 @@ const SettingsScreen = (function () {
       <div class="st-sect">
         <div class="st-plain-row">
           <div class="st-rb">
-            <div class="st-rl">🌤 ${_T("Kunlik ma'lumotlar","Кунлик маълумотлар","Ежедневная сводка","Daily Briefing")}</div>
-            <div class="st-rs">${_T("Har kuni belgilangan vaqtda xabar","Ҳар куни белгиланган вақтда хабар","Сообщение каждый день в выбранное время","Daily message at scheduled time")}</div>
+            <div class="st-rl">🔔 ${_T("Kunlik briefing","Кунлик брифинг","Ежедневная сводка","Daily Briefing")}</div>
+            <div class="st-rs">${_T("Namoz, ob-havo, AQI, hadis","Намоз, об-ҳаво, AQI, ҳадис","Намаз, погода, AQI, хадис","Prayer, weather, AQI, hadith")}</div>
           </div>
           <div class="st-toggle${on ? ' on' : ''}" id="st-brief-tog"></div>
         </div>
         <div class="st-div"></div>
         <div class="st-plain-row"${dim}>
           <div class="st-rb">
-            <div class="st-rl">🕐 ${_T("Vaqt","Вақт","Время","Time")}</div>
-            <div class="st-rs">${_T("Mahalliy vaqt","Маҳаллий вақт","Местное время","Local time")}</div>
+            <div class="st-rl">⏰ ${_T("Vaqt","Вақт","Время","Time")}</div>
+            <div class="st-rs">${_T("Mahalliy vaqt (default 04:00)","Маҳаллий вақт (default 04:00)","Местное время (по умолч. 04:00)","Local time (default 04:00)")}</div>
           </div>
           <input type="time" class="st-time-input" id="st-brief-time" value="${_s.briefing_time}">
-        </div>
-        <div class="st-div"></div>
-        <div class="st-plain-row"${dim}>
-          <div class="st-rb">
-            <div class="st-rl">🌡 ${_T("Ob-havo","Об-ҳаво","Погода","Weather")}</div>
-            <div class="st-rs">${_T("Harorat va havo holati","Ҳарорат ва ҳаво ҳолати","Температура и погода","Temperature and conditions")}</div>
-          </div>
-          <div class="st-toggle${_s.briefing_weather ? ' on' : ''}" id="st-brief-weather"></div>
-        </div>
-        <div class="st-div"></div>
-        <div class="st-plain-row"${dim}>
-          <div class="st-rb">
-            <div class="st-rl">🌬 ${_T("Havo sifati (AQI)","Ҳаво сифати (AQI)","Качество воздуха (AQI)","Air Quality (AQI)")}</div>
-            <div class="st-rs">${_T("Havoning tozaligi","Ҳавонинг тозалиги","Чистота воздуха","Air cleanliness index")}</div>
-          </div>
-          <div class="st-toggle${_s.briefing_aqi ? ' on' : ''}" id="st-brief-aqi"></div>
-        </div>
-        <div class="st-div"></div>
-        <div class="st-plain-row"${dim}>
-          <div class="st-rb">
-            <div class="st-rl">🕌 ${_T("Namoz vaqtlari","Намоз вақтлари","Время намаза","Prayer times")}</div>
-            <div class="st-rs">${_T("Barcha 5 vaqt","Барча 5 вақт","Все 5 времён","All 5 daily prayers")}</div>
-          </div>
-          <div class="st-toggle${_s.briefing_prayer ? ' on' : ''}" id="st-brief-prayer"></div>
         </div>
       </div>
       <div class="st-sect" style="margin-top:10px">
@@ -365,12 +335,9 @@ const SettingsScreen = (function () {
     const togEl = el.querySelector('#st-brief-tog');
 
     function _refreshDim() {
-      const on = _s.daily_briefing;
-      el.querySelectorAll('#st-brief-time,#st-brief-weather,#st-brief-aqi,#st-brief-prayer')
-        .forEach(e => {
-          const row = e.closest('.st-plain-row');
-          if (row) { row.style.opacity = on ? '' : '0.45'; row.style.pointerEvents = on ? '' : 'none'; }
-        });
+      const on  = _s.daily_briefing;
+      const row = el.querySelector('#st-brief-time')?.closest('.st-plain-row');
+      if (row) { row.style.opacity = on ? '' : '0.45'; row.style.pointerEvents = on ? '' : 'none'; }
     }
 
     togEl?.addEventListener('click', () => {
@@ -385,32 +352,17 @@ const SettingsScreen = (function () {
       _persist('briefing_time', e.target.value);
     });
 
-    [
-      { id:'st-brief-weather', k:'briefing_weather' },
-      { id:'st-brief-aqi',     k:'briefing_aqi'     },
-      { id:'st-brief-prayer',  k:'briefing_prayer'  },
-    ].forEach(({ id, k }) => {
-      el.querySelector(`#${id}`)?.addEventListener('click', () => {
-        const nv = !_s[k]; _persist(k, nv);
-        el.querySelector(`#${id}`)?.classList.toggle('on', nv);
-        window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
-      });
-    });
-
     el.querySelector('#st-brief-save')?.addEventListener('click', () => {
       const tg     = window.Telegram?.WebApp;
       const uid    = tg?.initDataUnsafe?.user?.id;
-      const tzOff  = -new Date().getTimezoneOffset(); // minutes east of UTC
+      const tzOff  = -new Date().getTimezoneOffset();
       const btn    = el.querySelector('#st-brief-save');
       if (btn) btn.textContent = _T('Saqlanmoqda...','Сақланмоқда...','Сохранение...','Saving...');
 
       const payload = {
-        user_id:  uid || 0,
-        enabled:  _s.daily_briefing,
-        time:     _s.briefing_time,
-        weather:  _s.briefing_weather,
-        aqi:      _s.briefing_aqi,
-        prayer:   _s.briefing_prayer,
+        user_id:   uid || 0,
+        enabled:   _s.daily_briefing,
+        time:      _s.briefing_time,
         tz_offset: tzOff,
       };
 
@@ -759,9 +711,6 @@ const SettingsScreen = (function () {
         user_id:   uid,
         enabled:   _s.daily_briefing,
         time:      _s.briefing_time,
-        weather:   _s.briefing_weather,
-        aqi:       _s.briefing_aqi,
-        prayer:    _s.briefing_prayer,
         tz_offset: tzOff,
       }),
     }).catch(() => {});
