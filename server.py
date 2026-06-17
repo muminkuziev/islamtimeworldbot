@@ -809,29 +809,31 @@ async def _init_bot():
     @_dp.message(CommandStart())
     async def cmd_start(message: types.Message):
         u = message.from_user
-        print(f"[/start] uid={u.id} @{u.username or ''} fn={u.first_name or ''}", flush=True)
+        lang = u.language_code or "uz"
+        print(f"[START] user_id={u.id} lang={lang} @{u.username or ''}", flush=True)
         try:
-            _track_user(u.id, u.username or "", u.first_name or "", u.language_code or "")
-            start_url = WEBAPP_URL.rstrip("/") + "?start=1"
+            _track_user(u.id, u.username or "", u.first_name or "", lang)
+        except Exception as e:
+            _flog.error(f"/start _track_user uid={u.id}: {e}", exc_info=True)
+        try:
+            ts = int(time.time())
+            app_url = f"https://islamtimeworldbot-dbup.onrender.com/?v=90&t={ts}&user_id={u.id}"
             kb = InlineKeyboardMarkup(inline_keyboard=[[
                 InlineKeyboardButton(
-                    text="🕌 IslamTimeWorldBot — Open",
-                    web_app=WebAppInfo(url=start_url),
+                    text="🕌 Ilovani ochish",
+                    web_app=WebAppInfo(url=app_url),
                 )
             ]])
             await message.answer(
-                "🌙 <b>IslamTimeWorldBot</b>\n\n"
-                "Assalomu alaykum! Ilovani ochish uchun quyidagi tugmani bosing.\n\n"
-                "<i>Assalamu Alaikum! Tap the button below to open the app.</i>",
-                parse_mode="HTML",
+                "Assalomu alaykum! IslamTimeWorldBot ishlayapti.",
                 reply_markup=kb,
             )
-            print(f"[/start] OK uid={u.id}", flush=True)
+            print(f"[START] user_id={u.id} lang={lang} success=True", flush=True)
         except Exception as e:
-            _flog.error(f"/start uid={u.id}: {e}", exc_info=True)
-            print(f"[/start] ERROR uid={u.id}: {e}", flush=True)
+            _flog.error(f"/start send uid={u.id}: {e}", exc_info=True)
+            print(f"[START] user_id={u.id} lang={lang} success=False err={e}", flush=True)
             try:
-                await message.answer("🌙 IslamTimeWorldBot — Assalomu alaykum! ✅")
+                await message.answer("Assalomu alaykum! IslamTimeWorldBot ishlayapti.")
             except Exception:
                 pass
 
@@ -1254,7 +1256,11 @@ app.mount("/assets", StaticFiles(directory=str(WEBAPP_DIR / "assets")), name="as
 async def index():
     return FileResponse(
         str(WEBAPP_DIR / "index.html"),
-        headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache"},
+        headers={
+            "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+            "Pragma":        "no-cache",
+            "Expires":       "0",
+        },
     )
 
 # ── Dev test page ──────────────────────────────────────────────────────────
