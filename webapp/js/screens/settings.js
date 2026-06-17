@@ -54,7 +54,7 @@ const SettingsScreen = (function () {
       ayah:              (localStorage.getItem('islamtime_notif_ayah')           ?? 'true')  === 'true',
       hadith:            (localStorage.getItem('islamtime_notif_hadith')         ?? 'true')  === 'true',
       dua:               (localStorage.getItem('islamtime_notif_dua')            ?? 'false') === 'true',
-      daily_briefing:    (localStorage.getItem('islamtime_daily_briefing')       ?? 'false') === 'true',
+      daily_briefing:    (localStorage.getItem('islamtime_daily_briefing')       ?? 'true')  === 'true',
       briefing_time:     localStorage.getItem('islamtime_briefing_time')         || '04:00',
       briefing_weather:  (localStorage.getItem('islamtime_briefing_weather')     ?? 'true')  === 'true',
       briefing_aqi:      (localStorage.getItem('islamtime_briefing_aqi')         ?? 'true')  === 'true',
@@ -91,6 +91,7 @@ const SettingsScreen = (function () {
     _loadS();
     _rebuild();
     if (_s.push) _saveNotifToServer(true);
+    if (_s.daily_briefing) _saveBriefingToServerSilent();
   }
 
   function _rebuild() {
@@ -742,6 +743,25 @@ const SettingsScreen = (function () {
         user_id:   uid,
         enabled:   enabled ? 1 : 0,
         timing,
+        tz_offset: tzOff,
+      }),
+    }).catch(() => {});
+  }
+
+  function _saveBriefingToServerSilent() {
+    const uid = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+    if (!uid) return;
+    const tzOff = -new Date().getTimezoneOffset();
+    fetch('/api/user/daily-briefing', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        user_id:   uid,
+        enabled:   _s.daily_briefing,
+        time:      _s.briefing_time,
+        weather:   _s.briefing_weather,
+        aqi:       _s.briefing_aqi,
+        prayer:    _s.briefing_prayer,
         tz_offset: tzOff,
       }),
     }).catch(() => {});

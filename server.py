@@ -401,6 +401,7 @@ def _format_daily_briefing_msg(
     aqi_data,
     incl_weather: bool, incl_aqi: bool, incl_prayer: bool,
     hadith_data: dict = None,
+    send_minute: int = -1,
 ) -> str:
     L = lang if lang in ("uz", "uz_cyr", "ru", "en") else "uz"
 
@@ -410,17 +411,19 @@ def _format_daily_briefing_msg(
         "ru":     "🕌 <b>Ассаляму алейкум!</b>",
         "en":     "🕌 <b>Assalamu alaykum!</b>",
     }
-    _WEATHER_LBL = {
-        "uz": "Ob-havo", "uz_cyr": "Об-ҳаво", "ru": "Погода", "en": "Weather",
-    }
-    _AQI_LBL = {
-        "uz": "Havo sifati", "uz_cyr": "Ҳаво сифати", "ru": "Качество воздуха", "en": "Air quality",
-    }
     _PRAY_HDR = {
         "uz":     "🕌 <b>Bugungi namoz vaqtlari:</b>",
         "uz_cyr": "🕌 <b>Бугунги намоз вақтлари:</b>",
         "ru":     "🕌 <b>Намаз сегодня:</b>",
         "en":     "🕌 <b>Today's prayers:</b>",
+    }
+    _NEXT_LBL = {
+        "uz": "Keyingi namoz", "uz_cyr": "Кейинги намоз",
+        "ru": "Следующий намаз", "en": "Next prayer",
+    }
+    _LEFT_LBL = {
+        "uz": "Qoldi", "uz_cyr": "Қолди",
+        "ru": "Осталось", "en": "Remaining",
     }
     _HADITH_HDR = {
         "uz":     "📚 <b>Kun hadisi:</b>",
@@ -438,6 +441,27 @@ def _format_daily_briefing_msg(
         "fajr": "🌅", "dhuhr": "☀️", "asr": "🌇", "maghrib": "🌆", "isha": "🌙",
     }
 
+    def _time_to_min(t: str) -> int:
+        try:
+            h, m = t.split(":")
+            return int(h) * 60 + int(m)
+        except Exception:
+            return -1
+
+    def _fmt_left(minutes: int) -> str:
+        h, m = divmod(minutes, 60)
+        if L == "uz":
+            parts = ([f"{h} soat"] if h else []) + ([f"{m} daqiqa"] if m else [])
+            return " ".join(parts) or "0 daqiqa"
+        if L == "uz_cyr":
+            parts = ([f"{h} соат"] if h else []) + ([f"{m} дақиқа"] if m else [])
+            return " ".join(parts) or "0 дақиқа"
+        if L == "ru":
+            parts = ([f"{h} ч"] if h else []) + ([f"{m} мин"] if m else [])
+            return " ".join(parts) or "0 мин"
+        parts = ([f"{h}h"] if h else []) + ([f"{m}m"] if m else [])
+        return " ".join(parts) or "0m"
+
     lines = [_GREET.get(L, _GREET["uz"]), ""]
 
     # Location
@@ -445,48 +469,69 @@ def _format_daily_briefing_msg(
     ctry = country or prayer_data.get("country", "")
     if loc:
         lines.append(f"📍 {loc}{', ' + ctry if ctry else ''}")
+        lines.append("")
 
-    # Gregorian + Hijri date
+    # Gregorian date + Hijri date on separate lines
     greg = datetime.utcnow().strftime("%d.%m.%Y")
     _hijri_raw = prayer_data.get("hijri") or {}
     hijri = _hijri_raw.get("full", "") if isinstance(_hijri_raw, dict) else str(_hijri_raw)
     if not hijri:
         hijri = prayer_data.get("hijri_date", "")
-    date_line = f"📅 {greg}"
+    lines.append(f"📅 {greg}")
     if hijri:
-        date_line += f"  🌙 {hijri}"
-    lines.append(date_line)
+        lines.append(f"🌙 {hijri}")
     lines.append("")
 
-    # Weather + AQI on one line
-    weather_parts = []
+    # Weather on its own line, AQI on its own line
     if incl_weather and weather_data:
         temp = weather_data.get("temp_c")
         icon = weather_data.get("icon", "🌤")
         if temp is not None:
-            weather_parts.append(f"{icon} {_WEATHER_LBL.get(L, 'Ob-havo')}: {temp}°C")
+            lines.append(f"{icon} Ob-havo: {temp}°C" if L in ("uz","uz_cyr") else
+                         f"{icon} Погода: {temp}°C" if L == "ru" else
+                         f"{icon} Weather: {temp}°C")
     if incl_aqi and aqi_data:
         aqi_val  = aqi_data.get("aqi", 0)
         aqi_icon = aqi_data.get("icon", "🌬")
-        weather_parts.append(f"{aqi_icon} {_AQI_LBL.get(L, 'Havo sifati')}: AQI {aqi_val}")
-    if weather_parts:
-        lines.append("  ".join(weather_parts))
+        lines.append(f"{aqi_icon} Havo sifati: AQI {aqi_val}" if L in ("uz","uz_cyr") else
+                     f"{aqi_icon} Качество воздуха: AQI {aqi_val}" if L == "ru" else
+                     f"{aqi_icon} Air quality: AQI {aqi_val}")
+    if incl_weather or incl_aqi:
         lines.append("")
 
-    # Prayer times — inline with emojis
+    # Prayer times — one per line, with emoji
     if incl_prayer:
         prayers = prayer_data.get("prayers", [])
-        prayer_rows = [p for p in prayers if p.get("key", "").lower() not in ("sunrise",)]
+        prayer_rows = [p for p in prayers if p.get("key", "").lower() != "sunrise"]
         if prayer_rows:
             lines.append(_PRAY_HDR.get(L, _PRAY_HDR["uz"]))
-            parts = []
             for p in prayer_rows:
-                key  = p.get("key", "").lower()
-                name = _PRAYER_NOTIF_NAMES.get(key, {}).get(L) or key.capitalize()
+                key   = p.get("key", "").lower()
+                name  = _PRAYER_NOTIF_NAMES.get(key, {}).get(L) or key.capitalize()
                 emoji = _PRAYER_EMOJI.get(key, "🕌")
-                parts.append(f"{emoji} {name}: {p.get('time', '')}")
-            lines.append("  ".join(parts))
+                lines.append(f"{emoji} {name}: {p.get('time', '')}")
             lines.append("")
+
+            # Next prayer + countdown
+            if send_minute >= 0:
+                next_p = None
+                left   = 0
+                for p in prayer_rows:
+                    pm = _time_to_min(p.get("time", ""))
+                    if pm > send_minute:
+                        next_p = p
+                        left   = pm - send_minute
+                        break
+                if not next_p:
+                    next_p = prayer_rows[0]
+                    pm     = _time_to_min(next_p.get("time", ""))
+                    left   = (1440 - send_minute) + pm
+                if next_p:
+                    key  = next_p.get("key", "").lower()
+                    name = _PRAYER_NOTIF_NAMES.get(key, {}).get(L) or key.capitalize()
+                    lines.append(f"🕐 {_NEXT_LBL.get(L,'Keyingi namoz')}: {name}")
+                    lines.append(f"⏳ {_LEFT_LBL.get(L,'Qoldi')}: {_fmt_left(left)}")
+                    lines.append("")
 
     # Hadith
     if hadith_data and hadith_data.get("text"):
@@ -569,6 +614,7 @@ async def _process_user_daily_briefing(user: dict, utc_minutes: int, today_str: 
         weather_data, aqi_data,
         incl_weather, incl_aqi, incl_prayer,
         hadith_data=hadith_data,
+        send_minute=local_minute,
     )
 
     try:
@@ -1150,8 +1196,8 @@ async def api_save_daily_briefing(request: Request):
     try:
         data      = await request.json()
         user_id   = int(data.get("user_id", 0))
-        enabled   = int(bool(data.get("enabled", False)))
-        time_str  = str(data.get("time", "06:00"))[:5]
+        enabled   = int(bool(data.get("enabled", True)))
+        time_str  = str(data.get("time", "04:00"))[:5]
         weather   = int(bool(data.get("weather", True)))
         aqi       = int(bool(data.get("aqi", True)))
         prayer    = int(bool(data.get("prayer", True)))
@@ -1160,12 +1206,19 @@ async def api_save_daily_briefing(request: Request):
             return {"ok": False, "error": "missing user_id"}
         conn = sqlite3.connect(str(USERS_DB))
         conn.execute("""
-            UPDATE users SET
-                daily_briefing_enabled=?, daily_briefing_time=?,
-                briefing_weather=?, briefing_aqi=?, briefing_prayer=?,
-                notif_tz_offset=?
-            WHERE user_id=?
-        """, (enabled, time_str, weather, aqi, prayer, tz_offset, user_id))
+            INSERT INTO users (user_id, joined_at, last_active,
+                daily_briefing_enabled, daily_briefing_time,
+                briefing_weather, briefing_aqi, briefing_prayer, notif_tz_offset)
+            VALUES (?, datetime('now'), datetime('now'), ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET
+                daily_briefing_enabled=excluded.daily_briefing_enabled,
+                daily_briefing_time=excluded.daily_briefing_time,
+                briefing_weather=excluded.briefing_weather,
+                briefing_aqi=excluded.briefing_aqi,
+                briefing_prayer=excluded.briefing_prayer,
+                notif_tz_offset=excluded.notif_tz_offset,
+                last_active=datetime('now')
+        """, (user_id, enabled, time_str, weather, aqi, prayer, tz_offset))
         conn.commit()
         conn.close()
         print(f"[DAILY BRIEFING] Prefs saved: uid={user_id} enabled={enabled} time={time_str}", flush=True)
