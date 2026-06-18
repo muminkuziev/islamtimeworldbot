@@ -6,12 +6,7 @@ services:
     plan: starter
     region: oregon
     healthCheckPath: /health
-    disk:
-      name: islamtimeworldbot-data
-      mountPath: /app/persist
-      sizeGB: 1
     envVars:
-      # ── Required: set these in Render Dashboard → Environment ──
       - key: BOT_TOKEN
         sync: false
 

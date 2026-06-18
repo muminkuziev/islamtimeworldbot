@@ -65,10 +65,25 @@ WEBAPP_DIR = BASE_DIR / "webapp"
 BOT_TOKEN  = os.getenv("BOT_TOKEN", "")
 WEBAPP_URL = os.getenv("WEBAPP_URL", "")
 
-# Persistent DB: on Render use /app/persist (mounted disk), locally use data/
-_PERSIST_DIR = Path("/app/persist") if os.getenv("RENDER", "") == "true" else BASE_DIR / "data"
-_PERSIST_DIR.mkdir(parents=True, exist_ok=True)
-USERS_DB = _PERSIST_DIR / "users.db"
+def _resolve_users_db() -> Path:
+    """Pick a writable path for users.db with fallback chain."""
+    candidates = [
+        Path("/app/persist/users.db"),   # Render persistent disk (when mounted)
+        Path("/app/data/users.db"),      # Render Docker container
+        BASE_DIR / "data" / "users.db", # Local dev
+        BASE_DIR / "users.db",          # Last resort
+    ]
+    for p in candidates:
+        try:
+            p.parent.mkdir(parents=True, exist_ok=True)
+            p.parent.stat()              # confirm readable
+            print(f"[DB] users.db path: {p}", flush=True)
+            return p
+        except (OSError, PermissionError):
+            continue
+    return BASE_DIR / "users.db"
+
+USERS_DB = _resolve_users_db()
 _PRIMARY_ADMIN = 310467246
 ADMIN_IDS = {_PRIMARY_ADMIN}
 for _x in os.getenv("ADMIN_IDS", "").split(","):
