@@ -62,9 +62,13 @@ from fastapi.middleware.cors import CORSMiddleware
 # ── Config ─────────────────────────────────────────────────────────────────
 BASE_DIR   = Path(__file__).parent
 WEBAPP_DIR = BASE_DIR / "webapp"
-USERS_DB   = BASE_DIR / "data" / "users.db"
 BOT_TOKEN  = os.getenv("BOT_TOKEN", "")
 WEBAPP_URL = os.getenv("WEBAPP_URL", "")
+
+# Persistent DB: on Render use /app/persist (mounted disk), locally use data/
+_PERSIST_DIR = Path("/app/persist") if os.getenv("RENDER", "") == "true" else BASE_DIR / "data"
+_PERSIST_DIR.mkdir(parents=True, exist_ok=True)
+USERS_DB = _PERSIST_DIR / "users.db"
 _PRIMARY_ADMIN = 310467246
 ADMIN_IDS = {_PRIMARY_ADMIN}
 for _x in os.getenv("ADMIN_IDS", "").split(","):
@@ -289,25 +293,32 @@ async def _init_notif_bot():
     if not BOT_TOKEN:
         return
     try:
-        import socket, aiohttp
         from aiogram import Bot
         from aiogram.client.session.aiohttp import AiohttpSession
 
-        _TG_HOST = "api.telegram.org"
-        _TG_IP   = "149.154.167.220"
+        _on_render = os.getenv("RENDER", "").lower() == "true"
 
-        class _NR:
-            async def resolve(self, host, port=0, family=socket.AF_INET):
-                if host == _TG_HOST:
-                    return [{"hostname": host, "host": _TG_IP, "port": port,
-                             "family": socket.AF_INET, "proto": 0, "flags": 0}]
-                return await aiohttp.ThreadedResolver().resolve(host, port, family)
-            async def close(self): pass
+        if _on_render:
+            # Render.com has normal DNS — no bypass needed
+            session = AiohttpSession()
+            print("[OK] Notification bot initialized (Render mode)", flush=True)
+        else:
+            # Local dev: DNS bypass for restricted networks
+            import socket, aiohttp
+            _TG_HOST = "api.telegram.org"
+            _TG_IP   = "149.154.167.220"
+            class _NR:
+                async def resolve(self, host, port=0, family=socket.AF_INET):
+                    if host == _TG_HOST:
+                        return [{"hostname": host, "host": _TG_IP, "port": port,
+                                 "family": socket.AF_INET, "proto": 0, "flags": 0}]
+                    return await aiohttp.ThreadedResolver().resolve(host, port, family)
+                async def close(self): pass
+            session = AiohttpSession()
+            session._connector_init["resolver"] = _NR()
+            print(f"[OK] Notification bot initialized (local+DNS bypass)", flush=True)
 
-        session = AiohttpSession()
-        session._connector_init["resolver"] = _NR()
         _bot_notif = Bot(token=BOT_TOKEN, session=session)
-        print("[OK] Notification bot initialized", flush=True)
     except Exception as e:
         print(f"[WARN] _init_notif_bot: {e}", flush=True)
 
@@ -763,9 +774,10 @@ _bot = None
 _dp  = None
 
 def _is_production() -> bool:
+    # Only RENDER=true (set automatically by Render.com) activates webhook mode.
+    # WEBHOOK_MODE is intentionally excluded: local dev must NOT overwrite production webhook.
     on_render = os.getenv("RENDER", "").lower() == "true"
-    webhook   = os.getenv("WEBHOOK_MODE", "").lower() == "true"
-    return bool((on_render or webhook) and BOT_TOKEN)
+    return bool(on_render and BOT_TOKEN)
 
 async def _init_bot():
     global _bot, _dp
@@ -778,29 +790,31 @@ async def _init_bot():
         InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo, BotCommand
     )
 
-    _TG_HOST = "api.telegram.org"
-    _TG_IPS  = ["149.154.167.220", "149.154.166.110", "149.154.175.53"]
+    _on_render = os.getenv("RENDER", "").lower() == "true"
+    _proxy     = os.getenv("PROXY_URL", "").strip() or None
 
-    class _BypassResolver:
-        async def resolve(self, host, port=0, family=socket.AF_INET):
-            if host == _TG_HOST:
-                print(f"[DNS] {host} → {_TG_IPS[0]}", flush=True)
-                return [{"hostname": host, "host": _TG_IPS[0],
-                         "port": port, "family": socket.AF_INET,
-                         "proto": 0, "flags": 0}]
-            resolver = aiohttp.ThreadedResolver()
-            return await resolver.resolve(host, port, family)
-        async def close(self):
-            pass
-
-    _proxy = os.getenv("PROXY_URL", "").strip() or None
     if _proxy:
         session = AiohttpSession(proxy=_proxy)
         print(f"[OK] Bot proxy: {_proxy}", flush=True)
+    elif _on_render:
+        # Render.com — standard DNS, no bypass needed
+        session = AiohttpSession()
+        print("[OK] Bot session: Render (standard DNS)", flush=True)
     else:
+        # Local dev — DNS bypass
+        _TG_HOST = "api.telegram.org"
+        _TG_IP   = "149.154.167.220"
+        class _BypassResolver:
+            async def resolve(self, host, port=0, family=socket.AF_INET):
+                if host == _TG_HOST:
+                    return [{"hostname": host, "host": _TG_IP,
+                             "port": port, "family": socket.AF_INET,
+                             "proto": 0, "flags": 0}]
+                return await aiohttp.ThreadedResolver().resolve(host, port, family)
+            async def close(self): pass
         session = AiohttpSession()
         session._connector_init["resolver"] = _BypassResolver()
-        print(f"[OK] Bot DNS bypass: {_TG_HOST} → {_TG_IPS[0]}", flush=True)
+        print(f"[OK] Bot DNS bypass: {_TG_HOST} → {_TG_IP}", flush=True)
 
     _bot = Bot(token=BOT_TOKEN, session=session)
     _dp  = Dispatcher()
@@ -816,7 +830,7 @@ async def _init_bot():
             _flog.error(f"/start _track_user uid={u.id}: {e}", exc_info=True)
         try:
             ts = int(time.time())
-            app_url = f"https://islamtimeworldbot-dbup.onrender.com/?v=90&t={ts}&user_id={u.id}"
+            app_url = f"https://islamtimeworldbot-dbup.onrender.com/?v=92&start=1&t={ts}&user_id={u.id}"
             kb = InlineKeyboardMarkup(inline_keyboard=[[
                 InlineKeyboardButton(
                     text="🕌 Ilovani ochish",
@@ -1345,7 +1359,7 @@ async def telegram_webhook(token: str, request: Request):
             try:
                 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
                 ts      = int(time.time())
-                app_url = f"https://islamtimeworldbot-dbup.onrender.com/?v=90&t={ts}&user_id={user_id}"
+                app_url = f"https://islamtimeworldbot-dbup.onrender.com/?v=92&start=1&t={ts}&user_id={user_id}"
                 kb = InlineKeyboardMarkup(inline_keyboard=[[
                     InlineKeyboardButton(text="🕌 Ilovani ochish", web_app=WebAppInfo(url=app_url))
                 ]])

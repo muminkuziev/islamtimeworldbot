@@ -3,23 +3,23 @@ services:
     name: islamtimeworldbot
     runtime: docker
     dockerfilePath: ./Dockerfile
-    plan: free
+    plan: starter
     region: oregon
     healthCheckPath: /health
+    disk:
+      name: islamtimeworldbot-data
+      mountPath: /app/persist
+      sizeGB: 1
     envVars:
-      # Set these manually in Render Dashboard → Environment
+      # ── Required: set these in Render Dashboard → Environment ──
       - key: BOT_TOKEN
-        sync: false        # paste your real token in Render dashboard
+        sync: false
 
       - key: WEBAPP_URL
-        sync: false        # paste your Render service URL, e.g.:
-                           # https://islamtimeworldbot.onrender.com
-
-      - key: WEBHOOK_MODE
-        value: "true"      # enables webhook bot mode on Render
+        value: "https://islamtimeworldbot-dbup.onrender.com"
 
       - key: PYTHONIOENCODING
         value: "utf-8"
 
       - key: ADMIN_IDS
-        sync: false        # comma-separated Telegram user IDs for /stats access
+        sync: false
