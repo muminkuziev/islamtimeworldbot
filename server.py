@@ -845,7 +845,7 @@ async def _init_bot():
             _flog.error(f"/start _track_user uid={u.id}: {e}", exc_info=True)
         try:
             ts = int(time.time())
-            app_url = f"https://islamtimeworldbot-dbup.onrender.com/?v=92&start=1&t={ts}&user_id={u.id}"
+            app_url = f"https://islamtimeworldbot-dbup.onrender.com/app?v=92&start=1&t={ts}&user_id={u.id}"
             kb = InlineKeyboardMarkup(inline_keyboard=[[
                 InlineKeyboardButton(
                     text="🕌 Ilovani ochish",
@@ -1280,9 +1280,17 @@ app.mount("/js",     StaticFiles(directory=str(WEBAPP_DIR / "js")),     name="js
 app.mount("/data",   StaticFiles(directory=str(WEBAPP_DIR / "data")),   name="webapp_data")
 app.mount("/assets", StaticFiles(directory=str(WEBAPP_DIR / "assets")), name="assets")
 
-# ── WebApp entry point ─────────────────────────────────────────────────────
+# ── Landing page (public) ──────────────────────────────────────────────────
 @app.get("/")
-async def index():
+async def landing():
+    return FileResponse(
+        str(WEBAPP_DIR / "landing.html"),
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
+
+# ── Telegram WebApp entry point ────────────────────────────────────────────
+@app.get("/app")
+async def webapp():
     return FileResponse(
         str(WEBAPP_DIR / "index.html"),
         headers={
@@ -1292,7 +1300,7 @@ async def index():
         },
     )
 
-# ── Dev test page ──────────────────────────────────────────────────────────
+# ── Dev test pages ─────────────────────────────────────────────────────────
 @app.get("/test")
 async def test_page():
     return FileResponse(str(WEBAPP_DIR / "test_integration.html"))
@@ -1374,7 +1382,7 @@ async def telegram_webhook(token: str, request: Request):
             try:
                 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
                 ts      = int(time.time())
-                app_url = f"https://islamtimeworldbot-dbup.onrender.com/?v=92&start=1&t={ts}&user_id={user_id}"
+                app_url = f"https://islamtimeworldbot-dbup.onrender.com/app?v=92&start=1&t={ts}&user_id={user_id}"
                 kb = InlineKeyboardMarkup(inline_keyboard=[[
                     InlineKeyboardButton(text="🕌 Ilovani ochish", web_app=WebAppInfo(url=app_url))
                 ]])

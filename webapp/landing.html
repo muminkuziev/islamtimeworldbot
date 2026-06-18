@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IslamTimeWorld — Namoz vaqtlari, Qibla, Qur'on va Zikr bir joyda</title>
+<meta name="description" content="14 tilda ishlaydigan, reklamasiz Islom hamrohi. Namoz vaqtlari, Qibla kompas, Qur'on, Hadis, Du'olar va Hijriy taqvim — Telegram orqali bepul.">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+:root{
+  --gold:#E8C15A; --gold-d:#C49A1E; --gold-l:#F5D98A;
+  --navy:#06101f; --navy-2:#0a1830; --navy-3:#0e2040; --navy-4:#11264a;
+  --cream:#e8dfc8; --cream-d:rgba(232,223,200,.6); --cream-m:rgba(232,223,200,.32);
+  --green:#4fcfa0;
+  --fi:'Inter',system-ui,sans-serif; --fa:'Amiri',serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--navy);
+  color:var(--cream);
+  font-family:var(--fi);
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:rgba(232,193,90,.3);}
+a{color:inherit;text-decoration:none;}
+button{font-family:inherit;}
+
+.bg-fixed{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 900px 600px at 18% -10%, rgba(232,193,90,.10), transparent 60%),
+    radial-gradient(ellipse 700px 500px at 85% 15%, rgba(91,155,213,.07), transparent 55%),
+    var(--navy);
+}
+.tile-overlay{
+  position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.35;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cline x1='0' y1='0' x2='60' y2='60' stroke='%23E8C15A' stroke-width='0.3' opacity='0.08'/%3E%3Cline x1='60' y1='0' x2='0' y2='60' stroke='%23E8C15A' stroke-width='0.3' opacity='0.08'/%3E%3C/svg%3E");
+  background-size:60px 60px;
+}
+
+.wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:0 28px;}
+
+/* ── NAV ── */
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:50;
+  padding:18px 0;
+  background:rgba(6,16,31,.72);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid rgba(232,193,90,.08);
+}
+.nav-inner{max-width:1180px;margin:0 auto;padding:0 28px;
+  display:flex;align-items:center;justify-content:space-between;}
+.brand{display:flex;align-items:center;gap:10px;}
+.brand-mark{width:30px;height:30px;flex-shrink:0;}
+.brand-name{font-size:16px;font-weight:800;letter-spacing:-.3px;color:var(--cream);}
+.brand-name b{color:var(--gold);}
+.nav-links{display:flex;gap:32px;align-items:center;}
+.nav-links a{font-size:13.5px;font-weight:600;color:var(--cream-d);transition:color .2s;}
+.nav-links a:hover{color:var(--gold);}
+.nav-cta{
+  padding:9px 20px;border-radius:10px;font-size:13px;font-weight:700;
+  background:linear-gradient(135deg,var(--gold-d),var(--gold) 55%,var(--gold-l));
+  color:var(--navy);box-shadow:0 4px 18px rgba(232,193,90,.3);
+  transition:transform .15s;
+}
+.nav-cta:hover{transform:translateY(-1px);}
+
+/* ── HERO ── */
+.hero{
+  position:relative;padding:168px 0 100px;
+  display:grid;grid-template-columns:1.05fr .95fr;gap:50px;align-items:center;
+}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:11.5px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;
+  color:var(--gold);padding:6px 14px;border-radius:20px;
+  background:rgba(232,193,90,.08);border:1px solid rgba(232,193,90,.22);
+  margin-bottom:26px;
+}
+.eyebrow span.dot{width:6px;height:6px;border-radius:50%;background:var(--green);
+  box-shadow:0 0 8px var(--green);}
+h1{
+  font-size:56px;line-height:1.05;font-weight:800;letter-spacing:-1.6px;
+  color:var(--cream);margin-bottom:22px;
+}
+h1 em{
+  font-style:normal;color:var(--gold);
+  background:linear-gradient(135deg,var(--gold-l),var(--gold) 60%,var(--gold-d));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+}
+.hero-sub{
+  font-size:17.5px;line-height:1.65;color:var(--cream-d);max-width:480px;margin-bottom:36px;
+}
+.hero-actions{display:flex;align-items:center;gap:18px;margin-bottom:42px;flex-wrap:wrap;}
+.btn-primary{
+  display:inline-flex;align-items:center;gap:10px;padding:16px 28px;border-radius:14px;
+  background:linear-gradient(135deg,var(--gold-d),var(--gold) 55%,var(--gold-l));
+  color:var(--navy);font-weight:800;font-size:15px;
+  box-shadow:0 10px 32px rgba(232,193,90,.38), inset 0 1px 0 rgba(255,255,255,.25);
+  transition:transform .18s ease;
+}
+.btn-primary:hover{transform:translateY(-2px) scale(1.01);}
+.btn-primary svg{width:18px;height:18px;}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:7px;
+  font-size:12.5px;font-weight:600;color:var(--cream-d);
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
+  padding:8px 14px;border-radius:10px;
+}
+.hero-badge .dot-g{width:7px;height:7px;border-radius:50%;background:var(--green);
+  box-shadow:0 0 6px var(--green);}
+
+.hero-stats{display:flex;gap:34px;}
+.stat b{display:block;font-size:26px;font-weight:800;color:var(--gold);letter-spacing:-.5px;}
+.stat span{font-size:12px;color:var(--cream-m);font-weight:600;}
+
+/* ── Phone mock ── */
+.hero-visual{position:relative;display:flex;justify-content:center;}
+.phone{
+  width:280px;height:572px;background:var(--navy);border-radius:38px;
+  box-shadow:0 50px 110px rgba(0,0,0,.7), 0 0 0 1px rgba(232,193,90,.18),
+    inset 0 1px 0 rgba(255,255,255,.06);
+  overflow:hidden;position:relative;
+}
+.phone-glow{
+  position:absolute;width:380px;height:380px;border-radius:50%;
+  background:radial-gradient(circle,rgba(232,193,90,.18),transparent 70%);
+  top:50%;left:50%;transform:translate(-50%,-50%);z-index:-1;
+}
+.phone-screen{padding:20px 18px;height:100%;display:flex;flex-direction:column;}
+.phone-status{display:flex;justify-content:space-between;font-size:9px;color:var(--cream-m);
+  font-weight:600;margin-bottom:14px;}
+.phone-app-name{font-size:13px;font-weight:800;color:var(--cream);margin-bottom:2px;}
+.phone-date{font-size:10px;color:var(--cream-d);margin-bottom:16px;}
+.sun-card{
+  background:rgba(232,193,90,.07);border:1px solid rgba(232,193,90,.2);
+  border-radius:16px;padding:16px;margin-bottom:14px;position:relative;overflow:hidden;
+}
+.sun-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--gold-d),var(--gold),var(--gold-l),transparent);}
+.sun-eyebrow{font-size:8px;font-weight:700;letter-spacing:1.3px;text-transform:uppercase;
+  color:rgba(232,193,90,.7);margin-bottom:6px;}
+.sun-row{display:flex;justify-content:space-between;align-items:center;}
+.sun-name{font-size:19px;font-weight:800;color:var(--cream);letter-spacing:-.4px;}
+.sun-time{font-size:26px;font-weight:800;color:var(--gold);letter-spacing:-.6px;}
+.arc-svg{width:100%;height:50px;margin-top:10px;display:block;}
+.prayer-rows{display:flex;flex-direction:column;gap:6px;flex:1;}
+.prow{
+  display:flex;justify-content:space-between;align-items:center;
+  background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.05);
+  border-radius:11px;padding:9px 12px;font-size:12px;
+}
+.prow.active{background:rgba(232,193,90,.08);border-color:rgba(232,193,90,.25);}
+.prow .pname{font-weight:700;color:var(--cream-d);}
+.prow.active .pname{color:var(--cream);}
+.prow .ptime{font-weight:800;color:var(--cream-m);font-size:12.5px;}
+.prow.active .ptime{color:var(--gold);}
+.prow .check{width:14px;height:14px;border-radius:50%;border:1.5px solid rgba(255,255,255,.12);
+  display:flex;align-items:center;justify-content:center;font-size:7px;color:var(--gold);}
+.prow.done .check{background:rgba(232,193,90,.15);border-color:var(--gold);}
+
+.float-card{
+  position:absolute;background:rgba(14,32,64,.92);backdrop-filter:blur(10px);
+  border:1px solid rgba(232,193,90,.2);border-radius:14px;padding:11px 15px;
+  box-shadow:0 16px 40px rgba(0,0,0,.5);font-size:11.5px;font-weight:700;
+  display:flex;align-items:center;gap:8px;animation:floaty 5s ease-in-out infinite;
+}
+.float-card.f1{top:6%;left:-40px;color:var(--green);animation-delay:0s;}
+.float-card.f2{bottom:14%;right:-44px;color:var(--gold);animation-delay:1.2s;}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+
+/* ── Language marquee ── */
+.lang-strip{
+  border-top:1px solid rgba(232,193,90,.08);border-bottom:1px solid rgba(232,193,90,.08);
+  padding:22px 0;overflow:hidden;position:relative;
+}
+.lang-strip::before,.lang-strip::after{
+  content:'';position:absolute;top:0;bottom:0;width:120px;z-index:2;
+}
+.lang-strip::before{left:0;background:linear-gradient(90deg,var(--navy),transparent);}
+.lang-strip::after{right:0;background:linear-gradient(270deg,var(--navy),transparent);}
+.lang-track{display:flex;gap:46px;white-space:nowrap;animation:scroll-left 32s linear infinite;width:max-content;}
+@keyframes scroll-left{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.lang-item{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:600;color:var(--cream-m);}
+.lang-item .flag{font-size:18px;}
+
+/* ── Section headers ── */
+.section{padding:108px 0;}
+.section-head{max-width:620px;margin-bottom:64px;}
+.section-eyebrow{
+  font-size:11.5px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;
+  color:var(--gold);margin-bottom:14px;
+}
+.section-head h2{font-size:38px;font-weight:800;letter-spacing:-1px;line-height:1.18;
+  color:var(--cream);margin-bottom:16px;}
+.section-head p{font-size:16px;line-height:1.7;color:var(--cream-d);}
+
+/* ── Features grid ── */
+.features{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
+  background:rgba(232,193,90,.1);border:1px solid rgba(232,193,90,.1);border-radius:24px;
+  overflow:hidden;}
+.feature{background:rgba(10,24,48,.55);padding:34px 30px;transition:background .25s;}
+.feature:hover{background:rgba(232,193,90,.05);}
+.feature-num{font-size:11px;font-weight:700;color:var(--cream-m);letter-spacing:1px;margin-bottom:18px;}
+.feature h3{font-size:18px;font-weight:700;color:var(--cream);margin-bottom:10px;letter-spacing:-.2px;}
+.feature p{font-size:13.5px;line-height:1.65;color:var(--cream-d);}
+.feature .ar-tag{font-family:var(--fa);font-size:14px;color:var(--gold);margin-top:14px;display:block;}
+
+/* ── Why us ── */
+.why-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:60px;align-items:start;}
+.compare-table{border-radius:18px;overflow:hidden;border:1px solid rgba(232,193,90,.12);}
+.compare-row{display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:center;
+  padding:16px 22px;font-size:13.5px;}
+.compare-row.head{background:rgba(232,193,90,.06);font-weight:700;font-size:11px;
+  letter-spacing:1px;text-transform:uppercase;color:var(--cream-m);}
+.compare-row:not(.head){border-top:1px solid rgba(255,255,255,.05);color:var(--cream-d);}
+.compare-row .col-us{color:var(--gold);font-weight:700;text-align:center;}
+.compare-row .col-them{color:var(--cream-m);text-align:center;}
+.compare-row.head .col-us,.compare-row.head .col-them{text-align:center;}
+.check-y{color:var(--green);font-weight:800;}
+.check-n{color:rgba(232,223,200,.25);}
+.why-text p{font-size:15.5px;line-height:1.85;color:var(--cream-d);margin-bottom:20px;}
+.why-text strong{color:var(--cream);}
+
+/* ── Trust band ── */
+.trust-band{
+  background:rgba(232,193,90,.05);border:1px solid rgba(232,193,90,.14);
+  border-radius:22px;padding:44px;display:grid;grid-template-columns:repeat(4,1fr);gap:28px;
+}
+.trust-item{text-align:center;}
+.trust-item .ic{font-size:26px;margin-bottom:10px;}
+.trust-item h4{font-size:14px;font-weight:700;color:var(--cream);margin-bottom:6px;}
+.trust-item p{font-size:12px;color:var(--cream-m);line-height:1.5;}
+
+/* ── Final CTA ── */
+.cta-section{
+  position:relative;border-radius:32px;overflow:hidden;
+  background:linear-gradient(155deg,var(--navy-4),var(--navy-2));
+  border:1px solid rgba(232,193,90,.18);
+  padding:80px 60px;text-align:center;
+}
+.cta-bismillah{font-family:var(--fa);font-size:26px;color:var(--gold);margin-bottom:18px;
+  text-shadow:0 2px 20px rgba(232,193,90,.3);}
+.cta-section h2{font-size:36px;font-weight:800;color:var(--cream);letter-spacing:-.8px;
+  margin-bottom:16px;}
+.cta-section p{font-size:16px;color:var(--cream-d);max-width:480px;margin:0 auto 36px;}
+
+/* ── Footer ── */
+footer{border-top:1px solid rgba(232,193,90,.08);padding:56px 0 32px;}
+.footer-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:40px;margin-bottom:48px;}
+.footer-brand p{font-size:13.5px;color:var(--cream-m);line-height:1.7;margin-top:14px;max-width:280px;}
+.footer-col h5{font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  color:var(--cream-m);margin-bottom:16px;}
+.footer-col a{display:block;font-size:13.5px;color:var(--cream-d);margin-bottom:11px;transition:color .2s;}
+.footer-col a:hover{color:var(--gold);}
+.footer-bottom{display:flex;justify-content:space-between;align-items:center;
+  padding-top:28px;border-top:1px solid rgba(255,255,255,.05);font-size:12.5px;color:var(--cream-m);}
+
+/* ── Responsive ── */
+@media (max-width:980px){
+  .hero{grid-template-columns:1fr;padding:140px 0 70px;text-align:center;}
+  .hero-sub{margin-left:auto;margin-right:auto;}
+  .hero-actions{justify-content:center;}
+  .hero-stats{justify-content:center;}
+  .hero-visual{margin-top:20px;}
+  .float-card{display:none;}
+  .features{grid-template-columns:1fr;}
+  .why-grid{grid-template-columns:1fr;gap:36px;}
+  .trust-band{grid-template-columns:repeat(2,1fr);}
+  .footer-grid{grid-template-columns:1fr 1fr;gap:32px;}
+  .nav-links{display:none;}
+  h1{font-size:38px;}
+  .section-head h2{font-size:28px;}
+  .cta-section{padding:54px 28px;}
+  .cta-section h2{font-size:26px;}
+}
+@media (max-width:560px){
+  .hero-stats{flex-wrap:wrap;gap:22px;}
+  .trust-band{grid-template-columns:1fr 1fr;padding:28px 20px;}
+  .footer-grid{grid-template-columns:1fr;}
+  .compare-row{font-size:12px;padding:13px 14px;}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:0.01ms !important;animation-iteration-count:1 !important;}
+}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:4px;}
+</style>
+</head>
+<body>
+
+<div class="bg-fixed"></div>
+<div class="tile-overlay"></div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-inner">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 100 100" fill="none">
+        <defs>
+          <linearGradient id="navLogo" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#F5D98A"/>
+            <stop offset="60%" stop-color="#E8C15A"/>
+            <stop offset="100%" stop-color="#C49A1E"/>
+          </linearGradient>
+        </defs>
+        <rect x="22" y="58" width="56" height="26" rx="2" fill="url(#navLogo)"/>
+        <path d="M35 58 Q35 36 50 30 Q65 36 65 58 Z" fill="url(#navLogo)"/>
+        <rect x="14" y="46" width="8" height="38" rx="1.5" fill="url(#navLogo)"/>
+        <rect x="78" y="46" width="8" height="38" rx="1.5" fill="url(#navLogo)"/>
+        <path d="M14.5 46 L18 36 L21.5 46 Z" fill="url(#navLogo)"/>
+        <path d="M78.5 46 L82 36 L85.5 46 Z" fill="url(#navLogo)"/>
+        <path d="M44 25 a6.5 6.5 0 1 0 9 -8.5 a8 8 0 1 1 -9 8.5 Z" fill="url(#navLogo)"/>
+        <path d="M44 84 L44 70 Q44 65 50 65 Q56 65 56 70 L56 84 Z" fill="#06101f"/>
+      </svg>
+      <div class="brand-name">IslamTime<b>World</b></div>
+    </div>
+    <div class="nav-links">
+      <a href="#features">Xususiyatlar</a>
+      <a href="#why">Nega biz</a>
+      <a href="#languages">Tillar</a>
+      <a href="#trust">Manbalar</a>
+    </div>
+    <a href="https://t.me/IslamTimeWorldBot" class="nav-cta">Botni ochish</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero wrap">
+  <div class="hero-content">
+    <div class="eyebrow"><span class="dot"></span> Endi Telegram'da jonli</div>
+    <h1>Har bir namoz vaqti, <em>bir botda</em> jamlangan.</h1>
+    <p class="hero-sub">
+      Namoz vaqtlari, Qibla kompasi, Qur'on, Hadis, Du'olar va Hijriy taqvim —
+      reklamasiz, ma'lumotingiz sotilmasdan, 14 tilda. Telegram ochiq bo'lgan
+      joyda, IslamTimeWorld ham yoningizda.
+    </p>
+    <div class="hero-actions">
+      <a href="https://t.me/IslamTimeWorldBot" class="btn-primary">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.64 6.8-1.59 7.49c-.12.53-.43.66-.87.41l-2.41-1.78-1.16 1.12c-.13.13-.24.24-.49.24l.17-2.43 4.43-4c.19-.17-.04-.27-.3-.1l-5.47 3.45-2.36-.74c-.51-.16-.52-.51.11-.76l9.23-3.56c.43-.16.8.1.67.76z"/></svg>
+        Telegram'da ochish
+      </a>
+      <div class="hero-badge">
+        <span class="dot-g"></span> Test rejimida &nbsp;·&nbsp; Reklamasiz &nbsp;·&nbsp; Bepul
+      </div>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><b>14</b><span>til rejalashtirilgan</span></div>
+      <div class="stat"><b>10</b><span>diniy bo'lim</span></div>
+      <div class="stat"><b>0</b><span>reklama yoki ma'lumot sotuvi</span></div>
+    </div>
+  </div>
+
+  <div class="hero-visual">
+    <div class="phone-glow"></div>
+    <div class="float-card f1">✓&nbsp; Havo toza — masjidga boring</div>
+    <div class="float-card f2">📿&nbsp; 33/33 — tabriklaymiz</div>
+    <div class="phone">
+      <div class="phone-screen">
+        <div class="phone-status"><span>21:22</span><span>5G ●</span></div>
+        <div class="phone-app-name">IslamTimeWorld</div>
+        <div class="phone-date">Dushanba, 09 Iyun · ١٢ ذو الحجة ١٤٤٧</div>
+        <div class="sun-card">
+          <div class="sun-eyebrow">Keyingi namoz</div>
+          <div class="sun-row">
+            <span class="sun-name">Asr</span>
+            <span class="sun-time">16:58</span>
+          </div>
+          <svg class="arc-svg" viewBox="0 0 280 50">
+            <line x1="10" y1="44" x2="270" y2="44" stroke="rgba(232,223,200,.12)" stroke-width="1" stroke-dasharray="3 3"/>
+            <path d="M10 44 A 130 130 0 0 1 270 44" fill="none" stroke="#5b9bd5" stroke-width="2" opacity=".4"/>
+            <path d="M10 44 A 130 130 0 0 1 190 16" fill="none" stroke="#E8C15A" stroke-width="2"/>
+            <circle cx="190" cy="16" r="5" fill="#E8C15A"/>
+            <circle cx="190" cy="16" r="9" fill="#E8C15A" opacity=".2"/>
+          </svg>
+        </div>
+        <div class="prayer-rows">
+          <div class="prow done"><span class="pname">Bomdod</span><span class="ptime">02:04</span><span class="check">✓</span></div>
+          <div class="prow done"><span class="pname">Peshin</span><span class="ptime">12:36</span><span class="check">✓</span></div>
+          <div class="prow active"><span class="pname">Asr</span><span class="ptime">16:58</span><span class="check"></span></div>
+          <div class="prow"><span class="pname">Shom</span><span class="ptime">20:55</span><span class="check"></span></div>
+          <div class="prow"><span class="pname">Xufton</span><span class="ptime">23:00</span><span class="check"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- LANGUAGE MARQUEE -->
+<div class="lang-strip">
+  <div class="lang-track" id="langTrack"></div>
+</div>
+
+<!-- FEATURES -->
+<section class="section wrap" id="features">
+  <div class="section-head">
+    <div class="section-eyebrow">Xizmatlar</div>
+    <h2>O'nta bo'lim, bitta odat.</h2>
+    <p>Har kuni ochadigan ilovangizda kerakli hammasi — alohida ilovalarga bo'linib ketmasdan.</p>
+  </div>
+  <div class="features">
+    <div class="feature">
+      <div class="feature-num">01 — Vaqt</div>
+      <h3>Namoz vaqtlari</h3>
+      <p>GPS asosida aniq hisoblangan 5 vaqt, joriy namozgacha qolgan vaqt, ob-havo va havo sifati (AQI) ko'rsatkichi bilan birga.</p>
+      <span class="ar-tag">مواقيت الصلاة</span>
+    </div>
+    <div class="feature">
+      <div class="feature-num">02 — Yo'nalish</div>
+      <h3>Qibla kompasi</h3>
+      <p>Telefon kompasidan foydalanib, Ka'bagacha aniq burchak va masofani jonli ko'rsatadi — internet bo'lmasa ham ishlaydi.</p>
+      <span class="ar-tag">اتجاه القبلة</span>
+    </div>
+    <div class="feature">
+      <div class="feature-num">03 — O'qish</div>
+      <h3>Qur'on va tarjima</h3>
+      <p>114 sura, tanlangan qori ovozi bilan audio, oyat-oyat tarjima va belgilab qo'yish imkoniyati.</p>
+      <span class="ar-tag">القرآن الكريم</span>
+    </div>
+    <div class="feature">
+      <div class="feature-num">04 — Bilim</div>
+      <h3>Hadis to'plami</h3>
+      <p>Sahih manbalardan tanlangan hadislar, mavzu bo'yicha bo'limlangan, arabcha matn va tarjima bilan.</p>
+      <span class="ar-tag">الحديث الشريف</span>
+    </div>
+    <div class="feature">
+      <div class="feature-num">05 — Topish</div>
+      <h3>Yaqin masjidlar</h3>
+      <p>Atrofdagi masjidlarni xaritada ko'rish, ish vaqtlari va Juma namozi jadvali bilan.</p>
+      <span class="ar-tag">المساجد القريبة</span>
+    </div>
+    <div class="feature">
+      <div class="feature-num">06 — Eslab qolish</div>
+      <h3>Hijriy taqvim</h3>
+      <p>Har oy, har muhim islomiy sana — Ramazon, Ashura, ikki bayram — batafsil tushuntirish va eslatma bilan.</p>
+      <span class="ar-tag">التقويم الهجري</span>
+    </div>
+  </div>
+</section>
+
+<!-- WHY US -->
+<section class="section wrap" id="why">
+  <div class="section-head">
+    <div class="section-eyebrow">Farqi nimada</div>
+    <h2>Ibodat — savdo emas.</h2>
+  </div>
+  <div class="why-grid">
+    <div class="compare-table">
+      <div class="compare-row head">
+        <span>Xususiyat</span><span class="col-us">IslamTimeWorld</span><span class="col-them">Boshqalar</span>
+      </div>
+      <div class="compare-row"><span>Reklama yo'q</span><span class="col-us check-y">✓</span><span class="col-them check-n">✕</span></div>
+      <div class="compare-row"><span>Ma'lumot sotilmaydi</span><span class="col-us check-y">✓</span><span class="col-them check-n">✕</span></div>
+      <div class="compare-row"><span>14 til</span><span class="col-us check-y">✓</span><span class="col-them check-n">3–5</span></div>
+      <div class="compare-row"><span>O'rnatish shart emas</span><span class="col-us check-y">✓</span><span class="col-them check-n">✕</span></div>
+      <div class="compare-row"><span>To'liq bepul</span><span class="col-us check-y">✓</span><span class="col-them check-n">Ichki xarid</span></div>
+    </div>
+    <div class="why-text">
+      <p>Ko'pchilik namoz vaqti ilovalari <strong>diqqatingizni</strong> sotadi — reklama, push-bildirishnomalar, ortiqcha ruxsatlar orqali. Biz boshqacha yo'l tutdik.</p>
+      <p>IslamTimeWorld — Telegram ichida ishlaydigan WebApp. <strong>Hech qanday ilova o'rnatmaysiz</strong>, hech qanday hisob ochmaysiz, telefon xotirangizda joy egallamaydi.</p>
+      <p>Barcha hisob-kitoblar (namoz vaqtlari, Qibla burchagi) qabul qilingan astronomik formulalar asosida amalga oshiriladi, manbalari ochiq va tekshirilishi mumkin.</p>
+    </div>
+  </div>
+</section>
+
+<!-- LANGUAGES -->
+<section class="section wrap" id="languages" style="padding-top:0;">
+  <div class="section-head">
+    <div class="section-eyebrow">Til devori yo'q</div>
+    <h2>O'z tilingizda — chin ma'noda.</h2>
+    <p>14 til rejalashtirilgan, asosiy tillar bosqichma-bosqich ishga tushirilmoqda. Interfeys, du'olar va sana nomlari arabcha va urducha uchun to'g'ri o'ngdan-chapga yozuv tartibi bilan.</p>
+  </div>
+</section>
+
+<!-- TRUST / SOURCES -->
+<section class="section wrap" id="trust" style="padding-top:0;">
+  <div class="trust-band">
+    <div class="trust-item">
+      <div class="ic">🕋</div>
+      <h4>Hisob-kitob</h4>
+      <p>Standart astronomik namoz vaqti formulalari</p>
+    </div>
+    <div class="trust-item">
+      <div class="ic">🗺️</div>
+      <h4>Xaritalar</h4>
+      <p>OpenStreetMap ochiq ma'lumotlari asosida</p>
+    </div>
+    <div class="trust-item">
+      <div class="ic">📜</div>
+      <h4>Hadis manbalari</h4>
+      <p>Har bir hadis asl manbasi ko'rsatilgan holda</p>
+    </div>
+    <div class="trust-item">
+      <div class="ic">🔒</div>
+      <h4>Maxfiylik</h4>
+      <p>Joylashuv faqat qurilmangizda hisoblanadi</p>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="section wrap">
+  <div class="cta-section">
+    <div class="cta-bismillah">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+    <h2>Botni bugun ochib ko'ring.</h2>
+    <p>O'rnatish, ro'yxatdan o'tish yoki to'lov shart emas — Telegram'ni oching va boshlang.</p>
+    <a href="https://t.me/IslamTimeWorldBot" class="btn-primary">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.64 6.8-1.59 7.49c-.12.53-.43.66-.87.41l-2.41-1.78-1.16 1.12c-.13.13-.24.24-.49.24l.17-2.43 4.43-4c.19-.17-.04-.27-.3-.1l-5.47 3.45-2.36-.74c-.51-.16-.52-.51.11-.76l9.23-3.56c.43-.16.8.1.67.76z"/></svg>
+      @IslamTimeWorldBot
+    </a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="wrap">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 100 100" fill="none">
+          <rect x="22" y="58" width="56" height="26" rx="2" fill="#E8C15A"/>
+          <path d="M35 58 Q35 36 50 30 Q65 36 65 58 Z" fill="#E8C15A"/>
+          <rect x="14" y="46" width="8" height="38" rx="1.5" fill="#E8C15A"/>
+          <rect x="78" y="46" width="8" height="38" rx="1.5" fill="#E8C15A"/>
+        </svg>
+        <div class="brand-name">IslamTime<b>World</b></div>
+      </div>
+      <p>Namoz vaqtlari, Qibla, Qur'on, Hadis, Du'olar va Hijriy taqvimni bir joyga jamlagan, reklamasiz Telegram hamrohi.</p>
+    </div>
+    <div class="footer-col">
+      <h5>Xizmatlar</h5>
+      <a href="#features">Namoz vaqtlari</a>
+      <a href="#features">Qibla kompasi</a>
+      <a href="#features">Qur'on</a>
+      <a href="#features">Hadis</a>
+    </div>
+    <div class="footer-col">
+      <h5>Loyiha</h5>
+      <a href="#why">Nega biz</a>
+      <a href="#languages">Tillar</a>
+      <a href="#trust">Manbalar</a>
+    </div>
+    <div class="footer-col">
+      <h5>Aloqa</h5>
+      <a href="https://t.me/IslamTimeWorldBot">Telegram bot</a>
+      <a href="https://t.me/islamtimeworldsupport">@islamtimeworldsupport</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 IslamTimeWorld. Barcha huquqlar himoyalangan.</span>
+    <span>Made with care for the Muslim community.</span>
+  </div>
+</footer>
+
+<script>
+const langs = [
+  ["🇺🇿","O'zbek"],["🇷🇺","Русский"],["🇬🇧","English"],["🇹🇷","Türkçe"],
+  ["🇸🇦","العربية"],["🇰🇿","Қазақша"],["🇰🇬","Кыргызча"],["🇹🇯","Тоҷикӣ"],
+  ["🇩🇪","Deutsch"],["🇫🇷","Français"],["🇮🇩","Indonesia"],["🇮🇳","हिन्दी"],["🇵🇰","اردو"]
+];
+const track = document.getElementById('langTrack');
+const html = langs.map(([f,n])=>`<div class="lang-item"><span class="flag">${f}</span>${n}</div>`).join('');
+track.innerHTML = html + html;
+</script>
+
+</body>
+</html>
