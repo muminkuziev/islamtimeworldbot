@@ -36,7 +36,8 @@ const SettingsScreen = (function () {
 
   /* view = 'main' | 'location' | 'prayer' | 'langmazhab' |
             'interface' | 'notifications' | 'briefing' |
-            'cloudsync' | 'contact' | 'about'                 */
+            'cloudsync' | 'contact' | 'about' |
+            'privacy' | 'terms'                               */
   let _lang = 'uz';
   function _T(lat, cyr, ru, en) { return _resolveT(lat, cyr, ru, en, _lang); }
   let _s    = {};
@@ -152,6 +153,8 @@ const SettingsScreen = (function () {
       case 'cloudsync':     return _htmlCloudSync();
       case 'contact':       return _htmlContact();
       case 'about':         return _htmlAbout();
+      case 'privacy':       return _htmlLegalPage('privacy');
+      case 'terms':         return _htmlLegalPage('terms');
       default:              return _htmlMain();
     }
   }
@@ -581,11 +584,118 @@ const SettingsScreen = (function () {
       )}</div>`;
   }
 
+  /* ── Privacy Policy & Terms — in-app pages ──────────────── */
+  function _htmlLegalPage(which) {
+    const isPrivacy = which === 'privacy';
+
+    const TITLE = isPrivacy
+      ? _T('Maxfiylik siyosati', 'Махфийлик сиёсати', 'Политика конфиденциальности', 'Privacy Policy')
+      : _T('Foydalanish shartlari', 'Фойдаланиш шартлари', 'Условия использования', 'Terms of Use');
+
+    const UPDATED = _T('Oxirgi yangilanish','Охирги янгиланиш','Последнее обновление','Last updated')
+                  + ': 18.06.2026';
+
+    const items = isPrivacy ? [
+      _T(
+        'Biz foydalanuvchilarning shaxsiy ma\'lumotlarini himoya qilishga katta e\'tibor beramiz.',
+        'Биз фойдаланувчиларнинг шахсий маълумотларини ҳимоя қилишга катта эътибор берамиз.',
+        'Мы уделяем особое внимание защите персональных данных пользователей.',
+        'We place great importance on protecting the personal data of our users.'
+      ),
+      _T(
+        'Lokatsiya ma\'lumotlari faqat namoz vaqtlari, qibla va yaqin masjidlarni aniqlash uchun ishlatiladi.',
+        'Локация маълумотлари фақат намоз вақтлари, қибла ва яқин масжидларни аниқлаш учун ишлатилади.',
+        'Данные о местоположении используются только для определения времени намаза, киблы и ближайших мечетей.',
+        'Location data is used only to determine prayer times, qibla direction, and nearby mosques.'
+      ),
+      _T(
+        'Shaxsiy ma\'lumotlar uchinchi tomonlarga sotilmaydi va berilmaydi.',
+        'Шахсий маълумотлар учинчи томонларга сотилмайди ва берилмайди.',
+        'Личные данные не продаются и не передаются третьим лицам.',
+        'Personal data is not sold or shared with third parties.'
+      ),
+      _T(
+        'Qur\'on, hadis va boshqa diniy ma\'lumotlardan foydalanish anonim tarzda amalga oshiriladi.',
+        'Қуръон, ҳадис ва бошқа диний маълумотлардан фойдаланиш аноним тарзда амалга оширилади.',
+        'Использование Корана, хадисов и других религиозных материалов осуществляется анонимно.',
+        'Use of Quran, hadith, and other religious content is done anonymously.'
+      ),
+      _T(
+        'Ilova faqat xizmat sifatini yaxshilash uchun zarur texnik ma\'lumotlarni saqlashi mumkin.',
+        'Илова фақат хизмат сифатини яхшилаш учун зарур техник маълумотларни сақлаши мумкин.',
+        'Приложение может хранить только технические данные, необходимые для улучшения качества сервиса.',
+        'The app may only store technical data necessary for improving the quality of service.'
+      ),
+      _T(
+        'Foydalanuvchi istalgan vaqtda ma\'lumotlarini o\'chirishni so\'rashi mumkin.',
+        'Фойдаланувчи исталган вақтда маълумотларини ўчиришни сўраши мумкин.',
+        'Пользователь может в любое время запросить удаление своих данных.',
+        'Users may request deletion of their data at any time.'
+      ),
+    ] : [
+      _T(
+        'Ilova musulmonlarga kundalik ibodat va diniy amallarda yordam berish uchun yaratilgan.',
+        'Илова мусулмонларга кундалик ибодат ва диний амалларда ёрдам бериш учун яратилган.',
+        'Приложение создано для помощи мусульманам в ежедневных молитвах и религиозных практиках.',
+        'The app is designed to help Muslims with daily prayers and religious practices.'
+      ),
+      _T(
+        'Namoz vaqtlari va boshqa ma\'lumotlar ishonchli manbalardan olinadi, ammo foydalanuvchi mahalliy masjid e\'lonlarini ham tekshirishi tavsiya etiladi.',
+        'Намоз вақтлари ва бошқа маълумотлар ишончли манбалардан олинади, аммо фойдаланувчи маҳаллий масжид эълонларини ҳам текшириши тавсия этилади.',
+        'Время намаза и другие данные берутся из надёжных источников, однако рекомендуется также проверять объявления местной мечети.',
+        'Prayer times and other data are taken from reliable sources, but users are advised to also check local mosque announcements.'
+      ),
+      _T(
+        'Ilovadan noqonuniy yoki zararli maqsadlarda foydalanish taqiqlanadi.',
+        'Иловадан ноқонуний ёки зарарли мақсадларда фойдаланиш тақиқланади.',
+        'Использование приложения в незаконных или вредоносных целях запрещено.',
+        'Use of the app for illegal or harmful purposes is prohibited.'
+      ),
+      _T(
+        'Ilova tarkibidagi Qur\'on, hadis va diniy materiallarga hurmat bilan munosabatda bo\'lish talab etiladi.',
+        'Илова таркибидаги Қуръон, ҳадис ва диний материалларга ҳурмат билан муносабатда бўлиш талаб этилади.',
+        'К Корану, хадисам и другим религиозным материалам приложения необходимо относиться с уважением.',
+        'The Quran, hadith, and religious materials within the app must be treated with respect.'
+      ),
+      _T(
+        'Ilova xizmatlari vaqt-vaqti bilan yangilanishi yoki o\'zgartirilishi mumkin.',
+        'Илова хизматлари вақт-вақти билан янгиланиши ёки ўзгартирилиши мумкин.',
+        'Сервисы приложения могут периодически обновляться или изменяться.',
+        'App services may be updated or changed from time to time.'
+      ),
+    ];
+
+    const rows = items.map(text => `
+      <div class="lp-item">
+        <span class="lp-bullet">•</span>
+        <span class="lp-text">${text}</span>
+      </div>`).join('');
+
+    const contactLabel = _T('Muallif','Муаллиф','Автор','Author');
+    const contactRow = !isPrivacy ? `
+      <div class="lp-contact">
+        <span class="lp-contact-lbl">${contactLabel}:</span>
+        <span class="lp-contact-val">Mumin Kuziev &nbsp;·&nbsp; @islamtimeworldsupport</span>
+      </div>` : '';
+
+    return `
+      <div class="lp-hero">
+        <div class="lp-icon">${isPrivacy ? '🔒' : '📜'}</div>
+        <div class="lp-title">${TITLE}</div>
+        <div class="lp-updated">${UPDATED}</div>
+      </div>
+      <div class="lp-body">
+        ${rows}
+        ${contactRow}
+      </div>`;
+  }
+
   /* ── Events ──────────────────────────────────────────────── */
   function _bindAll(el) {
     el.querySelector('#st-back')?.addEventListener('click', () => {
-      if (_view === 'main') { window.App.navigate('screen-dashboard'); }
-      else { _view = 'main'; _loadS(); _rebuild(); }
+      if (_view === 'main')                        { window.App.navigate('screen-dashboard'); }
+      else if (_view === 'privacy' || _view === 'terms') { _view = 'about'; _rebuild(); }
+      else                                         { _view = 'main'; _loadS(); _rebuild(); }
     });
 
     if (_view === 'main') {
@@ -608,6 +718,8 @@ const SettingsScreen = (function () {
     if (_view === 'cloudsync')     _bindCloudSync(el);
     if (_view === 'contact')       _bindContact(el);
     if (_view === 'about')         _bindAbout(el);
+    if (_view === 'privacy')       { /* no interactive elements */ }
+    if (_view === 'terms')         { /* no interactive elements */ }
   }
 
   /* ── Sub-screen binders ──────────────────────────────────── */
@@ -774,14 +886,12 @@ const SettingsScreen = (function () {
       else window.open('https://t.me/islamtimeworldsupport', '_blank');
     });
     el.querySelector('#st-privacy-btn')?.addEventListener('click', () => {
-      const tg = window.Telegram?.WebApp;
-      if (tg?.openLink) tg.openLink('https://islamtimeworld.com/privacy');
-      else window.open('https://islamtimeworld.com/privacy', '_blank');
+      _view = 'privacy'; _rebuild();
+      window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
     });
     el.querySelector('#st-terms-btn')?.addEventListener('click', () => {
-      const tg = window.Telegram?.WebApp;
-      if (tg?.openLink) tg.openLink('https://islamtimeworld.com/terms');
-      else window.open('https://islamtimeworld.com/terms', '_blank');
+      _view = 'terms'; _rebuild();
+      window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
     });
   }
 
