@@ -14,6 +14,7 @@ import shutil
 import logging
 import asyncio
 import sqlite3
+import traceback
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -860,17 +861,14 @@ async def _init_bot():
 
     @_dp.message(CommandStart())
     async def cmd_start(message: types.Message):
-        u = message.from_user
+        u    = message.from_user
         lang = u.language_code or "uz"
-        print(f"[START] user_id={u.id} lang={lang} @{u.username or ''}", flush=True)
+        print(f"[START] cmd_start FIRED user_id={u.id} lang={lang} @{u.username or ''}", flush=True)
         try:
-            _track_user(u.id, u.username or "", u.first_name or "", lang)
-        except Exception as e:
-            _flog.error(f"/start _track_user uid={u.id}: {e}", exc_info=True)
-        try:
-            ts = int(time.time())
+            ts  = int(time.time())
             _wa = WEBAPP_URL.rstrip("/") if WEBAPP_URL.startswith("https://") else (BASE_DOMAIN + "/app")
             app_url = f"{_wa}?v=94&start=1&t={ts}&user_id={u.id}"
+            print(f"[START] app_url={app_url}", flush=True)
             kb = InlineKeyboardMarkup(inline_keyboard=[[
                 InlineKeyboardButton(
                     text="🕌 Ilovani ochish",
@@ -881,10 +879,10 @@ async def _init_bot():
                 "Assalomu alaykum! IslamTimeWorldBot ishlayapti.",
                 reply_markup=kb,
             )
-            print(f"[START] user_id={u.id} lang={lang} success=True", flush=True)
+            print(f"[START] user_id={u.id} SENT OK", flush=True)
         except Exception as e:
             _flog.error(f"/start send uid={u.id}: {e}", exc_info=True)
-            print(f"[START] user_id={u.id} lang={lang} success=False err={e}", flush=True)
+            print(f"[START] user_id={u.id} SEND FAILED: {e}\n{traceback.format_exc()[-600:]}", flush=True)
             try:
                 await message.answer("Assalomu alaykum! IslamTimeWorldBot ishlayapti.")
             except Exception:
@@ -1382,65 +1380,31 @@ async def telegram_webhook(token: str, request: Request):
         print(f"[WH] JSON parse error: {e}", flush=True)
         return {"ok": True}
 
-    # ── Direct /start handler (uses _bot_notif, bypasses dispatcher) ──────
-    msg = data.get("message") or {}
-    txt = msg.get("text", "") or ""
+    update_id = data.get("update_id", "?")
+    msg       = data.get("message") or {}
+    txt       = (msg.get("text") or "").strip()
+    print(f"[WH] RECV update_id={update_id} txt={txt[:50]!r} bot={_bot is not None} dp={_dp is not None}", flush=True)
+
+    # ── Pre-track user on /start (before dispatcher) ──────────────────────
     if txt == "/start" or txt.startswith("/start "):
-        chat_id = msg.get("chat", {}).get("id")
-        from_u  = msg.get("from", {})
+        from_u  = msg.get("from") or {}
         user_id = from_u.get("id")
         lang    = from_u.get("language_code") or "uz"
-        print(f"[START] user_id={user_id} lang={lang}", flush=True)
-        # track user safely
-        try:
-            if user_id:
-                _track_user(
-                    user_id,
-                    from_u.get("username") or "",
-                    from_u.get("first_name") or "",
-                    lang,
-                )
-        except Exception as te:
-            _flog.error(f"[START] track user_id={user_id}: {te}", exc_info=True)
-        # send reply via _bot_notif (always initialized)
-        sent = False
-        if chat_id and _bot_notif:
+        print(f"[START] DETECTED user_id={user_id} lang={lang} chat_id={msg.get('chat',{}).get('id')}", flush=True)
+        if user_id:
             try:
-                from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
-                ts      = int(time.time())
-                _wa     = WEBAPP_URL.rstrip("/") if WEBAPP_URL.startswith("https://") else (BASE_DOMAIN + "/app")
-                app_url = f"{_wa}?v=94&start=1&t={ts}&user_id={user_id}"
-                kb = InlineKeyboardMarkup(inline_keyboard=[[
-                    InlineKeyboardButton(text="🕌 Ilovani ochish", web_app=WebAppInfo(url=app_url))
-                ]])
-                await _bot_notif.send_message(
-                    chat_id,
-                    "Assalomu alaykum! IslamTimeWorldBot ishlayapti.",
-                    reply_markup=kb,
-                )
-                sent = True
-                print(f"[START] user_id={user_id} success=True", flush=True)
-            except Exception as e:
-                _flog.error(f"[START] send user_id={user_id}: {e}", exc_info=True)
-                print(f"[START] user_id={user_id} btn_failed={e}", flush=True)
-                # ultimate fallback — plain text, no keyboard
-                try:
-                    await _bot_notif.send_message(chat_id, "Assalomu alaykum! IslamTimeWorldBot ishlayapti.")
-                    sent = True
-                    print(f"[START] user_id={user_id} fallback=True", flush=True)
-                except Exception as e2:
-                    _flog.error(f"[START] fallback user_id={user_id}: {e2}", exc_info=True)
-                    print(f"[START] user_id={user_id} success=False err={e2}", flush=True)
-        if not sent:
-            print(f"[START] user_id={user_id} NOT SENT (bot_notif={_bot_notif is not None} chat_id={chat_id})", flush=True)
-        return {"ok": True}
+                _track_user(user_id, from_u.get("username") or "",
+                            from_u.get("first_name") or "", lang)
+            except Exception as te:
+                print(f"[START] track error: {te}", flush=True)
 
-    # ── All other updates → aiogram dispatcher ─────────────────────────────
+    # ── All updates → aiogram dispatcher (handles /start via cmd_start) ────
     if _bot and _dp:
         from aiogram.types import Update
         try:
             update   = Update.model_validate(data)
-            uid      = upd_type = "?"
+            uid      = "?"
+            upd_type = "unknown"
             if update.message:
                 uid      = update.message.from_user.id if update.message.from_user else "?"
                 upd_type = f"msg:{(update.message.text or '')[:30]}"
@@ -1448,14 +1412,31 @@ async def telegram_webhook(token: str, request: Request):
                 upd_type = "callback"
             elif update.web_app_data:
                 upd_type = "web_app_data"
-            print(f"[WH] id={update.update_id} uid={uid} type={upd_type}", flush=True)
+            print(f"[WH] dispatch update_id={update_id} uid={uid} type={upd_type}", flush=True)
             await _dp.feed_update(_bot, update)
         except Exception as e:
             _flog.error(f"[WH] feed_update: {e}", exc_info=True)
-            print(f"[WH] Error: {e}", flush=True)
+            print(f"[WH] feed_update ERROR: {e}\n{traceback.format_exc()[-500:]}", flush=True)
     else:
-        upd_id = data.get("update_id", "?")
-        print(f"[WH] update_id={upd_id} dp=None — skipped", flush=True)
+        # Emergency: dispatcher not ready — use _bot_notif for /start only
+        print(f"[WH] WARN bot={_bot is not None} dp={_dp is not None} — dispatcher not ready", flush=True)
+        if (txt == "/start" or txt.startswith("/start ")) and _bot_notif:
+            chat_id = msg.get("chat", {}).get("id")
+            user_id = (msg.get("from") or {}).get("id")
+            if chat_id:
+                try:
+                    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
+                    ts  = int(time.time())
+                    _wa = WEBAPP_URL.rstrip("/") if WEBAPP_URL.startswith("https://") else (BASE_DOMAIN + "/app")
+                    kb  = InlineKeyboardMarkup(inline_keyboard=[[
+                        InlineKeyboardButton(text="🕌 Ilovani ochish",
+                                             web_app=WebAppInfo(url=f"{_wa}?v=94&start=1&t={ts}&user_id={user_id}"))
+                    ]])
+                    await _bot_notif.send_message(chat_id, "Assalomu alaykum! IslamTimeWorldBot ishlayapti.", reply_markup=kb)
+                    print(f"[START] emergency fallback sent to {chat_id}", flush=True)
+                except Exception as ef:
+                    print(f"[START] emergency fallback error: {ef}\n{traceback.format_exc()[-400:]}", flush=True)
+
     return {"ok": True}
 
 
