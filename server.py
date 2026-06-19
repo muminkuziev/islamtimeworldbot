@@ -54,6 +54,8 @@ sys.path.insert(0, str(Path(__file__).parent))
 from dotenv import load_dotenv
 load_dotenv()
 
+from urllib.parse import urlparse
+
 from fastapi import FastAPI, Query, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -64,6 +66,17 @@ BASE_DIR   = Path(__file__).parent
 WEBAPP_DIR = BASE_DIR / "webapp"
 BOT_TOKEN  = os.getenv("BOT_TOKEN", "")
 WEBAPP_URL = os.getenv("WEBAPP_URL", "")
+
+# Derive scheme+host from WEBAPP_URL (strips any /app path) — used for webhook URL
+# e.g. https://islamtimeworld.com/app → https://islamtimeworld.com
+def _base_domain() -> str:
+    url = WEBAPP_URL.strip()
+    if url.startswith("https://"):
+        p = urlparse(url)
+        return f"{p.scheme}://{p.netloc}"
+    return "https://islamtimeworldbot-dbup.onrender.com"
+
+BASE_DOMAIN = _base_domain()
 
 def _resolve_users_db() -> Path:
     """Pick a writable path for users.db with fallback chain."""
@@ -750,38 +763,49 @@ async def _notification_scheduler():
     _last_backup_day: str = ""
 
     while True:
-        tick_start = time.monotonic()
-        now_utc    = datetime.utcnow()
-        utc_min    = now_utc.hour * 60 + now_utc.minute
-        today_str  = now_utc.strftime("%Y-%m-%d")
-
-        # Daily backup (once per day at ~00:01 UTC)
-        if today_str != _last_backup_day and utc_min >= 1:
-            _backup_db()
-            _last_backup_day = today_str
-
-        print(f"[SCHED] tick={_SCHED_STATUS['ticks']} utc={utc_min}", flush=True)
-
         try:
-            await _send_due_notifications()
+            tick_start = time.monotonic()
+            now_utc    = datetime.utcnow()
+            utc_min    = now_utc.hour * 60 + now_utc.minute
+            today_str  = now_utc.strftime("%Y-%m-%d")
+
+            # Daily backup (once per day at ~00:01 UTC)
+            if today_str != _last_backup_day and utc_min >= 1:
+                _backup_db()
+                _last_backup_day = today_str
+
+            print(f"[SCHED] tick={_SCHED_STATUS['ticks']} utc={utc_min}", flush=True)
+
+            try:
+                await _send_due_notifications()
+            except Exception as e:
+                _SCHED_STATUS["errors"] += 1
+                _flog.error(f"Notification scheduler: {e}", exc_info=True)
+                print(f"[SCHED] Notif error: {e}", flush=True)
+
+            try:
+                await _send_due_daily_briefings()
+            except Exception as e:
+                _SCHED_STATUS["errors"] += 1
+                _flog.error(f"Briefing scheduler: {e}", exc_info=True)
+                print(f"[SCHED] Brief error: {e}", flush=True)
+
+            _SCHED_STATUS["ticks"]     += 1
+            _SCHED_STATUS["last_tick"]  = now_utc.isoformat()
+
+            # Sleep for the remainder of 60 s (drift-safe)
+            elapsed = time.monotonic() - tick_start
+            await asyncio.sleep(max(0, 60 - elapsed))
+        except asyncio.CancelledError:
+            raise
         except Exception as e:
             _SCHED_STATUS["errors"] += 1
-            _flog.error(f"Notification scheduler: {e}", exc_info=True)
-            print(f"[SCHED] Notif error: {e}", flush=True)
-
-        try:
-            await _send_due_daily_briefings()
-        except Exception as e:
-            _SCHED_STATUS["errors"] += 1
-            _flog.error(f"Briefing scheduler: {e}", exc_info=True)
-            print(f"[SCHED] Brief error: {e}", flush=True)
-
-        _SCHED_STATUS["ticks"]     += 1
-        _SCHED_STATUS["last_tick"]  = now_utc.isoformat()
-
-        # Sleep for the remainder of 60 s (drift-safe)
-        elapsed = time.monotonic() - tick_start
-        await asyncio.sleep(max(0, 60 - elapsed))
+            _flog.error(f"Scheduler tick crashed: {e}", exc_info=True)
+            print(f"[SCHED] Tick crash (recovered): {e}", flush=True)
+            try:
+                await asyncio.sleep(60)
+            except asyncio.CancelledError:
+                raise
 
 
 # ── Bot (webhook mode — only active when WEBAPP_URL is HTTPS) ──────────────
@@ -845,7 +869,8 @@ async def _init_bot():
             _flog.error(f"/start _track_user uid={u.id}: {e}", exc_info=True)
         try:
             ts = int(time.time())
-            app_url = f"https://islamtimeworldbot-dbup.onrender.com/app?v=92&start=1&t={ts}&user_id={u.id}"
+            _wa = WEBAPP_URL.rstrip("/") if WEBAPP_URL.startswith("https://") else (BASE_DOMAIN + "/app")
+            app_url = f"{_wa}?v=94&start=1&t={ts}&user_id={u.id}"
             kb = InlineKeyboardMarkup(inline_keyboard=[[
                 InlineKeyboardButton(
                     text="🕌 Ilovani ochish",
@@ -889,10 +914,11 @@ async def _init_bot():
 
     @_dp.message(Command("reset"))
     async def cmd_reset(message: types.Message):
+        _wa = WEBAPP_URL.rstrip("/") if WEBAPP_URL.startswith("https://") else (BASE_DOMAIN + "/app")
         kb = InlineKeyboardMarkup(inline_keyboard=[[
             InlineKeyboardButton(
                 text="🔄 Reset & Restart",
-                web_app=WebAppInfo(url=WEBAPP_URL + "?reset=1"),
+                web_app=WebAppInfo(url=f"{_wa}?reset=1"),
             )
         ]])
         await message.answer(
@@ -1212,12 +1238,11 @@ async def _init_bot():
     except Exception as e:
         print(f"[WARN] set_my_commands failed: {e}", flush=True)
 
-    base_url = WEBAPP_URL.rstrip("/") if WEBAPP_URL.startswith("https://") else "https://islamtimeworldbot-dbup.onrender.com"
-    webhook_url = f"{base_url}/webhook/{BOT_TOKEN}"
-    print(f"[BOT] webhook_url={webhook_url[:80]}", flush=True)
+    webhook_url = f"{BASE_DOMAIN}/webhook/{BOT_TOKEN}"
+    print(f"[BOT] Webhook URL: {webhook_url[:80]}", flush=True)
     try:
         await _bot.set_webhook(webhook_url, drop_pending_updates=False)
-        print(f"[OK] Bot webhook set", flush=True)
+        print(f"[OK] webhook set OK", flush=True)
     except Exception as e:
         _flog.error(f"set_webhook failed: {e}", exc_info=True)
         print(f"[WARN] set_webhook failed (handlers still active): {e}", flush=True)
@@ -1243,6 +1268,7 @@ async def lifespan(app: FastAPI):
         await _init_bot()                             # webhook + commands (prod only)
     notif_task = asyncio.create_task(_notification_scheduler())
     print(f"[OK] Server ready — uptime tracking started", flush=True)
+    print("[OK] Application startup complete", flush=True)
     yield
     notif_task.cancel()
     try:
@@ -1382,7 +1408,8 @@ async def telegram_webhook(token: str, request: Request):
             try:
                 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
                 ts      = int(time.time())
-                app_url = f"https://islamtimeworldbot-dbup.onrender.com/app?v=92&start=1&t={ts}&user_id={user_id}"
+                _wa     = WEBAPP_URL.rstrip("/") if WEBAPP_URL.startswith("https://") else (BASE_DOMAIN + "/app")
+                app_url = f"{_wa}?v=94&start=1&t={ts}&user_id={user_id}"
                 kb = InlineKeyboardMarkup(inline_keyboard=[[
                     InlineKeyboardButton(text="🕌 Ilovani ochish", web_app=WebAppInfo(url=app_url))
                 ]])

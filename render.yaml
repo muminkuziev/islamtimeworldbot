@@ -11,7 +11,7 @@ services:
         sync: false
 
       - key: WEBAPP_URL
-        value: "https://islamtimeworldbot-dbup.onrender.com"
+        value: "https://islamtimeworld.com/app"
 
       - key: PYTHONIOENCODING
         value: "utf-8"
