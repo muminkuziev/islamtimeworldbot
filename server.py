@@ -66,18 +66,34 @@ from fastapi.middleware.cors import CORSMiddleware
 BASE_DIR   = Path(__file__).parent
 WEBAPP_DIR = BASE_DIR / "webapp"
 BOT_TOKEN  = os.getenv("BOT_TOKEN", "")
+
+# WEBAPP_URL — shown in buttons (can be custom domain, e.g. islamtimeworld.com/app)
 WEBAPP_URL = os.getenv("WEBAPP_URL", "")
 
-# Derive scheme+host from WEBAPP_URL (strips any /app path) — used for webhook URL
-# e.g. https://islamtimeworld.com/app → https://islamtimeworld.com
+# WEBHOOK_BASE — Render's direct service URL used for setting the webhook.
+# Must NEVER be a custom domain that goes through a local tunnel.
+# Always use islamtimeworldbot-dbup.onrender.com so the bot works when laptop is off.
+WEBHOOK_BASE = os.getenv("WEBHOOK_BASE", "https://islamtimeworldbot-dbup.onrender.com")
+
+# scheme+host from WEBAPP_URL — used to build WebApp button links
 def _base_domain() -> str:
     url = WEBAPP_URL.strip()
     if url.startswith("https://"):
         p = urlparse(url)
         return f"{p.scheme}://{p.netloc}"
-    return "https://islamtimeworldbot-dbup.onrender.com"
+    return WEBHOOK_BASE.rstrip("/")
 
 BASE_DOMAIN = _base_domain()
+
+# Webhook base (always the reliable Render URL, never a tunnel/custom domain)
+def _get_webhook_domain() -> str:
+    base = WEBHOOK_BASE.strip().rstrip("/")
+    if base.startswith("https://"):
+        p = urlparse(base)
+        return f"{p.scheme}://{p.netloc}"
+    return "https://islamtimeworldbot-dbup.onrender.com"
+
+WEBHOOK_DOMAIN = _get_webhook_domain()
 
 def _resolve_users_db() -> Path:
     """Pick a writable path for users.db with fallback chain."""
@@ -1241,8 +1257,9 @@ async def _init_bot():
     except Exception as e:
         print(f"[WARN] set_my_commands failed: {e}", flush=True)
 
-    webhook_url = f"{BASE_DOMAIN}/webhook/{BOT_TOKEN}"
+    webhook_url = f"{WEBHOOK_DOMAIN}/webhook/{BOT_TOKEN}"
     print(f"[BOT] Webhook URL: {webhook_url[:80]}", flush=True)
+    print(f"[BOT] WebApp URL:  {WEBAPP_URL}", flush=True)
     try:
         await _bot.set_webhook(webhook_url, drop_pending_updates=False)
         print(f"[OK] webhook set OK", flush=True)

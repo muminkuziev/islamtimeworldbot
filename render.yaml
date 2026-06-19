@@ -13,6 +13,9 @@ services:
       - key: WEBAPP_URL
         value: "https://islamtimeworld.com/app"
 
+      - key: WEBHOOK_BASE
+        value: "https://islamtimeworldbot-dbup.onrender.com"
+
       - key: PYTHONIOENCODING
         value: "utf-8"
 
