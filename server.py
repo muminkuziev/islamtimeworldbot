@@ -861,32 +861,37 @@ async def _init_bot():
 
     @_dp.message(CommandStart())
     async def cmd_start(message: types.Message):
+        print(f"[START] STEP 1 — handler entered", flush=True)
         u    = message.from_user
         lang = u.language_code or "uz"
-        print(f"[START] cmd_start FIRED user_id={u.id} lang={lang} @{u.username or ''}", flush=True)
+        print(f"[START] STEP 2 — user_id={u.id} lang={lang} @{u.username or ''}", flush=True)
         try:
-            ts  = int(time.time())
-            _wa = WEBAPP_URL.rstrip("/") if WEBAPP_URL.startswith("https://") else (BASE_DOMAIN + "/app")
+            ts = int(time.time())
+            print(f"[START] STEP 3 — building URL ts={ts}", flush=True)
+            _wa     = WEBAPP_URL.rstrip("/") if WEBAPP_URL.startswith("https://") else (BASE_DOMAIN + "/app")
             app_url = f"{_wa}?v=94&start=1&t={ts}&user_id={u.id}"
-            print(f"[START] app_url={app_url}", flush=True)
+            print(f"[START] STEP 4 — app_url={app_url}", flush=True)
             kb = InlineKeyboardMarkup(inline_keyboard=[[
                 InlineKeyboardButton(
                     text="🕌 Ilovani ochish",
                     web_app=WebAppInfo(url=app_url),
                 )
             ]])
+            print(f"[START] STEP 5 — keyboard built, calling message.answer()", flush=True)
             await message.answer(
                 "Assalomu alaykum! IslamTimeWorldBot ishlayapti.",
                 reply_markup=kb,
             )
-            print(f"[START] user_id={u.id} SENT OK", flush=True)
+            print(f"[START] STEP 6 — SENT OK user_id={u.id}", flush=True)
         except Exception as e:
+            print(f"[START] STEP 6 — SEND FAILED: {e}\n{traceback.format_exc()[-800:]}", flush=True)
             _flog.error(f"/start send uid={u.id}: {e}", exc_info=True)
-            print(f"[START] user_id={u.id} SEND FAILED: {e}\n{traceback.format_exc()[-600:]}", flush=True)
             try:
+                print(f"[START] STEP 7 — fallback plain text", flush=True)
                 await message.answer("Assalomu alaykum! IslamTimeWorldBot ishlayapti.")
-            except Exception:
-                pass
+                print(f"[START] STEP 7 — fallback SENT OK", flush=True)
+            except Exception as e2:
+                print(f"[START] STEP 7 — fallback FAILED: {e2}\n{traceback.format_exc()[-400:]}", flush=True)
 
     @_dp.message(Command("stats"))
     async def cmd_stats(message: types.Message):
