@@ -811,6 +811,17 @@ async def _notification_scheduler():
             _SCHED_STATUS["ticks"]     += 1
             _SCHED_STATUS["last_tick"]  = now_utc.isoformat()
 
+            # Webhook self-heal: every 10 ticks (~10 min) verify and re-set if missing
+            if _bot and _SCHED_STATUS["ticks"] % 10 == 0:
+                try:
+                    wh = await _bot.get_webhook_info()
+                    expected = f"{WEBHOOK_DOMAIN}/webhook/{BOT_TOKEN}"
+                    if wh.url != expected:
+                        await _bot.set_webhook(expected, drop_pending_updates=False)
+                        print(f"[SCHED] Webhook re-set (was: {wh.url[-30:] or 'empty'})", flush=True)
+                except Exception as wh_e:
+                    print(f"[SCHED] Webhook check failed: {wh_e}", flush=True)
+
             # Sleep for the remainder of 60 s (drift-safe)
             elapsed = time.monotonic() - tick_start
             await asyncio.sleep(max(0, 60 - elapsed))
