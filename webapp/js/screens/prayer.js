@@ -288,12 +288,22 @@ const PrayerScreen = (function () {
     _tab = 'vaqt';
     _weatherRetries = 0;
 
+    /* Title */
     const titleEl = document.getElementById('prayer-title');
     if (titleEl) titleEl.textContent = _l('title', _lang);
 
+    /* Back button — was set at render() time, must match current lang */
+    const backBtn = document.getElementById('prayer-back');
+    if (backBtn) backBtn.textContent = '‹ ' + (_lang === 'ar' ? 'القائمة' : _T('Menyu','Меню','Меню','Menu'));
+
+    /* Tab labels — also set at render() time, must be re-translated */
     const row = document.getElementById('pm-tabs-row');
     if (row) {
-      row.querySelectorAll('.q-tab-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+      const TAB_KEYS = ['tabVaqt', 'tabObhavo', 'tabAqi', 'tabSoz'];
+      row.querySelectorAll('.q-tab-btn').forEach((btn, i) => {
+        btn.textContent = _l(TAB_KEYS[i], _lang);
+        btn.classList.toggle('active', i === 0);
+      });
     }
 
     _showLoading();
@@ -1173,10 +1183,7 @@ const PrayerScreen = (function () {
   /* ── Ayah / Hadith cards ────────────────────────────────────── */
   function _buildAyahCard() {
     const ay = _data.daily_ayah;
-    const uzLang = (_lang === 'uz' || _lang === 'uz_cyr');
-    const translationLine = uzLang
-        ? (_lang === 'uz_cyr' ? 'Таржима текшириш жараёнида' : 'Tarjima tekshiruv jarayonida')
-        : _esc(ay.translation || '');
+    const translationLine = _esc(ay.translation || '');
     return `
       <div class="pm-card pm-card--gold">
         <div class="pm-card-label"><span class="pm-card-dot pm-card-dot--gold"></span>${_l('dailyAyah', _lang)}</div>

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="uz" dir="ltr">
 <head>
   <meta charset="UTF-8"/>
@@ -6,12 +6,13 @@
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0,
                  user-scalable=no, viewport-fit=cover"/>
   <meta name="theme-color" content="#080D1A"/>
+  <link rel="manifest" href="/manifest.json"/>
   <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-  <title>IslamTimeWorldBot</title>
+  <title>Islam Time World</title>
 
-  <!-- Telegram WebApp SDK (must be first) -->
+  <!-- Telegram WebApp SDK (no-op when not in Telegram) -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <!-- Fonts: Inter + Amiri (Arabic) -->
@@ -25,68 +26,39 @@
 <body>
 
   <div id="app">
-    <!-- Screen 1: Splash -->
     <div id="screen-splash"    class="screen"></div>
-
-    <!-- Screen 2: Language Selection -->
     <div id="screen-language"  class="screen"></div>
-
-    <!-- Screen 2b: Mazhab Selection -->
     <div id="screen-mazhab"    class="screen"></div>
-
-    <!-- Screen 2c: Location Permission -->
     <div id="screen-location"  class="screen"></div>
-
-    <!-- Screen 3: Main Dashboard -->
     <div id="screen-dashboard" class="screen"></div>
-
-    <!-- Screen 4: Prayer Times -->
     <div id="screen-prayer"    class="screen"></div>
-
-    <!-- Screen 5: Qibla -->
     <div id="screen-qibla"     class="screen"></div>
-
-    <!-- Screen 6: Nearby Mosques -->
     <div id="screen-mosques"   class="screen"></div>
-
-    <!-- Screen 7: Quran -->
     <div id="screen-quran"     class="screen"></div>
-
-    <!-- Screen 8: Hadith -->
     <div id="screen-hadith"    class="screen"></div>
-
-    <!-- Screen 9: Duas -->
     <div id="screen-duas"      class="screen"></div>
-
-    <!-- Screen 10: Dhikr -->
     <div id="screen-dhikr"     class="screen"></div>
-
-    <!-- Screen 11: Hijri Calendar -->
     <div id="screen-calendar"  class="screen"></div>
-
-    <!-- Screen 12: 99 Names -->
     <div id="screen-names"     class="screen"></div>
-
-    <!-- Screen 13: Settings -->
     <div id="screen-settings"  class="screen"></div>
   </div>
 
-  <!-- в•ђв•ђ i18n: must load before all screen modules в•ђв•ђ -->
+  <!-- i18n: must load before all screen modules -->
   <script src="js/i18n.js?v=94"></script>
 
-  <!-- в•ђв•ђ Static data в•ђв•ђ -->
+  <!-- Static data -->
   <script src="data/names_of_allah.js?v=94"></script>
   <script src="data/duas.js?v=94"></script>
 
-  <!-- в•ђв•ђ Shared utilities (must load before screen modules) в•ђв•ђ -->
+  <!-- Shared utilities -->
   <script src="js/hijri.js?v=98"></script>
 
-  <!-- в•ђв•ђ Screen modules в•ђв•ђ -->
+  <!-- Screen modules -->
   <script src="js/screens/splash.js?v=94"></script>
   <script src="js/screens/language.js?v=94"></script>
   <script src="js/screens/mazhab.js?v=94"></script>
   <script src="js/screens/location.js?v=94"></script>
-  <script src="js/screens/prayer.js?v=98"></script>
+  <script src="js/screens/prayer.js?v=103"></script>
   <script src="js/screens/qibla.js?v=94"></script>
   <script src="js/screens/mosques.js?v=94"></script>
   <script src="js/screens/quran.js?v=94"></script>
@@ -98,9 +70,21 @@
   <script src="js/screens/settings.js?v=94"></script>
   <script src="js/screens/dashboard.js?v=98"></script>
 
-  <!-- в•ђв•ђ App controller (must be last) в•ђв•ђ -->
-  <script src="js/app.js?v=102"></script>
+  <!-- App controller (must be last among screens) -->
+  <script src="js/app.js?v=103"></script>
+
+  <!-- Capacitor native bridge (no-op in browser) -->
+  <script src="js/native/bridge.js?v=103"></script>
+
+  <!-- Service Worker registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+          .catch(function (e) { console.warn('[SW] register failed:', e); });
+      });
+    }
+  </script>
 
 </body>
 </html>
-
