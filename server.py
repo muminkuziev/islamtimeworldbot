@@ -895,7 +895,7 @@ async def _init_bot():
         try:
             ts = int(time.time())
             print(f"[START] STEP 3 — building URL ts={ts}", flush=True)
-            _wa     = WEBAPP_URL.rstrip("/") if WEBAPP_URL.startswith("https://") else (BASE_DOMAIN + "/app")
+            _wa     = BASE_DOMAIN + "/app"
             app_url = f"{_wa}?v=94&start=1&t={ts}&user_id={u.id}"
             print(f"[START] STEP 4 — app_url={app_url}", flush=True)
             _btn_labels = {"ru": "🕌 Открыть приложение", "en": "🕌 Open app",
