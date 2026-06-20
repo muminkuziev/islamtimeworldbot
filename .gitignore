@@ -93,3 +93,23 @@ scripts/ngrok.exe
 
 # ── Claude Code internal ───────────────────────────────────
 .claude/
+
+# ── Android / Capacitor build artifacts ────────────────────
+node_modules/
+android/build/
+android/.gradle/
+android/app/build/
+android/app/release/
+android/local.properties
+*.apk
+*.aab
+*.keystore
+*.jks
+
+# ── Capacitor assets generation output ─────────────────────
+resources/.cache/
+
+# ── Firebase credentials (NEVER commit) ────────────────────
+google-services.json
+firebase-credentials.json
+serviceAccountKey.json

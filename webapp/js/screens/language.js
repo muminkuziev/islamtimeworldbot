@@ -156,8 +156,19 @@ const LanguageScreen = (function () {
       window.Telegram?.WebApp?.sendData(JSON.stringify({ action: 'set_language', lang: _selected }));
     } catch (_) {}
 
-    /* After language selection always proceed to Madhab — never skip onboarding */
-    window.App.navigate('screen-mazhab');
+    /* Always re-render mazhab with the newly selected language */
+    MazhabScreen.render();
+
+    const onboarded = !!localStorage.getItem('islamtime_madhab') &&
+                      !!localStorage.getItem('islamtime_location_asked');
+    if (onboarded) {
+      /* Language changed mid-session (from Settings) — return to dashboard */
+      DashboardScreen.update(_selected);
+      window.App.navigate('screen-dashboard');
+    } else {
+      /* First-time onboarding — proceed to mazhab selection */
+      window.App.navigate('screen-mazhab');
+    }
   }
 
   return { render };

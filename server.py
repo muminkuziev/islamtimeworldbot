@@ -160,6 +160,18 @@ def _init_users_db():
             WHERE (daily_briefing_enabled=0 OR daily_briefing_enabled IS NULL)
               AND (briefing_sent IS NULL OR briefing_sent='')
         """)
+        # ── app_devices: FCM tokens for Android app users ──────────────
+        conn.execute("""CREATE TABLE IF NOT EXISTS app_devices (
+            device_id    TEXT    PRIMARY KEY,
+            fcm_token    TEXT    NOT NULL,
+            lang         TEXT    DEFAULT 'uz',
+            platform     TEXT    DEFAULT 'android',
+            lat          REAL,
+            lon          REAL,
+            city         TEXT    DEFAULT '',
+            registered_at TEXT   NOT NULL,
+            last_seen    TEXT    NOT NULL
+        )""")
         conn.commit()
         conn.close()
         print("[OK] users.db initialized", flush=True)
@@ -1369,6 +1381,58 @@ app.mount("/js",     StaticFiles(directory=str(WEBAPP_DIR / "js")),     name="js
 app.mount("/data",   StaticFiles(directory=str(WEBAPP_DIR / "data")),   name="webapp_data")
 app.mount("/assets", StaticFiles(directory=str(WEBAPP_DIR / "assets")), name="assets")
 
+# ── TWA / Android Digital Asset Links ─────────────────────────────────────
+@app.get("/.well-known/assetlinks.json")
+async def assetlinks():
+    sha256 = os.getenv("TWA_SHA256_FINGERPRINT", "")
+    if not sha256:
+        return JSONResponse(
+            status_code=404,
+            content={"error": "TWA_SHA256_FINGERPRINT env var not set"},
+        )
+    return JSONResponse(
+        content=[{
+            "relation": ["delegate_permission/common.handle_all_urls"],
+            "target": {
+                "namespace": "android_app",
+                "package_name": os.getenv("TWA_PACKAGE_NAME", "com.islamtimeworld.app"),
+                "sha256_cert_fingerprints": [sha256],
+            },
+        }],
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
+
+@app.get("/manifest.json")
+async def pwa_manifest():
+    return FileResponse(
+        str(WEBAPP_DIR / "manifest.json"),
+        media_type="application/manifest+json",
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
+
+@app.get("/sw.js")
+async def service_worker():
+    return FileResponse(
+        str(WEBAPP_DIR / "sw.js"),
+        media_type="application/javascript",
+        headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Service-Worker-Allowed": "/"},
+    )
+
+# ── Play Store legal pages ─────────────────────────────────────────────────
+@app.get("/privacy")
+async def privacy_policy():
+    return FileResponse(
+        str(WEBAPP_DIR / "privacy.html"),
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
+
+@app.get("/terms")
+async def terms_of_service():
+    return FileResponse(
+        str(WEBAPP_DIR / "terms.html"),
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
+
 # ── Landing page (public) ──────────────────────────────────────────────────
 @app.get("/")
 async def landing():
@@ -2110,6 +2174,128 @@ async def api_hadith_search(
     try:
         results = await asyncio.to_thread(_search)
         return JSONResponse({"hadiths": results, "total": len(results)})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+# ── Android App: Device Registration (FCM token) ──────────────────────────
+@app.post("/api/app/register-device")
+async def api_register_device(request: Request):
+    """Stores FCM push token for Android app users."""
+    try:
+        data      = await request.json()
+        device_id = str(data.get("device_id", "")).strip()[:64]
+        fcm_token = str(data.get("fcm_token", "")).strip()[:512]
+        lang      = str(data.get("lang", "uz")).strip()[:8]
+        platform  = str(data.get("platform", "android")).strip()[:16]
+        if not device_id or not fcm_token:
+            return JSONResponse({"ok": False, "error": "missing fields"}, status_code=400)
+        conn = _db_connect()
+        conn.execute("""
+            INSERT INTO app_devices (device_id, fcm_token, lang, platform, registered_at, last_seen)
+            VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))
+            ON CONFLICT(device_id) DO UPDATE SET
+                fcm_token=excluded.fcm_token,
+                lang=excluded.lang,
+                last_seen=datetime('now')
+        """, (device_id, fcm_token, lang, platform))
+        conn.commit()
+        conn.close()
+        print(f"[APP] Device registered: {device_id[:8]}... lang={lang} platform={platform}", flush=True)
+        return {"ok": True}
+    except Exception as e:
+        print(f"[WARN] register_device: {e}", flush=True)
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
+
+
+# ── Android App: Admin Push Broadcast ──────────────────────────────────────
+@app.post("/api/admin/push-broadcast")
+async def api_push_broadcast(request: Request):
+    """
+    Send FCM push notification to all registered Android devices.
+    Requires FIREBASE_SERVER_KEY env var and admin_id in body.
+
+    Body: { admin_id, title, body, data: { screen: "prayer" } }
+    """
+    try:
+        payload  = await request.json()
+        admin_id = int(payload.get("admin_id", 0))
+        if admin_id not in ADMIN_IDS:
+            return JSONResponse({"error": "forbidden"}, status_code=403)
+
+        title    = str(payload.get("title", "Islam Time World"))[:100]
+        body_txt = str(payload.get("body",  ""))[:300]
+        data     = payload.get("data", {})
+
+        server_key = os.getenv("FIREBASE_SERVER_KEY", "")
+        if not server_key:
+            return JSONResponse({"ok": False, "error": "FIREBASE_SERVER_KEY not set"}, status_code=503)
+
+        conn = _db_connect()
+        tokens = [r[0] for r in conn.execute(
+            "SELECT fcm_token FROM app_devices WHERE last_seen > datetime('now', '-30 days')"
+        ).fetchall()]
+        conn.close()
+
+        if not tokens:
+            return {"ok": True, "sent": 0, "message": "no devices registered"}
+
+        import aiohttp as _aiohttp
+        results = {"success": 0, "failure": 0}
+
+        async def _send_batch(batch):
+            fcm_payload = {
+                "registration_ids": batch,
+                "notification": {"title": title, "body": body_txt},
+                "data": data,
+                "android": {"priority": "high"},
+            }
+            async with _aiohttp.ClientSession() as session:
+                async with session.post(
+                    "https://fcm.googleapis.com/fcm/send",
+                    json=fcm_payload,
+                    headers={
+                        "Authorization": f"key={server_key}",
+                        "Content-Type":  "application/json",
+                    },
+                    timeout=_aiohttp.ClientTimeout(total=15),
+                ) as r:
+                    resp = await r.json()
+                    results["success"] += resp.get("success", 0)
+                    results["failure"]  += resp.get("failure", 0)
+
+        # Send in batches of 500 (FCM limit)
+        for i in range(0, len(tokens), 500):
+            await _send_batch(tokens[i:i+500])
+
+        print(f"[PUSH] Broadcast: {results['success']} ok, {results['failure']} fail", flush=True)
+        return {"ok": True, "total": len(tokens), **results}
+
+    except Exception as e:
+        print(f"[WARN] push_broadcast: {e}", flush=True)
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
+
+
+# ── Android App: Device Stats (admin) ──────────────────────────────────────
+@app.get("/api/admin/app-stats")
+async def api_app_stats(admin_id: int = Query(0)):
+    if admin_id not in ADMIN_IDS:
+        return JSONResponse({"error": "forbidden"}, status_code=403)
+    try:
+        conn  = _db_connect()
+        total = conn.execute("SELECT COUNT(*) FROM app_devices").fetchone()[0]
+        active = conn.execute(
+            "SELECT COUNT(*) FROM app_devices WHERE last_seen > datetime('now','-7 days')"
+        ).fetchone()[0]
+        by_lang = conn.execute(
+            "SELECT lang, COUNT(*) as n FROM app_devices GROUP BY lang ORDER BY n DESC"
+        ).fetchall()
+        conn.close()
+        return {
+            "total_devices": total,
+            "active_7d": active,
+            "by_lang": [{"lang": r[0], "count": r[1]} for r in by_lang],
+        }
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
 

@@ -1,0 +1,58 @@
+{
+  "appId":   "com.islamtimeworld.app",
+  "appName": "Islam Time World",
+  "webDir":  "webapp",
+
+  "server": {
+    "url":           "https://islamtimeworld.com/app",
+    "cleartext":     false,
+    "androidScheme": "https",
+    "hostname":      "islamtimeworld.com"
+  },
+
+  "android": {
+    "backgroundColor":           "#080D1A",
+    "allowMixedContent":         false,
+    "captureInput":              true,
+    "webContentsDebuggingEnabled": false,
+    "initialFocus":              false,
+    "appendUserAgent":           "IslamTimeWorld/Android"
+  },
+
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration":        2500,
+      "launchAutoHide":            true,
+      "launchFadeOutDuration":     500,
+      "backgroundColor":           "#080D1A",
+      "androidSplashResourceName": "splash",
+      "androidScaleType":          "CENTER_CROP",
+      "showSpinner":               false,
+      "splashFullScreen":          true,
+      "splashImmersive":           true,
+      "useDialog":                 false
+    },
+
+    "StatusBar": {
+      "style":           "Dark",
+      "backgroundColor": "#080D1A",
+      "overlaysWebView": false,
+      "animation":       "SLIDE"
+    },
+
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    },
+
+    "LocalNotifications": {
+      "smallIcon":          "ic_notification",
+      "iconColor":          "#F5C542",
+      "sound":              "beep.wav"
+    },
+
+    "Geolocation": {
+      "enableHighAccuracy": true,
+      "timeout":            15000
+    }
+  }
+}

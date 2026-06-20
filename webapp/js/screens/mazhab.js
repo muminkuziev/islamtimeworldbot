@@ -148,9 +148,13 @@ const MazhabScreen = (function () {
     try {
       window.Telegram?.WebApp?.sendData(JSON.stringify({ action: 'set_mazhab', mazhab: _selected }));
     } catch (_) {}
+    /* Re-render location with current language before navigating */
+    LocationScreen.render();
     window.App.navigate('screen-location');
     window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('medium');
   }
 
-  return { render };
+  function load() { render(); }
+
+  return { render, load };
 })();

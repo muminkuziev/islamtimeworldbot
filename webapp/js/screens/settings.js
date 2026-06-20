@@ -763,10 +763,12 @@ const SettingsScreen = (function () {
 
   function _bindLangMazhab(el) {
     el.querySelector('#st-change-lang')?.addEventListener('click', () => {
+      LanguageScreen.render();
       window.App.navigate('screen-language');
       window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
     });
     el.querySelector('#st-change-mazhab')?.addEventListener('click', () => {
+      MazhabScreen.load();
       window.App.navigate('screen-mazhab');
       window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
     });
