@@ -650,8 +650,9 @@ def _format_daily_briefing_msg(
 
     # Hadith
     if hadith_data and hadith_data.get("text"):
+        import html as _html
         lines.append(_HADITH_HDR.get(L, _HADITH_HDR["uz"]))
-        lines.append(hadith_data["text"])
+        lines.append(_html.escape(str(hadith_data["text"])))
         lines.append(f"📖 {hadith_data.get('source', 'Sahih Muslim')}")
         lines.append("")
 
@@ -830,10 +831,9 @@ _bot = None
 _dp  = None
 
 def _is_production() -> bool:
-    # Only RENDER=true (set automatically by Render.com) activates webhook mode.
-    # WEBHOOK_MODE is intentionally excluded: local dev must NOT overwrite production webhook.
-    on_render = os.getenv("RENDER", "").lower() == "true"
-    return bool(on_render and BOT_TOKEN)
+    on_render  = os.getenv("RENDER", "").lower() == "true"
+    local_wh   = os.getenv("LOCAL_WEBHOOK", "").lower() == "true"
+    return bool((on_render or local_wh) and BOT_TOKEN)
 
 async def _init_bot():
     global _bot, _dp
@@ -887,17 +887,24 @@ async def _init_bot():
             _wa     = WEBAPP_URL.rstrip("/") if WEBAPP_URL.startswith("https://") else (BASE_DOMAIN + "/app")
             app_url = f"{_wa}?v=94&start=1&t={ts}&user_id={u.id}"
             print(f"[START] STEP 4 — app_url={app_url}", flush=True)
+            _btn_labels = {"ru": "🕌 Открыть приложение", "en": "🕌 Open app",
+                           "ar": "🕌 فتح التطبيق", "tr": "🕌 Uygulamayı aç"}
+            _greet_texts = {
+                "ru": "Ассаляму алейкум! IslamTimeWorldBot готов.",
+                "en": "Assalamu alaykum! IslamTimeWorldBot is ready.",
+                "ar": "السلام عليكم! IslamTimeWorldBot جاهز.",
+                "tr": "Selamun aleyküm! IslamTimeWorldBot hazır.",
+            }
+            btn_lbl  = _btn_labels.get(lang, "🕌 Ilovani ochish")
+            greet    = _greet_texts.get(lang, "Assalomu alaykum! IslamTimeWorldBot ishlayapti.")
             kb = InlineKeyboardMarkup(inline_keyboard=[[
                 InlineKeyboardButton(
-                    text="🕌 Ilovani ochish",
+                    text=btn_lbl,
                     web_app=WebAppInfo(url=app_url),
                 )
             ]])
             print(f"[START] STEP 5 — keyboard built, calling message.answer()", flush=True)
-            await message.answer(
-                "Assalomu alaykum! IslamTimeWorldBot ishlayapti.",
-                reply_markup=kb,
-            )
+            await message.answer(greet, reply_markup=kb)
             print(f"[START] STEP 6 — SENT OK user_id={u.id}", flush=True)
         except Exception as e:
             print(f"[START] STEP 6 — SEND FAILED: {e}\n{traceback.format_exc()[-800:]}", flush=True)
@@ -1296,7 +1303,10 @@ async def lifespan(app: FastAPI):
     except asyncio.CancelledError:
         pass
     if _bot:
-        await _bot.delete_webhook()
+        # On Render: keep webhook alive so a new deploy re-uses it immediately.
+        # On local dev: delete to avoid leaving a dead tunnel URL in Telegram.
+        if not os.getenv("RENDER", ""):
+            await _bot.delete_webhook()
         await _bot.session.close()
     if _bot_notif and _bot_notif is not _bot:
         try:

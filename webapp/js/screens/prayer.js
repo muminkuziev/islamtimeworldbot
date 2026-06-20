@@ -448,12 +448,13 @@ const PrayerScreen = (function () {
 
     /* Header dates: Gregorian + Hijri */
     const dateEl = document.getElementById('pm-hdr-date');
-    if (dateEl && _data.gregorian && _data.hijri) {
+    if (dateEl && _data.gregorian) {
       const g = _data.gregorian;
+      const hDate = window.HijriCalc.toHijriFromDate(new Date());
       dateEl.innerHTML = `
         <span class="pm-hdr-greg">${g.day} ${g.month} ${g.year}</span>
         <span class="pm-hdr-sep">·</span>
-        <span class="pm-hdr-hijri">${_data.hijri.full || ''}</span>`;
+        <span class="pm-hdr-hijri">${window.HijriCalc.format(hDate, _lang)}</span>`;
     }
 
     _buildBanner();
@@ -1051,7 +1052,7 @@ const PrayerScreen = (function () {
     const city = d.city ? `${d.city}, ${d.country}` : (d.country || '—');
     const flag = d.country_code ? _countryFlag(d.country_code) : '';
     const greg = `${d.gregorian.day} ${d.gregorian.month} ${d.gregorian.year}`;
-    const hij  = d.hijri.full;
+    const hij  = window.HijriCalc.format(window.HijriCalc.toHijriFromDate(new Date()), _lang);
     const meth = d.method || '—';
 
     const prefs = _getNotifPrefs();

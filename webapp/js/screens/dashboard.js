@@ -43,12 +43,6 @@ const DashboardScreen = (function () {
     hi:     ['जनवरी','फ़रवरी','मार्च','अप्रैल','मई','जून','जुलाई','अगस्त','सितंबर','अक्तूबर','नवंबर','दिसंबर'],
     ur:     ['جنوری','فروری','مارچ','اپریل','مئی','جون','جولائی','اگست','ستمبر','اکتوبر','نومبر','دسمبر'],
   };
-  const HIJRI_MONTHS_AR = [
-    'محرم','صفر','ربيع الأول','ربيع الآخر',
-    'جمادى الأولى','جمادى الآخرة','رجب','شعبان',
-    'رمضان','شوال','ذو القعدة','ذو الحجة',
-  ];
-
   /* ── Module definitions ── */
   const MODULES = [
     { key:'prayer',
@@ -282,30 +276,8 @@ const DashboardScreen = (function () {
     const months = MONTHS_MAP[_lang] || MONTHS_MAP.en;
     uzEl.textContent = `${days[n.getDay()]}, ${String(n.getDate()).padStart(2,'0')} ${months[n.getMonth()]} ${n.getFullYear()}`;
 
-    const h = _toHijri(n);
-    arEl.textContent = `${_toArabicNum(h.day)} ${HIJRI_MONTHS_AR[h.month - 1]} ${_toArabicNum(h.year)}`;
-  }
-
-  function _toHijri(date) {
-    const JD = Math.floor((14 + 1461*(date.getFullYear()+4800+Math.floor((date.getMonth()+1-14)/12)))/4)
-      + Math.floor((367*(date.getMonth()+1-2-12*Math.floor((date.getMonth()+1-14)/12)))/12)
-      - Math.floor((3*Math.floor((date.getFullYear()+4900+Math.floor((date.getMonth()+1-14)/12))/100))/4)
-      + date.getDate() - 32075;
-    let l = JD - 1948440 + 10632;
-    const n = Math.floor((l-1)/10631);
-    l = l - 10631*n + 354;
-    const j = Math.floor((10985-l)/5316)*Math.floor((50*l)/17719)
-      + Math.floor(l/5670)*Math.floor((43*l)/15238);
-    l = l - Math.floor((30-j)/15)*Math.floor((17719*j)/50)
-      - Math.floor(j/16)*Math.floor((15238*j)/43) + 29;
-    const month = Math.floor((24*l)/709);
-    const day   = l - Math.floor((709*month)/24);
-    const year  = 30*n + j - 30;
-    return { year, month, day };
-  }
-
-  function _toArabicNum(n) {
-    return String(n).split('').map(d => '٠١٢٣٤٥٦٧٨٩'[parseInt(d)] ?? d).join('');
+    const h = window.HijriCalc.toHijriFromDate(n);
+    arEl.textContent = window.HijriCalc.formatArabic(h);
   }
 
   /* ══════════════════════════════════════════════

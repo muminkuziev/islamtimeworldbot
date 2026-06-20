@@ -168,11 +168,11 @@ def _webapp_keyboard(url: str = "") -> InlineKeyboardMarkup:
 async def cmd_start(message: types.Message):
     u = message.from_user
     _track_user(u.id, u.username or "", u.first_name or "", u.language_code or "")
-    print(f"[DEBUG] /start from {u.id} @{u.username}", flush=True)
+    print(f"[START] uid={u.id} @{u.username} webapp_url={config.WEBAPP_URL!r}", flush=True)
     try:
         if _webapp_url_valid():
-            # ?start=1 tells the webapp to always show Language Selection
             start_url = config.WEBAPP_URL.rstrip("/") + "?start=1"
+            print(f"[START] sending webapp button url={start_url}", flush=True)
             await message.answer(
                 "🌙 <b>IslamTimeWorldBot</b>\n\n"
                 "Assalomu alaykum! Ilovani ochish uchun quyidagi tugmani bosing.\n\n"
@@ -180,13 +180,18 @@ async def cmd_start(message: types.Message):
                 parse_mode="HTML",
                 reply_markup=_webapp_keyboard(url=start_url),
             )
+            print(f"[START] OK uid={u.id}", flush=True)
         else:
             await message.answer(
                 "🌙 <b>IslamTimeWorldBot</b>\nAssalomu alaykum! ✅",
                 parse_mode="HTML",
             )
     except Exception as e:
-        print(f"[DEBUG] /start ERROR: {e}", flush=True)
+        print(f"[START] ERROR uid={u.id}: {e}", flush=True)
+        try:
+            await message.answer("🌙 IslamTimeWorldBot\nAssalomu alaykum! ✅")
+        except Exception as e2:
+            print(f"[START] fallback also failed: {e2}", flush=True)
 
 
 @dp.message(Command("reset"))
@@ -522,6 +527,24 @@ print("[OK] ADMIN HANDLERS LOADED: dbcheck testnotif testbrief", flush=True)
 # ══════════════════════════════════════════════════════════════════════════
 
 async def main():
+    # Ensure data dir and users table exist
+    _USERS_DB.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        conn = sqlite3.connect(str(_USERS_DB))
+        conn.execute("""CREATE TABLE IF NOT EXISTS users (
+            user_id    INTEGER PRIMARY KEY,
+            username   TEXT DEFAULT '',
+            first_name TEXT DEFAULT '',
+            language   TEXT DEFAULT '',
+            joined_at  TEXT NOT NULL,
+            last_active TEXT NOT NULL
+        )""")
+        conn.commit()
+        conn.close()
+        print("[OK] users.db ready", flush=True)
+    except Exception as e:
+        print(f"[WARN] DB init: {e}", flush=True)
+
     _proxy = os.getenv("PROXY_URL", "").strip() or None
 
     if _proxy:
