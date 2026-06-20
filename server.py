@@ -951,7 +951,7 @@ async def _init_bot():
 
     @_dp.message(Command("reset"))
     async def cmd_reset(message: types.Message):
-        _wa = WEBAPP_URL.rstrip("/") if WEBAPP_URL.startswith("https://") else (BASE_DOMAIN + "/app")
+        _wa = BASE_DOMAIN + "/app"
         kb = InlineKeyboardMarkup(inline_keyboard=[[
             InlineKeyboardButton(
                 text="🔄 Reset & Restart",
@@ -1470,7 +1470,7 @@ async def telegram_webhook(token: str, request: Request):
                 try:
                     from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
                     ts  = int(time.time())
-                    _wa = WEBAPP_URL.rstrip("/") if WEBAPP_URL.startswith("https://") else (BASE_DOMAIN + "/app")
+                    _wa = BASE_DOMAIN + "/app"
                     kb  = InlineKeyboardMarkup(inline_keyboard=[[
                         InlineKeyboardButton(text="🕌 Ilovani ochish",
                                              web_app=WebAppInfo(url=f"{_wa}?v=94&start=1&t={ts}&user_id={user_id}"))
