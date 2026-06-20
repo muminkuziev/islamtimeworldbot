@@ -893,21 +893,43 @@ async def _init_bot():
         lang = u.language_code or "uz"
         print(f"[START] STEP 2 — user_id={u.id} lang={lang} @{u.username or ''}", flush=True)
         try:
-            ts = int(time.time())
-            print(f"[START] STEP 3 — building URL ts={ts}", flush=True)
+            lang_norm = (lang.split("-")[0] or "uz").lower()
+            print(f"[START] STEP 3 — building URL lang_norm={lang_norm}", flush=True)
             _wa     = BASE_DOMAIN + "/app"
-            app_url = f"{_wa}?v=94&start=1&t={ts}&user_id={u.id}"
+            app_url = f"{_wa}?start=1&lang={lang_norm}&user_id={u.id}"
             print(f"[START] STEP 4 — app_url={app_url}", flush=True)
-            _btn_labels = {"ru": "🕌 Открыть приложение", "en": "🕌 Open app",
-                           "ar": "🕌 فتح التطبيق", "tr": "🕌 Uygulamayı aç"}
+            _btn_labels = {
+                "uz": "🕌 Ilovani ochish",
+                "ru": "🕌 Открыть приложение",
+                "en": "🕌 Open app",
+                "ar": "🕌 فتح التطبيق",
+                "tr": "🕌 Uygulamayı aç",
+                "de": "🕌 App öffnen",
+                "fr": "🕌 Ouvrir l'app",
+                "kk": "🕌 Қосымшаны ашу",
+                "id": "🕌 Buka aplikasi",
+                "hi": "🕌 ऐप खोलें",
+                "ur": "🕌 ایپ کھولیں",
+                "ky": "🕌 Тиркемени ачуу",
+                "tg": "🕌 Барномаро кушоед",
+            }
             _greet_texts = {
+                "uz": "Assalomu alaykum! IslamTimeWorldBot ishlayapti.",
                 "ru": "Ассаляму алейкум! IslamTimeWorldBot готов.",
                 "en": "Assalamu alaykum! IslamTimeWorldBot is ready.",
                 "ar": "السلام عليكم! IslamTimeWorldBot جاهز.",
                 "tr": "Selamun aleyküm! IslamTimeWorldBot hazır.",
+                "de": "Assalamu alaikum! IslamTimeWorldBot ist bereit.",
+                "fr": "Assalamu alaikum! IslamTimeWorldBot est prêt.",
+                "kk": "Ассаламу алайкум! IslamTimeWorldBot дайын.",
+                "id": "Assalamu alaikum! IslamTimeWorldBot siap.",
+                "hi": "अस्सलामु अलैकुम! IslamTimeWorldBot तैयार है।",
+                "ur": "السلام علیکم! IslamTimeWorldBot تیار ہے۔",
+                "ky": "Ассаламу алейкум! IslamTimeWorldBot даяр.",
+                "tg": "Ассалому алайкум! IslamTimeWorldBot тайёр аст.",
             }
-            btn_lbl  = _btn_labels.get(lang, "🕌 Ilovani ochish")
-            greet    = _greet_texts.get(lang, "Assalomu alaykum! IslamTimeWorldBot ishlayapti.")
+            btn_lbl = _btn_labels.get(lang_norm, "🕌 Ilovani ochish")
+            greet   = _greet_texts.get(lang_norm, "Assalomu alaykum! IslamTimeWorldBot ishlayapti.")
             kb = InlineKeyboardMarkup(inline_keyboard=[[
                 InlineKeyboardButton(
                     text=btn_lbl,

@@ -23,6 +23,7 @@
   /* ── URL parameters (read once at load) ── */
   const _urlParams   = new URLSearchParams(window.location.search);
   const _isStartFlow = _urlParams.get('start') === '1';
+  const _urlLang     = (_urlParams.get('lang') || '').toLowerCase();
 
   /* ── App State ── */
   const state = {
@@ -71,16 +72,27 @@
     });
   }
 
-  /* ── Auto-detect language from Telegram user ── */
+  /* ── Supported active languages (not WIP) ── */
+  const _ACTIVE_LANGS = new Set(['uz', 'uz_cyr', 'ru', 'en']);
+
+  /* ── Auto-detect language from URL param or Telegram SDK ── */
   function _detectLang() {
-    const tgLang = tg?.initDataUnsafe?.user?.language_code || '';
-    const map = {
+    const _LANG_MAP = {
       uz: 'uz', ru: 'ru', en: 'en', ar: 'ar',
       tr: 'tr', de: 'de', fr: 'fr',
       kk: 'kk', id: 'id', hi: 'hi', ur: 'ur',
       ky: 'ky', tg: 'tg',
     };
-    return map[tgLang] || null;
+    /* 1. URL hint passed by the bot (most reliable — comes from Telegram API) */
+    if (_urlLang) {
+      const mapped = _LANG_MAP[_urlLang] || _LANG_MAP[_urlLang.split('-')[0]];
+      if (mapped) return mapped;
+    }
+    /* 2. Telegram SDK language_code */
+    const tgLang = tg?.initDataUnsafe?.user?.language_code || '';
+    const fromSdk = _LANG_MAP[tgLang] || _LANG_MAP[tgLang.split('-')[0]];
+    if (fromSdk) return fromSdk;
+    return null;
   }
 
   /* ── Expose global App API ── */
@@ -106,30 +118,40 @@
   /* ── Boot sequence ── */
   navigate('screen-splash');
 
-  const langConfirmed   = !!localStorage.getItem('islamtime_lang');
-  /* Shorter splash for returning users; first-timers see full animation */
+  const langConfirmed = !!localStorage.getItem('islamtime_lang');
   const SPLASH_DURATION = langConfirmed ? 1600 : 2600;
 
   setTimeout(() => {
-    /* ?start=1 → user pressed the /start button: always show Language screen.
-       This ensures Language Selection is never bypassed regardless of cached state. */
-    if (_isStartFlow || !langConfirmed) {
-      navigate('screen-language');
+    /* Returning user: has saved language → go straight to where they left off.
+       Never force Language screen on a user who already completed onboarding. */
+    if (langConfirmed) {
+      applyLangDir(state.lang);
+      const madhab   = localStorage.getItem('islamtime_madhab');
+      const locAsked = localStorage.getItem('islamtime_location_asked');
+      if (madhab && locAsked) {
+        DashboardScreen.update(state.lang);
+        navigate('screen-dashboard');
+      } else if (madhab) {
+        navigate('screen-location');
+      } else {
+        navigate('screen-mazhab');
+      }
       return;
     }
 
-    /* Direct webapp access (no ?start=1): restore previous session normally */
-    applyLangDir(state.lang);
-    const madhab   = localStorage.getItem('islamtime_madhab');
-    const locAsked = localStorage.getItem('islamtime_location_asked');
-    if (madhab && locAsked) {
-      DashboardScreen.update(state.lang);
-      navigate('screen-dashboard');
-    } else if (madhab) {
-      navigate('screen-location');
-    } else {
+    /* First-time user: auto-apply detected language if it is an active (non-WIP) lang.
+       This lets Uzbek/Russian/English speakers skip the Language screen automatically. */
+    const detected = _detectLang();
+    if (detected && _ACTIVE_LANGS.has(detected)) {
+      localStorage.setItem('islamtime_lang', detected);
+      applyLangDir(detected);
+      state.lang = detected;
       navigate('screen-mazhab');
+      return;
     }
+
+    /* Unknown or WIP language → show Language screen to let user pick */
+    navigate('screen-language');
   }, SPLASH_DURATION);
 
 })();
