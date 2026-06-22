@@ -408,11 +408,11 @@ out center tags;`.trim();
     const rKm = _radius / 1000;
     const expandNotice = (_radius > RADIUS_DEFAULT)
       ? `<div class="ms-expand-notice">📍 ${_T(
-          `Yaqin atrofda kam masjid topildi. Qidiruv radiusi ${rKm} km ga kengaytirildi.`,
-          `Яқин атрофда кам масжид топилди. Қидирув радиуси ${rKm} км га кенгайтирилди.`,
-          `В этом районе мало мечетей. Радиус расширен до ${rKm} км.`,
-          `Few mosques nearby. Search radius expanded to ${rKm} km.`
-        )}</div>`
+          `Yaqin atrofda kam masjid topildi. Qidiruv radiusi {n} km ga kengaytirildi.`.replace('{n}', rKm),
+          `Яқин атрофда кам масжид топилди. Қидирув радиуси {n} км га кенгайтирилди.`.replace('{n}', rKm),
+          `В этом районе мало мечетей. Радиус расширен до {n} км.`.replace('{n}', rKm),
+          'Few mosques nearby. Search radius expanded to {n} km.'
+        ).replace('{n}', rKm)}</div>`
       : '';
     const notice = expandNotice;
     if (_tab === 'royxat') return notice + (_selIdx !== null ? _buildDetail() : _buildList());
