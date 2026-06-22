@@ -7,7 +7,7 @@
      - External (CDN, Telegram SDK)     : network-only
    ================================================================ */
 
-const CACHE = 'islamtime-v4';
+const CACHE = 'islamtime-v6';
 
 const PRECACHE = [
   '/app',
@@ -75,19 +75,19 @@ self.addEventListener('fetch', e => {
 
   e.respondWith(
     caches.open(CACHE).then(async cache => {
-      const cached = await cache.match(request, { ignoreSearch: true });
-
-      /* App shell: serve cached immediately, update in background */
-      const networkFetch = fetch(request)
-        .then(response => {
-          if (response && response.status === 200) {
-            cache.put(request, response.clone());
-          }
-          return response;
-        })
-        .catch(() => null);
-
-      return cached || networkFetch;
+      /* Network-first: always try network so updated files load immediately.
+         Cache used only as offline fallback. ignoreSearch removed so ?v= params
+         are respected — each versioned URL is cached independently. */
+      try {
+        const response = await fetch(request);
+        if (response && response.status === 200) {
+          cache.put(request, response.clone());
+        }
+        return response;
+      } catch (_) {
+        const cached = await cache.match(request);
+        return cached || new Response('', { status: 408, statusText: 'Offline' });
+      }
     })
   );
 });

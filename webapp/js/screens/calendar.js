@@ -91,6 +91,8 @@ const CalendarScreen = (function () {
     {
       id:'arafa', icon:'🕋', type:'muhim', color:'#E8C15A',
       nomi:'Arafa kuni', nomi_cyr:'Арафа куни', nomi_ru:'День Арафа', nomi_en:'Day of Arafah', arNomi:'يوم عرفة',
+      nomi_tr:'Arefe Günü', nomi_kk:'Арафа күні', nomi_tg:'Рӯзи Арафа', nomi_ky:'Арафа күнү',
+      nomi_de:'Tag von Arafah', nomi_fr:"Jour d'Arafah", nomi_id:'Hari Arafah', nomi_hi:'अरफा का दिन', nomi_ur:'یوم عرفہ',
       hYear:1447, hMonth:12, hDay:9,
       qisqa:"Zulhijjaning 9-kuni — Haj amallarining eng muhim qismi va ro'za tutish tavsiya etiladigan ulug' kun.",
       muhim:"Hajning asosi Arofatda wuquf (turish)dir. Hojjilar Arofat tekisligida dua qiladilar. Hajda bo'lmaganlar uchun bu kuni ro'za tutish ikki yillik gunohlarni kafforat qiladi.",
@@ -103,6 +105,8 @@ const CalendarScreen = (function () {
     {
       id:'qurbon', icon:'🐑', type:'bayram', color:'#4fcfa0',
       nomi:'Iyd al-Adha', nomi_cyr:'Ийд ал-Адҳа', nomi_ru:'Ид аль-Адха', nomi_en:'Eid al-Adha', arNomi:'عيد الأضحى',
+      nomi_tr:'Kurban Bayramı', nomi_kk:'Құрбан айт', nomi_tg:'Иди Қурбон', nomi_ky:'Курман айт',
+      nomi_de:'Eid al-Adha', nomi_fr:'Aïd al-Adha', nomi_id:'Hari Raya Idul Adha', nomi_hi:'ईद अल-अधा', nomi_ur:'عید الاضحی',
       hYear:1447, hMonth:12, hDay:10,
       qisqa:"Qurbon hayiti — Ibrohim a.s.ning Allohga bo'lgan itoatini xotirlash va qurbon so'yish bayrami.",
       muhim:"Islomning ikki rasmiy bayramidan biri. Qurbon so'yish — Ibrohim a.s. o'g'lini qurbon qilishga tayyor bo'lganining ramzi. Qurbon go'shti kambag'allarga ulashiladi.",
@@ -114,6 +118,8 @@ const CalendarScreen = (function () {
     {
       id:'yangi_yil', icon:'🌙', type:'bayram', color:'#4fcfa0',
       nomi:'Yangi Hijriy yil', nomi_cyr:'Янги Ҳижрий йил', nomi_ru:'Исламский Новый год', nomi_en:'Islamic New Year', arNomi:'رأس السنة الهجرية',
+      nomi_tr:'İslam Yeni Yılı', nomi_kk:'Ислам Жаңа жылы', nomi_tg:'Соли нави ислом', nomi_ky:'Ислам жаны жылы',
+      nomi_de:'Islamisches Neujahr', nomi_fr:'Nouvel An Islamique', nomi_id:'Tahun Baru Islam', nomi_hi:'इस्लामी नया साल', nomi_ur:'اسلامی نیا سال',
       hYear:1448, hMonth:1, hDay:1,
       qisqa:"Islomiy yangi yilning boshlanishi — Hijriy taqvimning birinchi kuni.",
       muhim:"Islom tarixi Payg'ambar s.a.v.ning Makkadan Madinaga hijratlari bilan boshlanadi. Bu kundan boshlab 1448 yil sanala boshlanadi.",
@@ -125,6 +131,8 @@ const CalendarScreen = (function () {
     {
       id:'ashura', icon:'⭐', type:'muhim', color:'#E8C15A',
       nomi:'Ashura kuni', nomi_cyr:'Ашура куни', nomi_ru:'День Ашура', nomi_en:'Day of Ashura', arNomi:'يوم عاشوراء',
+      nomi_tr:'Aşure Günü', nomi_kk:'Ашура күні', nomi_tg:'Рӯзи Ошура', nomi_ky:'Ашура күнү',
+      nomi_de:'Tag von Ashura', nomi_fr:"Jour d'Achoura", nomi_id:'Hari Asyura', nomi_hi:'अशूरा का दिन', nomi_ur:'یوم عاشورا',
       hYear:1448, hMonth:1, hDay:10,
       qisqa:"Muharramning o'ninchi kuni — ro'za tutish tavsiya etiladigan ulug' kun.",
       muhim:"Bu kunda Muso a.s. va uning ummatini Alloh Fir'avndan najot bergan. Payg'ambar s.a.v. bu kunning fozilati haqida ko'p hadis aytganlar.",
@@ -138,6 +146,8 @@ const CalendarScreen = (function () {
     {
       id:'isro_meraj', icon:'🌟', type:'muhim', color:'#c084fc',
       nomi:"Isro' va Me'roj", nomi_cyr:'Исро ва Меърож', nomi_ru:'Исра и Мирадж', nomi_en:"Isra' and Mi'raj", arNomi:'الإسراء والمعراج',
+      nomi_tr:'İsra ve Miraç', nomi_kk:'Исра жəне Мирадж', nomi_tg:'Исро ва Меъроҷ', nomi_ky:'Исра жана Мирадж',
+      nomi_de:'Isra und Miraj', nomi_fr:"Isra' et Mi'raj", nomi_id:'Isra Miraj', nomi_hi:'इसरा और मेराज', nomi_ur:'اسراء اور معراج',
       hYear:1448, hMonth:7, hDay:27,
       qisqa:"Payg'ambar s.a.v. ning Makkadan Quddusga (Isro') va u yerdan osmonlarga (Me'roj) ko'tarilgan kechasi.",
       muhim:"Bu kechada 5 vaqt namoz farz qilindi. Bu Islom tarixidagi eng ulug' voqealardan biri — Payg'ambar s.a.v. Alloh bilan bevosita muloqot qildilar.",
@@ -149,6 +159,8 @@ const CalendarScreen = (function () {
     {
       id:'barat', icon:'🌙', type:'muhim', color:'#5b9bd5',
       nomi:'Barat kechasi', nomi_cyr:'Барот кечаси', nomi_ru:'Ночь Бараат', nomi_en:"Laylat al-Bara'ah", arNomi:"ليلة البراءة",
+      nomi_tr:'Berat Gecesi', nomi_kk:'Бәрат кешесі', nomi_tg:'Шаби Барот', nomi_ky:'Бараат кечеси',
+      nomi_de:'Nacht der Vergebung', nomi_fr:'Nuit du Pardon', nomi_id:"Lailatul Bara'ah", nomi_hi:'बरात की रात', nomi_ur:'شب برات',
       hYear:1448, hMonth:8, hDay:15,
       qisqa:"Sha'bonning 15-kechasi — ko'p olimlar bu kechada duolar qabul bo'lishi haqida rivoyatlar keltirgan.",
       muhim:"Ba'zi hadislarda bu kechada Alloh bandalarining gunohlarini kechirishi tilga olinadi. Shuningdek bu oy Payg'ambar s.a.v. eng ko'p ro'za tutgan oy.",
@@ -160,6 +172,8 @@ const CalendarScreen = (function () {
     {
       id:'ramazon', icon:'🌙', type:'bayram', color:'#4fcfa0',
       nomi:'Ramazon boshi', nomi_cyr:'Рамазон боши', nomi_ru:'Начало Рамадана', nomi_en:'Beginning of Ramadan', arNomi:'بداية رمضان',
+      nomi_tr:'Ramazan Başlangıcı', nomi_kk:'Рамазан басталуы', nomi_tg:'Оғози Рамазон', nomi_ky:'Рамазан башталуу',
+      nomi_de:'Beginn des Ramadans', nomi_fr:'Début du Ramadan', nomi_id:'Awal Ramadan', nomi_hi:'रमजान की शुरुआत', nomi_ur:'رمضان کا آغاز',
       hYear:1448, hMonth:9, hDay:1,
       qisqa:"Islomning to'rtinchi rukni — Ramazon ro'zasining boshlanishi.",
       muhim:"Ramazon — Qur'on nozil bo'lgan muborak oy. Bu oyda ro'za tutish har bir baquvvat, baliq musulmonga farz.",
@@ -171,6 +185,8 @@ const CalendarScreen = (function () {
     {
       id:'qadr', icon:'✨', type:'eng_muhim', color:'#c084fc',
       nomi:'Qadr kechasi', nomi_cyr:'Қадр кечаси', nomi_ru:'Ночь Кадр', nomi_en:'Laylat al-Qadr', arNomi:'ليلة القدر',
+      nomi_tr:'Kadir Gecesi', nomi_kk:'Қадір кешесі', nomi_tg:'Шаби Қадр', nomi_ky:'Кадыр кечеси',
+      nomi_de:'Nacht der Macht', nomi_fr:'Nuit du Destin', nomi_id:'Lailatul Qadar', nomi_hi:'लैलतुल क़द्र', nomi_ur:'لیلۃ القدر',
       hYear:1448, hMonth:9, hDay:27,
       qisqa:"Ming oydan yaxshiroq kecha — Qur'on nozil bo'lishining boshlanishi.",
       muhim:"Bu kecha Alloh tomonidan ming oydan afzal deb belgilangan. Jabroil a.s. va boshqa farishtalar yerga tushadilar. Tong otguncha tinchlik va xayir hukm suradi.",
@@ -182,6 +198,8 @@ const CalendarScreen = (function () {
     {
       id:'iyd_fitr', icon:'🎉', type:'bayram', color:'#4fcfa0',
       nomi:'Iyd al-Fitr', nomi_cyr:'Ийд ал-Фитр', nomi_ru:'Ид аль-Фитр', nomi_en:'Eid al-Fitr', arNomi:'عيد الفطر',
+      nomi_tr:'Ramazan Bayramı', nomi_kk:'Ораза айт', nomi_tg:'Иди Фитр', nomi_ky:'Орозо айт',
+      nomi_de:'Eid al-Fitr', nomi_fr:'Aïd al-Fitr', nomi_id:'Hari Raya Idul Fitri', nomi_hi:'ईद अल-फित्र', nomi_ur:'عید الفطر',
       hYear:1448, hMonth:10, hDay:1,
       qisqa:"Ramazon ro'zasini muvaffaqiyatli tugatganlik sharafiga bayram — Fitr hayiti.",
       muhim:"Ramazon oyini ro'za tutib tugatganlarga Allohning sovg'asi. Bu kunda ro'za tutish harom, bayram namozi sunnati muakkada.",
@@ -193,16 +211,142 @@ const CalendarScreen = (function () {
   ];
 
   const SPECIAL = [
-    { m:1,  d:1,  type:'bayram',    color:'#4fcfa0', uz:'Yangi Hijriy yil',  cyr:'Янги Ҳижрий йил',    ru:'Исламский Новый год',  en:'Islamic New Year',      desc:'Hijriy yangi yil boshlanadi',          desc_cyr:'Ҳижрий янги йил бошланади',        desc_ru:'Начало исламского года',           desc_en:'Islamic new year begins'             },
-    { m:1,  d:10, type:'muhim',     color:'#E8C15A', uz:'Ashura kuni',        cyr:'Ашура куни',          ru:'День Ашура',           en:'Day of Ashura',         desc:"Ro'za tutish mustahab",                 desc_cyr:"Рўза тутиш мустаҳаб",              desc_ru:'Рекомендуется поститься',          desc_en:'Fasting is recommended'             },
-    { m:7,  d:27, type:'muhim',     color:'#E8C15A', uz:"Isro' va Me'roj",    cyr:"Исро ва Меърож",     ru:'Исра и Мирадж',        en:"Isra' and Mi'raj",     desc:"Payg'ambar s.a.v. me'roj kechasi",     desc_cyr:"Пайғамбар с.а.в. меърож кечаси", desc_ru:'Ночь вознесения Пророка ﷺ',        desc_en:"Night of Prophet's ﷺ Ascension"      },
-    { m:8,  d:15, type:'muhim',     color:'#E8C15A', uz:'Barat kechasi',      cyr:'Барот кечаси',       ru:'Ночь Бараат',          en:"Laylat al-Bara'ah",    desc:"Qabrlarni ziyorat qilish",              desc_cyr:"Қабрларни зиёрат қилиш",          desc_ru:'Посещение кладбищ',                desc_en:'Night of forgiveness'               },
-    { m:9,  d:1,  type:'bayram',    color:'#4fcfa0', uz:'Ramazon boshi',      cyr:'Рамазон боши',       ru:'Начало Рамадана',      en:'Start of Ramadan',     desc:"Ro'za boshlanadi",                      desc_cyr:"Рўза бошланади",                  desc_ru:'Начало поста',                     desc_en:'Fasting begins'                     },
-    { m:9,  d:27, type:'eng_muhim', color:'#c084fc', uz:'Qadr kechasi',       cyr:'Қадр кечаси',        ru:'Ночь Кадр',            en:'Laylat al-Qadr',       desc:'Ming oydan yaxshi kecha',               desc_cyr:'Минг ойдан яхши кеча',            desc_ru:'Ночь лучше тысячи месяцев',       desc_en:'Better than a thousand months'      },
-    { m:10, d:1,  type:'bayram',    color:'#4fcfa0', uz:'Iyd al-Fitr',        cyr:'Ийд ал-Фитр',        ru:'Ид аль-Фитр',          en:'Eid al-Fitr',          desc:'Ramazon hayiti',                        desc_cyr:'Рамазон ҳайити',                  desc_ru:'Праздник разговения',             desc_en:'Festival of Breaking the Fast'     },
-    { m:12, d:9,  type:'muhim',     color:'#E8C15A', uz:'Arafa kuni',         cyr:'Арафа куни',          ru:'День Арафа',           en:'Day of Arafah',        desc:"Ro'za tutish afzal",                    desc_cyr:"Рўза тутиш афзал",                desc_ru:'Рекомендуется поститься',          desc_en:'Fasting is recommended'            },
-    { m:12, d:10, type:'bayram',    color:'#4fcfa0', uz:'Iyd al-Adha',        cyr:'Ийд ал-Адҳа',        ru:'Ид аль-Адха',          en:'Eid al-Adha',          desc:'Qurbon hayiti',                         desc_cyr:'Қурбон ҳайити',                   desc_ru:'Праздник жертвоприношения',       desc_en:'Festival of Sacrifice'            },
+    { m:1,  d:1,  type:'bayram',    color:'#4fcfa0',
+      uz:'Yangi Hijriy yil',  cyr:'Янги Ҳижрий йил',  ru:'Исламский Новый год', en:'Islamic New Year',
+      ar:'رأس السنة الهجرية', tr:'İslam Yeni Yılı',    kk:'Ислам Жаңа жылы',    tg:'Соли нави ислом',
+      ky:'Ислам жаны жылы',   de:'Islamisches Neujahr',fr:'Nouvel An Islamique', id:'Tahun Baru Islam',
+      hi:'इस्लामी नया साल',   ur:'اسلامی نیا سال',
+      desc:'Hijriy yangi yil boshlanadi',          desc_cyr:'Ҳижрий янги йил бошланади',
+      desc_ru:'Начало исламского года',            desc_en:'Islamic new year begins',
+      desc_ar:'يبدأ العام الهجري الجديد',          desc_tr:'İslam yeni yılı başlıyor',
+      desc_kk:'Ислам жаңа жылы басталады',         desc_tg:'Соли нави ҳиҷрӣ оғоз меёбад',
+      desc_ky:'Ислам жаны жылы башталат',          desc_de:'Das islamische Neujahr beginnt',
+      desc_fr:"Le Nouvel An islamique commence",   desc_id:'Tahun baru Islam dimulai',
+      desc_hi:'इस्लामी नया साल शुरू होता है',     desc_ur:'اسلامی نیا سال شروع ہوتا ہے',
+    },
+    { m:1,  d:10, type:'muhim',     color:'#E8C15A',
+      uz:'Ashura kuni',       cyr:'Ашура куни',        ru:'День Ашура',          en:'Day of Ashura',
+      ar:'يوم عاشوراء',       tr:'Aşure Günü',          kk:'Ашура күні',          tg:'Рӯзи Ошура',
+      ky:'Ашура күнү',        de:'Tag von Ashura',      fr:"Jour d'Achoura",      id:'Hari Asyura',
+      hi:'अशूरा का दिन',     ur:'یوم عاشورا',
+      desc:"Ro'za tutish mustahab",                desc_cyr:"Рўза тутиш мустаҳаб",
+      desc_ru:'Рекомендуется поститься',           desc_en:'Fasting is recommended',
+      desc_ar:'الصيام مستحب', desc_tr:'Oruç tutmak müstehaptır',
+      desc_kk:'Ораза ұстау мүстеһап',             desc_tg:'Рӯза гирифтан мустаҳаб аст',
+      desc_ky:'Ороза кармоо мустахаб',             desc_de:'Fasten ist empfohlen',
+      desc_fr:'Il est recommandé de jeûner',       desc_id:'Puasa dianjurkan',
+      desc_hi:'रोज़ा रखना मुस्तहब है',            desc_ur:'روزہ رکھنا مستحب ہے',
+    },
+    { m:7,  d:27, type:'muhim',     color:'#E8C15A',
+      uz:"Isro' va Me'roj",   cyr:"Исро ва Меърож",    ru:'Исра и Мирадж',       en:"Isra' and Mi'raj",
+      ar:'الإسراء والمعراج',  tr:'İsra ve Miraç',       kk:'Исра жəне Мирадж',    tg:'Исро ва Меъроҷ',
+      ky:'Исра жана Мирадж',  de:'Isra und Miraj',      fr:"Isra' et Mi'raj",     id:'Isra Miraj',
+      hi:'इसरा और मेराज',     ur:'اسراء اور معراج',
+      desc:"Payg'ambar s.a.v. me'roj kechasi",    desc_cyr:"Пайғамбар с.а.в. меърож кечаси",
+      desc_ru:'Ночь вознесения Пророка ﷺ',         desc_en:"Night of Prophet's ﷺ Ascension",
+      desc_ar:'ليلة المعراج للنبي ﷺ',             desc_tr:'Peygamber ﷺ miracı kecesi',
+      desc_kk:'Пайғамбар ﷺ мирадж кешесі',        desc_tg:'Шаби Меъроҷи Паёмбар ﷺ',
+      desc_ky:'Пайгамбар ﷺ мирадж кечеси',        desc_de:"Nacht der Himmelfahrt des Propheten ﷺ",
+      desc_fr:"Nuit de l'ascension du Prophète ﷺ",desc_id:'Malam Isra Miraj Nabi ﷺ',
+      desc_hi:'नबी ﷺ की मेराज की रात',            desc_ur:'نبی ﷺ کی معراج کی رات',
+    },
+    { m:8,  d:15, type:'muhim',     color:'#E8C15A',
+      uz:'Barat kechasi',     cyr:'Барот кечаси',      ru:'Ночь Бараат',         en:"Laylat al-Bara'ah",
+      ar:'ليلة البراءة',      tr:'Berat Gecesi',        kk:'Бәрат кешесі',        tg:'Шаби Барот',
+      ky:'Бараат кечеси',     de:'Nacht der Vergebung', fr:'Nuit du Pardon',      id:"Lailatul Bara'ah",
+      hi:'बरात की रात',       ur:'شب برات',
+      desc:"Qabrlarni ziyorat qilish",            desc_cyr:"Қабрларни зиёрат қилиш",
+      desc_ru:'Посещение кладбищ',                desc_en:'Night of forgiveness',
+      desc_ar:'زيارة القبور والتوبة',              desc_tr:'Kabir ziyareti yapılır',
+      desc_kk:'Зираттарды зиярат ету',             desc_tg:'Зиёрати қабрҳо',
+      desc_ky:'Маза зыярат кылуу',                 desc_de:'Nacht der Buße und Vergebung',
+      desc_fr:'Nuit du pardon et de la repentance',desc_id:'Malam pengampunan',
+      desc_hi:'क्षमा की रात',                     desc_ur:'بخشش کی رات',
+    },
+    { m:9,  d:1,  type:'bayram',    color:'#4fcfa0',
+      uz:'Ramazon boshi',     cyr:'Рамазон боши',      ru:'Начало Рамадана',     en:'Start of Ramadan',
+      ar:'بداية رمضان',       tr:'Ramazan Başlangıcı',  kk:'Рамазан басталуы',    tg:'Оғози Рамазон',
+      ky:'Рамазан башталуу',  de:'Beginn des Ramadans', fr:'Début du Ramadan',    id:'Awal Ramadan',
+      hi:'रमजान की शुरुआत',   ur:'رمضان کا آغاز',
+      desc:"Ro'za boshlanadi",                     desc_cyr:"Рўза бошланади",
+      desc_ru:'Начало поста',                      desc_en:'Fasting begins',
+      desc_ar:'يبدأ الصيام',  desc_tr:'Oruç başlıyor',
+      desc_kk:'Ораза басталады',                   desc_tg:'Рӯза оғоз меёбад',
+      desc_ky:'Ороза башталат',                    desc_de:'Das Fasten beginnt',
+      desc_fr:'Le jeûne commence',                 desc_id:'Puasa dimulai',
+      desc_hi:'रोज़ा शुरू होता है',               desc_ur:'روزہ شروع ہوتا ہے',
+    },
+    { m:9,  d:27, type:'eng_muhim', color:'#c084fc',
+      uz:'Qadr kechasi',      cyr:'Қадр кечаси',       ru:'Ночь Кадр',           en:'Laylat al-Qadr',
+      ar:'ليلة القدر',        tr:'Kadir Gecesi',        kk:'Қадір кешесі',        tg:'Шаби Қадр',
+      ky:'Кадыр кечеси',      de:'Nacht der Macht',     fr:'Nuit du Destin',      id:'Lailatul Qadar',
+      hi:'लैलतुल क़द्र',      ur:'لیلۃ القدر',
+      desc:'Ming oydan yaxshi kecha',              desc_cyr:'Минг ойдан яхши кеча',
+      desc_ru:'Ночь лучше тысячи месяцев',        desc_en:'Better than a thousand months',
+      desc_ar:'خير من ألف شهر',                   desc_tr:'Bin aydan hayırlı gece',
+      desc_kk:'Мың айдан қайырлы кеше',           desc_tg:'Аз ҳазор моҳ беҳтар',
+      desc_ky:'Миң айдан жакшы кеча',             desc_de:'Besser als tausend Monate',
+      desc_fr:'Meilleure que mille mois',          desc_id:'Lebih baik dari seribu bulan',
+      desc_hi:'हज़ार महीनों से बेहतर',             desc_ur:'ہزار مہینوں سے بہتر',
+    },
+    { m:10, d:1,  type:'bayram',    color:'#4fcfa0',
+      uz:'Iyd al-Fitr',       cyr:'Ийд ал-Фитр',       ru:'Ид аль-Фитр',         en:'Eid al-Fitr',
+      ar:'عيد الفطر',         tr:'Ramazan Bayramı',     kk:'Ораза айт',           tg:'Иди Фитр',
+      ky:'Орозо айт',         de:'Eid al-Fitr',         fr:'Aïd al-Fitr',         id:'Hari Raya Idul Fitri',
+      hi:'ईद अल-फित्र',      ur:'عید الفطر',
+      desc:'Ramazon hayiti',                       desc_cyr:'Рамазон ҳайити',
+      desc_ru:'Праздник разговения',               desc_en:'Festival of Breaking the Fast',
+      desc_ar:'عيد الفطر المبارك',                desc_tr:'Ramazan Bayramı kutlu olsun',
+      desc_kk:'Ораза айт мерекесі',               desc_tg:'Иди Фитри муборак',
+      desc_ky:'Орозо айт майрамы',                 desc_de:'Fest des Fastenbrechens',
+      desc_fr:'Fête de la rupture du jeûne',       desc_id:'Hari Raya Idul Fitri',
+      desc_hi:'ईद उल-फितर',                       desc_ur:'عید الفطر مبارک',
+    },
+    { m:12, d:9,  type:'muhim',     color:'#E8C15A',
+      uz:'Arafa kuni',        cyr:'Арафа куни',         ru:'День Арафа',          en:'Day of Arafah',
+      ar:'يوم عرفة',          tr:'Arefe Günü',           kk:'Арафа күні',          tg:'Рӯзи Арафа',
+      ky:'Арафа күнү',        de:'Tag von Arafah',       fr:"Jour d'Arafah",       id:'Hari Arafah',
+      hi:'अरफा का दिन',      ur:'یوم عرفہ',
+      desc:"Ro'za tutish afzal",                   desc_cyr:"Рўза тутиш афзал",
+      desc_ru:'Рекомендуется поститься',           desc_en:'Fasting is recommended',
+      desc_ar:'الصيام أفضل',  desc_tr:'Oruç tutmak efdaldir',
+      desc_kk:'Ораза ұстау артық',                 desc_tg:'Рӯза гирифтан афзал аст',
+      desc_ky:'Ороза кармоо афзал',                desc_de:'Fasten ist vorzuziehen',
+      desc_fr:'Le jeûne est préférable',           desc_id:'Puasa lebih utama',
+      desc_hi:'रोज़ा रखना अफज़ल है',              desc_ur:'روزہ رکھنا افضل ہے',
+    },
+    { m:12, d:10, type:'bayram',    color:'#4fcfa0',
+      uz:'Iyd al-Adha',       cyr:'Ийд ал-Адҳа',       ru:'Ид аль-Адха',         en:'Eid al-Adha',
+      ar:'عيد الأضحى',        tr:'Kurban Bayramı',      kk:'Құрбан айт',          tg:'Иди Қурбон',
+      ky:'Курман айт',        de:'Eid al-Adha',         fr:'Aïd al-Adha',         id:'Hari Raya Idul Adha',
+      hi:'ईद अल-अधा',        ur:'عید الاضحی',
+      desc:'Qurbon hayiti',                        desc_cyr:'Қурбон ҳайити',
+      desc_ru:'Праздник жертвоприношения',         desc_en:'Festival of Sacrifice',
+      desc_ar:'عيد الأضحى المبارك',               desc_tr:'Kurban Bayramı kutlu olsun',
+      desc_kk:'Құрбан айт мерекесі',              desc_tg:'Иди Қурбони муборак',
+      desc_ky:'Курман айт майрамы',               desc_de:'Fest des Opfers',
+      desc_fr:'Fête du Sacrifice',                 desc_id:'Hari Raya Idul Adha',
+      desc_hi:'ईद उल-अज़हा',                      desc_ur:'عید الاضحی مبارک',
+    },
   ];
+
+  /* ── Weekday short names (Mon → Sun), all 14 langs ── */
+  const _WD_MAP = {
+    uz:     ['Du','Se','Ch','Pa','Ju','Sh','Ya'],
+    uz_cyr: ['Душ','Сеш','Чор','Пай','Жум','Шан','Якш'],
+    ru:     ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'],
+    en:     ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+    ar:     ['إث','ثل','أر','خم','جم','سب','أح'],
+    tr:     ['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'],
+    kk:     ['Дс','Сс','Ср','Бс','Жм','Сн','Жк'],
+    tg:     ['Дш','Сш','Чш','Пш','Ҷм','Шн','Як'],
+    ky:     ['Дш','Шш','Шр','Бш','Жм','Иш','Жк'],
+    de:     ['Mo','Di','Mi','Do','Fr','Sa','So'],
+    fr:     ['Lu','Ma','Me','Je','Ve','Sa','Di'],
+    id:     ['Sen','Sel','Rab','Kam','Jum','Sab','Min'],
+    hi:     ['सोम','मंगल','बुध','गुरु','शुक्र','शनि','रवि'],
+    ur:     ['پیر','منگل','بدھ','جمرات','جمعہ','ہفتہ','اتوار'],
+  };
 
   /* ── Language helpers ── */
   function _T(lat, cyr, ru, en) { return _resolveT(lat, cyr, ru, en, _lang); }
@@ -243,10 +387,19 @@ const CalendarScreen = (function () {
       .replace(/Z/g,'З').replace(/z/g,'з');
   }
   function _evName(ev) {
-    if (_lang === 'uz_cyr' && ev.nomi_cyr) return ev.nomi_cyr;
-    if (_lang === 'ru' && ev.nomi_ru) return ev.nomi_ru;
-    if (_lang === 'en' && ev.nomi_en) return ev.nomi_en;
-    return ev.nomi;
+    if (_lang === 'ar') return ev.arNomi || ev.nomi_en || ev.nomi;
+    const k = 'nomi_' + _lang;
+    if (ev[k]) return ev[k];
+    return ev.nomi_en || ev.nomi;
+  }
+  function _spName(sp) {
+    if (_lang === 'uz_cyr') return sp.cyr || sp.uz;
+    const k = _lang === 'ar' ? 'ar' : _lang;
+    return sp[k] || sp.en || sp.uz;
+  }
+  function _spDesc(sp) {
+    const k = 'desc_' + (_lang === 'uz_cyr' ? 'cyr' : _lang);
+    return sp[k] || sp.desc_en || sp.desc;
   }
   function _evTxt(obj, field) {
     if (!obj) return '';
@@ -421,13 +574,7 @@ const CalendarScreen = (function () {
 
   /* ── Tab 1: Taqvim ── */
   function _buildTaqvimTab() {
-    const WD = _lang === 'uz_cyr'
-      ? ['Душ','Сеш','Чор','Пай','Жум','Шан','Якш']
-      : _lang === 'ru'
-      ? ['Пн','Вт','Ср','Чт','Пт','Сб','Вс']
-      : _lang === 'en'
-      ? ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
-      : ['Du','Se','Ch','Pa','Ju','Sh','Ya'];
+    const WD = _WD_MAP[_lang] || _WD_MAP.uz;
     const dim = _hijriDaysInMonth(_viewYear, _viewMonth);
     const fJdn = _hijriToJdn(_viewYear, _viewMonth, 1);
     const startWday = fJdn % 7;
@@ -476,7 +623,7 @@ const CalendarScreen = (function () {
     </div>
     <div class="hc-sel-num">${_selDay}</div>
   </div>
-  ${selSp ? `<div class="hc-sel-event"><span class="hc-sel-ev-name" style="color:${selSp.color}">${_lang==='uz_cyr'?(selSp.cyr||selSp.uz):_lang==='ru'?(selSp.ru||selSp.uz):_lang==='en'?(selSp.en||selSp.uz):selSp.uz}</span> <span class="hc-sel-ev-desc">— ${_lang==='uz_cyr'?(selSp.desc_cyr||selSp.desc):_lang==='ru'?(selSp.desc_ru||selSp.desc):_lang==='en'?(selSp.desc_en||selSp.desc):selSp.desc}</span></div>` : ''}
+  ${selSp ? `<div class="hc-sel-event"><span class="hc-sel-ev-name" style="color:${selSp.color}">${_spName(selSp)}</span> <span class="hc-sel-ev-desc">— ${_spDesc(selSp)}</span></div>` : ''}
 </div>`;
   }
 

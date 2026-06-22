@@ -36,13 +36,13 @@ const DuasScreen = (function () {
   }
 
   const CAT_META = {
-    morning: { ar: 'دعاء الصباح',    uz: 'Tong duosi',      uz_cyr: 'Тонг дуоси',      ru: 'Утренняя дуа',   en: 'Morning Dua'   },
-    evening: { ar: 'دعاء المساء',    uz: 'Kech duosi',      uz_cyr: 'Кеч дуоси',       ru: 'Вечерняя дуа',   en: 'Evening Dua'   },
-    food:    { ar: 'دعاء الطعام',    uz: 'Ovqat',           uz_cyr: 'Овқат',            ru: 'Еда',            en: 'Food'           },
-    travel:  { ar: 'دعاء السفر',     uz: 'Safar',           uz_cyr: 'Сафар',            ru: 'Путешествие',    en: 'Travel'         },
-    sleep:   { ar: 'دعاء النوم',     uz: 'Uxlash',          uz_cyr: 'Уxлаш',           ru: 'Сон',            en: 'Sleep'          },
-    mosque:  { ar: 'دعاء المسجد',    uz: 'Masjid',          uz_cyr: 'Масжид',           ru: 'Мечеть',         en: 'Mosque'         },
-    general: { ar: 'الأدعية العامة', uz: "Umumiy du'olar",  uz_cyr: 'Умумий дуолар',   ru: 'Общие дуа',      en: 'General Duas'   },
+    morning: { uz:'Tong duosi',     uz_cyr:'Тонг дуоси',    ru:'Утренняя дуа',    en:'Morning Dua',   ar:'دعاء الصباح',    tr:'Sabah Duası',     kk:'Таң дұғасы',      tg:'Дуои субҳ',       ky:'Таң дуасы',      de:'Morgendua',            fr:'Dua du matin',      id:'Doa Pagi',         hi:'सुबह की दुआ',   ur:'صبح کی دعا'    },
+    evening: { uz:'Kech duosi',     uz_cyr:'Кеч дуоси',     ru:'Вечерняя дуа',    en:'Evening Dua',   ar:'دعاء المساء',    tr:'Akşam Duası',     kk:'Кеш дұғасы',      tg:'Дуои шом',        ky:'Кеч дуасы',      de:'Abenddua',             fr:'Dua du soir',       id:'Doa Sore',         hi:'शाम की दुआ',    ur:'شام کی دعا'    },
+    food:    { uz:'Ovqat',          uz_cyr:'Овқат',          ru:'Еда',             en:'Food',          ar:'دعاء الطعام',    tr:'Yemek Duası',     kk:'Тамақ дұғасы',    tg:'Дуои хӯрок',      ky:'Тамак дуасы',    de:'Essensdua',            fr:'Dua pour les repas',id:'Doa Makan',        hi:'खाने की दुआ',   ur:'کھانے کی دعا'  },
+    travel:  { uz:'Safar',          uz_cyr:'Сафар',          ru:'Путешествие',     en:'Travel',        ar:'دعاء السفر',     tr:'Yolculuk Duası',  kk:'Саяхат дұғасы',   tg:'Дуои сафар',      ky:'Саяхат дуасы',   de:'Reisedua',             fr:'Dua du voyage',     id:'Doa Perjalanan',   hi:'यात्रा की दुआ', ur:'سفر کی دعا'    },
+    sleep:   { uz:'Uxlash',         uz_cyr:'Уxлаш',         ru:'Сон',             en:'Sleep',         ar:'دعاء النوم',     tr:'Uyku Duası',      kk:'Ұйқы дұғасы',     tg:'Дуои хоб',        ky:'Уйку дуасы',     de:'Schlafdua',            fr:'Dua du coucher',    id:'Doa Tidur',        hi:'सोने की दुआ',   ur:'سونے کی دعا'   },
+    mosque:  { uz:'Masjid',         uz_cyr:'Масжид',         ru:'Мечеть',          en:'Mosque',        ar:'دعاء المسجد',    tr:'Cami Duası',      kk:'Мешіт дұғасы',    tg:'Дуои масҷид',     ky:'Мечит дуасы',    de:'Moscheendua',          fr:'Dua pour la mosquée',id:'Doa Masjid',      hi:'मस्जिद की दुआ', ur:'مسجد کی دعا'   },
+    general: { uz:"Umumiy du'olar", uz_cyr:'Умумий дуолар', ru:'Общие дуа',       en:'General Duas',  ar:'الأدعية العامة', tr:'Genel Dualar',    kk:'Жалпы дұғалар',   tg:'Дуоҳои умумӣ',   ky:'Жалпы дуалар',   de:'Allgemeine Duas',      fr:'Duas générales',    id:'Doa-doa Umum',     hi:'सामान्य दुआएँ', ur:'عام دعائیں'    },
   };
 
   /* ══════════════════════════════════════════════

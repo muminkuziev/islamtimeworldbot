@@ -15,7 +15,25 @@
   const {
     App, StatusBar, SplashScreen,
     PushNotifications, Haptics, Network,
+    Geolocation,
   } = Plugins;
+
+  /* ── Location permission helper (called by screens that need GPS) ── */
+  window._requestLocationPermission = async function () {
+    if (!Geolocation) return true; /* no plugin — let navigator.geolocation handle it */
+    try {
+      const perm = await Geolocation.checkPermissions();
+      /* Accept fine OR coarse location */
+      if (perm.location === 'granted' || perm.coarseLocation === 'granted') return true;
+      /* Always request — even if status is 'denied' (Samsung can mis-report on fresh install) */
+      const req = await Geolocation.requestPermissions({
+        permissions: ['location', 'coarseLocation'],
+      });
+      return req.location === 'granted' || req.coarseLocation === 'granted';
+    } catch (e) {
+      return true; /* fall through to navigator.geolocation */
+    }
+  };
 
   /* ── Device ID (stable UUID per install) ────────────────── */
   function _deviceId() {
@@ -36,7 +54,6 @@
   if (StatusBar) {
     StatusBar.setStyle({ style: 'DARK' }).catch(() => {});
     StatusBar.setBackgroundColor({ color: '#080D1A' }).catch(() => {});
-    StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
   }
 
   /* ── Splash Screen ──────────────────────────────────────── */

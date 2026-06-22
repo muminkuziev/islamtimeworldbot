@@ -11,7 +11,7 @@ const MosquesScreen = (function () {
   const RADIUS_DEFAULT = 10000;
   const RADIUS_EXPAND  = 20000;
   const RADIUS_MAX     = 50000;
-  const GEO_TIMEOUT    = 10000;   /* ms to wait for browser geolocation */
+  const GEO_TIMEOUT    = 8000;    /* ms to wait for geolocation (fallback to error UI) */
 
   /* Cache key is per-language so city names are always in the right script */
   function _cacheKey() { return 'islamtime_mosques_' + _lang + '_v2'; }
@@ -104,26 +104,39 @@ const MosquesScreen = (function () {
       }
     }
 
-    /* 4. Browser geolocation — wait up to GEO_TIMEOUT then show request UI */
-    if (navigator.geolocation) {
-      _loadTimer = setTimeout(_showNoLocation, GEO_TIMEOUT);
-      navigator.geolocation.getCurrentPosition(
-        pos => {
-          clearTimeout(_loadTimer);
-          if (_mosques.length) return;  /* already resolved by another path */
-          _lat = pos.coords.latitude;
-          _lon = pos.coords.longitude;
-          localStorage.setItem('islamtime_last_lat', _lat);
-          localStorage.setItem('islamtime_last_lon', _lon);
-          _saveLocationToServer(_lat, _lon, '');
-          _fetchMosques(false);
-        },
-        () => { clearTimeout(_loadTimer); _showNoLocation(); },
-        { timeout: GEO_TIMEOUT, maximumAge: 300000, enableHighAccuracy: false }
-      );
-    } else {
+    /* 4. Geolocation — Capacitor (Android native) or browser fallback */
+    console.log('[GPS] mosques: request started');
+    _loadTimer = setTimeout(() => {
+      console.log('[GPS] mosques: timeout after', GEO_TIMEOUT, 'ms');
       _showNoLocation();
+    }, GEO_TIMEOUT);
+
+    if (!navigator.geolocation) {
+      clearTimeout(_loadTimer);
+      console.log('[GPS] geolocation not available');
+      _showNoLocation();
+      return;
     }
+
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        clearTimeout(_loadTimer);
+        if (_mosques.length) return;
+        console.log('[GPS] success lat=' + pos.coords.latitude.toFixed(5) + ' lon=' + pos.coords.longitude.toFixed(5));
+        _lat = pos.coords.latitude;
+        _lon = pos.coords.longitude;
+        localStorage.setItem('islamtime_last_lat', _lat);
+        localStorage.setItem('islamtime_last_lon', _lon);
+        _saveLocationToServer(_lat, _lon, '');
+        _fetchMosques(false);
+      },
+      err => {
+        clearTimeout(_loadTimer);
+        console.log('[GPS] error code=' + err.code + ' msg=' + err.message);
+        _showNoLocation();
+      },
+      { timeout: GEO_TIMEOUT - 500, maximumAge: 300000, enableHighAccuracy: false }
+    );
   }
 
   /* No coords available — ask user to share location */
@@ -182,11 +195,14 @@ const MosquesScreen = (function () {
     _loading = true;
     _refreshBody();
 
-    if (!navigator.geolocation) { _showNoLocation(); return; }
-    _loadTimer = setTimeout(_showNoLocation, GEO_TIMEOUT);
+    console.log('[GPS] mosques: change location request');
+    _loadTimer = setTimeout(() => { console.log('[GPS] timeout'); _showNoLocation(); }, GEO_TIMEOUT);
+
+    if (!navigator.geolocation) { clearTimeout(_loadTimer); _showNoLocation(); return; }
     navigator.geolocation.getCurrentPosition(
       pos => {
         clearTimeout(_loadTimer);
+        console.log('[GPS] success lat=' + pos.coords.latitude.toFixed(5));
         _lat = pos.coords.latitude;
         _lon = pos.coords.longitude;
         localStorage.setItem('islamtime_last_lat', _lat);
@@ -195,8 +211,8 @@ const MosquesScreen = (function () {
         _city = '';
         _fetchMosques(false);
       },
-      () => { clearTimeout(_loadTimer); _showNoLocation(); },
-      { timeout: GEO_TIMEOUT, enableHighAccuracy: true }
+      err => { clearTimeout(_loadTimer); console.log('[GPS] error', err?.code); _showNoLocation(); },
+      { timeout: GEO_TIMEOUT - 500, enableHighAccuracy: true }
     );
     window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('medium');
   }
@@ -348,15 +364,21 @@ out center tags;`.trim();
     if (_noLocation) {
       return `<div class="ms-noloc">
         <div class="ms-noloc-icon">📍</div>
-        <div class="ms-noloc-title">${_T("Lokatsiya topilmadi","Локация топилмади","Местоположение не найдено","Location not found")}</div>
+        <div class="ms-noloc-title">${_T("Joylashuv aniqlanmadi","Жойлашув аниқланмади","Местоположение не определено","Location not found")}</div>
         <div class="ms-noloc-text">${_T(
-          "Yaqin masjidlarni ko'rish uchun lokatsiyangizni yuboring.",
-          "Яқин масжидларни кўриш учун локациянгизни юборинг.",
-          "Поделитесь геолокацией для поиска мечетей.",
-          "Share your location to find nearby mosques."
+          "GPS ruxsat berilmagan yoki signal yo'q. Qayta urinib ko'ring yoki shahar tanlang.",
+          "GPS рухсат берилмаган ёки сигнал йўқ. Қайта уриниб кўринг ёки шаҳар танланг.",
+          "GPS недоступен. Повторите попытку или выберите город.",
+          "GPS unavailable. Retry or select a city."
         )}</div>
         <button class="ms-noloc-btn" id="ms-request-loc">
-          📍 ${_T("Lokatsiyani yuborish","Локацияни юбориш","Поделиться геолокацией","Share Location")}
+          🔄 ${_T("Qayta urinish","Қайта уриниш","Повторить","Retry")}
+        </button>
+        <button class="ms-noloc-btn ms-noloc-btn-sec" id="ms-go-location">
+          🏙️ ${_T("Shahar tanlash","Шаҳар танлаш","Выбрать город","Select City")}
+        </button>
+        <button class="ms-noloc-btn ms-noloc-btn-ghost" id="ms-go-home">
+          ← ${_T("Asosiy menyu","Асосий меню","Главное меню","Main Menu")}
         </button>
       </div>`;
     }
@@ -572,7 +594,9 @@ ${_mosques.slice(0, 8).map(m => {
       });
     });
     _el.querySelector('#ms-body')?.addEventListener('click', e => {
-      if (e.target.closest('#ms-request-loc')) { _changeLocation(); return; }
+      if (e.target.closest('#ms-request-loc'))  { _changeLocation(); return; }
+      if (e.target.closest('#ms-go-location'))  { window.App.navigate('screen-location'); return; }
+      if (e.target.closest('#ms-go-home'))      { window.App.navigate('screen-dashboard'); return; }
       if (e.target.closest('#ms-detail-back')) { _selIdx = null; _refreshBody(); return; }
       const mapRow = e.target.closest('.ms-map-row');
       if (mapRow) { _selIdx = parseInt(mapRow.dataset.idx); _refreshBody(); return; }

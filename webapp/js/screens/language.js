@@ -1,5 +1,7 @@
 /* ═══════════════════════════════════════════════════
-   Language Selection Screen — v3
+   Language Selection Screen — v4
+   All strings sourced from I18N (i18n.js) — no local
+   hardcoded text tables.
    ═══════════════════════════════════════════════════ */
 
 const LanguageScreen = (function () {
@@ -7,46 +9,16 @@ const LanguageScreen = (function () {
 
   const TILE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Crect width='60' height='60' fill='%230d1829'/%3E%3Cline x1='0' y1='0' x2='60' y2='60' stroke='%23F5C542' stroke-width='0.2' opacity='0.13'/%3E%3Cline x1='60' y1='0' x2='0' y2='60' stroke='%23F5C542' stroke-width='0.2' opacity='0.13'/%3E%3Ccircle cx='30' cy='30' r='8' fill='none' stroke='%23F5C542' stroke-width='0.3' opacity='0.15'/%3E%3C/svg%3E";
 
-  /* Active: uz, uz_cyr, ru, en — rest temporarily disabled */
-  const WIP_LANGS = new Set(['tr','ar','kk','tg','ky','de','fr','id','hi','ur']);
-
-  /* "Select language" in all 14 languages */
-  const SELECT_LABELS = {
-    uz:     'Tilni tanlang',
-    uz_cyr: 'Тилни танланг',
-    en:     'Select language',
-    ru:     'Выберите язык',
-    tr:     'Dil seçin',
-    ar:     'اختر اللغة',
-    kk:     'Тілді таңдаңыз',
-    tg:     'Забонро интихоб кунед',
-    ky:     'Тилди тандаңыз',
-    de:     'Sprache wählen',
-    fr:     'Choisir la langue',
-    id:     'Pilih bahasa',
-    hi:     'भाषा चुनें',
-    ur:     'زبان منتخب کریں',
-  };
-
-  /* "Continue" in all 14 languages */
-  const CONTINUE_LABELS = {
-    uz:     'Davom etish',
-    uz_cyr: 'Давом этиш',
-    en:     'Continue',
-    ru:     'Продолжить',
-    tr:     'Devam et',
-    ar:     'المتابعة',
-    kk:     'Жалғастыру',
-    tg:     'Идома додан',
-    ky:     'Улантуу',
-    de:     'Weiter',
-    fr:     'Continuer',
-    id:     'Lanjutkan',
-    hi:     'जारी रखें',
-    ur:     'جاری رکھیں',
-  };
+  const WIP_LANGS = new Set();
 
   let _selected = null;
+
+  /* Lookup helper: I18N key → text for given lang, fallback to uz */
+  function _t(key, lang) {
+    const node = I18N[key];
+    if (!node) return '';
+    return node[lang] || node.uz || '';
+  }
 
   function render() {
     const el = document.getElementById('screen-language');
@@ -61,7 +33,7 @@ const LanguageScreen = (function () {
   /* ── HTML ─────────────────────────────────────────────────── */
   function _buildHTML() {
     const sel    = LANG_META.find(l => l.code === _selected) || LANG_META[0];
-    const selLbl = SELECT_LABELS[_selected] || SELECT_LABELS.en;
+    const selLbl = _t('choose_language', _selected);
     return `
       <div class="ls-wrap">
 
@@ -73,9 +45,9 @@ const LanguageScreen = (function () {
             <div class="ls-subrow">
               <span class="ls-sg" id="ls-sel-lbl">${selLbl}</span>
               <span class="ls-sdot">·</span>
-              <span class="ls-sc">${SELECT_LABELS.en}</span>
+              <span class="ls-sc">${_t('choose_language', 'en')}</span>
               <span class="ls-sdot">·</span>
-              <span class="ls-sa">${SELECT_LABELS.ar}</span>
+              <span class="ls-sa">${_t('choose_language', 'ar')}</span>
             </div>
             <div class="ls-divider"></div>
           </div>
@@ -89,7 +61,7 @@ const LanguageScreen = (function () {
 
         <div class="ls-footer">
           <button class="ls-btn" id="ls-btn">
-            <span class="ls-btn-lbl" id="ls-btn-lbl">${CONTINUE_LABELS[sel.code] || sel.name}</span>
+            <span class="ls-btn-lbl" id="ls-btn-lbl">${_t('continue', sel.code)}</span>
             <div class="ls-btn-sep"></div>
             <span class="ls-btn-arr">→</span>
           </button>
@@ -101,11 +73,12 @@ const LanguageScreen = (function () {
   function _cardHTML(l) {
     const wip    = WIP_LANGS.has(l.code);
     const active = !wip && l.code === _selected;
+    const subTxt = wip ? _t('comingSoon', _selected) : (l.sub || '');
     return `
       <div class="ls-card${active ? ' ls-card--on' : ''}${wip ? ' ls-card--wip' : ''}" data-code="${l.code}">
         <div class="ls-flag">${l.flag}</div>
         <div class="ls-name">${l.name}</div>
-        <div class="ls-sub">${wip ? 'tez kunda' : (l.sub || '')}</div>
+        <div class="ls-sub">${subTxt}</div>
         <div class="ls-dot${active ? '' : ' ls-dot--off'}"></div>
       </div>`;
   }
@@ -131,16 +104,20 @@ const LanguageScreen = (function () {
       c.classList.toggle('ls-card--on', on);
       const dot = c.querySelector('.ls-dot');
       if (dot) dot.classList.toggle('ls-dot--off', !on);
+      /* Refresh WIP sub-label in the newly selected language */
+      if (WIP_LANGS.has(c.dataset.code)) {
+        const sub = c.querySelector('.ls-sub');
+        if (sub) sub.textContent = _t('comingSoon', code);
+      }
     });
 
     /* Update header subtitle to reflect selected language */
     const hdr = document.getElementById('ls-sel-lbl');
-    if (hdr) hdr.textContent = SELECT_LABELS[code] || SELECT_LABELS.en;
+    if (hdr) hdr.textContent = _t('choose_language', code);
 
     /* Update Continue button label */
-    const meta = LANG_META.find(l => l.code === code);
-    const lbl  = document.getElementById('ls-btn-lbl');
-    if (lbl && meta) lbl.textContent = CONTINUE_LABELS[code] || meta.name;
+    const lbl = document.getElementById('ls-btn-lbl');
+    if (lbl) lbl.textContent = _t('continue', code);
 
     window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
   }

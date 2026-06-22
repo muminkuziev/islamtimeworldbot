@@ -51,10 +51,19 @@
     if (current) {
       current.classList.add('exit');
       current.classList.remove('active');
-      setTimeout(() => current.classList.remove('exit'), 380);
+      setTimeout(() => {
+        current.classList.remove('exit'); /* CSS sets display:none via .screen default */
+      }, 380);
     }
 
-    next.classList.add('active');
+    /* Two-frame sequence: display→flex first, then trigger transition */
+    next.classList.add('entering');
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        next.classList.add('active');
+        next.classList.remove('entering');
+      });
+    });
 
     /* Update Telegram Back Button */
     if (tg?.BackButton) {
@@ -72,8 +81,8 @@
     });
   }
 
-  /* ── Supported active languages (not WIP) ── */
-  const _ACTIVE_LANGS = new Set(['uz', 'uz_cyr', 'ru', 'en']);
+  /* ── Supported active languages — all 14 enabled ── */
+  const _ACTIVE_LANGS = new Set(['uz','uz_cyr','ru','en','tr','ar','kk','tg','ky','de','fr','id','hi','ur']);
 
   /* ── Auto-detect language from URL param or Telegram SDK ── */
   function _detectLang() {

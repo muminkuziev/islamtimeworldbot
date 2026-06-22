@@ -17,14 +17,23 @@ const HadithScreen = (function () {
     "Iymon", "Tahorat", "Namoz", "Zakot", "Ro'za",
     "Haj", "Savdo", "Nikoh", "Ilm", "Adab", "Zikr", "Qiyomat",
   ];
-  const KATEGORIYALAR_CYR = [
-    "Иймон", "Таҳорат", "Намоз", "Закот", "Рўза",
-    "Ҳаж", "Савдо", "Никоҳ", "Илм", "Адаб", "Зикр", "Қиёмат",
-  ];
-  const KATEGORIYALAR_EN = [
-    "Faith", "Purification", "Prayer", "Zakat", "Fasting",
-    "Hajj", "Trade", "Marriage", "Knowledge", "Manners", "Dhikr", "Judgment Day",
-  ];
+  const KATEGORIYALAR_LANGS = {
+    uz_cyr: ["Иймон","Таҳорат","Намоз","Закот","Рўза","Ҳаж","Савдо","Никоҳ","Илм","Адаб","Зикр","Қиёмат"],
+    ru:     ["Вера","Очищение","Намаз","Закят","Пост","Хадж","Торговля","Никах","Знания","Нравы","Зикр","Судный день"],
+    en:     ["Faith","Purification","Prayer","Zakat","Fasting","Hajj","Trade","Marriage","Knowledge","Manners","Dhikr","Judgment Day"],
+    tr:     ["İman","Taharet","Namaz","Zekât","Oruç","Hac","Ticaret","Nikah","İlim","Edep","Zikir","Kıyamet"],
+    ar:     ["الإيمان","الطهارة","الصلاة","الزكاة","الصيام","الحج","التجارة","النكاح","العلم","الأدب","الذكر","يوم القيامة"],
+    kk:     ["Иман","Тазалық","Намаз","Зекет","Ораза","Қажылық","Сауда","Неке","Білім","Әдеп","Зікір","Қиямет"],
+    tg:     ["Имон","Тоҳорат","Намоз","Закот","Рӯза","Ҳаҷ","Тиҷорат","Никоҳ","Илм","Адаб","Зикр","Қиёмат"],
+    ky:     ["Ыйман","Тазалык","Намаз","Зекет","Ороза","Ажылык","Соода","Никах","Илим","Адеп","Зикир","Кыямат"],
+    de:     ["Glaube","Reinigung","Gebet","Zakat","Fasten","Hajj","Handel","Ehe","Wissen","Benehmen","Dhikr","Jüngstes Gericht"],
+    fr:     ["Foi","Purification","Prière","Zakat","Jeûne","Hajj","Commerce","Mariage","Savoir","Bonnes manières","Dhikr","Jour du Jugement"],
+    id:     ["Iman","Bersuci","Sholat","Zakat","Puasa","Haji","Perdagangan","Pernikahan","Ilmu","Akhlak","Dzikir","Hari Kiamat"],
+    hi:     ["ईमान","पवित्रता","नमाज़","ज़कात","रोज़ा","हज","व्यापार","विवाह","ज्ञान","शिष्टाचार","ज़िक्र","क़यामत"],
+    ur:     ["ایمان","طہارت","نماز","زکوٰۃ","روزہ","حج","تجارت","نکاح","علم","ادب","ذکر","قیامت"],
+  };
+  const KATEGORIYALAR_CYR = KATEGORIYALAR_LANGS.uz_cyr;
+  const KATEGORIYALAR_EN  = KATEGORIYALAR_LANGS.en;
 
   const KAT_ICONS = {
     "Iymon":"🕌","Tahorat":"💧","Namoz":"🙏","Zakot":"💰","Ro'za":"🌙",
@@ -396,7 +405,7 @@ const HadithScreen = (function () {
       const sub = isUzBukhari && cnt
         ? `${cnt.count} ${_T('hadis','ҳадис','хадисов','hadiths')} · ${cnt.chapter_count} ${_T("bo'lim","бўлим","раздел","chapters")}`
         : (isUzBukhari ? '…' : _T("Bo'lim →","Бўлим →","Раздел →","Section →"));
-      const displayName = _lang === 'uz_cyr' ? (KATEGORIYALAR_CYR[idx] || k) : _lang === 'en' ? (KATEGORIYALAR_EN[idx] || k) : k;
+      const displayName = (KATEGORIYALAR_LANGS[_lang]?.[idx]) || (KATEGORIYALAR_LANGS.en[idx]) || k;
       return `<div class="hd-kat-card" data-kat="${_esc(k)}">
   <div class="hd-kat-card-ic">${ic}</div>
   <div class="hd-kat-card-name">${_esc(displayName)}</div>
@@ -711,21 +720,36 @@ ${loading}`;
     return /^Telah\b|^Diceritakan\b|^Dari\b/.test(h.text);
   }
 
+  const _HADITH_UNAVAIL = {
+    uz:     "Ushbu hadis tarjimasi hozircha mavjud emas.",
+    uz_cyr: 'Ушбу ҳадис таржимаси ҳозирча мавжуд эмас.',
+    ru:     'Русский перевод данного хадиса пока не добавлен.',
+    en:     'English translation not yet available.',
+    tr:     'Bu hadisin çevirisi henüz mevcut değil.',
+    ar:     'ترجمة هذا الحديث غير متوفرة بعد.',
+    kk:     'Бұл хадистің аудармасы әзірше қолжетімді емес.',
+    tg:     'Тарҷумаи ин ҳадис ҳанӯз дастрас нест.',
+    ky:     'Бул хадистин котормосу азырынча жеткиликтүү эмес.',
+    de:     'Die Übersetzung dieses Hadith ist noch nicht verfügbar.',
+    fr:     "La traduction de ce hadith n'est pas encore disponible.",
+    id:     'Terjemahan hadis ini belum tersedia.',
+    hi:     'इस हदीस का अनुवाद अभी उपलब्ध नहीं है।',
+    ur:     'اس حدیث کا ترجمہ ابھی دستیاب نہیں ہے۔',
+  };
+
   function _getText(h) {
     if (_lang === 'uz' || _lang === 'uz_cyr') {
       if (h.text) return _lang === 'uz_cyr' ? _cy(h.text) : h.text;
-      return _lang === 'uz_cyr'
-        ? 'Ушбу ҳадис таржимаси ҳозирча мавжуд эмас.'
-        : "Ushbu hadis tarjimasi hozircha mavjud emas.";
+      return _HADITH_UNAVAIL[_lang];
     }
     if (_lang === 'ru') {
       if (!_isRuFallback(h)) return h.text;
-      return 'Русский перевод данного хадиса пока не добавлен.';
+      return _HADITH_UNAVAIL.ru;
     }
     if (_lang === 'en') {
-      return h.text || 'English translation not yet available.';
+      return h.text || _HADITH_UNAVAIL.en;
     }
-    return h.text || '';
+    return h.text || _HADITH_UNAVAIL[_lang] || _HADITH_UNAVAIL.en;
   }
 
   return { render, load };

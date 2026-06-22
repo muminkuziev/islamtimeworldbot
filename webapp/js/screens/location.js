@@ -110,26 +110,138 @@ const LocationScreen = (function () {
     el.querySelector('#lc-skip').addEventListener('click', _skip);
   }
 
+  /* ── GPS error messages (3 error codes: 1=denied, 2=unavailable, 3=timeout) ── */
+  const ERR = {
+    1: {
+      uz:     '❌ GPS ruxsati rad etildi. Sozlamalar → Ilovalar → IslamTimeWorld → Ruxsatlar → Joylashuv',
+      uz_cyr: '❌ GPS рухсати рад этилди. Созламалар → Иловалар → IslamTimeWorld → Рухсатлар → Жойлашув',
+      ru:     '❌ Разрешение GPS отклонено. Настройки → Приложения → IslamTimeWorld → Разрешения → Геолокация',
+      en:     '❌ GPS permission denied. Go to Settings → Apps → IslamTimeWorld → Permissions → Location',
+      ar:     '❌ تم رفض إذن GPS. الإعدادات ← التطبيقات ← الأذونات ← الموقع',
+      tr:     '❌ GPS izni reddedildi. Ayarlar → Uygulamalar → İzinler → Konum',
+      kk:     '❌ GPS рұқсаты берілмеді. Параметрлер → Рұқсаттар → Геолокация',
+      tg:     '❌ Иҷозати GPS рад шуд. Танзимот → Барномаҳо → IslamTimeWorld → Иҷозатҳо → Мавқеат',
+      ky:     '❌ GPS уруксаты четке кагылды. Жөндөөлөр → Тиркемелер → IslamTimeWorld → Уруксаттар → Жайгашуу',
+      de:     '❌ GPS-Berechtigung verweigert. Einstellungen → Apps → IslamTimeWorld → Berechtigungen → Standort',
+      fr:     '❌ Permission GPS refusée. Paramètres → Applications → IslamTimeWorld → Autorisations → Position',
+      id:     '❌ Izin GPS ditolak. Pengaturan → Aplikasi → IslamTimeWorld → Izin → Lokasi',
+      hi:     '❌ GPS अनुमति अस्वीकृत। सेटिंग्स → ऐप्स → IslamTimeWorld → अनुमतियाँ → स्थान',
+      ur:     '❌ GPS اجازت مسترد۔ ترتیبات → ایپس → IslamTimeWorld → اجازتیں → مقام',
+    },
+    2: {
+      uz:     "⚠️ GPS signal topilmadi. Tashqarida yoki deraza yonida qayta urinib ko'ring",
+      uz_cyr: '⚠️ GPS сигнали топилмади. Ташқарида ёки дераза ёнида қайта уриниб кўринг',
+      ru:     '⚠️ GPS сигнал не найден. Попробуйте на улице или у окна',
+      en:     '⚠️ GPS signal not found. Try outdoors or near a window',
+      ar:     '⚠️ لم يتم العثور على إشارة GPS. حاول في الخارج أو بالقرب من النافذة',
+      tr:     '⚠️ GPS sinyali bulunamadı. Dışarıda veya pencere yanında deneyin',
+      kk:     '⚠️ GPS сигналы табылмады. Далада немесе терезе жанында сынап көріңіз',
+      tg:     '⚠️ Сигнали GPS ёфт нашуд. Берун ё назди тиреза кӯшиш кунед',
+      ky:     '⚠️ GPS сигналы табылган жок. Сырттан же терезе жанынан аракет кылыңыз',
+      de:     '⚠️ GPS-Signal nicht gefunden. Versuchen Sie es draußen oder am Fenster',
+      fr:     "⚠️ Signal GPS introuvable. Essayez à l'extérieur ou près d'une fenêtre",
+      id:     '⚠️ Sinyal GPS tidak ditemukan. Coba di luar ruangan atau dekat jendela',
+      hi:     '⚠️ GPS सिग्नल नहीं मिला। बाहर या खिड़की के पास कोशिश करें',
+      ur:     '⚠️ GPS سگنل نہیں ملا۔ باہر یا کھڑکی کے قریب کوشش کریں',
+    },
+    3: {
+      uz:     "⏱ GPS vaqt tugadi. Qayta urinib ko'ring",
+      uz_cyr: '⏱ GPS вақти тугади. Қайта уриниб кўринг',
+      ru:     '⏱ Время ожидания GPS истекло. Попробуйте снова',
+      en:     '⏱ GPS timed out. Please try again',
+      ar:     '⏱ انتهت مهلة GPS. يرجى المحاولة مجدداً',
+      tr:     '⏱ GPS zaman aşımı. Lütfen tekrar deneyin',
+      kk:     '⏱ GPS күту уақыты өтті. Қайта байқап көріңіз',
+      tg:     '⏱ GPS вақт ба охир расид. Дубора кӯшиш кунед',
+      ky:     '⏱ GPS күтүү убактысы бүттү. Кайра аракет кылыңыз',
+      de:     '⏱ GPS-Zeitüberschreitung. Bitte erneut versuchen',
+      fr:     '⏱ Délai GPS dépassé. Veuillez réessayer',
+      id:     '⏱ GPS waktu habis. Silakan coba lagi',
+      hi:     '⏱ GPS समय समाप्त। कृपया पुनः प्रयास करें',
+      ur:     '⏱ GPS وقت ختم۔ برائے کرم دوبارہ کوشش کریں',
+    },
+  };
+
   function _requestGPS() {
     if (_loading) return;
     _loading = true;
-    localStorage.setItem('islamtime_location_asked', '1');
+    /* NOTE: location_asked is written ONLY on success or explicit skip — not here */
+
     const lang = window.App?.state?.lang || 'uz';
     const lbl  = document.getElementById('lc-btn-lbl');
     if (lbl) lbl.textContent = _lc('loading', lang);
 
-    if (!navigator.geolocation) { _goToDashboard(); return; }
+    /* Show error and re-enable button */
+    function _showError(code) {
+      _loading = false;
+      if (lbl) lbl.textContent = _lc('gpsBtn', lang);
+      const msg = ERR[code] || ERR[2];
+      const text = msg[lang] || msg[lang.split('_')[0]] || msg.en;
+      const old = document.getElementById('lc-gps-err');
+      if (old) old.remove();
+      const div = document.createElement('div');
+      div.id = 'lc-gps-err';
+      div.className = 'lc-gps-error';
+      div.textContent = text;
+      const footer = document.querySelector('#screen-location .lc-footer');
+      if (footer) footer.insertAdjacentElement('beforebegin', div);
+    }
 
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        localStorage.setItem('islamtime_last_lat', String(pos.coords.latitude));
-        localStorage.setItem('islamtime_last_lon', String(pos.coords.longitude));
-        window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred('success');
-        _goToDashboard();
-      },
-      () => { _goToDashboard(); },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
+    /* Save coordinates and sync to server, then go to dashboard */
+    function _saveAndGo(lat, lon) {
+      localStorage.setItem('islamtime_location_asked', '1'); /* only written on GPS success */
+      localStorage.setItem('islamtime_last_lat', String(lat));
+      localStorage.setItem('islamtime_last_lon', String(lon));
+      /* Sync to server — Telegram user_id (web) or device_id (native Android) */
+      const userId   = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+      const deviceId = window.IslamNative?.deviceId?.();
+      if (userId || deviceId) {
+        fetch('/api/user/location', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: userId || null, device_id: deviceId || null,
+            lat: lat, lon: lon, city: ''
+          })
+        }).catch(function() {});
+      }
+      _goToDashboard();
+    }
+
+    /* IP fallback — last resort */
+    function _ipGeo() {
+      fetch('https://ipapi.co/json/')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d && d.latitude && d.longitude) {
+            _saveAndGo(parseFloat(d.latitude), parseFloat(d.longitude));
+          } else { _showError(2); }
+        })
+        .catch(function() { _showError(2); });
+    }
+
+    /* navigator.geolocation fallback */
+    function _navGeo() {
+      if (!navigator.geolocation) { _ipGeo(); return; }
+      navigator.geolocation.getCurrentPosition(
+        function(pos) { _saveAndGo(pos.coords.latitude, pos.coords.longitude); },
+        function(err) {
+          if (err.code === 1) { _showError(1); }
+          else               { _ipGeo(); }
+        },
+        { enableHighAccuracy: false, timeout: 15000, maximumAge: 300000 }
+      );
+    }
+
+    /* Primary: Capacitor FusedLocationProvider — direct Android OS call, bypasses WebView */
+    var Geo = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Geolocation;
+    if (Geo && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
+      Geo.getCurrentPosition({ enableHighAccuracy: false, timeout: 15000 })
+        .then(function(pos) { _saveAndGo(pos.coords.latitude, pos.coords.longitude); })
+        .catch(function()   { _navGeo(); });
+    } else {
+      _navGeo();
+    }
   }
 
   function _skip() {

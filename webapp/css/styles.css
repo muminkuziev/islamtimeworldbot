@@ -72,13 +72,13 @@
 }
 
 html {
-  height: 100%;
+  height: 100dvh;
   font-size: 16px;
   -webkit-text-size-adjust: 100%;
 }
 
 body {
-  min-height: 100%;
+  min-height: 100dvh;
   background: var(--bg);
   color: var(--text);
   font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
@@ -102,23 +102,42 @@ button {
 ───────────────────────────────────── */
 #app {
   position: fixed;
-  inset: 0;
+  top:    var(--sat, 0px);
+  right:  var(--sar, 0px);
+  bottom: var(--sab, 0px);
+  left:   var(--sal, 0px);
   overflow: hidden;
 }
 
 .screen {
   position: absolute;
   inset: 0;
-  display: flex;
+  display: none; /* hidden by default — GPU tiles only for active screen */
   flex-direction: column;
   overflow: hidden;
   opacity: 0;
   transform: translateX(40px);
+  pointer-events: none;
+}
+
+.screen.entering,
+.screen.exit,
+.screen.active {
+  display: flex; /* visible states need flex layout */
+}
+
+.screen.entering {
   transition:
     opacity var(--dur) var(--ease),
     transform var(--dur) var(--ease);
-  pointer-events: none;
-  will-change: opacity, transform;
+}
+
+.screen.exit {
+  opacity: 0;
+  transform: translateX(-40px);
+  transition:
+    opacity var(--dur) var(--ease),
+    transform var(--dur) var(--ease);
 }
 
 .screen.active {
@@ -146,26 +165,7 @@ button {
   z-index: 0;
 }
 
-.geo-bg::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image:
-    repeating-linear-gradient(
-      45deg,
-      transparent,
-      transparent 28px,
-      rgba(201,162,39,0.028) 28px,
-      rgba(201,162,39,0.028) 29px
-    ),
-    repeating-linear-gradient(
-      -45deg,
-      transparent,
-      transparent 28px,
-      rgba(201,162,39,0.028) 28px,
-      rgba(201,162,39,0.028) 29px
-    );
-}
+/* geo-bg::before removed — repeating gradients were creating GPU tiles on all screens */
 
 /* ─────────────────────────────────────
    SPLASH SCREEN
@@ -500,9 +500,13 @@ button {
 }
 
 .lc-body {
-  flex:1; display:flex; flex-direction:column;
-  align-items:center; justify-content:center;
-  padding:24px 24px 0; text-align:center;
+  flex:1; min-height:0; overflow-y:auto;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:flex-start;
+  padding:20px 20px 0; text-align:center;
+}
+@media (min-height: 700px) {
+  .lc-body { justify-content:center; }
 }
 
 .lc-icon-wrap { margin-bottom:28px; }
@@ -558,6 +562,17 @@ button {
 .lc-btn-main:active { transform:scale(.98); }
 .lc-btn-sep { width:1px; height:16px; background:rgba(9,18,31,.2); }
 .lc-btn-arr { font-size:13px; font-weight:600; color:rgba(9,18,31,.45); }
+.lc-gps-error {
+  margin: 0 14px 10px;
+  padding: 10px 14px;
+  background: rgba(220,60,60,0.12);
+  border: 1px solid rgba(220,60,60,0.3);
+  border-radius: 10px;
+  color: #ff8080;
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: center;
+}
 .lc-btn-skip {
   width:100%; padding:10px; background:none;
   border:none; cursor:pointer;
@@ -1179,19 +1194,52 @@ button {
 [dir="rtl"] .dua-transliteration { text-align: right; direction: rtl; }
 
 /* ─────────────────────────────────────
-   RESPONSIVE / SAFE AREA
+   SAFE AREA — Edge-to-edge (Android 15+ / iOS)
+   Android: MainActivity.java injects real pixel values via evaluateJavascript.
+   iOS:     env(safe-area-inset-*) below is the primary source (no JS needed).
+   Browser: env() returns 0 → #app fills full screen (correct).
 ───────────────────────────────────── */
-@supports (padding: max(0px)) {
-  .lang-footer { padding-bottom: max(var(--sp-lg), env(safe-area-inset-bottom)); }
-  .dash-body   { padding-bottom: max(var(--sp-xl), env(safe-area-inset-bottom)); }
-  .lang-header { padding-top: max(var(--sp-xl), env(safe-area-inset-top)); }
-  .dash-header { padding-top: max(var(--sp-xl), env(safe-area-inset-top)); }
+:root {
+  --sat: env(safe-area-inset-top,    0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left,   0px);
+  --sar: env(safe-area-inset-right,  0px);
+}
+
+/* ── Safe area handled by #app positioning — headers use plain padding ── */
+.ls-header, .mz-header, .lc-header, .zk-hdr, .hc-hdr-inner,
+.db-hdr, .nm-header { padding-top: 12px !important; }
+.dash-header, .prayer-header { padding-top: var(--sp-xl) !important; }
+.screen-header { padding-top: 14px !important; }
+.du-hdr, .hd-hdr, .ms-hdr, .qb-hdr, .q-header { padding-top: 10px !important; }
+
+/* ── BOTTOM: plain padding (nav bar handled by #app) ── */
+.ls-footer, .mz-footer, .lc-footer { padding-bottom: 18px !important; }
+.dash-body     { padding-bottom: var(--sp-xl)  !important; }
+.prayer-scroll { padding-bottom: var(--sp-2xl) !important; }
+.set-body      { padding-bottom: var(--sp-lg)  !important; }
+.zk-list-body  { padding-bottom: 16px !important; }
+.hc-body       { padding-bottom: 20px !important; }
+.du-body, .hd-body, .ms-body, .qb-body, .db-body { padding-bottom: 20px !important; }
+.nm-content, .pm-content, .qb-content, .mosq-content, .cal-content {
+  padding-bottom: 88px !important;
 }
 
 @media (max-height: 600px) {
   .splash-logo { width: 80px; height: 80px; }
   .splash-title { font-size: 1.4rem; }
   .lang-header { padding-top: var(--sp-lg); }
+}
+
+@media (max-height: 640px) {
+  .lc-icon-wrap { margin-bottom: 12px !important; }
+  .lc-ring-outer { width: 72px; height: 72px; }
+  .lc-ring-inner { width: 52px; height: 52px; }
+  .lc-icon-core  { font-size: 22px; }
+  .lc-desc       { margin-bottom: 12px !important; }
+  .lc-features   { gap: 5px !important; }
+  .lc-feat       { padding: 7px 12px; }
+  .lc-body       { justify-content: flex-start; padding-top: 16px; }
 }
 
 /* ═══════════════════════════════════════════════════
@@ -5181,7 +5229,9 @@ button {
 .ms-noloc-icon  { font-size:44px; }
 .ms-noloc-title { font-family:'Inter',system-ui,sans-serif; font-size:15px; font-weight:700; color:rgba(232,223,200,.85); }
 .ms-noloc-text  { font-family:'Inter',system-ui,sans-serif; font-size:12px; color:rgba(232,223,200,.45); line-height:1.55; max-width:260px; }
-.ms-noloc-btn   { background:linear-gradient(135deg,#4fcfa0,#3ab88a); border:none; border-radius:12px; color:#0a1628; font-family:'Inter',system-ui,sans-serif; font-size:13px; font-weight:700; padding:12px 28px; cursor:pointer; margin-top:6px; }
+.ms-noloc-btn        { display:block; width:100%; background:linear-gradient(135deg,#4fcfa0,#3ab88a); border:none; border-radius:12px; color:#0a1628; font-family:'Inter',system-ui,sans-serif; font-size:13px; font-weight:700; padding:13px 28px; cursor:pointer; margin-top:10px; }
+.ms-noloc-btn-sec    { background:linear-gradient(135deg,#C9A227,#a0801a); color:#fff; }
+.ms-noloc-btn-ghost  { background:transparent; border:1px solid rgba(255,255,255,.25); color:rgba(255,255,255,.75); font-weight:500; }
 .ms-noloc-btn:active { opacity:.82; }
 
 /* List */

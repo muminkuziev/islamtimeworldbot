@@ -355,11 +355,37 @@ const PrayerScreen = (function () {
   }
 
   function _browserGeo() {
+    /* Try Capacitor plugin first (handles Android permission dialog internally) */
+    const Geo = window.Capacitor?.Plugins?.Geolocation;
+    if (Geo && window.Capacitor?.isNativePlatform?.()) {
+      console.log('[GPS] prayer: using Capacitor plugin');
+      Geo.getCurrentPosition({ enableHighAccuracy: true, timeout: 12000 })
+        .then(pos => {
+          console.log('[GPS] Capacitor success', pos.coords.latitude, pos.coords.longitude);
+          _onLocation(pos.coords.latitude, pos.coords.longitude);
+        })
+        .catch(err => {
+          console.log('[GPS] Capacitor fail:', err?.message);
+          _navGeo();
+        });
+      return;
+    }
+    _navGeo();
+  }
+
+  function _navGeo() {
     if (!navigator.geolocation) { _showError(); return; }
+    console.log('[GPS] prayer: using navigator.geolocation');
     navigator.geolocation.getCurrentPosition(
-      pos  => _onLocation(pos.coords.latitude, pos.coords.longitude),
-      _err => _showError(),
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
+      pos  => {
+        console.log('[GPS] nav success', pos.coords.latitude, pos.coords.longitude);
+        _onLocation(pos.coords.latitude, pos.coords.longitude);
+      },
+      err => {
+        console.log('[GPS] nav error code=' + err.code + ' msg=' + err.message);
+        _showError();
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 300000 }
     );
   }
 

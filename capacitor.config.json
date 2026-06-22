@@ -1,22 +1,22 @@
 {
-  "appId":   "com.islamtimeworld.app",
-  "appName": "Islam Time World",
+  "appId":   "com.islamtimeworld.test",
+  "appName": "Islam Time Test",
   "webDir":  "webapp",
 
   "server": {
-    "url":           "https://islamtimeworld.com/app",
     "cleartext":     false,
     "androidScheme": "https",
-    "hostname":      "islamtimeworld.com"
+    "hostname":      "islamtimeworld.com",
+    "html5mode":     false
   },
 
   "android": {
-    "backgroundColor":           "#080D1A",
-    "allowMixedContent":         false,
-    "captureInput":              true,
-    "webContentsDebuggingEnabled": false,
-    "initialFocus":              false,
-    "appendUserAgent":           "IslamTimeWorld/Android"
+    "backgroundColor":             "#080D1A",
+    "allowMixedContent":           false,
+    "captureInput":                true,
+    "webContentsDebuggingEnabled": true,
+    "initialFocus":                false,
+    "appendUserAgent":             "IslamTimeWorld/Android"
   },
 
   "plugins": {
@@ -36,7 +36,7 @@
     "StatusBar": {
       "style":           "Dark",
       "backgroundColor": "#080D1A",
-      "overlaysWebView": false,
+      "overlaysWebView": true,
       "animation":       "SLIDE"
     },
 

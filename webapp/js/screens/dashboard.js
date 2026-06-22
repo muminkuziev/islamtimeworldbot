@@ -175,7 +175,9 @@ const DashboardScreen = (function () {
     const flag  = getLangFlag(_lang);
     const tiles = MODULES.map(mod => {
       const title = t('modules_list.' + mod.key, _lang);
-      const sub   = mod['sub_' + _lang] || (_lang === 'uz_cyr' ? mod.sub_cyr : null) || mod['sub_' + _lang.split('_')[0]] || mod.sub_en || mod.sub;
+      const sub   = _lang === 'uz'     ? mod.sub
+                  : _lang === 'uz_cyr' ? (mod.sub_cyr || mod.sub)
+                  : (mod['sub_' + _lang] || mod.sub_en || mod.sub);
       return `
         <div class="db-tile-wrap">
           <div class="db-cell" data-module="${mod.key}" role="button" tabindex="0">
@@ -443,11 +445,11 @@ const DashboardScreen = (function () {
       return;
     }
     const WL = {
-      feelsLike:   { uz:'His qilinadi',       uz_cyr:'Ҳис қилинади',      ru:'Ощущается',  en:'Feels like' },
-      humidity:    { uz:'Namlik',              uz_cyr:'Намлик',             ru:'Влажность',  en:'Humidity'   },
-      wind:        { uz:'Shamol',              uz_cyr:'Шамол',              ru:'Ветер',      en:'Wind'       },
-      sunrise:     { uz:'Quyosh chiqishi',      uz_cyr:'Қуёш чиқиши',       ru:'Рассвет',    en:'Sunrise'    },
-      sunset:      { uz:'Quyosh botishi',      uz_cyr:'Қуёш ботиши',       ru:'Закат',      en:'Sunset'     },
+      feelsLike: { uz:'His qilinadi',    uz_cyr:'Ҳис қилинади',   ru:'Ощущается',    en:'Feels like',      tr:'Hissedilen',       ar:'الحرارة المحسوسة', kk:'Сезілетіні',       tg:'Ҳис карда мешавад', ky:'Сезилгени',        de:'Gefühlt',              fr:'Ressenti',         id:'Terasa',         hi:'महसूस होता है', ur:'محسوس ہوتا ہے' },
+      humidity:  { uz:'Namlik',          uz_cyr:'Намлик',          ru:'Влажность',    en:'Humidity',        tr:'Nem',              ar:'الرطوبة',           kk:'Ылғалдылық',       tg:'Намӣ',              ky:'Нымдуулук',        de:'Luftfeuchtigkeit',     fr:'Humidité',         id:'Kelembaban',     hi:'नमी',           ur:'نمی'            },
+      wind:      { uz:'Shamol',          uz_cyr:'Шамол',           ru:'Ветер',        en:'Wind',            tr:'Rüzgar',           ar:'الريح',             kk:'Жел',              tg:'Шамол',             ky:'Шамал',            de:'Wind',                 fr:'Vent',             id:'Angin',          hi:'हवा',            ur:'ہوا'            },
+      sunrise:   { uz:'Quyosh chiqishi', uz_cyr:'Қуёш чиқиши',    ru:'Рассвет',      en:'Sunrise',         tr:'Gündoğumu',        ar:'شروق الشمس',        kk:'Күн шығысы',       tg:'Тулӯи офтоб',      ky:'Күн чыгуу',        de:'Sonnenaufgang',        fr:'Lever du soleil',  id:'Matahari terbit',hi:'सूर्योदय',       ur:'طلوع آفتاب'     },
+      sunset:    { uz:'Quyosh botishi',  uz_cyr:'Қуёш ботиши',    ru:'Закат',        en:'Sunset',          tr:'Gün batımı',       ar:'غروب الشمس',        kk:'Күн батысы',       tg:'Ғуруби офтоб',     ky:'Күн батуу',        de:'Sonnenuntergang',      fr:'Coucher du soleil',id:'Matahari terbenam',hi:'सूर्यास्त',    ur:'غروب آفتاب'     },
     };
     const wt = (k) => (WL[k]?.[_lang] || WL[k]?.en || k);
     wrap.style.display = 'block';
