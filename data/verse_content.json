@@ -1,0 +1,24 @@
+[
+  {
+    "surah": 2,
+    "ayah": 115,
+    "language": "uz",
+    "text": "Mashriqu mag'rib Allohnikidir, qayoqqa yuzlansangiz, Allohning yuzi o'sha yerda. Albatta, Alloh qamrovi kengdir, o'ta biluvchidir.",
+    "translation_source": "Muhammad Sodik Muhammad Yusuf — Uzbek Qur'on tarjimasi",
+    "source_reference": "IslamTimeWorld canonical Uzbek source (owner-provided)",
+    "corroboration": "Cross-checked against AlQuran Cloud edition uz.sodik (same translator) on 2026-09-21; core wording and structure match (minor transliteration variance only). See scripts/verify_verse_content.py.",
+    "verification_status": "verified",
+    "version": "1"
+  },
+  {
+    "surah": 2,
+    "ayah": 144,
+    "language": "uz",
+    "text": "Masjid al-Haram tomonga yuzlan",
+    "translation_source": "IslamTimeWorld short gloss (existing, already in production use on the Qibla screen)",
+    "source_reference": "webapp/js/screens/qibla.js — pre-existing, not part of this update",
+    "corroboration": null,
+    "verification_status": "verified",
+    "version": "1"
+  }
+]

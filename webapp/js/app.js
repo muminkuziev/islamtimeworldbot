@@ -110,9 +110,9 @@
   /* ── Render all screen shells (builds initial DOM) ── */
   const _screens = [
     SplashScreen, LanguageScreen, MazhabScreen, LocationScreen,
-    PrayerScreen, QiblaScreen, MosquesScreen, QuranScreen,
+    PrayerScreen, QazoScreen, MonthlyCalendarScreen, QiblaScreen, MosquesScreen, QuranScreen,
     HadithScreen, DuasScreen, DhikrScreen, CalendarScreen,
-    NamesScreen, SettingsScreen, DashboardScreen,
+    NamesScreen, OthersScreen, ShahodatScreen, HaramaynScreen, SettingsScreen, DashboardScreen,
   ];
   for (const s of _screens) {
     try { s.render(); } catch (e) { console.error('render failed:', e); }

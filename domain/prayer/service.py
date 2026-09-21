@@ -55,6 +55,9 @@ PRAYER_NAMES: dict[str, list[str]] = {
     "id":     ["Subuh",         "Terbit",            "Dzuhur",   "Ashar",  "Maghrib", "Isya"],
     "hi":     ["फज्र",          "सूर्योदय",          "ज़ुहर",    "अस्र",   "मग़रिब",  "इशा"],
     "ur":     ["فجر",           "طلوع آفتاب",        "ظہر",      "عصر",    "مغرب",    "عشاء"],
+    "bn":     ["ফজর",           "সূর্যোদয়",          "যোহর",     "আসর",    "মাগরিব",  "এশা"],
+    "fa":     ["فجر",           "طلوع آفتاب",        "ظهر",      "عصر",    "مغرب",    "عشاء"],
+    "ms":     ["Subuh",         "Terbit",            "Zohor",    "Asar",   "Maghrib", "Isyak"],
 }
 
 # ── Bot UI i18n strings ───────────────────────────────────────────────────────
@@ -326,6 +329,59 @@ class PrayerService:
             },
             "lat": lat,
             "lon": lon,
+        }
+
+    async def get_monthly_prayer_data(
+        self,
+        lat: float,
+        lon: float,
+        month: int,
+        year: int,
+        lang: str = "uz",
+        method: int = 3,
+    ) -> Optional[dict]:
+        """Full month of prayer times for the Oylik namoz taqvimi screen.
+
+        Reuses the exact same calculation method, prayer keys/names and time
+        formatting as get_prayer_data() (single-day view) — this is a second
+        entry point into the same canonical calculation service, not a
+        separate/duplicated calculation.
+        """
+        from infrastructure.external.aladhan_api import fetch_calendar
+
+        calendar_data, geo_data = await asyncio.gather(
+            fetch_calendar(lat, lon, month, year, method),
+            reverse_geocode(lat, lon),
+        )
+        if not calendar_data:
+            return None
+
+        names = PRAYER_NAMES.get(lang, PRAYER_NAMES["en"])
+        days = []
+        for entry in calendar_data:
+            raw_timings = entry.get("timings", {})
+            timings = {k: _strip_tz(v) for k, v in raw_timings.items() if k in PRAYER_KEYS}
+            date_info = entry.get("date", {})
+            hijri = date_info.get("hijri", {})
+            greg = date_info.get("gregorian", {})
+            days.append({
+                "gregorian_date": greg.get("date", ""),
+                "weekday_en":     greg.get("weekday", {}).get("en", ""),
+                "hijri_day":      hijri.get("day", ""),
+                "hijri_month":    _hijri_month_name(hijri.get("month", {}), lang),
+                "prayers": [
+                    {"key": key, "icon": PRAYER_ICONS[key], "name": names[i], "time": timings.get(key, "--:--")}
+                    for i, key in enumerate(PRAYER_KEYS)
+                ],
+            })
+
+        return {
+            "city":    geo_data.get("city", ""),
+            "country": geo_data.get("country", ""),
+            "month":   month,
+            "year":    year,
+            "days":    days,
+            "lat": lat, "lon": lon,
         }
 
     def format_bot_message(self, data: dict, lang: str) -> str:

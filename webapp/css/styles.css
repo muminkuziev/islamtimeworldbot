@@ -3834,6 +3834,42 @@ button {
   display:flex; align-items:center; justify-content:center;
   font-size:11px; color:#09121f; font-weight:800;
 }
+.q-qori-check--empty { background:rgba(255,255,255,.06); }
+.q-settings-row { display:flex; align-items:center; justify-content:center; gap:20px; padding:8px 0; }
+.q-settings-btn {
+  width:40px; height:40px; border-radius:12px; border:1px solid rgba(232,193,90,.3);
+  background:rgba(232,193,90,.08); color:#E8C15A; font-size:15px; font-weight:700; cursor:pointer;
+}
+.q-settings-value { font-size:15px; font-weight:700; color:#e8dfc8; min-width:52px; text-align:center; }
+
+/* ── Monthly Prayer Calendar ─────────────────────────────────── */
+.mc-screen { padding:16px 16px 32px; font-family:'Inter',system-ui,sans-serif; }
+.mc-header { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+.mc-back {
+  background:rgba(232,223,200,.06); border:1px solid rgba(232,223,200,.12);
+  color:var(--text,#EDE0C4); border-radius:10px; padding:8px 14px;
+  font-size:13px; font-weight:600; cursor:pointer;
+}
+.mc-title { font-size:15px; font-weight:700; color:var(--text,#EDE0C4); }
+.mc-month-nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.mc-nav-btn {
+  width:36px; height:36px; border-radius:10px; border:1px solid rgba(232,193,90,.3);
+  background:rgba(232,193,90,.08); color:#E8C15A; font-size:18px; font-weight:700; cursor:pointer;
+}
+.mc-month-label { font-size:14px; font-weight:700; color:var(--text,#EDE0C4); }
+.mc-loading, .mc-error { text-align:center; padding:40px 0; color:rgba(232,223,200,.5); font-size:13px; }
+.mc-loc { font-size:12px; color:rgba(232,223,200,.5); margin-bottom:10px; }
+.mc-table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+.mc-table { width:100%; border-collapse:collapse; font-size:11.5px; white-space:nowrap; }
+.mc-table th {
+  text-align:center; padding:8px 6px; color:rgba(232,223,200,.45); font-weight:700;
+  font-size:9.5px; text-transform:uppercase; letter-spacing:.4px; border-bottom:1px solid rgba(232,223,200,.1);
+}
+.mc-table td { text-align:center; padding:8px 6px; color:var(--text,#EDE0C4); border-bottom:1px solid rgba(232,223,200,.04); }
+.mc-cell-date { display:flex; flex-direction:column; align-items:center; font-weight:700; }
+.mc-cell-hijri { font-size:9px; color:rgba(232,223,200,.4); font-weight:400; }
+.mc-row-today td { background:rgba(79,207,160,.08); }
+.mc-row-today .mc-cell-date { color:#4fcfa0; }
 .q-qori-note { font-size:10px; color:rgba(232,223,200,.28); text-align:center; padding:10px; line-height:1.5; font-family:'Inter',system-ui,sans-serif; }
 
 /* Bookmark tab */
@@ -4711,6 +4747,7 @@ button {
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Crect width='60' height='60' fill='%230d1829'/%3E%3Cline x1='0' y1='0' x2='60' y2='60' stroke='%23E8C15A' stroke-width='0.2' opacity='0.12'/%3E%3Cline x1='60' y1='0' x2='0' y2='60' stroke='%23E8C15A' stroke-width='0.2' opacity='0.12'/%3E%3Ccircle cx='30' cy='30' r='8' fill='none' stroke='%23E8C15A' stroke-width='0.3' opacity='0.14'/%3E%3C/svg%3E");
   background-size:60px 60px; opacity:.5; }
 .nm-tile-ov { position:absolute; inset:0; background:linear-gradient(160deg,rgba(15,32,64,.7),rgba(13,24,41,.7)); }
+.db-hdr-photo { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 30%; }
 .nm-header-inner { position:relative; z-index:1; }
 
 /* Nav row */
@@ -5326,6 +5363,39 @@ button {
 .qb-found-badge { display:flex; align-items:center; gap:8px; background:rgba(79,207,160,.08); border:1px solid rgba(79,207,160,.2); border-radius:12px; padding:8px 16px; width:100%; justify-content:center; }
 .qb-found-dot { width:8px; height:8px; border-radius:50%; background:#4fcfa0; box-shadow:0 0 8px #4fcfa0; flex-shrink:0; }
 .qb-found-txt { font-family:'Inter',system-ui,sans-serif; font-size:11px; font-weight:700; color:#4fcfa0; }
+
+/* ── 3D Earth globes (real Three.js WebGL, not images) ──────── */
+.qb-route-globe-wrap { width:100%; margin-bottom:10px; }
+.qb-route-globe {
+  width:100%; height:180px; border-radius:16px; overflow:hidden;
+  background:#050a14; border:1px solid rgba(232,193,90,.15);
+}
+.qb-route-globe canvas { display:block; touch-action:none; }
+.qb-route-globe-label {
+  text-align:center; font-family:'Inter',system-ui,sans-serif; font-size:10px;
+  color:rgba(232,223,200,.4); margin-top:6px; text-transform:uppercase; letter-spacing:.5px;
+}
+.qb-compass-stack { position:relative; margin:0 auto; }
+.qb-compass-globe-wrap {
+  position:absolute; top:0; left:0; border-radius:50%; overflow:hidden;
+  pointer-events:none;
+}
+.qb-compass-globe { width:100%; height:100%; }
+#qb-compass-svg { position:relative; z-index:2; }
+.qb-live-btn {
+  margin-top:10px; background:rgba(224,85,85,.12); border:1px solid rgba(224,85,85,.35);
+  color:#e05555; border-radius:10px; padding:8px 16px; font-size:11.5px; font-weight:700;
+  font-family:'Inter',system-ui,sans-serif; cursor:pointer;
+}
+.qb-calibrate-badge { background:rgba(232,193,90,.1); border-color:rgba(232,193,90,.3); }
+.qb-calibrate-badge span { font-family:'Inter',system-ui,sans-serif; font-size:11.5px; font-weight:600; color:#E8C15A; text-align:center; }
+.qb-ios-permission-badge { background:rgba(79,207,160,.08); border-color:rgba(79,207,160,.25); padding:0; }
+.qb-ios-permission-btn {
+  width:100%; background:none; border:none; padding:10px 16px; cursor:pointer;
+  font-family:'Inter',system-ui,sans-serif; font-size:12.5px; font-weight:700; color:#4fcfa0;
+}
+.qb-ios-denied-badge { background:rgba(224,85,85,.08); border-color:rgba(224,85,85,.25); }
+.qb-ios-denied-badge { font-family:'Inter',system-ui,sans-serif; font-size:11.5px; color:#e05555; text-align:center; }
 .qb-badge-deg { font-family:'Inter',system-ui,sans-serif; font-size:13px; font-weight:800; color:#E8C15A; }
 .qb-badge-dir { font-family:'Inter',system-ui,sans-serif; font-size:10px; color:rgba(232,223,200,.55); }
 
@@ -5671,5 +5741,163 @@ button {
   transition:opacity .22s ease, transform .22s ease;
 }
 .ls-wip-toast--show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* ── Qazo Namozlari screen ──────────────────────────────────── */
+.qz-screen { padding:16px 16px 32px; font-family:'Inter',system-ui,sans-serif; }
+.qz-header { display:flex; align-items:center; gap:12px; margin-bottom:18px; }
+.qz-back {
+  background:rgba(232,223,200,.06); border:1px solid rgba(232,223,200,.12);
+  color:var(--text,#EDE0C4); border-radius:10px; padding:8px 14px;
+  font-size:13px; font-weight:600; cursor:pointer;
+}
+.qz-title { font-size:17px; font-weight:700; color:var(--text,#EDE0C4); }
+
+.qz-total-card {
+  background:rgba(79,207,160,.08); border:1px solid rgba(79,207,160,.22);
+  border-radius:16px; padding:18px; text-align:center; margin-bottom:14px;
+}
+.qz-total-num { font-size:36px; font-weight:800; color:#4fcfa0; line-height:1.1; }
+.qz-total-label { font-size:11px; color:rgba(232,223,200,.55); text-transform:uppercase; letter-spacing:.6px; margin-top:4px; }
+
+.qz-hint {
+  font-size:12.5px; line-height:1.5; color:rgba(232,223,200,.6);
+  background:rgba(232,223,200,.04); border-radius:10px; padding:10px 12px; margin-bottom:16px;
+}
+
+.qz-list { display:flex; flex-direction:column; gap:8px; margin-bottom:18px; }
+.qz-row {
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  background:rgba(232,223,200,.05); border:1px solid rgba(232,223,200,.09);
+  border-radius:12px; padding:12px 14px;
+}
+.qz-row-info { display:flex; align-items:center; gap:10px; }
+.qz-row-icon { font-size:18px; }
+.qz-row-name { font-size:14.5px; font-weight:600; color:var(--text,#EDE0C4); }
+
+.qz-stepper { display:flex; align-items:center; gap:8px; }
+.qz-btn {
+  width:32px; height:32px; border-radius:9px; border:1px solid rgba(232,223,200,.16);
+  background:rgba(232,223,200,.06); color:var(--text,#EDE0C4);
+  font-size:18px; font-weight:700; line-height:1; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+}
+.qz-btn--plus { border-color:rgba(79,207,160,.35); color:#4fcfa0; }
+.qz-btn--minus:disabled { opacity:.3; cursor:not-allowed; }
+.qz-count-input {
+  width:44px; text-align:center; background:transparent; border:none;
+  color:var(--text,#EDE0C4); font-size:16px; font-weight:700;
+  -moz-appearance:textfield;
+}
+.qz-count-input::-webkit-outer-spin-button,
+.qz-count-input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+
+.qz-fiqh-note {
+  font-size:12px; line-height:1.55; color:rgba(232,193,90,.85);
+  background:rgba(232,193,90,.07); border:1px solid rgba(232,193,90,.18);
+  border-radius:12px; padding:12px 14px;
+}
+.qz-fiqh-madhhab { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:#E8C15A; margin-bottom:6px; }
+.qz-fiqh-source { font-size:11px; color:rgba(232,223,200,.5); margin-top:6px; }
+
+.pm-qazo-link { transition:opacity .15s ease; }
+.pm-qazo-link:active { opacity:.75; }
+
+/* ── Boshqalar (Others) hub ─────────────────────────────────── */
+.ot-screen { padding:16px 16px 32px; font-family:'Inter',system-ui,sans-serif; }
+.ot-header { display:flex; align-items:center; gap:12px; margin-bottom:18px; }
+.ot-back {
+  background:rgba(232,223,200,.06); border:1px solid rgba(232,223,200,.12);
+  color:var(--text,#EDE0C4); border-radius:10px; padding:8px 14px;
+  font-size:13px; font-weight:600; cursor:pointer;
+}
+.ot-title { font-size:17px; font-weight:700; color:var(--text,#EDE0C4); }
+.ot-list { display:flex; flex-direction:column; gap:8px; }
+.ot-row {
+  display:flex; align-items:center; gap:12px; width:100%; text-align:left;
+  background:rgba(232,223,200,.05); border:1px solid rgba(232,223,200,.09);
+  border-radius:12px; padding:14px; cursor:pointer;
+}
+.ot-row-icon { font-size:20px; }
+.ot-row-label { flex:1; font-size:14.5px; font-weight:600; color:var(--text,#EDE0C4); }
+.ot-row-chev { color:rgba(232,223,200,.35); font-size:18px; }
+
+/* ── Shahodat va Kalimalar ──────────────────────────────────── */
+.sh-screen { padding:16px 16px 32px; font-family:'Inter',system-ui,sans-serif; }
+.sh-header { display:flex; align-items:center; gap:12px; margin-bottom:18px; }
+.sh-back {
+  background:rgba(232,223,200,.06); border:1px solid rgba(232,223,200,.12);
+  color:var(--text,#EDE0C4); border-radius:10px; padding:8px 14px;
+  font-size:13px; font-weight:600; cursor:pointer;
+}
+.sh-title { font-size:16px; font-weight:700; color:var(--text,#EDE0C4); }
+.sh-section-label { font-size:9px; font-weight:700; color:rgba(232,223,200,.45); text-transform:uppercase; letter-spacing:.8px; margin:16px 0 8px; }
+.sh-card {
+  background:rgba(232,223,200,.05); border:1px solid rgba(232,223,200,.09);
+  border-radius:16px; padding:18px; text-align:center;
+}
+.sh-ar { font-size:22px; line-height:1.7; color:var(--text,#EDE0C4); margin-bottom:12px; }
+.sh-translit { font-size:13px; font-style:italic; color:rgba(232,223,200,.6); margin-bottom:10px; }
+.sh-meaning { font-size:13.5px; line-height:1.55; color:var(--text,#EDE0C4); margin-bottom:10px; }
+.sh-ref { font-size:11px; color:rgba(232,223,200,.4); margin-bottom:14px; }
+.sh-memorize-btn {
+  background:rgba(232,193,90,.1); border:1px solid rgba(232,193,90,.3);
+  color:#E8C15A; border-radius:10px; padding:9px 16px; font-size:12.5px; font-weight:600; cursor:pointer;
+}
+.sh-memorize-btn.active { background:rgba(79,207,160,.15); border-color:rgba(79,207,160,.4); color:#4fcfa0; }
+.sh-pending-card {
+  background:rgba(232,193,90,.06); border:1px solid rgba(232,193,90,.18);
+  border-radius:14px; padding:14px;
+}
+.sh-pending-title { font-size:13px; font-weight:700; color:#E8C15A; margin-bottom:8px; }
+.sh-pending-body { font-size:12.5px; line-height:1.55; color:rgba(232,223,200,.65); }
+
+/* ── Haramayn LIVE (Home mini cards) ────────────────────────── */
+.db-haramayn-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px; }
+.db-haramayn-mini {
+  position:relative; border-radius:14px; overflow:hidden; border:1px solid rgba(232,223,200,.1);
+  background:rgba(232,223,200,.04); padding:0; cursor:pointer; height:110px;
+}
+.db-haramayn-mini img { width:100%; height:100%; object-fit:cover; display:block; opacity:.55; }
+.db-haramayn-mini--loading { display:flex; align-items:center; justify-content:center; color:rgba(232,223,200,.4); font-size:12px; grid-column:1 / -1; }
+.db-haramayn-mini-badge {
+  position:absolute; top:8px; right:8px; font-size:9px; font-weight:700;
+  background:rgba(9,18,31,.75); color:#e8dfc8; padding:3px 8px; border-radius:20px;
+}
+.db-haramayn-mini-name {
+  position:absolute; left:10px; bottom:8px; font-size:12.5px; font-weight:700; color:#fff;
+  text-shadow:0 1px 4px rgba(0,0,0,.6);
+}
+
+/* ── Haramayn LIVE center screen ────────────────────────────── */
+.hl-screen { padding:16px 16px 32px; font-family:'Inter',system-ui,sans-serif; }
+.hl-header { display:flex; align-items:center; gap:12px; margin-bottom:18px; }
+.hl-back {
+  background:rgba(232,223,200,.06); border:1px solid rgba(232,223,200,.12);
+  color:var(--text,#EDE0C4); border-radius:10px; padding:8px 14px;
+  font-size:13px; font-weight:600; cursor:pointer;
+}
+.hl-title { font-size:17px; font-weight:700; color:var(--text,#EDE0C4); }
+.hl-loading, .hl-error { text-align:center; padding:40px 0; color:rgba(232,223,200,.5); font-size:13px; }
+.hl-card {
+  background:rgba(232,223,200,.05); border:1px solid rgba(232,223,200,.09);
+  border-radius:16px; overflow:hidden; margin-bottom:16px;
+}
+.hl-card-img-wrap { position:relative; height:160px; }
+.hl-card-img { width:100%; height:100%; object-fit:cover; display:block; }
+.hl-card-badge {
+  position:absolute; top:10px; right:10px; font-size:10.5px; font-weight:700;
+  padding:5px 10px; border-radius:20px; background:rgba(9,18,31,.8); color:#e8dfc8;
+}
+.hl-card-badge--live { background:rgba(224,85,85,.9); color:#fff; }
+.hl-card-badge--offline { background:rgba(9,18,31,.85); color:rgba(232,223,200,.75); }
+.hl-card-body { padding:14px 16px; }
+.hl-card-name { font-size:15px; font-weight:700; color:var(--text,#EDE0C4); }
+.hl-card-mosque { font-size:12.5px; color:rgba(232,223,200,.55); margin-top:2px; margin-bottom:10px; }
+.hl-card-note { font-size:12px; line-height:1.5; color:rgba(232,223,200,.55); margin-bottom:12px; }
+.hl-card-btn {
+  width:100%; background:rgba(79,207,160,.12); border:1px solid rgba(79,207,160,.3);
+  color:#4fcfa0; border-radius:10px; padding:11px; font-size:13px; font-weight:700; cursor:pointer;
+}
+.hl-card-authority { font-size:10.5px; color:rgba(232,223,200,.35); text-align:center; margin-top:8px; }
 
 

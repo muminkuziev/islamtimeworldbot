@@ -500,26 +500,18 @@ async def _send_due_notifications():
 
 
 def _get_random_hadith(lang: str) -> dict:
-    """Returns dict with 'text' and 'source' for a random hadith from hadiths_muslim."""
-    import random as _random
-    db_path = BASE_DIR / "data" / "hadiths.db"
-    if not db_path.exists():
-        return {}
-    _col = {"uz": "uz_text", "uz_cyr": "uz_cyr", "ru": "ru_text", "en": "en_text"}
-    col = _col.get(lang, "uz_text")
+    """Returns dict with 'text' and 'source' from the verified 144x13 HadeethEnc
+    corpus (data/hadeethenc_verified.db) — the same source as the webapp's Daily
+    Hadith card (domain.prayer.extras.get_daily_hadith), so the Telegram daily
+    briefing and the Mini App never disagree about "today's hadith"."""
     try:
-        conn = sqlite3.connect(str(db_path))
-        row = conn.execute(
-            f"SELECT {col}, source FROM hadiths_muslim WHERE {col} IS NOT NULL AND {col} != '' ORDER BY RANDOM() LIMIT 1"
-        ).fetchone()
-        conn.close()
-        if row:
-            src_raw = row[1] or ""
-            src = "Sahih Muslim" if "muslim" in src_raw.lower() else (src_raw or "Sahih Muslim")
-            return {"text": row[0], "source": src}
+        from domain.prayer.extras import get_daily_hadith
+        h = get_daily_hadith(lang)
+        if not h:
+            return {}
+        return {"text": h.get("text", ""), "source": h.get("source_note", "HadeethEnc.com")}
     except Exception:
-        pass
-    return {}
+        return {}
 
 
 def _format_daily_briefing_msg(
@@ -1301,22 +1293,46 @@ async def _init_bot():
         print(f"[WARN] Webhook verify failed: {e}", flush=True)
 
 
+def _scheduler_enabled() -> bool:
+    """Safety gate: the notification scheduler (which can send real Telegram
+    messages via a real BOT_TOKEN) only runs automatically in production.
+
+    Production is detected the same way _is_production() does (Render sets
+    RENDER=true automatically) — this changes NO production behavior.
+
+    For local development/QA, it is disabled by default so restarting the
+    server for testing can never again trigger a real send (see the
+    incident this was added for). Set ENABLE_SCHEDULER=true explicitly to
+    opt back in for a deliberate local scheduler test.
+    """
+    explicit = os.getenv("ENABLE_SCHEDULER", "").lower()
+    if explicit in ("true", "false"):
+        return explicit == "true"
+    return _is_production()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     _init_users_db()
     _backup_db()                                      # daily backup on every (re)start
-    await _init_notif_bot()                           # always — needed for notifications
+    scheduler_on = _scheduler_enabled()
+    if scheduler_on:
+        await _init_notif_bot()                       # only when the scheduler can actually run
+    else:
+        print("[SCHED] Notification scheduler DISABLED (not production; "
+              "set ENABLE_SCHEDULER=true to force it on for a local test)", flush=True)
     if _is_production():
         await _init_bot()                             # webhook + commands (prod only)
-    notif_task = asyncio.create_task(_notification_scheduler())
+    notif_task = asyncio.create_task(_notification_scheduler()) if scheduler_on else None
     print(f"[OK] Server ready — uptime tracking started", flush=True)
     print("[OK] Application startup complete", flush=True)
     yield
-    notif_task.cancel()
-    try:
-        await notif_task
-    except asyncio.CancelledError:
-        pass
+    if notif_task:
+        notif_task.cancel()
+        try:
+            await notif_task
+        except asyncio.CancelledError:
+            pass
     if _bot:
         # On Render: keep webhook alive so a new deploy re-uses it immediately.
         # On local dev: delete to avoid leaving a dead tunnel URL in Telegram.
@@ -1780,6 +1796,27 @@ async def api_prayer_times(
     return JSONResponse(prayer_data)
 
 
+@app.get("/api/prayer-times/month")
+async def api_prayer_times_month(
+    lat:    float = Query(..., ge=-90,  le=90),
+    lon:    float = Query(..., ge=-180, le=180),
+    month:  int   = Query(..., ge=1, le=12),
+    year:   int   = Query(..., ge=1900, le=2200),
+    lang:   str   = Query("uz"),
+    method: int   = Query(3, ge=0, le=23),
+):
+    """Oylik namoz taqvimi — full month, same calculation service as the
+    daily Prayer Times screen (domain.prayer.service.PrayerService)."""
+    from domain.prayer.service import prayer_service
+    data = await prayer_service.get_monthly_prayer_data(lat, lon, month, year, lang, method)
+    if not data:
+        return JSONResponse(
+            {"error": "Could not fetch monthly prayer times. Check coordinates or try again."},
+            status_code=503,
+        )
+    return JSONResponse(data)
+
+
 @app.get("/api/weather")
 async def api_weather(
     lat:  float = Query(..., ge=-90,  le=90),
@@ -1792,6 +1829,71 @@ async def api_weather(
     if w is None:
         return JSONResponse({"error": "weather_unavailable"}, status_code=503)
     return JSONResponse(w)
+
+
+# ── Madhhab-aware fiqh content ──────────────────────────────────────────────
+@app.get("/api/fiqh")
+async def api_fiqh(
+    madhhab: str = Query(..., pattern="^(hanafi|shafii|maliki|hanbali)$"),
+    topic:   str = Query(...),
+    lang:    str = Query("en"),
+):
+    """Returns exactly one madhhab's content for one topic — never mixed,
+    never invented. See domain/fiqh/registry.py for the non-negotiable rules."""
+    from domain.fiqh.registry import get_fiqh_content
+    entry = get_fiqh_content(madhhab, topic, lang)
+    return JSONResponse({
+        "madhhab":                entry.madhhab,
+        "topic":                  entry.topic,
+        "language":               entry.language,
+        "verification_status":    entry.verification_status,
+        "ruling_text":            entry.ruling_text,
+        "source":                 entry.source,
+        "scholar_or_institution": entry.scholar_or_institution,
+        "version":                entry.version,
+        "reviewed_at":            entry.reviewed_at,
+    })
+
+
+# ── Quran translation source registry ───────────────────────────────────────
+@app.get("/api/quran/translation-sources")
+async def api_quran_translation_sources():
+    """Per-language Quran translation provenance/verification status.
+    See domain/quran/translation_registry.py — nothing here is AI-translated,
+    and nothing is marked usable without independent human confirmation."""
+    from domain.quran.translation_registry import all_sources
+    return JSONResponse({"sources": all_sources()})
+
+
+# ── Haramayn LIVE status ─────────────────────────────────────────────────────
+@app.get("/api/haramayn/status")
+async def api_haramayn_status():
+    """Real status only — never fabricates a LIVE indicator. See
+    domain/haramayn/registry.py for why direct embedding isn't active yet."""
+    from domain.haramayn.registry import all_sites
+    return JSONResponse({"sites": all_sites()})
+
+
+# ── Curated verse content (e.g. Qibla screen's verse card) ──────────────────
+@app.get("/api/quran/verse")
+async def api_quran_verse(
+    surah: int = Query(..., ge=1, le=114),
+    ayah:  int = Query(..., ge=1),
+    lang:  str = Query("uz"),
+):
+    """Returns None/404-shaped response rather than fabricated text if no
+    verified entry exists — see domain/quran/verse_registry.py."""
+    from domain.quran.verse_registry import get_verse
+    v = get_verse(surah, ayah, lang)
+    if not v:
+        return JSONResponse({"available": False}, status_code=404)
+    return JSONResponse({
+        "available": True,
+        "surah": v.surah, "ayah": v.ayah, "language": v.language, "text": v.text,
+        "translation_source": v.translation_source,
+        "source_reference": v.source_reference,
+        "verification_status": v.verification_status,
+    })
 
 
 # ── Category → Chapter mapping (Uzbek Bukhari) ─────────────────────────────

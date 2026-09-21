@@ -104,6 +104,7 @@ android/local.properties
 *.apk
 *.aab
 *.keystore
+android/keystore.properties
 *.jks
 
 # ── Capacitor assets generation output ─────────────────────
@@ -113,3 +114,7 @@ resources/.cache/
 google-services.json
 firebase-credentials.json
 serviceAccountKey.json
+
+# ── Real user data (PII — NEVER commit) ────────────────────
+users.db
+data/users.db

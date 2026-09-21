@@ -8,8 +8,10 @@
 
 const QiblaScreen = (function () {
 
-  const KAABA_LAT = 21.4225;
-  const KAABA_LON = 39.8262;
+  /* Single source of truth for geography — shared with EarthGlobe so the
+     compass and the 3D globes never disagree. See native/qibla-geo.js */
+  const KAABA_LAT = QiblaGeo.KAABA_LAT;
+  const KAABA_LON = QiblaGeo.KAABA_LON;
   const S  = 220;               /* SVG compass size */
   const CX = 110, CY = 110;    /* center */
   const R  = 102;               /* radius = S/2 - 8 */
@@ -27,6 +29,12 @@ const QiblaScreen = (function () {
   let _orientCb    = null;
   let _el          = null;
   let _found       = false;
+  let _gpsAccuracyM   = null;  // meters, from position.coords.accuracy — real, never fabricated
+  let _compassAccDeg  = null;  // degrees, from webkitCompassAccuracy when the platform provides it
+  let _hasOrientation = false; // true once at least one real orientation event has been received
+  let _calibrating    = false; // true when we've detected the compass needs the figure-8 gesture
+  let _routeGlobe     = null;  // EarthGlobe instance — top "global route" view
+  let _compassGlobe   = null;  // EarthGlobe instance — behind the SVG compass
 
   /* ══════════════════════════════════════════════
      Entry points
@@ -38,6 +46,7 @@ const QiblaScreen = (function () {
     if (!_el) return;
     _el.innerHTML = _buildHTML();
     _bind();
+    _initGlobes();
     const sLat = parseFloat(localStorage.getItem('islamtime_last_lat') || '');
     const sLon = parseFloat(localStorage.getItem('islamtime_last_lon') || '');
     if (sLat && sLon) { _lat = sLat; _lon = sLon; _computeAndShow(); }
@@ -51,10 +60,28 @@ const QiblaScreen = (function () {
     if (!_el) return;
     _el.innerHTML = _buildHTML();
     _bind();
+    _initGlobes();
     _startLocation();
   }
 
+  /* Real 3D globes (Three.js) when WebGL is available; the existing SVG
+     compass + Xarita map tab already work fully without them, so no
+     separate "fallback UI" is needed when it's not. */
+  function _initGlobes() {
+    if (typeof EarthGlobe === 'undefined' || !EarthGlobe.isSupported()) return;
+    const routeEl = _el?.querySelector('#qb-route-globe');
+    const compassEl = _el?.querySelector('#qb-compass-globe');
+    if (routeEl) _routeGlobe = EarthGlobe.create(routeEl, 'route');
+    if (compassEl) _compassGlobe = EarthGlobe.create(compassEl, 'compass');
+  }
+
+  function _destroyGlobes() {
+    if (_routeGlobe)   { _routeGlobe.destroy();   _routeGlobe = null; }
+    if (_compassGlobe) { _compassGlobe.destroy(); _compassGlobe = null; }
+  }
+
   function unload() {
+    _destroyGlobes();
     if (_orientCb) {
       window.removeEventListener('deviceorientationabsolute', _orientCb);
       window.removeEventListener('deviceorientation', _orientCb);
@@ -139,6 +166,11 @@ const QiblaScreen = (function () {
     return `
 <div id="qb-panel-kompas" class="qb-panel">
 
+  <div class="qb-route-globe-wrap">
+    <div id="qb-route-globe" class="qb-route-globe"></div>
+    <div class="qb-route-globe-label">${_T('Joylashuvingizdan Kabagacha','Жойлашувингиздан Каъбагача','От вашего местоположения до Каабы','Your location → Kaaba')}</div>
+  </div>
+
   <div id="qb-load-badge" class="qb-load-badge">
     <span class="qb-load-spin"></span>
     <span>${_T('Joylashuv aniqlanmoqda...','Жойлашув аниқланмоқда...','Определение местоположения...','Detecting location...')}</span>
@@ -150,7 +182,22 @@ const QiblaScreen = (function () {
     <span id="qb-badge-deg" class="qb-badge-deg">—°</span>
     <span id="qb-badge-dir" class="qb-badge-dir">—</span>
   </div>
+  <div id="qb-calibrate-badge" class="qb-found-badge qb-calibrate-badge" style="display:none">
+    <span>🧭 ${_T("Kompas kalibrlanmoqda — telefonni 8 shaklida aylantiring","Компас калибрланмоқда — телефонни 8 шаклида айлантиринг",'Калибровка компаса — двигайте телефон по форме "8"','Calibrating compass — move your phone in a figure-8')}</span>
+  </div>
+  <div id="qb-ios-permission-badge" class="qb-found-badge qb-ios-permission-badge" style="display:none">
+    <button id="qb-ios-permission-btn" class="qb-ios-permission-btn">
+      🧭 ${_T('Kompasni yoqish','Компасни ёқиш','Включить компас','Enable compass')}
+    </button>
+  </div>
+  <div id="qb-ios-denied-badge" class="qb-found-badge qb-ios-denied-badge" style="display:none">
+    ⚠️ ${_T("Kompas ruxsati berilmadi. Sozlamalarda yoqing.","Компас рухсати берилмади. Созламаларда ёқинг.",'Разрешение на компас не дано. Включите в настройках устройства.','Compass permission denied. Enable it in your device settings.')}
+  </div>
 
+  <div class="qb-compass-stack" style="width:${S}px;height:${S}px">
+  <div id="qb-compass-globe-wrap" class="qb-compass-globe-wrap" style="width:${S}px;height:${S}px">
+    <div id="qb-compass-globe" class="qb-compass-globe"></div>
+  </div>
   <svg id="qb-compass-svg" width="${S}" height="${S}" viewBox="0 0 ${S} ${S}">
     <defs>
       <filter id="qb-glow">
@@ -158,8 +205,8 @@ const QiblaScreen = (function () {
         <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
       </filter>
       <radialGradient id="qb-bg" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stop-color="#0f2040"/>
-        <stop offset="100%" stop-color="#09121f"/>
+        <stop offset="0%" stop-color="#0f2040" stop-opacity="0.35"/>
+        <stop offset="100%" stop-color="#09121f" stop-opacity="0.55"/>
       </radialGradient>
     </defs>
     <circle cx="${CX}" cy="${CY}" r="${R+6}" fill="none"
@@ -196,6 +243,7 @@ const QiblaScreen = (function () {
       fill="rgba(232,193,90,.1)" stroke="rgba(232,193,90,.2)" stroke-width="1"/>
     <text x="${CX}" y="${CY+5}" text-anchor="middle" font-size="14">🕋</text>
   </svg>
+  </div>
 
   <div id="qb-igrid" class="qb-igrid" style="display:none">
     <div class="qb-icell">
@@ -211,8 +259,8 @@ const QiblaScreen = (function () {
       <div class="qb-icell-val" id="qb-ig-dir" style="color:#e8dfc8">—</div>
     </div>
     <div class="qb-icell">
-      <div class="qb-icell-lbl">${_T('Aniqlik','Аниқлик','Точность','Accuracy')}</div>
-      <div class="qb-icell-val" style="color:rgba(232,223,200,.55)">±0.5°</div>
+      <div class="qb-icell-lbl">${_T('Kompas aniqligi','Компас аниқлиги','Точность компаса','Compass accuracy')}</div>
+      <div class="qb-icell-val" id="qb-ig-accuracy" style="color:rgba(232,223,200,.55)">—</div>
     </div>
   </div>
 
@@ -315,12 +363,13 @@ const QiblaScreen = (function () {
       <div class="qb-minfo-ar">الكعبة المشرفة</div>
       <div class="qb-minfo-name">Ka'ba · Masjid al-Haram</div>
       <div class="qb-minfo-city">${_T('Makka al-Mukarrama, Saudiya Arabistoni','Макка ал-Мукаррама, Саудия Арабистони','Мекка аль-Мукаррама, Саудовская Аравия','Makkah al-Mukarramah, Saudi Arabia')}</div>
+      <button class="qb-live-btn" id="qb-open-haramayn">🔴 ${_T('Live ko\'rish','Live кўриш','Смотреть Live','Watch Live')}</button>
     </div>
     <div class="qb-mrow"><span class="qb-mrow-lbl">${_T('Qibla burchagi','Қибла бурчаги','Угол Киблы','Qibla angle')}</span><span class="qb-mrow-val" id="qb-m-angle">—</span></div>
     <div class="qb-mrow"><span class="qb-mrow-lbl">${_T('Masofa','Масофа','Расстояние','Distance')}</span><span class="qb-mrow-val" id="qb-m-dist">—</span></div>
     <div class="qb-mrow"><span class="qb-mrow-lbl">${_T("Yo'nalish","Йўналиш","Направление","Direction")}</span><span class="qb-mrow-val" id="qb-m-dir">—</span></div>
     <div class="qb-mrow"><span class="qb-mrow-lbl">${_T('Hisoblash usuli','Ҳисоблаш усули','Метод расчёта','Calculation method')}</span><span class="qb-mrow-val">Haversine</span></div>
-    <div class="qb-mrow last"><span class="qb-mrow-lbl">${_T('GPS aniqlik','GPS аниқлик','Точность GPS','GPS accuracy')}</span><span class="qb-mrow-val">±0.5°</span></div>
+    <div class="qb-mrow last"><span class="qb-mrow-lbl">${_T('GPS aniqlik','GPS аниқлик','Точность GPS','GPS accuracy')}</span><span class="qb-mrow-val" id="qb-gps-accuracy-val">—</span></div>
   </div>
 
   <div class="qb-about-card">
@@ -361,8 +410,26 @@ const QiblaScreen = (function () {
         _el.querySelector('#qb-panel-kompas').style.display  = _tab==='kompas'  ? 'flex':'none';
         _el.querySelector('#qb-panel-xarita').style.display  = _tab==='xarita'  ? 'flex':'none';
         _el.querySelector('#qb-panel-malumot').style.display = _tab==='malumot' ? 'flex':'none';
+        // Pause the WebGL render loops off-screen — saves GPU/battery.
+        if (_routeGlobe)   _routeGlobe.setVisible(_tab === 'kompas');
+        if (_compassGlobe) _compassGlobe.setVisible(_tab === 'kompas');
         window.Telegram?.WebApp?.HapticFeedback?.selectionChanged();
       });
+    });
+
+    _el.querySelector('#qb-open-haramayn')?.addEventListener('click', () => {
+      // Reuses the one canonical Haramayn module (domain/haramayn/registry.py
+      // + HaramaynScreen) — never a second, independent video implementation.
+      HaramaynScreen.load(_lang);
+      window.App.navigate('screen-haramayn');
+    });
+
+    _el.querySelector('#qb-ios-permission-btn')?.addEventListener('click', () => {
+      DeviceOrientationEvent.requestPermission().then(state => {
+        _show('#qb-ios-permission-badge', false);
+        if (state === 'granted') _attachOrientationListener();
+        else _show('#qb-ios-denied-badge', true);
+      }).catch(() => _show('#qb-ios-permission-badge', false));
     });
   }
 
@@ -403,6 +470,7 @@ const QiblaScreen = (function () {
     navigator.geolocation.getCurrentPosition(
       pos => {
         _lat = pos.coords.latitude; _lon = pos.coords.longitude;
+        _gpsAccuracyM = (typeof pos.coords.accuracy === 'number' && pos.coords.accuracy > 0) ? pos.coords.accuracy : null;
         localStorage.setItem('islamtime_last_lat', _lat);
         localStorage.setItem('islamtime_last_lon', _lon);
         _computeAndShow(); _startOrientation();
@@ -420,6 +488,8 @@ const QiblaScreen = (function () {
     _distKm     = _distToKaaba(_lat, _lon);
     _found      = true;
 
+    if (_routeGlobe) _routeGlobe.setRoute(_lat, _lon, KAABA_LAT, KAABA_LON);
+
     /* city name from mosques cache */
     try { _city = JSON.parse(localStorage.getItem('islamtime_mosques_v1') || '{}').city || ''; }
     catch { _city = ''; }
@@ -433,11 +503,10 @@ const QiblaScreen = (function () {
       `<div class="qb-gps-dot"></div>
        <span class="qb-gps-txt">GPS${_city ? ' · '+_city : ' · ' + _T('Topildi','Топилди','Найдено','Found')}</span>`;
 
-    /* Kompas: swap badges, fill grid */
+    /* Kompas: swap badges (found-vs-calibrating handled by _updateQualityBadge,
+       gated on real GPS+compass quality, never shown unconditionally), fill grid */
     _show('#qb-load-badge',  false);
-    _show('#qb-found-badge', true);
-    _setText('#qb-badge-deg', `${ang}°`);
-    _setText('#qb-badge-dir', dir);
+    _updateQualityBadge();
 
     const grid = _el?.querySelector('#qb-igrid');
     if (grid) grid.style.display = 'grid';
@@ -486,9 +555,56 @@ const QiblaScreen = (function () {
      Orientation
   ══════════════════════════════════════════════ */
   function _startOrientation() {
+    // iOS 13+ requires an explicit, user-gesture-triggered permission grant
+    // before deviceorientation events fire at all — without this, the
+    // compass silently never works on iOS (no error, just zero events).
+    const needsIosPermission = typeof DeviceOrientationEvent !== 'undefined'
+      && typeof DeviceOrientationEvent.requestPermission === 'function';
+    if (needsIosPermission) {
+      _show('#qb-ios-permission-badge', true);
+      return; // _attachOrientationListener() runs after the user taps the prompt
+    }
+    _attachOrientationListener();
+  }
+
+  function _attachOrientationListener() {
+    let _lastHeading = null;
+    let _bigJumpCount = 0;
     _orientCb = e => {
-      _deviceNorth = e.webkitCompassHeading || (e.alpha ? (360 - e.alpha) : 0);
+      const hasWebkit = typeof e.webkitCompassHeading === 'number';
+      // Some browsers/environments fire a single null-data "capability probe"
+      // event (alpha/beta/gamma all null) just to signal the API exists —
+      // that is NOT a real compass reading and must not flip the quality
+      // gate to "found".
+      const hasUsableReading = hasWebkit || typeof e.alpha === 'number';
+      if (!hasUsableReading) return;
+
+      _deviceNorth = hasWebkit ? e.webkitCompassHeading : (360 - e.alpha) % 360;
+
+      // iOS reports a real per-reading uncertainty; Android's DeviceOrientation
+      // API does not expose one at all — leave it unknown rather than invent one.
+      if (hasWebkit && typeof e.webkitCompassAccuracy === 'number' && e.webkitCompassAccuracy >= 0) {
+        _compassAccDeg = e.webkitCompassAccuracy;
+      } else if (!hasWebkit && 'absolute' in e) {
+        // Chrome/Android: e.absolute === true means a real absolute (magnetometer-
+        // backed) heading; false/undefined means relative-only, i.e. not yet
+        // calibrated against magnetic north — treat as unknown accuracy.
+        _compassAccDeg = e.absolute ? null : null; // still unknown numerically either way
+      }
+
+      // Heuristic calibration-needed signal: large heading jumps between
+      // consecutive readings suggest the magnetometer hasn't settled yet.
+      if (_lastHeading !== null) {
+        const diff = Math.abs(((_deviceNorth - _lastHeading + 540) % 360) - 180);
+        if (diff > 45) _bigJumpCount++;
+      }
+      _lastHeading = _deviceNorth;
+      _calibrating = _bigJumpCount >= 2 && _bigJumpCount < 6;
+
+      _hasOrientation = true;
       _updateNeedle();
+      _updateQualityBadge();
+      if (_compassGlobe) _compassGlobe.setHeadingDeg(_deviceNorth);
     };
     if ('ondeviceorientationabsolute' in window) {
       window.addEventListener('deviceorientationabsolute', _orientCb);
@@ -497,31 +613,51 @@ const QiblaScreen = (function () {
     }
   }
 
+  /* Real quality gate: never claim "Qibla found" before we actually have
+     both a GPS fix AND at least one live compass reading. GPS accuracy and
+     compass accuracy are tracked and shown separately — never merged into
+     one fabricated number. */
+  function _qualityGood() {
+    if (!_hasOrientation) return false;
+    if (_gpsAccuracyM !== null && _gpsAccuracyM > 100) return false; // >100m fix is too coarse to trust
+    return true;
+  }
+
+  function _updateQualityBadge() {
+    const good = _qualityGood();
+    _show('#qb-found-badge', good);
+    // Whenever we're not confidently "found" — whether because no compass
+    // reading has arrived yet, or because jitter suggests it needs
+    // calibrating — show the figure-8 guidance rather than leaving a blank
+    // gap that could be mistaken for a frozen screen.
+    _show('#qb-calibrate-badge', !good);
+    if (good) {
+      const ang = Math.round(_qiblaAngle);
+      _setText('#qb-badge-deg', `${ang}°`);
+      _setText('#qb-badge-dir', _dirLabel(_qiblaAngle));
+    }
+    const accCell = _el?.querySelector('#qb-ig-accuracy');
+    if (accCell) {
+      accCell.textContent = _compassAccDeg !== null ? `±${Math.round(_compassAccDeg)}°` : _T('Nomaʼlum','Номаълум','Неизвестно','Unknown');
+    }
+    const gpsRow = _el?.querySelector('#qb-gps-accuracy-val');
+    if (gpsRow) {
+      gpsRow.textContent = _gpsAccuracyM !== null ? `±${Math.round(_gpsAccuracyM)} m` : _T('Nomaʼlum','Номаълум','Неизвестно','Unknown');
+    }
+  }
+
   function _updateNeedle() {
     const needle = _el?.querySelector('#qb-needle');
     if (!needle) return;
-    needle.setAttribute('transform',
-      `rotate(${(_qiblaAngle - _deviceNorth).toFixed(1)}, ${CX}, ${CY})`);
+    const delta = QiblaGeo.headingDelta(_qiblaAngle, _deviceNorth);
+    needle.setAttribute('transform', `rotate(${delta.toFixed(1)}, ${CX}, ${CY})`);
   }
 
   /* ══════════════════════════════════════════════
      Helpers
   ══════════════════════════════════════════════ */
-  function _bearingToKaaba(lat, lon) {
-    const lat1 = lat*Math.PI/180, lat2 = KAABA_LAT*Math.PI/180;
-    const dLon = (KAABA_LON - lon)*Math.PI/180;
-    const y = Math.sin(dLon)*Math.cos(lat2);
-    const x = Math.cos(lat1)*Math.sin(lat2) - Math.sin(lat1)*Math.cos(lat2)*Math.cos(dLon);
-    return (Math.atan2(y, x)*180/Math.PI + 360) % 360;
-  }
-
-  function _distToKaaba(lat, lon) {
-    const R = 6371;
-    const lat1 = lat*Math.PI/180, lat2 = KAABA_LAT*Math.PI/180;
-    const dLat = (KAABA_LAT - lat)*Math.PI/180, dLon = (KAABA_LON - lon)*Math.PI/180;
-    const a = Math.sin(dLat/2)**2 + Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLon/2)**2;
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  }
+  function _bearingToKaaba(lat, lon) { return QiblaGeo.bearingToKaaba(lat, lon); }
+  function _distToKaaba(lat, lon)    { return QiblaGeo.distanceToKaabaKm(lat, lon); }
 
   const DIR_MAP = {
     uz:     ['Shimol',"Shimoli-sharq",'Sharq','Janubi-sharq','Janub',"Janubi-g'arb","G'arb","Shimoli-g'arb"],

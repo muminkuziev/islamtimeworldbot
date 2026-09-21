@@ -156,6 +156,18 @@ const PrayerScreen = (function () {
                   de:'Tageshadith',    fr:'Hadith du jour',     id:'Hadits Harian',
                   hi:'आज का हदीस',    ur:'آج کا حدیث' },
 
+    qazoLink:   { uz:'📿 Qazo namozlari', uz_cyr:'📿 Қазо намозлари', en:'📿 Missed Prayers (Qazo)',
+                  ru:'📿 Восполнение намазов', tr:'📿 Kaza Namazları',  ar:'📿 قضاء الصلوات',
+                  kk:'📿 Қаза намаздары',     tg:'📿 Қазои намозҳо',   ky:'📿 Каза намаздары',
+                  de:'📿 Nachzuholende Gebete', fr:'📿 Prières à rattraper', id:'📿 Sholat Qadha',
+                  hi:'📿 क़ज़ा नमाज़ें',       ur:'📿 قضاء نمازیں' },
+
+    monthlyLink:{ uz:'📅 Oylik namoz taqvimi', uz_cyr:'📅 Ойлик намоз тақвими', en:'📅 Monthly Prayer Calendar',
+                  ru:'📅 Месячный календарь намазов', tr:'📅 Aylık Namaz Takvimi', ar:'📅 التقويم الشهري للصلاة',
+                  kk:'📅 Айлық намаз күнтізбесі', tg:'📅 Тақвими моҳонаи намоз', ky:'📅 Айлык намаз календары',
+                  de:'📅 Monatlicher Gebetskalender', fr:'📅 Calendrier mensuel des prières', id:'📅 Kalender Sholat Bulanan',
+                  hi:'📅 मासिक नमाज़ कैलेंडर',  ur:'📅 ماہانہ نماز کیلنڈر' },
+
     feelsLike:  { uz:'Seziladi',    uz_cyr:'Сезилади', en:'Feels',    ru:'Ощущается',
                   tr:'Hissedilen',  ar:'يبدو',          kk:'Сезіледі', tg:'Эҳсос мешавад',
                   ky:'Сезилет',    de:'Gefühlt',        fr:'Ressenti', id:'Terasa',
@@ -556,7 +568,17 @@ const PrayerScreen = (function () {
     if (!el || !_data) return;
 
     switch (_tab) {
-      case 'vaqt':    el.innerHTML = _buildVaqtTab();    break;
+      case 'vaqt':
+        el.innerHTML = _buildVaqtTab();
+        el.querySelector('#pm-open-qazo')?.addEventListener('click', () => {
+          QazoScreen.load(_lang);
+          window.App.navigate('screen-qazo');
+        });
+        el.querySelector('#pm-open-monthly')?.addEventListener('click', () => {
+          MonthlyCalendarScreen.load(_lang);
+          window.App.navigate('screen-monthly-calendar');
+        });
+        break;
       case 'obhavo':  el.innerHTML = _buildObHavoTab();  break;
       case 'aqi':     el.innerHTML = _buildAqiTab();     break;
       case 'sozlama':
@@ -613,7 +635,15 @@ const PrayerScreen = (function () {
 
     const ayah   = _data.daily_ayah   ? _buildAyahCard()   : '';
     const hadith = _data.daily_hadith ? _buildHadithCard() : '';
-    return `<div class="pm-vaqt-list">${rows}</div>${ayah}${hadith}`;
+    const qazo   = `
+      <button class="pm-card pm-card--green pm-qazo-link" id="pm-open-qazo" style="width:100%;text-align:left;cursor:pointer;border:none">
+        <div class="pm-card-label"><span class="pm-card-dot pm-card-dot--green"></span>${_l('qazoLink', _lang)}</div>
+      </button>`;
+    const monthly = `
+      <button class="pm-card pm-card--gold pm-qazo-link" id="pm-open-monthly" style="width:100%;text-align:left;cursor:pointer;border:none">
+        <div class="pm-card-label"><span class="pm-card-dot pm-card-dot--gold"></span>${_l('monthlyLink', _lang)}</div>
+      </button>`;
+    return `<div class="pm-vaqt-list">${rows}</div>${ayah}${hadith}${qazo}${monthly}`;
   }
 
   /* ── SVG weather icons (inline, no emoji) ──────────────────── */

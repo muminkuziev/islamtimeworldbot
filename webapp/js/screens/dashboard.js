@@ -125,6 +125,14 @@ const DashboardScreen = (function () {
       sub_ky:  'Тил · Тема · Қори · GPS', sub_de: 'Sprache · Thema · Rezitator · GPS',
       sub_fr:  'Langue · Thème · Récitant · GPS',sub_id:'Bahasa · Tema · Qari · GPS',
       sub_hi:  'भाषा · थीम · क़ारी · GPS',   sub_ur: 'زبان · تھیم · قاری · GPS' },
+    { key:'boshqalar',
+      sub:     'Shahodat · Kalimalar',    sub_cyr:'Шаҳодат · Калималар',
+      sub_ru:  'Шахада · Калимы',         sub_en: 'Shahodat · Kalimas',
+      sub_tr:  'Şehadet · Kelimeler',     sub_ar: 'الشهادة · الكلمات',
+      sub_kk:  'Шаһадат · Кәлимелер',    sub_tg: 'Шаҳодат · Калимаҳо',
+      sub_ky:  'Шахадат · Калималар',    sub_de: 'Shahada · Kalimas',
+      sub_fr:  'Chahada · Kalimas',       sub_id: 'Syahadat · Kalimat',
+      sub_hi:  'शहादा · कलिमा',            sub_ur: 'شہادت · کلمات' },
   ];
 
   let _el      = null;
@@ -161,6 +169,7 @@ const DashboardScreen = (function () {
     _updateDate();
     _loadCity();
     _loadPrayer();
+    _loadHaramaynRow();
   }
 
   function update(lang) {
@@ -189,7 +198,7 @@ const DashboardScreen = (function () {
 
     return `
 <div class="db-hdr">
-  <div class="nm-tile-bg"></div>
+  <img class="db-hdr-photo" src="assets/landing/haram-madinah.webp" alt="Masjid an-Nabawi" loading="eager">
   <div class="nm-tile-ov" style="background:rgba(9,18,31,0.65)"></div>
   <div class="db-hdr-inner">
 
@@ -245,7 +254,43 @@ const DashboardScreen = (function () {
 <div class="db-body">
   <div class="db-section-lbl">${_l('services')}</div>
   <div class="db-grid">${tiles}</div>
+
+  <div class="db-section-lbl">${_T('Haramayn LIVE','Ҳарамайн LIVE','Харамайн LIVE','Haramayn LIVE')}</div>
+  <div class="db-haramayn-row" id="db-haramayn-row">
+    <div class="db-haramayn-mini db-haramayn-mini--loading">${_l('loading')}</div>
+  </div>
 </div>`;
+  }
+
+  function _T(lat, cyr, ru, en) { return _resolveT(lat, cyr, ru, en, _lang); }
+
+  async function _loadHaramaynRow() {
+    const wrap = _el?.querySelector('#db-haramayn-row');
+    if (!wrap) return;
+    try {
+      const r = await fetch('/api/haramayn/status');
+      const d = await r.json();
+      const sites = d.sites || [];
+      const IMG = { makkah: 'assets/landing/haram-makkah.webp', madinah: 'assets/landing/haram-madinah.webp' };
+      const NAME = {
+        makkah:  _T('Makkah LIVE','Макка LIVE','Мекка LIVE','Makkah LIVE'),
+        madinah: _T('Madina LIVE','Мадина LIVE','Медина LIVE','Madinah LIVE'),
+      };
+      wrap.innerHTML = sites.map(s => `
+        <button class="db-haramayn-mini" data-site="${s.site_id}">
+          <img src="${IMG[s.site_id]}" alt="${s.mosque_en}" loading="lazy">
+          <div class="db-haramayn-mini-badge">${s.status === 'LIVE_EMBED_ACTIVE' ? '🔴 LIVE' : _T('Tez orada','Тез орада','Скоро','Soon')}</div>
+          <div class="db-haramayn-mini-name">${NAME[s.site_id] || s.name_en}</div>
+        </button>`).join('');
+      wrap.querySelectorAll('.db-haramayn-mini').forEach(btn => {
+        btn.addEventListener('click', () => {
+          HaramaynScreen.load(_lang);
+          window.App.navigate('screen-haramayn');
+        });
+      });
+    } catch {
+      wrap.innerHTML = `<div class="db-haramayn-mini db-haramayn-mini--loading">—</div>`;
+    }
   }
 
   /* ══════════════════════════════════════════════
@@ -523,6 +568,7 @@ const DashboardScreen = (function () {
       calendar: () => { CalendarScreen.load(lang); window.App.navigate('screen-calendar'); },
       names:    () => { NamesScreen.load(lang);    window.App.navigate('screen-names');    },
       settings: () => { SettingsScreen.load(lang); window.App.navigate('screen-settings'); },
+      boshqalar:() => { OthersScreen.load(lang);   window.App.navigate('screen-others');   },
     };
     (MAP[key] || (() => {}))();
   }

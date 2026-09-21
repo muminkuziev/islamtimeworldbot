@@ -1,6 +1,6 @@
 {
-  "appId":   "com.islamtimeworld.test",
-  "appName": "Islam Time Test",
+  "appId":   "com.islamtimeworld.app",
+  "appName": "IslamTimeWorld",
   "webDir":  "webapp",
 
   "server": {

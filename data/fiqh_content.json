@@ -1,0 +1,46 @@
+[
+  {
+    "madhhab": "hanafi",
+    "topic": "qazo",
+    "language": "en",
+    "source": null,
+    "scholar_or_institution": null,
+    "version": null,
+    "reviewed_at": null,
+    "verification_status": "unverified",
+    "ruling_text": null
+  },
+  {
+    "madhhab": "shafii",
+    "topic": "qazo",
+    "language": "en",
+    "source": null,
+    "scholar_or_institution": null,
+    "version": null,
+    "reviewed_at": null,
+    "verification_status": "unverified",
+    "ruling_text": null
+  },
+  {
+    "madhhab": "maliki",
+    "topic": "qazo",
+    "language": "en",
+    "source": null,
+    "scholar_or_institution": null,
+    "version": null,
+    "reviewed_at": null,
+    "verification_status": "unverified",
+    "ruling_text": null
+  },
+  {
+    "madhhab": "hanbali",
+    "topic": "qazo",
+    "language": "en",
+    "source": null,
+    "scholar_or_institution": null,
+    "version": null,
+    "reviewed_at": null,
+    "verification_status": "unverified",
+    "ruling_text": null
+  }
+]

@@ -158,7 +158,23 @@ const QuranScreen = (function () {
     id:null, hi:null, ur:null
   };
 
-  const RECITER = { id:'ar.alafasy', name:'Mishary Rashid al-Afasy', flag:'🇰🇼' };
+  const LS_RECITER = 'quran_reciter';
+  function _getReciters() {
+    return window.QuranReciters ? window.QuranReciters.getFullSurahReciters() : [{ id:'mishary', edition:'ar.alafasy', name:'Mishary Rashid al-Afasy', flag:'🇰🇼' }];
+  }
+  function _getReciter() {
+    const saved = (() => { try { return localStorage.getItem(LS_RECITER); } catch { return null; } })();
+    const list  = _getReciters();
+    return list.find(r => r.id === saved) || list[0];
+  }
+  function _setReciter(id) {
+    try { localStorage.setItem(LS_RECITER, id); } catch {}
+  }
+  function _reciterAudioUrl(surahNum) {
+    return window.QuranReciters
+      ? window.QuranReciters.getFullSurahAudioUrl(_getReciter().id, surahNum)
+      : `https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/${surahNum}.mp3`;
+  }
 
   /* ── State ── */
   let _lang         = 'uz';
@@ -190,6 +206,7 @@ const QuranScreen = (function () {
     tafsirLoad:   { uz:'Tafsir yuklanmoqda...', uz_cyr:'Тафсир юкланмоқда...', ru:'Тафсир загружается...', en:'Tafsir loading...', tr:'Tefsir yükleniyor...', ar:'جاري تحميل التفسير...', kk:'Тафсир жүктелуде...', tg:'Тафсир бор карда мешавад...', ky:'Тафсир жүктөлүүдө...', de:'Tafsir wird geladen...', fr:'Tafsir en chargement...', id:'Tafsir memuat...', hi:'तफ़सीर लोड हो रही है...', ur:'تفسیر لوڈ ہو رہی ہے...' },
   };
   function _qt(k) { const n = QT[k]; return n ? (n[_lang] || n.en || '') : ''; }
+  function _T(lat, cyr, ru, en) { return _resolveT(lat, cyr, ru, en, _lang); }
   let _view         = 'list';
   let _surahIdx     = 0;
   let _filter       = 'all';
@@ -239,8 +256,8 @@ const QuranScreen = (function () {
           <div class="q-nav-row">
             <button id="quran-back" class="q-back-btn">${_qt('back')}</button>
             <div class="q-qori-badge">
-              <span>${RECITER.flag}</span>
-              <span>${RECITER.name.split(' ')[0]}</span>
+              <span>${_getReciter().flag}</span>
+              <span>${_getReciter().name.split(' ')[0]}</span>
             </div>
           </div>
           <div class="q-title-block">
@@ -252,6 +269,7 @@ const QuranScreen = (function () {
             <button class="q-tab-btn${_tab==='suralar'?' active':''}" data-tab="suralar">${_qt('tabSura')}</button>
             <button class="q-tab-btn${_tab==='qori'?' active':''}" data-tab="qori">${_qt('tabQori')}</button>
             <button class="q-tab-btn${_tab==='saqlangan'?' active':''}" data-tab="saqlangan">${_qt('tabSaved')}</button>
+            <button class="q-tab-btn${_tab==='sozlama'?' active':''}" data-tab="sozlama">⚙️</button>
           </div>
         </div>
         <div class="q-content" id="q-content">${_tabContent()}</div>
@@ -262,7 +280,99 @@ const QuranScreen = (function () {
     if (_tab === 'suralar')   return _suralarHTML();
     if (_tab === 'qori')      return _qoriHTML();
     if (_tab === 'saqlangan') return _saqlanganHTML();
+    if (_tab === 'sozlama')   return _sozlamaHTML();
     return _suralarHTML();
+  }
+
+  /* ── Tab: Sozlamalar (Quran settings — script, font size, line spacing) ──
+     Only options genuinely served by the active text provider (AlQuran
+     Cloud) are offered — no "Indo-Pak" option, since that edition isn't
+     available there; presenting it would mean either faking the script or
+     silently falling back, both dishonest. ── */
+  const SCRIPT_STYLES = [
+    { id: 'quran-uthmani', label: 'Uthmani' },
+    { id: 'quran-simple',  label: 'Simple Arabic' },
+  ];
+  const LS_SCRIPT   = 'quran_script_style';
+  const LS_FONTSIZE = 'quran_font_size';
+  const LS_LINESP   = 'quran_line_spacing';
+
+  function _getScript()   { try { return localStorage.getItem(LS_SCRIPT) || 'quran-uthmani'; } catch { return 'quran-uthmani'; } }
+  function _setScript(v)  { try { localStorage.setItem(LS_SCRIPT, v); } catch {} }
+  function _getFontSize() { try { return parseInt(localStorage.getItem(LS_FONTSIZE), 10) || 28; } catch { return 28; } }
+  function _setFontSize(v){ try { localStorage.setItem(LS_FONTSIZE, String(v)); } catch {} }
+  function _getLineSp()   { try { return parseFloat(localStorage.getItem(LS_LINESP)) || 1.9; } catch { return 1.9; } }
+  function _setLineSp(v)  { try { localStorage.setItem(LS_LINESP, String(v)); } catch {} }
+
+  function _sozlamaHTML() {
+    const current = _getScript();
+    const fontSize = _getFontSize();
+    const lineSp = _getLineSp();
+    const scriptCards = SCRIPT_STYLES.map(s => `
+      <div class="q-qori-card${s.id === current ? ' active' : ''}" data-script="${s.id}">
+        <div class="q-qori-info">
+          <div class="q-qori-name">${s.label}</div>
+        </div>
+        <div class="q-qori-check${s.id === current ? '' : ' q-qori-check--empty'}">${s.id === current ? '✓' : ''}</div>
+      </div>`).join('');
+
+    return `
+      <div class="q-section-label" style="margin-bottom:8px">${_T("Arabcha matn uslubi","Арабча матн услуби",'Стиль арабского текста','Arabic Script Style')}</div>
+      ${scriptCards}
+      <div class="q-qori-note">${_T(
+        "Indo-Pak uslubi hozirgi manba tomonidan qo'llab-quvvatlanmaydi.",
+        "Индо-Пак услуби ҳозирги манба томонидан қўллаб-қувватланмайди.",
+        'Стиль Indo-Pak не поддерживается текущим источником текста.',
+        'Indo-Pak style is not supported by the current text provider.'
+      )}</div>
+
+      <div class="q-section-label" style="margin:20px 0 8px">${_T('Shrift o\'lchami','Шрифт ўлчами','Размер шрифта','Font Size')}</div>
+      <div class="q-settings-row">
+        <button class="q-settings-btn" id="q-fontsize-dec">A−</button>
+        <span class="q-settings-value" id="q-fontsize-value">${fontSize}px</span>
+        <button class="q-settings-btn" id="q-fontsize-inc">A+</button>
+      </div>
+
+      <div class="q-section-label" style="margin:20px 0 8px">${_T("Qator oralig'i",'Қатор оралиғи','Межстрочный интервал','Line Spacing')}</div>
+      <div class="q-settings-row">
+        <button class="q-settings-btn" id="q-linesp-dec">−</button>
+        <span class="q-settings-value" id="q-linesp-value">${lineSp.toFixed(1)}</span>
+        <button class="q-settings-btn" id="q-linesp-inc">+</button>
+      </div>`;
+  }
+
+  function _bindSozlama(el) {
+    el.querySelectorAll('.q-qori-card[data-script]').forEach(card => {
+      card.addEventListener('click', () => {
+        _setScript(card.dataset.script);
+        _clearAyahCache();
+        const c = el.querySelector('#q-content');
+        if (c) { c.innerHTML = _tabContent(); _bindTabContent(el); }
+        window.Telegram?.WebApp?.HapticFeedback?.selectionChanged();
+      });
+    });
+    const fsVal = el.querySelector('#q-fontsize-value');
+    el.querySelector('#q-fontsize-dec')?.addEventListener('click', () => {
+      const v = Math.max(18, _getFontSize() - 2); _setFontSize(v); if (fsVal) fsVal.textContent = v + 'px';
+    });
+    el.querySelector('#q-fontsize-inc')?.addEventListener('click', () => {
+      const v = Math.min(44, _getFontSize() + 2); _setFontSize(v); if (fsVal) fsVal.textContent = v + 'px';
+    });
+    const lsVal = el.querySelector('#q-linesp-value');
+    el.querySelector('#q-linesp-dec')?.addEventListener('click', () => {
+      const v = Math.max(1.3, +(_getLineSp() - 0.1).toFixed(1)); _setLineSp(v); if (lsVal) lsVal.textContent = v.toFixed(1);
+    });
+    el.querySelector('#q-linesp-inc')?.addEventListener('click', () => {
+      const v = Math.min(3.0, +(_getLineSp() + 0.1).toFixed(1)); _setLineSp(v); if (lsVal) lsVal.textContent = v.toFixed(1);
+    });
+  }
+
+  function _clearAyahCache() {
+    try {
+      Object.keys(localStorage)
+        .filter(k => k.startsWith('quran_') && k.includes('_v6'))
+        .forEach(k => localStorage.removeItem(k));
+    } catch {}
   }
 
   /* ── Tab: Suralar ── */
@@ -320,17 +430,36 @@ const QuranScreen = (function () {
 
   /* ── Tab: Qori ── */
   function _qoriHTML() {
-    return `
-      <div class="q-section-label" style="margin-bottom:8px">${_qt('chooseRec')}</div>
-      <div class="q-qori-card active">
-        <span class="q-qori-flag">${RECITER.flag}</span>
+    const current = _getReciter();
+    const cards = _getReciters().map(r => `
+      <div class="q-qori-card${r.id === current.id ? ' active' : ''}" data-reciter="${r.id}">
+        <span class="q-qori-flag">${r.flag}</span>
         <div class="q-qori-info">
-          <div class="q-qori-name">${RECITER.name}</div>
+          <div class="q-qori-name">${r.name}</div>
           <div class="q-qori-style">Murattal · 128kbps</div>
         </div>
-        <div class="q-qori-check">✓</div>
-      </div>
+        <div class="q-qori-check${r.id === current.id ? '' : ' q-qori-check--empty'}">${r.id === current.id ? '✓' : ''}</div>
+      </div>`).join('');
+    return `
+      <div class="q-section-label" style="margin-bottom:8px">${_qt('chooseRec')}</div>
+      ${cards}
       <div class="q-qori-note">${_qt('moreRec')}</div>`;
+  }
+
+  function _bindQoriEvents(el) {
+    el.querySelectorAll('.q-qori-card').forEach(card => {
+      card.addEventListener('click', () => {
+        _setReciter(card.dataset.reciter);
+        window.Telegram?.WebApp?.HapticFeedback?.selectionChanged();
+        const c = el.querySelector('#q-content');
+        if (c) { c.innerHTML = _tabContent(); _bindTabContent(el); }
+        const badge = el.querySelector('.q-qori-badge');
+        if (badge) {
+          const r = _getReciter();
+          badge.innerHTML = `<span>${r.flag}</span><span>${r.name.split(' ')[0]}</span>`;
+        }
+      });
+    });
   }
 
   /* ── Tab: Saqlangan ── */
@@ -388,6 +517,8 @@ const QuranScreen = (function () {
   function _bindTabContent(el) {
     if (_tab === 'suralar')   _bindSuralar(el);
     if (_tab === 'saqlangan') _bindSaqlangan(el);
+    if (_tab === 'qori')      _bindQoriEvents(el);
+    if (_tab === 'sozlama')   _bindSozlama(el);
   }
 
   function _bindSuralar(el) {
@@ -492,7 +623,8 @@ const QuranScreen = (function () {
     _bindReaderShell(el, s);
     _initAudio(el, s[0]);
 
-    const cacheKey = `quran_${s[0]}_${_lang}_v6`;
+    const scriptStyle = _getScript();
+    const cacheKey = `quran_${s[0]}_${_lang}_${scriptStyle}_v6`;
     const cached   = localStorage.getItem(cacheKey);
     if (cached) {
       try {
@@ -505,7 +637,7 @@ const QuranScreen = (function () {
     try {
       const edition = TRANSLATIONS[_lang];
       const [arData, trData, txData] = await Promise.all([
-        fetch(`https://api.alquran.cloud/v1/surah/${s[0]}/quran-uthmani`).then(r => r.json()),
+        fetch(`https://api.alquran.cloud/v1/surah/${s[0]}/${scriptStyle}`).then(r => r.json()),
         edition
           ? fetch(`https://api.alquran.cloud/v1/surah/${s[0]}/${edition}`).then(r => r.json())
           : Promise.resolve(null),
@@ -557,7 +689,7 @@ const QuranScreen = (function () {
             <div class="q-audio-info">
               <div class="q-audio-avatar">🎙</div>
               <div class="q-audio-meta">
-                <div class="q-audio-name">${RECITER.name}</div>
+                <div class="q-audio-name">${_getReciter().name}</div>
                 <div class="q-audio-quality">Murattal · 128kbps</div>
               </div>
               <div class="quran-waveform" id="quran-waveform">${wave}</div>
@@ -638,6 +770,7 @@ const QuranScreen = (function () {
     const body  = el.querySelector('#quran-reader-body');
     if (!body) return;
     const bm = _getBM();
+    const arStyle = `font-size:${_getFontSize()}px;line-height:${_getLineSp()}`;
 
     const basmala = (num !== 9 && num !== 1)
       ? '<div class="quran-basmala">بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ</div>' : '';
@@ -659,7 +792,7 @@ const QuranScreen = (function () {
               <button class="quran-ayah-icon-btn" data-action="share"  data-n="${n}" data-sn="${num}">📤</button>
             </div>
           </div>
-          <div class="quran-ayah-ar">${arText}</div>
+          <div class="quran-ayah-ar" style="${arStyle}">${arText}</div>
           ${translit[i] ? `
             <div class="quran-ayah-translit"${(_showTranslit || _lang === 'uz') ? '' : ' style="display:none"'}>
               ${_esc(translit[i])}
@@ -760,7 +893,7 @@ const QuranScreen = (function () {
     _audio   = new Audio();
     _playing = false;
     _audio.preload = 'none';
-    _audio.src = `https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/${surahNum}.mp3`;
+    _audio.src = _reciterAudioUrl(surahNum);
 
     _audio.addEventListener('playing',        () => { _playing=true;  _setPlayIcon(el,'pause'); _setWave(el,true); });
     _audio.addEventListener('pause',          () => { _playing=false; _setPlayIcon(el,'play');  _setWave(el,false); });

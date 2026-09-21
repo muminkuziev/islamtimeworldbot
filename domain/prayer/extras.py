@@ -3,7 +3,7 @@ Extra data fetchers for the Prayer Times screen:
   Weather    — wttr.in (no API key required)
   AQI        — Open-Meteo Air Quality (no API key required)
   Daily Ayah — AlQuran.cloud API (rotates by day of year)
-  Daily Hadith — local collection in data/hadiths.py
+  Daily Hadith — verified 144x13 HadeethEnc corpus, data/hadeethenc_verified.db
 """
 
 import asyncio
@@ -462,26 +462,62 @@ async def fetch_daily_ayah(lang: str = "en") -> Optional[dict]:
     return None
 
 
-# ── Daily Hadith (local collection) ──────────────────────────────────────────
+# ── Daily Hadith (verified 144x13 HadeethEnc corpus) ─────────────────────────
+# Source: data/hadeethenc_verified.db, built by scripts/build_hadeethenc_verified_db.py
+# from the official HadeethEnc API (https://hadeethenc.com/api-docs/). Every one
+# of the 144 hadith has a real, provider-published translation in all 13
+# canonical languages — never AI-generated. See that script's docstring and
+# the `build_meta` table in the DB for full provenance.
 
 _HADITH_LANG_FALLBACK = {"uz_cyr": "uz", "kk": "ru", "tg": "ru", "ky": "ru"}
+_HADITH_CANONICAL_LANGS = ["ar", "en", "id", "ur", "bn", "fr", "hi", "fa", "tr", "ru", "uz", "de", "ms"]
 
 def get_daily_hadith(lang: str = "en") -> dict:
-    """Return today's hadith in the user's language from the local 30-hadith collection."""
-    from data.hadiths import DAILY_HADITHS
-    day = date.today().timetuple().tm_yday
-    h   = DAILY_HADITHS[day % len(DAILY_HADITHS)]
-    l   = _HADITH_LANG_FALLBACK.get(lang, lang)
+    """Return today's hadith (verified HadeethEnc corpus) in the user's language.
 
-    text = h.get("text", "")
-    if isinstance(text, dict):
-        text = text.get(l) or text.get("en", "")
+    Rotates deterministically by day-of-year across the 144 verified hadith IDs,
+    so every user sees the same hadith on a given calendar day.
+    """
+    from pathlib import Path
+    import sqlite3
 
-    narrator = h.get("narrator", "")
-    if isinstance(narrator, dict):
-        narrator = narrator.get(l) or narrator.get("en", "")
+    l = _HADITH_LANG_FALLBACK.get(lang, lang)
+    if l not in _HADITH_CANONICAL_LANGS:
+        l = "en"
 
-    return {"text": text, "source": h.get("source", ""), "narrator": narrator}
+    db_path = Path(__file__).resolve().parent.parent.parent / "data" / "hadeethenc_verified.db"
+    if not db_path.exists():
+        return {}
+    try:
+        con = sqlite3.connect(str(db_path))
+        con.row_factory = sqlite3.Row
+        ids = [r[0] for r in con.execute(
+            "SELECT DISTINCT id FROM hadeeth_verified ORDER BY CAST(id AS INTEGER)"
+        ).fetchall()]
+        if not ids:
+            con.close()
+            return {}
+        day = date.today().timetuple().tm_yday
+        hadith_id = ids[day % len(ids)]
+        row = con.execute(
+            "SELECT title, hadeeth_text, attribution, grade, source FROM hadeeth_verified "
+            "WHERE id=? AND language=?",
+            (hadith_id, l),
+        ).fetchone()
+        con.close()
+        if not row:
+            return {}
+        return {
+            "id":          hadith_id,
+            "text":        row["hadeeth_text"],
+            "title":       row["title"],
+            "narrator":    row["attribution"],
+            "grade":       row["grade"],
+            "source":      row["source"],
+            "source_note": "HadeethEnc.com — verified 144-hadith, 13-language corpus",
+        }
+    except Exception:
+        return {}
 
 
 # ── Convenience: fetch all extras at once ────────────────────────────────────
