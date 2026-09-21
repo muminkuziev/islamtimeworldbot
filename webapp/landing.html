@@ -293,7 +293,7 @@
 
     .hero-grid {
       display: grid;
-      grid-template-columns: 1fr 1.1fr;
+      grid-template-columns: 1.2fr 1fr;
       gap: 32px;
       align-items: center;
     }
@@ -838,6 +838,14 @@
       color: #8c9e97;
     }
 
+    .footer-founder {
+      font-size: 12px;
+      color: #8c9e97;
+      margin-top: 6px;
+      letter-spacing: .1px;
+    }
+    .footer-founder strong { color: #4a6059; font-weight: 600; }
+
     .feature-chips { list-style: none; }
     section, header, footer { scroll-margin-top: 84px; }
     /* =========================================
@@ -946,14 +954,23 @@
     .hero-actions .btn-playstore,
     .hero-actions .btn-video { padding: 12px 20px; }
 
-    /* Hero background photo (decorative, CC0) */
+    /* Hero background photo — real Masjid al-Haram / Makkah (CC0). Kept
+       fully visible and bright; only the separate .hero-readability layer
+       below fades the LEFT text column, never the photo itself. */
     .hero-bg {
       position: absolute;
       inset: 0;
-      background: url("assets/landing/hero-bg.webp") center top / max(100%, 1000px) auto no-repeat;
-      opacity: 0.11;
-      -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0,0,0,0.5) 40%, transparent 75%);
-      mask-image: linear-gradient(180deg, #000 0%, rgba(0,0,0,0.5) 40%, transparent 75%);
+      background: url("assets/landing/hero-bg.webp") center 38% / cover no-repeat;
+      opacity: 0.9;
+      pointer-events: none;
+    }
+    /* Sibling overlay (not masked/faded itself) — a controlled readability
+       wash over the text column only. The mosque on the right/center stays
+       fully recognizable, never covered by this gradient. */
+    .hero-readability {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(100deg, rgba(247,251,249,.97) 0%, rgba(247,251,249,.8) 30%, rgba(247,251,249,.25) 48%, transparent 62%);
       pointer-events: none;
     }
     .hero::before { z-index: 0; }
@@ -1303,6 +1320,13 @@
       .hero-title { font-size: 30px; }
       .flags-grid { grid-template-columns: repeat(3, 1fr); }
       .stat-number { font-size: 20px; }
+      /* Narrow phones (360px class): lang selector + hamburger were
+         overflowing the viewport by ~12px — tighten spacing/padding only
+         at this breakpoint rather than shrinking them everywhere. */
+      .nav-actions { gap: 8px; }
+      .lang-btn { padding: 8px 10px; font-size: 12.5px; }
+      .lang-btn span { display: none; }
+      .nav-toggle { width: 34px; height: 34px; padding: 0; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -1369,6 +1393,7 @@
   <!-- HERO -->
   <header id="hero" class="hero">
     <div class="hero-bg" aria-hidden="true"></div>
+    <div class="hero-readability" aria-hidden="true"></div>
     <div class="container hero-grid">
       <div class="hero-content">
         <div class="pill-badge">
@@ -1735,6 +1760,7 @@
       <div class="footer-copy">
         © 2026 IslamTimeWorld. Barcha huquqlar himoyalangan.
         <div class="photo-credit">Fotosuratlar: Wikimedia Commons (CC0).</div>
+        <div class="footer-founder">IslamTimeWorld · Asoschisi: <strong>Mumin Kuziev</strong></div>
       </div>
     </div>
   </footer>
