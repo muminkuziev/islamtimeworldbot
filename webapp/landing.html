@@ -954,14 +954,17 @@
     .hero-actions .btn-playstore,
     .hero-actions .btn-video { padding: 12px 20px; }
 
-    /* Hero background photo — real Masjid al-Haram / Makkah (CC0). Kept
-       fully visible and bright; only the separate .hero-readability layer
-       below fades the LEFT text column, never the photo itself. */
+    /* Hero background photo — real daytime exterior photograph of Masjid
+       al-Haram (minarets + marble facade + courtyard entrance), Pexels
+       License (free for commercial use), cropped to remove the source
+       photo's distant construction crane. Kept fully visible and bright;
+       only the separate .hero-readability layer below fades the LEFT text
+       column, never the photo itself. */
     .hero-bg {
       position: absolute;
       inset: 0;
-      background: url("assets/landing/hero-bg.webp") center 38% / cover no-repeat;
-      opacity: 0.9;
+      background: url("assets/landing/hero-bg.webp") center 12% / cover no-repeat;
+      opacity: 0.92;
       pointer-events: none;
     }
     /* Sibling overlay (not masked/faded itself) — a controlled readability
