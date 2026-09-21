@@ -58,6 +58,15 @@ const I18N = {
     ms:"Semoga setiap hari anda semakin dekat dengan Allah!",
     uz_cyr:"Ҳар кунингиз Аллоҳга яқинроқ бўлсин!",
   },
+  /* Footer credit word only — "IslamTimeWorld" and "Mumin Kuziev" are proper
+     names and must never be translated. Only this one word ("Founder") is
+     localized per language. */
+  footerFounder: {
+    uz:"Asoschisi", ar:"المؤسس", en:"Founder", id:"Pendiri", ur:"بانی",
+    bn:"প্রতিষ্ঠাতা", fr:"Fondateur", hi:"संस्थापक", fa:"بنیان‌گذار",
+    tr:"Kurucu", ru:"Основатель", de:"Gründer", ms:"Pengasas",
+    uz_cyr:"Асосчиси",
+  },
   assalamu: {
     uz:"Assalomu alaykum!", uz_cyr:"Ассалому алейкум!",
     en:"Assalamu Alaikum!", ru:"Ассаляму алейкум!",

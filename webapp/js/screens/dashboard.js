@@ -259,6 +259,8 @@ const DashboardScreen = (function () {
   <div class="db-haramayn-row" id="db-haramayn-row">
     <div class="db-haramayn-mini db-haramayn-mini--loading">${_l('loading')}</div>
   </div>
+
+  <div class="db-footer-credit">IslamTimeWorld · ${t('footerFounder', _lang)}: Mumin Kuziev</div>
 </div>`;
   }
 
