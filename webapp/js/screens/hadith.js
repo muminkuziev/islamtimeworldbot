@@ -133,9 +133,10 @@ const HadithScreen = (function () {
     const backLbl = _ML({uz:'Menyu',uz_cyr:'Меню',ru:'Меню',en:'Menu',tr:'Menü',ar:'القائمة',
       kk:'Мәзір',tg:'Меню',ky:'Меню',de:'Menü',fr:'Menu',id:'Menu',hi:'मेनू',ur:'مینو'});
     return `<div class="screen-inner" style="padding:0">
-  <div class="hd-hdr" style="min-height:80px">
+  <div class="hd-hdr hd-hdr--photo">
+    <img class="hd-hdr-photo" src="assets/landing/haram-makkah.webp" alt="Masjid al-Haram" loading="eager">
     <div class="nm-tile-bg"></div>
-    <div class="nm-tile-ov" style="background:rgba(9,18,31,0.65)"></div>
+    <div class="nm-tile-ov"></div>
     <div class="hd-hdr-inner">
       <div class="hd-nav-row">
         <button class="hd-back" id="hd-verify-back">← ${backLbl}</button>
@@ -145,10 +146,10 @@ const HadithScreen = (function () {
     </div>
   </div>
   <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:50vh;padding:32px 24px;text-align:${isAr ? 'right' : 'center'}" dir="${isAr ? 'rtl' : 'ltr'}">
-    <div style="font-size:52px;margin-bottom:18px">🚧</div>
-    <div style="font-size:18px;font-weight:700;color:#E8C15A;margin-bottom:12px">${title}</div>
-    <div style="font-size:14px;color:rgba(232,223,200,.75);line-height:1.65;max-width:300px;margin-bottom:8px">${body1}</div>
-    <div style="font-size:13px;color:rgba(232,223,200,.5);line-height:1.65;max-width:300px">${body2}</div>
+    <span class="material-symbols-rounded hd-state-icon" data-icon="verified_user" aria-hidden="true">verified_user</span>
+    <div style="font-size:18px;font-weight:700;color:#16794A;margin-bottom:12px">${title}</div>
+    <div style="font-size:14px;color:rgba(22,33,43,.75);line-height:1.65;max-width:300px;margin-bottom:8px">${body1}</div>
+    <div style="font-size:13px;color:rgba(22,33,43,.5);line-height:1.65;max-width:300px">${body2}</div>
   </div>
 </div>`;
   }
@@ -200,7 +201,7 @@ const HadithScreen = (function () {
     return `
 <div class="hd-hdr">
   <div class="nm-tile-bg"></div>
-  <div class="nm-tile-ov" style="background:rgba(9,18,31,0.65)"></div>
+  <div class="nm-tile-ov"></div>
   <div class="hd-hdr-inner">
     <div class="hd-nav-row">
       <button class="hd-back" id="hd-back">← ${_T('Menyu','Меню','Меню','Menu')}</button>
@@ -292,7 +293,7 @@ const HadithScreen = (function () {
       ? ((isFall || isRuFall)
           ? `<div class="hd-card-uz" style="opacity:.45;font-style:italic">${_esc(txt)}</div>`
           : isRealUz
-            ? `<div class="hd-card-uz" style="font-style:normal;font-size:13px;opacity:.88;color:rgba(232,223,200,.88)">${_esc(txt)}</div>`
+            ? `<div class="hd-card-uz" style="font-style:normal;font-size:13px;opacity:.88;color:rgba(22,33,43,.88)">${_esc(txt)}</div>`
             : `<div class="hd-card-uz">${_esc(txt)}</div>`)
       : '';
     return `

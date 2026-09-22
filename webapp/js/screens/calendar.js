@@ -89,7 +89,7 @@ const CalendarScreen = (function () {
   /* ── Full event data (9 events) ── */
   const HIJRI_EVENTS = [
     {
-      id:'arafa', icon:'🕋', type:'muhim', color:'#E8C15A',
+      id:'arafa', icon:'🕋', type:'muhim', color:'#16794A',
       nomi:'Arafa kuni', nomi_cyr:'Арафа куни', nomi_ru:'День Арафа', nomi_en:'Day of Arafah', arNomi:'يوم عرفة',
       nomi_tr:'Arefe Günü', nomi_kk:'Арафа күні', nomi_tg:'Рӯзи Арафа', nomi_ky:'Арафа күнү',
       nomi_de:'Tag von Arafah', nomi_fr:"Jour d'Arafah", nomi_id:'Hari Arafah', nomi_hi:'अरफा का दिन', nomi_ur:'یوم عرفہ',
@@ -129,7 +129,7 @@ const CalendarScreen = (function () {
       duo:{ar:"اللَّهُمَّ أَدْخِلْهُ عَلَيْنَا بِالأَمْنِ وَالإِيمَانِ",tr:"Allohim, adkhilhu alayna bil-amni wal-iymaan",uz:"Allohim, uni bizga xavfsizlik va iymon bilan kirgaz.",manba:"Tabaroniy"},
     },
     {
-      id:'ashura', icon:'⭐', type:'muhim', color:'#E8C15A',
+      id:'ashura', icon:'⭐', type:'muhim', color:'#16794A',
       nomi:'Ashura kuni', nomi_cyr:'Ашура куни', nomi_ru:'День Ашура', nomi_en:'Day of Ashura', arNomi:'يوم عاشوراء',
       nomi_tr:'Aşure Günü', nomi_kk:'Ашура күні', nomi_tg:'Рӯзи Ошура', nomi_ky:'Ашура күнү',
       nomi_de:'Tag von Ashura', nomi_fr:"Jour d'Achoura", nomi_id:'Hari Asyura', nomi_hi:'अशूरा का दिन', nomi_ur:'یوم عاشورا',
@@ -224,7 +224,7 @@ const CalendarScreen = (function () {
       desc_fr:"Le Nouvel An islamique commence",   desc_id:'Tahun baru Islam dimulai',
       desc_hi:'इस्लामी नया साल शुरू होता है',     desc_ur:'اسلامی نیا سال شروع ہوتا ہے',
     },
-    { m:1,  d:10, type:'muhim',     color:'#E8C15A',
+    { m:1,  d:10, type:'muhim',     color:'#16794A',
       uz:'Ashura kuni',       cyr:'Ашура куни',        ru:'День Ашура',          en:'Day of Ashura',
       ar:'يوم عاشوراء',       tr:'Aşure Günü',          kk:'Ашура күні',          tg:'Рӯзи Ошура',
       ky:'Ашура күнү',        de:'Tag von Ashura',      fr:"Jour d'Achoura",      id:'Hari Asyura',
@@ -237,7 +237,7 @@ const CalendarScreen = (function () {
       desc_fr:'Il est recommandé de jeûner',       desc_id:'Puasa dianjurkan',
       desc_hi:'रोज़ा रखना मुस्तहब है',            desc_ur:'روزہ رکھنا مستحب ہے',
     },
-    { m:7,  d:27, type:'muhim',     color:'#E8C15A',
+    { m:7,  d:27, type:'muhim',     color:'#16794A',
       uz:"Isro' va Me'roj",   cyr:"Исро ва Меърож",    ru:'Исра и Мирадж',       en:"Isra' and Mi'raj",
       ar:'الإسراء والمعراج',  tr:'İsra ve Miraç',       kk:'Исра жəне Мирадж',    tg:'Исро ва Меъроҷ',
       ky:'Исра жана Мирадж',  de:'Isra und Miraj',      fr:"Isra' et Mi'raj",     id:'Isra Miraj',
@@ -250,7 +250,7 @@ const CalendarScreen = (function () {
       desc_fr:"Nuit de l'ascension du Prophète ﷺ",desc_id:'Malam Isra Miraj Nabi ﷺ',
       desc_hi:'नबी ﷺ की मेराज की रात',            desc_ur:'نبی ﷺ کی معراج کی رات',
     },
-    { m:8,  d:15, type:'muhim',     color:'#E8C15A',
+    { m:8,  d:15, type:'muhim',     color:'#16794A',
       uz:'Barat kechasi',     cyr:'Барот кечаси',      ru:'Ночь Бараат',         en:"Laylat al-Bara'ah",
       ar:'ليلة البراءة',      tr:'Berat Gecesi',        kk:'Бәрат кешесі',        tg:'Шаби Барот',
       ky:'Бараат кечеси',     de:'Nacht der Vergebung', fr:'Nuit du Pardon',      id:"Lailatul Bara'ah",
@@ -302,7 +302,7 @@ const CalendarScreen = (function () {
       desc_fr:'Fête de la rupture du jeûne',       desc_id:'Hari Raya Idul Fitri',
       desc_hi:'ईद उल-फितर',                       desc_ur:'عید الفطر مبارک',
     },
-    { m:12, d:9,  type:'muhim',     color:'#E8C15A',
+    { m:12, d:9,  type:'muhim',     color:'#16794A',
       uz:'Arafa kuni',        cyr:'Арафа куни',         ru:'День Арафа',          en:'Day of Arafah',
       ar:'يوم عرفة',          tr:'Arefe Günü',           kk:'Арафа күні',          tg:'Рӯзи Арафа',
       ky:'Арафа күнү',        de:'Tag von Arafah',       fr:"Jour d'Arafah",       id:'Hari Arafah',
@@ -535,7 +535,7 @@ const CalendarScreen = (function () {
     return `
 <div class="hc-hdr">
   <div class="nm-tile-bg"></div>
-  <div class="nm-tile-ov" style="background:rgba(9,18,31,0.65)"></div>
+  <div class="nm-tile-ov"></div>
   <div class="hc-hdr-inner">
     <div class="hc-top-row">
       <button class="hc-back-btn" id="hc-back">← ${_T('Menyu','Меню','Меню','Menu')}</button>
@@ -543,9 +543,9 @@ const CalendarScreen = (function () {
     </div>
     <div class="hc-title">${_T('Hijriy taqvim','Ҳижрий тақвим','Исламский календарь','Islamic Calendar')}</div>
     <div class="hc-sub-row">
-      <span style="font-family:'Amiri',serif;font-size:14px;color:#E8C15A">${_mname()} ${_viewYear}</span>
-      <span style="color:rgba(232,223,200,.3)">·</span>
-      <span style="font-size:11px;color:rgba(232,223,200,.45)">${_gMonth((_today?.gMonth||1)-1)} ${_today?.gYear||''}</span>
+      <span style="font-family:'Amiri',serif;font-size:14px;color:#16794A">${_mname()} ${_viewYear}</span>
+      <span style="color:rgba(22,33,43,.3)">·</span>
+      <span style="font-size:11px;color:rgba(22,33,43,.45)">${_gMonth((_today?.gMonth||1)-1)} ${_today?.gYear||''}</span>
     </div>
     <div class="hc-month-nav">
       <button class="hc-nav-btn" id="hc-prev">‹</button>
@@ -596,12 +596,12 @@ const CalendarScreen = (function () {
         if (!d) return `<div class="hc-cell hc-cell-empty"></div>`;
         const s = sp(d), tod = isToday(d), sel = d===_selDay, c = s?.color||null;
         let st = '';
-        if (sel) st = 'background:#E8C15A;';
-        else if (tod) st = 'background:rgba(232,193,90,.18);border:1px solid rgba(232,193,90,.35);';
+        if (sel) st = 'background:#16794A;';
+        else if (tod) st = 'background:rgba(22,121,74,.18);border:1px solid rgba(22,121,74,.35);';
         else if (c) st = `background:${c}18;border:1px solid ${c}30;`;
         else st = 'background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);';
-        const numSt = sel ? 'color:#09121f;font-weight:800;' : tod ? 'color:#E8C15A;font-weight:700;' : c ? `color:${c};` : '';
-        const dot = (!sel && (c||tod)) ? `<span class="hc-dot" style="background:${tod?'#E8C15A':c}"></span>` : '';
+        const numSt = sel ? 'color:#FFFFFF;font-weight:800;' : tod ? 'color:#16794A;font-weight:700;' : c ? `color:${c};` : '';
+        const dot = (!sel && (c||tod)) ? `<span class="hc-dot" style="background:${tod?'#16794A':c}"></span>` : '';
         return `<div class="hc-cell" data-d="${d}" style="${st}">
           <span class="hc-day-num" style="${numSt}">${d}</span>${dot}</div>`;
       }).join('')}</div>`).join('');
@@ -618,7 +618,7 @@ const CalendarScreen = (function () {
   <div class="hc-sel-row">
     <div>
       <div class="hc-sel-lbl">${_T('TANLANGAN KUN','ТАНЛАНГАН КУН','ВЫБРАННЫЙ ДЕНЬ','SELECTED DAY')}</div>
-      <div class="hc-sel-hijri" style="font-family:'Amiri',serif;font-size:16px;color:#E8C15A;">${_selDay} ${_mname()} ${_viewYear}</div>
+      <div class="hc-sel-hijri" style="font-family:'Amiri',serif;font-size:16px;color:#16794A;">${_selDay} ${_mname()} ${_viewYear}</div>
       <div class="hc-sel-greg">${gregStr}${isToday(_selDay) ? ' · ' + _T('Bugun','Бугун','Сегодня','Today') : ''}</div>
     </div>
     <div class="hc-sel-num">${_selDay}</div>
@@ -647,7 +647,7 @@ const CalendarScreen = (function () {
           <span class="hc-ev-badge" style="color:${ev.color};background:${ev.color}18;border:1px solid ${ev.color}35">${bLabel}</span>
           ${hasRem ? '<span style="font-size:11px">🔔</span>' : ''}
         </div>
-        <div class="hc-ev-arname" style="font-family:'Amiri',serif;font-size:10px;color:rgba(232,223,200,.28)">${ev.arNomi}</div>
+        <div class="hc-ev-arname" style="font-family:'Amiri',serif;font-size:10px;color:rgba(22,33,43,.28)">${ev.arNomi}</div>
         <div class="hc-ev-date" style="color:${ev.color}">${milodiy}</div>
       </div>
       <div class="hc-ev-arrow">›</div>
@@ -710,7 +710,7 @@ const CalendarScreen = (function () {
     return `
 <div class="hc-hdr">
   <div class="nm-tile-bg"></div>
-  <div class="nm-tile-ov" style="background:rgba(9,18,31,0.65)"></div>
+  <div class="nm-tile-ov"></div>
   <div class="hc-hdr-inner">
     <div class="hc-top-row">
       <button class="hc-back-btn" id="hc-det-back">← ${_T('Islomiy kunlar','Исломий кунлар','Исламские даты','Islamic dates')}</button>
@@ -730,7 +730,7 @@ const CalendarScreen = (function () {
     <div class="hc-dates-grid">
       <div class="hc-date-cell hc-date-gold">
         <div class="hc-date-lbl">${_T('Hijriy','Ҳижрий','Хиджра','Hijri')}</div>
-        <div style="font-family:'Amiri',serif;font-size:13px;color:#E8C15A;line-height:1.4">${ev.hDay} ${_hMonth(ev.hMonth-1)} ${ev.hYear}</div>
+        <div style="font-family:'Amiri',serif;font-size:13px;color:#16794A;line-height:1.4">${ev.hDay} ${_hMonth(ev.hMonth-1)} ${ev.hYear}</div>
       </div>
       <div class="hc-date-cell hc-date-blue">
         <div class="hc-date-lbl">${_T('Milodiy','Милодий','Григ.','Gregorian')}</div>
@@ -758,7 +758,7 @@ const CalendarScreen = (function () {
       const active = (_reminders[ev.id]||[]).includes(opt.days);
       return `<div class="hc-rem-opt ${active?'hc-rem-opt--active':''}" data-days="${opt.days}">
         <span>${opt.icon}</span>
-        <span style="flex:1;font-family:'Inter',system-ui,sans-serif;font-size:13px;font-weight:600;color:#e8dfc8">${opt.label}</span>
+        <span style="flex:1;font-family:'Inter',system-ui,sans-serif;font-size:13px;font-weight:600;color:#16212B">${opt.label}</span>
         <div class="hc-rem-check ${active?'hc-rem-check--active':''}">${active?'✓':''}</div>
       </div>`;
     }).join('')}
@@ -782,23 +782,23 @@ const CalendarScreen = (function () {
     const eslatmaHTML = ev.eslatma ? `
       <div class="hc-eslatma">
         <div class="hc-eslatma-lbl">⚠️ ${_T('MUHIM ESLATMA','МУҲИМ ЭСЛАТМА','ВАЖНОЕ ЗАМЕЧАНИЕ','IMPORTANT NOTE')}</div>
-        <div style="font-family:'Inter',system-ui,sans-serif;font-size:11px;color:rgba(232,223,200,.55);line-height:1.7;margin-bottom:8px">${_evTxt(ev,'eslatma')}</div>
+        <div style="font-family:'Inter',system-ui,sans-serif;font-size:11px;color:rgba(22,33,43,.55);line-height:1.7;margin-bottom:8px">${_evTxt(ev,'eslatma')}</div>
       </div>` : '';
     return `
 <div class="hc-det-content">
   <div class="hc-info-card">
     <div class="hc-slbl" style="margin-bottom:8px">${_T('QISQA TAVSIF','ҚИСҚА ТАВСИФ','КРАТКОЕ ОПИСАНИЕ','BRIEF DESCRIPTION')}</div>
-    <div style="font-family:'Inter',system-ui,sans-serif;font-size:12px;color:rgba(232,223,200,.55);line-height:1.8">${_evTxt(ev,'qisqa')}</div>
+    <div style="font-family:'Inter',system-ui,sans-serif;font-size:12px;color:rgba(22,33,43,.55);line-height:1.8">${_evTxt(ev,'qisqa')}</div>
   </div>
   <div class="hc-info-card hc-info-color" style="background:${ev.color}08;border-color:${ev.color}28">
     <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,${ev.color},transparent)"></div>
     <div class="hc-slbl" style="margin-bottom:8px">${_T('MUHIMLIGI','МУҲИМЛИГИ','ЗНАЧИМОСТЬ','SIGNIFICANCE')}</div>
-    <div style="font-family:'Inter',system-ui,sans-serif;font-size:12px;color:rgba(232,223,200,.55);line-height:1.8">${_evTxt(ev,'muhim')}</div>
+    <div style="font-family:'Inter',system-ui,sans-serif;font-size:12px;color:rgba(22,33,43,.55);line-height:1.8">${_evTxt(ev,'muhim')}</div>
   </div>
   ${eslatmaHTML}
   <div class="hc-info-card" style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px">
-    <span style="font-family:'Inter',system-ui,sans-serif;font-size:9px;color:rgba(232,223,200,.28)">${_T('Manba','Манба','Источник','Source')}</span>
-    <span style="font-family:'Inter',system-ui,sans-serif;font-size:10px;font-weight:700;color:rgba(232,223,200,.55)">${_T('Sahih hadislar va Islom fiqhi','Саҳиҳ ҳадислар ва Ислом фиқҳи','Достоверные хадисы и исламское право','Authentic hadiths and Islamic jurisprudence')}</span>
+    <span style="font-family:'Inter',system-ui,sans-serif;font-size:9px;color:rgba(22,33,43,.28)">${_T('Manba','Манба','Источник','Source')}</span>
+    <span style="font-family:'Inter',system-ui,sans-serif;font-size:10px;font-weight:700;color:rgba(22,33,43,.55)">${_T('Sahih hadislar va Islom fiqhi','Саҳиҳ ҳадислар ва Ислом фиқҳи','Достоверные хадисы и исламское право','Authentic hadiths and Islamic jurisprudence')}</span>
   </div>
 </div>`;
   }
@@ -811,7 +811,7 @@ const CalendarScreen = (function () {
   ${(ev.amallar_cyr && _lang==='uz_cyr' ? ev.amallar_cyr : ev.amallar).map((a, i) => `
     <div class="hc-amal-row">
       <div class="hc-amal-num" style="background:${ev.color}18;border:1px solid ${ev.color}35;color:${ev.color}">${i+1}</div>
-      <span style="font-family:'Inter',system-ui,sans-serif;font-size:12px;color:#e8dfc8;line-height:1.4;font-weight:500">${_lang==='uz_cyr'&&!ev.amallar_cyr?_cy(a):a}</span>
+      <span style="font-family:'Inter',system-ui,sans-serif;font-size:12px;color:#16212B;line-height:1.4;font-weight:500">${_lang==='uz_cyr'&&!ev.amallar_cyr?_cy(a):a}</span>
     </div>`).join('')}
 </div>`;
   }
@@ -825,11 +825,11 @@ const CalendarScreen = (function () {
   <div class="hc-verse-card">
     <div class="hc-verse-topline"></div>
     <div class="hc-ar-text" style="font-size:18px;padding:12px 14px;background:rgba(255,255,255,.03);border-radius:12px;margin-bottom:12px">${ev.quran.ar}</div>
-    <div style="height:1px;background:rgba(232,193,90,.1);margin-bottom:12px"></div>
-    <div style="font-family:'Inter',system-ui,sans-serif;font-style:italic;font-size:12px;color:rgba(232,223,200,.55);line-height:1.85;margin-bottom:12px">"${_evTxt(ev.quran,'uz')}"</div>
+    <div style="height:1px;background:rgba(22,121,74,.1);margin-bottom:12px"></div>
+    <div style="font-family:'Inter',system-ui,sans-serif;font-style:italic;font-size:12px;color:rgba(22,33,43,.55);line-height:1.85;margin-bottom:12px">"${_evTxt(ev.quran,'uz')}"</div>
     <div class="hc-manba-row">
       <span>${_T('Manba','Манба','Источник','Source')}</span>
-      <span style="color:#E8C15A">${ev.quran.manba}</span>
+      <span style="color:#16794A">${ev.quran.manba}</span>
     </div>
   </div>
 </div>`;
@@ -840,9 +840,9 @@ const CalendarScreen = (function () {
     const card = (h) => `
       <div class="hc-hadis-card">
         <div class="hc-ar-text" style="font-size:15px;padding:10px 12px;background:rgba(255,255,255,.03);border-radius:10px;margin-bottom:8px">${h.ar}</div>
-        <div style="height:1px;background:rgba(232,193,90,.08);margin-bottom:8px"></div>
-        <div style="font-family:'Inter',system-ui,sans-serif;font-style:italic;font-size:11px;color:rgba(232,223,200,.55);line-height:1.8;margin-bottom:10px">"${_evTxt(h,'uz')}"</div>
-        <div class="hc-manba-row"><span>${_T('Manba','Манба','Источник','Source')}</span><span style="color:#E8C15A">${h.manba}</span></div>
+        <div style="height:1px;background:rgba(22,121,74,.08);margin-bottom:8px"></div>
+        <div style="font-family:'Inter',system-ui,sans-serif;font-style:italic;font-size:11px;color:rgba(22,33,43,.55);line-height:1.8;margin-bottom:10px">"${_evTxt(h,'uz')}"</div>
+        <div class="hc-manba-row"><span>${_T('Manba','Манба','Источник','Source')}</span><span style="color:#16794A">${h.manba}</span></div>
       </div>`;
     return `
 <div class="hc-det-content">
@@ -860,10 +860,10 @@ const CalendarScreen = (function () {
   <div class="hc-verse-card">
     <div class="hc-verse-topline"></div>
     <div class="hc-ar-text" style="font-size:18px;padding:12px 14px;background:rgba(255,255,255,.03);border-radius:12px;margin-bottom:10px">${ev.duo.ar}</div>
-    ${ev.duo.tr ? `<div style="font-family:'Inter',system-ui,sans-serif;font-style:italic;font-size:10px;color:#E8C15A;line-height:1.7;margin-bottom:10px;padding:8px 10px;background:rgba(232,193,90,.05);border-radius:9px">${ev.duo.tr}</div>` : ''}
-    <div style="height:1px;background:rgba(232,193,90,.1);margin-bottom:10px"></div>
-    <div style="font-family:'Inter',system-ui,sans-serif;font-style:italic;font-size:12px;color:rgba(232,223,200,.55);line-height:1.85;margin-bottom:12px">"${_evTxt(ev.duo,'uz')}"</div>
-    <div class="hc-manba-row"><span>${_T('Manba','Манба','Источник','Source')}</span><span style="color:#E8C15A">${ev.duo.manba}</span></div>
+    ${ev.duo.tr ? `<div style="font-family:'Inter',system-ui,sans-serif;font-style:italic;font-size:10px;color:#16794A;line-height:1.7;margin-bottom:10px;padding:8px 10px;background:rgba(22,121,74,.05);border-radius:9px">${ev.duo.tr}</div>` : ''}
+    <div style="height:1px;background:rgba(22,121,74,.1);margin-bottom:10px"></div>
+    <div style="font-family:'Inter',system-ui,sans-serif;font-style:italic;font-size:12px;color:rgba(22,33,43,.55);line-height:1.85;margin-bottom:12px">"${_evTxt(ev.duo,'uz')}"</div>
+    <div class="hc-manba-row"><span>${_T('Manba','Манба','Источник','Source')}</span><span style="color:#16794A">${ev.duo.manba}</span></div>
   </div>
 </div>`;
   }
@@ -997,7 +997,7 @@ const CalendarScreen = (function () {
       if (!y||!m||!d||!res) return;
       try {
         const h = toHijri(y, m, d);
-        res.innerHTML = `<span style="color:#E8C15A;font-size:17px;font-weight:800;font-family:'Amiri',serif">${h.hDay} ${_hMonth(h.hMonth-1)} ${h.hYear}</span>`;
+        res.innerHTML = `<span style="color:#16794A;font-size:17px;font-weight:800;font-family:'Amiri',serif">${h.hDay} ${_hMonth(h.hMonth-1)} ${h.hYear}</span>`;
       } catch { res.textContent = '❌'; }
       window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
     });

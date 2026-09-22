@@ -13,8 +13,8 @@
     tg.expand();
     tg.enableClosingConfirmation();
     try { tg.disableVerticalSwipes(); }      catch (_) {}
-    try { tg.setHeaderColor('#080D1A'); }    catch (_) {}
-    try { tg.setBackgroundColor('#080D1A'); } catch (_) {}
+    try { tg.setHeaderColor('#FFFFFF'); }    catch (_) {}
+    try { tg.setBackgroundColor('#FFFFFF'); } catch (_) {}
   }
 
   /* Allow passive touch scroll in WebView */
@@ -33,6 +33,79 @@
     _prevScreen:   null,
   };
 
+  const NAV_ITEMS = [
+    { id: 'screen-dashboard', icon: 'home',           key: 'home' },
+    { id: 'screen-quran',     icon: 'menu_book',      key: 'quran' },
+    { id: 'screen-prayer',    icon: 'schedule',       key: 'prayer' },
+    { id: 'screen-calendar',  icon: 'calendar_month', key: 'calendar' },
+    { id: 'screen-others',    icon: 'grid_view',      key: 'more' },
+  ];
+  const NAV_LABELS = {
+    home:     {uz:'Bosh sahifa',uz_cyr:'Бош саҳифа',ru:'Главная',en:'Home',tr:'Ana sayfa',ar:'الرئيسية',kk:'Басты бет',tg:'Асосӣ',ky:'Башкы бет',de:'Start',fr:'Accueil',id:'Beranda',hi:'होम',ur:'ہوم'},
+    quran:    {uz:"Qur'on",uz_cyr:'Қуръон',ru:'Коран',en:'Quran',tr:'Kur’an',ar:'القرآن',kk:'Құран',tg:'Қуръон',ky:'Куран',de:'Koran',fr:'Coran',id:'Al-Quran',hi:'क़ुरआन',ur:'قرآن'},
+    prayer:   {uz:'Namoz',uz_cyr:'Намоз',ru:'Намаз',en:'Prayer',tr:'Namaz',ar:'الصلاة',kk:'Намаз',tg:'Намоз',ky:'Намаз',de:'Gebet',fr:'Prière',id:'Salat',hi:'नमाज़',ur:'نماز'},
+    calendar: {uz:'Taqvim',uz_cyr:'Тақвим',ru:'Календарь',en:'Calendar',tr:'Takvim',ar:'التقويم',kk:'Күнтізбе',tg:'Тақвим',ky:'Жылнаама',de:'Kalender',fr:'Calendrier',id:'Kalender',hi:'कैलेंडर',ur:'تقویم'},
+    more:     {uz:"Ko'proq",uz_cyr:'Кўпроқ',ru:'Ещё',en:'More',tr:'Daha fazla',ar:'المزيد',kk:'Қосымша',tg:'Бештар',ky:'Дагы',de:'Mehr',fr:'Plus',id:'Lainnya',hi:'और',ur:'مزید'},
+  };
+  const MORE_SCREENS = new Set([
+    'screen-others','screen-settings','screen-qibla','screen-mosques','screen-hadith',
+    'screen-duas','screen-dhikr','screen-names','screen-shahodat','screen-haramayn',
+    'screen-qazo','screen-monthly-calendar'
+  ]);
+  const ONBOARDING_SCREENS = new Set(['screen-splash','screen-language','screen-mazhab','screen-location']);
+
+  function _navLabel(key) {
+    const values = NAV_LABELS[key] || {};
+    return values[state.lang] || values.en || key;
+  }
+
+  function _ensureBottomNav() {
+    let nav = document.getElementById('app-bottom-nav');
+    if (!nav) {
+      nav = document.createElement('nav');
+      nav.id = 'app-bottom-nav';
+      nav.className = 'app-bottom-nav';
+      nav.setAttribute('aria-label', 'Primary');
+      document.body.appendChild(nav);
+    }
+    nav.innerHTML = NAV_ITEMS.map(item => {
+      const label = _navLabel(item.key);
+      return `<button class="app-nav-item" type="button" data-screen="${item.id}" aria-label="${label}">
+        <span class="material-symbols-rounded app-nav-icon" data-icon="${item.icon}" aria-hidden="true">${item.icon}</span>
+        <span class="app-nav-label">${label}</span>
+      </button>`;
+    }).join('');
+    nav.querySelectorAll('.app-nav-item').forEach(btn => btn.addEventListener('click', () => _openPrimary(btn.dataset.screen)));
+  }
+
+  function _openPrimary(screenId) {
+    const lang = state.lang || 'uz';
+    try {
+      if (screenId === 'screen-dashboard') DashboardScreen.update(lang);
+      if (screenId === 'screen-quran') QuranScreen.load(lang);
+      if (screenId === 'screen-prayer') PrayerScreen.load(lang);
+      if (screenId === 'screen-calendar') CalendarScreen.load(lang);
+      if (screenId === 'screen-others') OthersScreen.load(lang);
+    } catch (e) { console.warn('primary navigation load failed:', e); }
+    navigate(screenId);
+    try { tg?.HapticFeedback?.selectionChanged(); } catch (_) {}
+  }
+
+  function _updateBottomNav(screenId) {
+    const nav = document.getElementById('app-bottom-nav');
+    if (!nav) return;
+    const hidden = ONBOARDING_SCREENS.has(screenId);
+    nav.classList.toggle('is-hidden', hidden);
+    document.body.classList.toggle('has-bottom-nav', !hidden);
+    const activeId = MORE_SCREENS.has(screenId) ? 'screen-others' : screenId;
+    nav.querySelectorAll('.app-nav-item').forEach(btn => {
+      const active = btn.dataset.screen === activeId;
+      btn.classList.toggle('active', active);
+      if (active) btn.setAttribute('aria-current', 'page');
+      else btn.removeAttribute('aria-current');
+    });
+  }
+
   /* ── Screen Navigation ── */
   function navigate(screenId) {
     const next    = document.getElementById(screenId);
@@ -47,6 +120,7 @@
 
     state._prevScreen  = state.currentScreen;
     state.currentScreen = screenId;
+    _updateBottomNav(screenId);
 
     if (current) {
       current.classList.add('exit');
@@ -106,6 +180,8 @@
 
   /* ── Expose global App API ── */
   window.App = { navigate, state };
+
+  _ensureBottomNav();
 
   /* ── Render all screen shells (builds initial DOM) ── */
   const _screens = [

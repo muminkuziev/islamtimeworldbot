@@ -4,11 +4,11 @@
 
 const DhikrScreen = (function () {
 
-  const GOLD   = '#E8C15A', GOLDD = '#C49A1E', GOLDL = '#F5D98A';
-  const NAVY   = '#09121f';
-  const CREAM  = '#e8dfc8';
-  const CREAMD = 'rgba(232,223,200,.55)';
-  const CREAMM = 'rgba(232,223,200,.28)';
+  const GOLD   = '#16794A', GOLDD = '#0F5C39', GOLDL = '#CFEEDD';
+  const NAVY   = '#FFFFFF';
+  const CREAM  = '#16212B';
+  const CREAMD = 'rgba(22,33,43,.55)';
+  const CREAMM = 'rgba(22,33,43,.28)';
   const GREEN  = '#4fcfa0';
   const RED    = '#e05555';
   const BLUE   = '#5b9bd5';
@@ -160,6 +160,7 @@ const DhikrScreen = (function () {
     return `
       <div class="zk-screen">
         <div class="zk-hdr">
+          <img class="zk-hdr-photo" src="assets/landing/haram-madinah.webp" alt="Masjid an-Nabawi" loading="eager">
           <div class="zk-hdr-tile"></div>
           <div class="zk-hdr-ov"></div>
           <div class="zk-hdr-cnt">
@@ -203,7 +204,7 @@ const DhikrScreen = (function () {
     return `
       <div style="position:relative;width:${S}px;height:${S}px;flex-shrink:0">
         <div style="position:absolute;inset:-4px;border-radius:50%;
-          box-shadow:0 0 40px rgba(232,193,90,.13),0 0 80px rgba(232,193,90,.07);pointer-events:none"></div>
+          box-shadow:0 0 40px rgba(22,121,74,.13),0 0 80px rgba(22,121,74,.07);pointer-events:none"></div>
         <svg width="${S}" height="${S}" style="transform:rotate(-90deg);position:absolute;inset:0">
           <defs>
             <linearGradient id="zkGrad" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -292,6 +293,7 @@ const DhikrScreen = (function () {
         ${_modal !== null ? _modalHTML(_modal, z.t) : ''}
 
         <div class="zk-hdr">
+          <img class="zk-hdr-photo" src="assets/landing/haram-madinah.webp" alt="Masjid an-Nabawi" loading="eager">
           <div class="zk-hdr-tile"></div>
           <div class="zk-hdr-ov"></div>
           <div class="zk-hdr-cnt">

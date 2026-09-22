@@ -7,7 +7,7 @@
      - External (CDN, Telegram SDK)     : network-only
    ================================================================ */
 
-const CACHE = 'islamtime-v6';
+const CACHE = 'islamtime-v7';
 
 const PRECACHE = [
   '/app',
@@ -16,12 +16,16 @@ const PRECACHE = [
   '/js/i18n.js',
   '/js/hijri.js',
   '/js/app.js',
+  '/js/safe-area.js',
+  '/js/lib/three.min.js',
   '/js/screens/splash.js',
   '/js/screens/language.js',
   '/js/screens/mazhab.js',
   '/js/screens/location.js',
   '/js/screens/dashboard.js',
   '/js/screens/prayer.js',
+  '/js/screens/qazo.js',
+  '/js/screens/monthly-calendar.js',
   '/js/screens/qibla.js',
   '/js/screens/mosques.js',
   '/js/screens/quran.js',
@@ -30,8 +34,13 @@ const PRECACHE = [
   '/js/screens/dhikr.js',
   '/js/screens/calendar.js',
   '/js/screens/names.js',
+  '/js/screens/others.js',
+  '/js/screens/shahodat.js',
+  '/js/screens/haramayn.js',
   '/js/screens/settings.js',
   '/js/native/bridge.js',
+  '/js/native/qibla-geo.js',
+  '/js/native/earth-globe.js',
   '/js/native/quran-provider.js',
   '/js/native/hadith-provider.js',
   '/data/names_of_allah.js',
@@ -39,6 +48,11 @@ const PRECACHE = [
   '/assets/logo.svg',
   '/assets/icons/icon-192.png',
   '/assets/icons/icon-512.png',
+  '/assets/landing/haram-makkah.webp',
+  '/assets/landing/haram-madinah.webp',
+  '/assets/earth/earth_atmos_2048.jpg',
+  '/assets/earth/earth_normal_2048.jpg',
+  '/assets/earth/earth_specular_2048.jpg',
 ];
 
 /* ── Install: precache static shell ── */

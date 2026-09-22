@@ -253,6 +253,7 @@ const QuranScreen = (function () {
     return `
       <div class="screen-inner q-screen">
         <div class="q-header">
+          <img class="q-header-photo" src="assets/landing/haram-makkah.webp" alt="Makkah" loading="eager">
           <div class="q-nav-row">
             <button id="quran-back" class="q-back-btn">${_qt('back')}</button>
             <div class="q-qori-badge">

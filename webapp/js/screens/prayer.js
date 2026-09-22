@@ -650,7 +650,7 @@ const PrayerScreen = (function () {
   function _weatherSvg(hour, size) {
     size = size || 22;
     const isDay = hour >= 4 && hour < 19;
-    const G = '#E8C15A', GL = '#F5D98A', C = 'rgba(232,223,200,.55)';
+    const G = '#16794A', GL = '#CFEEDD', C = 'rgba(22,33,43,.55)';
     if (!isDay) {
       return `<svg width="${size}" height="${size}" viewBox="0 0 32 32" fill="none"><path d="M22 4a13 13 0 1 0 6 14 11 11 0 0 1-6-14Z" fill="${C}"/></svg>`;
     }
@@ -689,13 +689,13 @@ const PrayerScreen = (function () {
     const sy = (52  - 38  * Math.sin(θ)).toFixed(1);   /* max rise = 38px */
 
     const sunDot = isDay ? `
-      <circle cx="${sx}" cy="${sy}" r="10" fill="#E8C15A" fill-opacity=".18"/>
-      <circle cx="${sx}" cy="${sy}" r="5"  fill="#E8C15A"/>` : '';
+      <circle cx="${sx}" cy="${sy}" r="10" fill="#16794A" fill-opacity=".18"/>
+      <circle cx="${sx}" cy="${sy}" r="5"  fill="#16794A"/>` : '';
 
     return `
-      <div style="background:rgba(232,193,90,.06);border:1px solid rgba(232,193,90,.16);
+      <div style="background:rgba(22,121,74,.06);border:1px solid rgba(22,121,74,.16);
                   border-radius:16px;padding:14px 16px 12px;margin-bottom:10px;overflow:hidden">
-        <div style="font-size:9px;font-weight:700;color:rgba(232,223,200,.28);
+        <div style="font-size:9px;font-weight:700;color:rgba(22,33,43,.28);
                     letter-spacing:1.3px;text-transform:uppercase;margin-bottom:10px">
           ${_l('sunArc', _lang)}
         </div>
@@ -704,31 +704,31 @@ const PrayerScreen = (function () {
           <defs>
             <linearGradient id="sunArcG" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%"   stop-color="#5b9bd5" stop-opacity=".4"/>
-              <stop offset="50%"  stop-color="#E8C15A"/>
+              <stop offset="50%"  stop-color="#16794A"/>
               <stop offset="100%" stop-color="#5b9bd5" stop-opacity=".4"/>
             </linearGradient>
           </defs>
           <line x1="12" y1="52" x2="268" y2="52"
-                stroke="rgba(232,223,200,.1)" stroke-width="1" stroke-dasharray="4 4"/>
+                stroke="rgba(22,33,43,.1)" stroke-width="1" stroke-dasharray="4 4"/>
           <path d="M12 52 A128 38 0 0 1 268 52"
                 fill="none" stroke="url(#sunArcG)" stroke-width="2.5"
                 stroke-linecap="round" opacity=".7"/>
-          <circle cx="12"  cy="52" r="3.5" fill="rgba(232,223,200,.22)"/>
-          <circle cx="268" cy="52" r="3.5" fill="rgba(232,223,200,.22)"/>
+          <circle cx="12"  cy="52" r="3.5" fill="rgba(22,33,43,.22)"/>
+          <circle cx="268" cy="52" r="3.5" fill="rgba(22,33,43,.22)"/>
           ${sunDot}
         </svg>
         <div style="display:flex;justify-content:space-between;align-items:flex-start">
           <div>
-            <div style="font-size:9px;color:rgba(232,223,200,.38);margin-bottom:3px">🌅 ${_l('sunRise', _lang)}</div>
-            <div style="font-size:13px;font-weight:700;color:#e8dfc8">${riseTime}</div>
+            <div style="font-size:9px;color:rgba(22,33,43,.38);margin-bottom:3px">🌅 ${_l('sunRise', _lang)}</div>
+            <div style="font-size:13px;font-weight:700;color:#16212B">${riseTime}</div>
           </div>
           <div style="text-align:center">
-            <div style="font-size:9px;color:rgba(232,223,200,.38);margin-bottom:3px">${_l('dayLen', _lang)}</div>
-            <div style="font-size:13px;font-weight:700;color:#E8C15A">${dayLen}</div>
+            <div style="font-size:9px;color:rgba(22,33,43,.38);margin-bottom:3px">${_l('dayLen', _lang)}</div>
+            <div style="font-size:13px;font-weight:700;color:#16794A">${dayLen}</div>
           </div>
           <div style="text-align:right">
-            <div style="font-size:9px;color:rgba(232,223,200,.38);margin-bottom:3px">🌇 ${_l('sunSet', _lang)}</div>
-            <div style="font-size:13px;font-weight:700;color:#e8dfc8">${setTime}</div>
+            <div style="font-size:9px;color:rgba(22,33,43,.38);margin-bottom:3px">🌇 ${_l('sunSet', _lang)}</div>
+            <div style="font-size:13px;font-weight:700;color:#16212B">${setTime}</div>
           </div>
         </div>
       </div>`;
@@ -739,16 +739,16 @@ const PrayerScreen = (function () {
     const items = hourly.map((h, i) => {
       const hr  = parseInt((h.time||'0').split(':')[0]);
       const pop = h.precip_pct || h.pop || 0;
-      const BG  = i===0 ? 'rgba(232,193,90,.1)'  : 'rgba(255,255,255,.04)';
-      const BD  = i===0 ? 'rgba(232,193,90,.25)' : 'rgba(255,255,255,.06)';
-      const TC  = i===0 ? '#E8C15A'              : 'rgba(232,223,200,.28)';
+      const BG  = i===0 ? 'rgba(22,121,74,.1)'  : 'rgba(255,255,255,.04)';
+      const BD  = i===0 ? 'rgba(22,121,74,.25)' : 'rgba(255,255,255,.06)';
+      const TC  = i===0 ? '#16794A'              : 'rgba(22,33,43,.28)';
       return `
         <div style="flex-shrink:0;background:${BG};border:1px solid ${BD};border-radius:12px;
                     padding:10px 10px 8px;text-align:center;min-width:56px;
                     display:flex;flex-direction:column;align-items:center;gap:6px">
           <div style="font-size:10px;font-weight:700;color:${TC}">${i===0?_l('now',_lang):h.time}</div>
           ${_weatherSvg(hr, 24)}
-          <div style="font-size:14px;font-weight:800;color:#e8dfc8">${h.temp_c}°</div>
+          <div style="font-size:14px;font-weight:800;color:#16212B">${h.temp_c}°</div>
           <div style="font-size:9px;color:#5b9bd5;font-weight:600;visibility:${pop>0?'visible':'hidden'}">💧${pop}%</div>
         </div>`;
     }).join('');
@@ -771,16 +771,16 @@ const PrayerScreen = (function () {
         <div style="display:flex;align-items:center;gap:10px;
                     background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.05);
                     border-radius:12px;padding:9px 12px">
-          <span style="font-size:12px;font-weight:700;color:${i===0?'#E8C15A':'#e8dfc8'};width:72px;flex-shrink:0">${i===0?_l('today',_lang):_esc(day.day_name||day.date||'')}</span>
+          <span style="font-size:12px;font-weight:700;color:${i===0?'#16794A':'#16212B'};width:72px;flex-shrink:0">${i===0?_l('today',_lang):_esc(day.day_name||day.date||'')}</span>
           ${_weatherSvg(hr, 22)}
           <span style="font-size:9px;color:#5b9bd5;font-weight:600;width:34px;text-align:center;visibility:${pop>0?'visible':'hidden'}">${pop}%</span>
           <div style="flex:1;display:flex;align-items:center;gap:6px;justify-content:flex-end">
-            <span style="font-size:11px;color:rgba(232,223,200,.55);font-weight:600">${mn}°</span>
+            <span style="font-size:11px;color:rgba(22,33,43,.55);font-weight:600">${mn}°</span>
             <div style="width:46px;height:3px;border-radius:2px;background:rgba(255,255,255,.08);position:relative;overflow:hidden">
               <div style="position:absolute;left:${left}%;width:${width}%;height:100%;
-                          background:linear-gradient(90deg,#5b9bd5,#E8C15A);border-radius:2px"></div>
+                          background:linear-gradient(90deg,#5b9bd5,#16794A);border-radius:2px"></div>
             </div>
-            <span style="font-size:12px;color:#e8dfc8;font-weight:800">${mx}°</span>
+            <span style="font-size:12px;color:#16212B;font-weight:800">${mx}°</span>
           </div>
         </div>`;
     }).join('');
@@ -817,14 +817,14 @@ const PrayerScreen = (function () {
         return `
         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:16px;text-align:center">
           <div style="width:44px;height:44px;border:3px solid rgba(91,155,213,.15);border-top-color:#5b9bd5;border-radius:50%;animation:spin 1s linear infinite"></div>
-          <div style="font-size:13px;color:rgba(232,223,200,.5)">${_T('Ob-havo yuklanmoqda…','Об-ҳаво юкланмоқда…','Погода загружается…','Weather loading…')}</div>
+          <div style="font-size:13px;color:rgba(22,33,43,.5)">${_T('Ob-havo yuklanmoqda…','Об-ҳаво юкланмоқда…','Погода загружается…','Weather loading…')}</div>
         </div>`;
       }
       /* All retries exhausted — show error state */
       return `
         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:14px;text-align:center">
           <div style="font-size:36px">🌦️</div>
-          <div style="font-size:13px;color:rgba(232,223,200,.55);line-height:1.6">${_T("Ob-havo ma'lumoti vaqtincha mavjud emas","Об-ҳаво маълумоти вақтинча мавжуд эмас","Данные о погоде временно недоступны","Weather data temporarily unavailable")}</div>
+          <div style="font-size:13px;color:rgba(22,33,43,.55);line-height:1.6">${_T("Ob-havo ma'lumoti vaqtincha mavjud emas","Об-ҳаво маълумоти вақтинча мавжуд эмас","Данные о погоде временно недоступны","Weather data temporarily unavailable")}</div>
           <button onclick="PrayerScreen._retryWeatherFull&&PrayerScreen._retryWeatherFull()"
             style="background:rgba(91,155,213,.12);border:1px solid rgba(91,155,213,.25);border-radius:12px;color:#5b9bd5;font-size:12px;font-weight:700;padding:8px 20px;cursor:pointer">
             ${_l('refresh',_lang)}
@@ -840,16 +840,16 @@ const PrayerScreen = (function () {
       <div style="height:1px;background:rgba(91,155,213,.18);margin:12px 0 10px"></div>
       <div style="display:flex;justify-content:space-between">
         <div style="display:flex;align-items:center;gap:5px">
-          <span style="font-size:10px;color:rgba(232,223,200,.28)">${_T('Eng yuqori','Энг юқори','Макс.','Max.')}</span>
-          <span style="font-size:13px;font-weight:800;color:#E8C15A">${w.temp_max_c}°</span>
+          <span style="font-size:10px;color:rgba(22,33,43,.28)">${_T('Eng yuqori','Энг юқори','Макс.','Max.')}</span>
+          <span style="font-size:13px;font-weight:800;color:#16794A">${w.temp_max_c}°</span>
         </div>
         <div style="display:flex;align-items:center;gap:5px">
-          <span style="font-size:10px;color:rgba(232,223,200,.28)">${_T('Eng past','Энг паст','Мин.','Min.')}</span>
+          <span style="font-size:10px;color:rgba(22,33,43,.28)">${_T('Eng past','Энг паст','Мин.','Min.')}</span>
           <span style="font-size:13px;font-weight:800;color:#5b9bd5">${w.temp_min_c}°</span>
         </div>
         <div style="display:flex;align-items:center;gap:5px">
-          <span style="font-size:10px;color:rgba(232,223,200,.28)">${_T('Yangilandi','Янгиланди','Обновлено','Updated')}</span>
-          <span style="font-size:11px;font-weight:700;color:rgba(232,223,200,.55)">${nowStr}</span>
+          <span style="font-size:10px;color:rgba(22,33,43,.28)">${_T('Yangilandi','Янгиланди','Обновлено','Updated')}</span>
+          <span style="font-size:11px;font-weight:700;color:rgba(22,33,43,.55)">${nowStr}</span>
         </div>
       </div>` : '';
 
@@ -859,12 +859,12 @@ const PrayerScreen = (function () {
         <div style="display:flex;justify-content:space-between;align-items:center">
           <div>
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">${_weatherSvg(nowH, 40)}</div>
-            <div style="font-size:13px;color:#e8dfc8;font-weight:600">${_esc(w.description)}</div>
-            <div style="font-size:10px;color:rgba(232,223,200,.28);margin-top:2px">📍 ${_esc(w.city || _data.city || '')}</div>
+            <div style="font-size:13px;color:#16212B;font-weight:600">${_esc(w.description)}</div>
+            <div style="font-size:10px;color:rgba(22,33,43,.28);margin-top:2px">📍 ${_esc(w.city || _data.city || '')}</div>
           </div>
           <div style="text-align:right">
-            <div style="font-size:48px;font-weight:800;color:#e8dfc8;letter-spacing:-2px;line-height:1">${w.temp_c}°</div>
-            <div style="font-size:10px;color:rgba(232,223,200,.55);margin-top:4px">${_T('His qilinadi','Ҳис қилинади','Ощущается','Feels like')}: ${w.feels_like_c}°</div>
+            <div style="font-size:48px;font-weight:800;color:#16212B;letter-spacing:-2px;line-height:1">${w.temp_c}°</div>
+            <div style="font-size:10px;color:rgba(22,33,43,.55);margin-top:4px">${_T('His qilinadi','Ҳис қилинади','Ощущается','Feels like')}: ${w.feels_like_c}°</div>
           </div>
         </div>
         ${minMaxHtml}
@@ -878,18 +878,18 @@ const PrayerScreen = (function () {
 
     /* ── Hourly (React prototype exact, inline styles only) ── */
     const hourlyHtml = (w.hourly && w.hourly.length) ? `
-      <div style="font-size:9px;font-weight:700;color:rgba(232,223,200,.28);letter-spacing:1.3px;text-transform:uppercase;margin-top:14px;margin-bottom:8px">${_T('SOATLIK PROGNOZ','СОАТЛИК ПРОГНОЗ','ПОЧАСОВОЙ ПРОГНОЗ','HOURLY FORECAST')}</div>
+      <div style="font-size:9px;font-weight:700;color:rgba(22,33,43,.28);letter-spacing:1.3px;text-transform:uppercase;margin-top:14px;margin-bottom:8px">${_T('SOATLIK PROGNOZ','СОАТЛИК ПРОГНОЗ','ПОЧАСОВОЙ ПРОГНОЗ','HOURLY FORECAST')}</div>
       <div style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-bottom:14px;padding-bottom:2px">
         ${w.hourly.map((h, i) => {
           const hr  = parseInt((h.time||'0').split(':')[0]);
           const pop = h.precip_pct || 0;
-          const BG  = i===0 ? 'rgba(232,193,90,.1)'  : 'rgba(255,255,255,.04)';
-          const BD  = i===0 ? 'rgba(232,193,90,.25)' : 'rgba(255,255,255,.06)';
-          const TC  = i===0 ? '#E8C15A'              : 'rgba(232,223,200,.28)';
+          const BG  = i===0 ? 'rgba(22,121,74,.1)'  : 'rgba(255,255,255,.04)';
+          const BD  = i===0 ? 'rgba(22,121,74,.25)' : 'rgba(255,255,255,.06)';
+          const TC  = i===0 ? '#16794A'              : 'rgba(22,33,43,.28)';
           return `<div style="flex-shrink:0;background:${BG};border:1px solid ${BD};border-radius:12px;padding:10px 10px 8px;text-align:center;min-width:52px;display:flex;flex-direction:column;align-items:center;gap:6px">
             <div style="font-size:9px;font-weight:700;color:${TC}">${i===0?_l('now',_lang):h.time}</div>
             ${_weatherSvg(hr, 22)}
-            <div style="font-size:13px;font-weight:800;color:#e8dfc8">${h.temp_c}°</div>
+            <div style="font-size:13px;font-weight:800;color:#16212B">${h.temp_c}°</div>
             <div style="font-size:8px;color:#5b9bd5;font-weight:600;visibility:${pop>0?'visible':'hidden'}">💧${pop}%</div>
           </div>`;
         }).join('')}
@@ -905,22 +905,22 @@ const PrayerScreen = (function () {
       { ic:'❄️', l:_T('Shabnam nuq.','Шабнам нуқ.','Точка росы','Dew point'), v: w.dew_point_c != null ? `${w.dew_point_c}°`: '—', sub: _T('Qulay','Қулай','Комфортно','Comfortable')                   },
     ];
     const batafsil = `
-      <div style="font-size:9px;font-weight:700;color:rgba(232,223,200,.28);letter-spacing:1.3px;text-transform:uppercase;margin-bottom:8px">${_T('BATAFSIL','БАТАФСИЛ','ПОДРОБНЕЕ','DETAILS')}</div>
+      <div style="font-size:9px;font-weight:700;color:rgba(22,33,43,.28);letter-spacing:1.3px;text-transform:uppercase;margin-bottom:8px">${_T('BATAFSIL','БАТАФСИЛ','ПОДРОБНЕЕ','DETAILS')}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
         ${details.map(x => `
           <div style="background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.05);border-radius:12px;padding:10px 12px">
             <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
               <span style="font-size:13px">${x.ic}</span>
-              <span style="font-size:8px;font-weight:700;color:rgba(232,223,200,.45);letter-spacing:.5px;text-transform:uppercase">${x.l}</span>
+              <span style="font-size:8px;font-weight:700;color:rgba(22,33,43,.45);letter-spacing:.5px;text-transform:uppercase">${x.l}</span>
             </div>
-            <div style="font-size:16px;font-weight:800;color:#e8dfc8;letter-spacing:-.3px;margin-bottom:2px">${x.v}</div>
-            <div style="font-size:8px;color:rgba(232,223,200,.35)">${x.sub}</div>
+            <div style="font-size:16px;font-weight:800;color:#16212B;letter-spacing:-.3px;margin-bottom:2px">${x.v}</div>
+            <div style="font-size:8px;color:rgba(22,33,43,.35)">${x.sub}</div>
           </div>`).join('')}
       </div>`;
 
     /* ── 5-day forecast (React prototype exact, inline styles only) ── */
     const forecastHtml = (w.forecast && w.forecast.length) ? `
-      <div style="font-size:9px;font-weight:700;color:rgba(232,223,200,.28);letter-spacing:1.3px;text-transform:uppercase;margin-bottom:8px">${_T('5 KUNLIK PROGNOZ','5 КУНЛИК ПРОГНОЗ','5-ДНЕВНЫЙ ПРОГНОЗ','5-DAY FORECAST')}</div>
+      <div style="font-size:9px;font-weight:700;color:rgba(22,33,43,.28);letter-spacing:1.3px;text-transform:uppercase;margin-bottom:8px">${_T('5 KUNLIK PROGNOZ','5 КУНЛИК ПРОГНОЗ','5-ДНЕВНЫЙ ПРОГНОЗ','5-DAY FORECAST')}</div>
       <div style="display:flex;flex-direction:column;gap:5px">
         ${w.forecast.map((day, i) => {
           const mn  = day.temp_min_c != null ? day.temp_min_c : 10;
@@ -929,15 +929,15 @@ const PrayerScreen = (function () {
           const lft = Math.max(0, ((mn - 8) / 22) * 100).toFixed(0);
           const wid = Math.min(100, ((mx - mn) / 22) * 100).toFixed(0);
           return `<div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.05);border-radius:12px;padding:9px 12px">
-            <span style="font-size:11px;font-weight:700;color:${i===0?'#E8C15A':'#e8dfc8'};width:62px;flex-shrink:0">${i===0?_l('today',_lang):_esc(day.day_name||day.date||'')}</span>
+            <span style="font-size:11px;font-weight:700;color:${i===0?'#16794A':'#16212B'};width:62px;flex-shrink:0">${i===0?_l('today',_lang):_esc(day.day_name||day.date||'')}</span>
             ${_weatherSvg(14, 20)}
             <span style="font-size:9px;color:#5b9bd5;font-weight:600;width:34px;text-align:center;visibility:${pop>0?'visible':'hidden'}">${pop}%</span>
             <div style="flex:1;display:flex;align-items:center;gap:6px;justify-content:flex-end">
-              <span style="font-size:11px;color:rgba(232,223,200,.55);font-weight:600">${mn}°</span>
+              <span style="font-size:11px;color:rgba(22,33,43,.55);font-weight:600">${mn}°</span>
               <div style="width:46px;height:3px;border-radius:2px;background:rgba(255,255,255,.08);position:relative;overflow:hidden">
-                <div style="position:absolute;left:${lft}%;width:${wid}%;height:100%;background:linear-gradient(90deg,#5b9bd5,#E8C15A);border-radius:2px"></div>
+                <div style="position:absolute;left:${lft}%;width:${wid}%;height:100%;background:linear-gradient(90deg,#5b9bd5,#16794A);border-radius:2px"></div>
               </div>
-              <span style="font-size:11px;color:#e8dfc8;font-weight:800">${mx}°</span>
+              <span style="font-size:11px;color:#16212B;font-weight:800">${mx}°</span>
             </div>
           </div>`;
         }).join('')}
@@ -966,7 +966,7 @@ const PrayerScreen = (function () {
       return `
         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:16px;text-align:center">
           <div style="width:44px;height:44px;border:3px solid rgba(91,155,213,.15);border-top-color:#5b9bd5;border-radius:50%;animation:spin 1s linear infinite"></div>
-          <div id="prayer-aqi-loading" style="font-size:13px;color:rgba(232,223,200,.5)">${_T('Havo sifati yuklanmoqda…','Ҳаво сифати юкланмоқда…','Качество воздуха загружается…','Air quality loading…')}</div>
+          <div id="prayer-aqi-loading" style="font-size:13px;color:rgba(22,33,43,.5)">${_T('Havo sifati yuklanmoqda…','Ҳаво сифати юкланмоқда…','Качество воздуха загружается…','Air quality loading…')}</div>
           <button onclick="(function(){var b=document.getElementById('prayer-aqi-btn');if(b)b.disabled=true;PrayerScreen._retryWeather&&PrayerScreen._retryWeather();})()" id="prayer-aqi-btn"
             style="background:rgba(91,155,213,.12);border:1px solid rgba(91,155,213,.25);border-radius:12px;color:#5b9bd5;font-size:12px;font-weight:700;padding:8px 20px;cursor:pointer;margin-top:4px">
             ${_l('refresh',_lang)}
@@ -1006,13 +1006,13 @@ const PrayerScreen = (function () {
             </svg>
             <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
               <div style="font-size:32px;font-weight:800;color:${lvl.color};letter-spacing:-1px;line-height:1">${aqiVal}</div>
-              <div style="font-size:8px;font-weight:700;color:rgba(232,223,200,.28);letter-spacing:1px;text-transform:uppercase;margin-top:2px">AQI</div>
+              <div style="font-size:8px;font-weight:700;color:rgba(22,33,43,.28);letter-spacing:1px;text-transform:uppercase;margin-top:2px">AQI</div>
             </div>
           </div>
           <div style="flex:1">
-            <div style="font-size:9px;font-weight:700;color:rgba(232,223,200,.28);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:4px">${_T('HAVO SIFATI','ҲАВО СИФАТИ','КАЧЕСТВО ВОЗДУХА','AIR QUALITY')}</div>
+            <div style="font-size:9px;font-weight:700;color:rgba(22,33,43,.28);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:4px">${_T('HAVO SIFATI','ҲАВО СИФАТИ','КАЧЕСТВО ВОЗДУХА','AIR QUALITY')}</div>
             <div style="font-size:18px;font-weight:800;color:${lvl.color};letter-spacing:-.3px;margin-bottom:6px">${_aqiLabel(lvl)}</div>
-            <div style="font-size:10px;color:rgba(232,223,200,.55);line-height:1.6">📍 ${_esc(_data.city || '')}<br>${_T('Yangilandi','Янгиланди','Обновлено','Updated')}: ${nowStr}</div>
+            <div style="font-size:10px;color:rgba(22,33,43,.55);line-height:1.6">📍 ${_esc(_data.city || '')}<br>${_T('Yangilandi','Янгиланди','Обновлено','Updated')}: ${nowStr}</div>
           </div>
         </div>
         <div style="margin-top:14px">
@@ -1020,7 +1020,7 @@ const PrayerScreen = (function () {
             <div style="position:absolute;top:-2px;left:${needlePct}%;width:2px;height:10px;background:#fff;border-radius:1px;transform:translateX(-50%)"></div>
           </div>
           <div style="display:flex;justify-content:space-between;margin-top:4px">
-            ${['0','50','100','150','200+'].map(l=>`<span style="font-size:7px;color:rgba(232,223,200,.28)">${l}</span>`).join('')}
+            ${['0','50','100','150','200+'].map(l=>`<span style="font-size:7px;color:rgba(22,33,43,.28)">${l}</span>`).join('')}
           </div>
         </div>
       </div>`;
@@ -1040,10 +1040,10 @@ const PrayerScreen = (function () {
         <div style="background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.05);border-radius:12px;padding:10px 8px;text-align:center">
           <div style="position:relative;width:40px;height:40px;margin:0 auto 6px;opacity:.25">
             <svg width="40" height="40" style="transform:rotate(-90deg)"><circle cx="20" cy="20" r="16" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="3.5"/></svg>
-            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:rgba(232,223,200,.3)">—</div>
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:rgba(22,33,43,.3)">—</div>
           </div>
-          <div style="font-size:10px;font-weight:700;color:#e8dfc8">${p.k}</div>
-          <div style="font-size:7px;color:rgba(232,223,200,.28);margin-top:1px">${p.desc}</div>
+          <div style="font-size:10px;font-weight:700;color:#16212B">${p.k}</div>
+          <div style="font-size:7px;color:rgba(22,33,43,.28);margin-top:1px">${p.desc}</div>
         </div>`;
       const pct = Math.min((p.v / p.max) * 100, 100);
       const c   = pct<30?'#4fcfa0':pct<60?'#a3e635':pct<80?'#f59e0b':'#e05555';
@@ -1057,8 +1057,8 @@ const PrayerScreen = (function () {
             </svg>
             <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:${c}">${p.v}</div>
           </div>
-          <div style="font-size:10px;font-weight:700;color:#e8dfc8">${p.k}</div>
-          <div style="font-size:7px;color:rgba(232,223,200,.28);margin-top:1px">${p.desc}</div>
+          <div style="font-size:10px;font-weight:700;color:#16212B">${p.k}</div>
+          <div style="font-size:7px;color:rgba(22,33,43,.28);margin-top:1px">${p.desc}</div>
         </div>`;
     }).join('');
 
@@ -1069,7 +1069,7 @@ const PrayerScreen = (function () {
     const trendBarsHtml = trendVals.map((v, i) => {
       const c = v<50?'#4fcfa0':v<100?'#a3e635':v<150?'#f59e0b':'#e05555';
       const h = Math.max(3, Math.round((v/120)*54));
-      return `<div style="flex:1;height:${h}px;background:${i===nowH?'#E8C15A':c};opacity:${i===nowH?1:.55};border-radius:2px;align-self:flex-end"></div>`;
+      return `<div style="flex:1;height:${h}px;background:${i===nowH?'#16794A':c};opacity:${i===nowH?1:.55};border-radius:2px;align-self:flex-end"></div>`;
     }).join('');
 
     /* ── Health recommendations ── */
@@ -1081,29 +1081,29 @@ const PrayerScreen = (function () {
     ];
 
     return heroGauge + `
-      <div style="font-size:9px;font-weight:700;color:rgba(232,223,200,.28);letter-spacing:1.3px;text-transform:uppercase;margin-bottom:8px">${_T('ZARRACHALAR VA GAZLAR','ЗАРРАЧАЛАР ВА ГАЗЛАР','ЧАСТИЦЫ И ГАЗЫ','PARTICLES AND GASES')}</div>
+      <div style="font-size:9px;font-weight:700;color:rgba(22,33,43,.28);letter-spacing:1.3px;text-transform:uppercase;margin-bottom:8px">${_T('ZARRACHALAR VA GAZLAR','ЗАРРАЧАЛАР ВА ГАЗЛАР','ЧАСТИЦЫ И ГАЗЫ','PARTICLES AND GASES')}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:14px">${miniHtml}</div>
 
-      <div style="font-size:9px;font-weight:700;color:rgba(232,223,200,.28);letter-spacing:1.3px;text-transform:uppercase;margin-bottom:8px">${_T("24 SOATLIK O'ZGARISH","24 СОАТЛИК ЎЗГАРИШ","24-ЧАСОВАЯ ДИНАМИКА",'24-HOUR TREND')}</div>
+      <div style="font-size:9px;font-weight:700;color:rgba(22,33,43,.28);letter-spacing:1.3px;text-transform:uppercase;margin-bottom:8px">${_T("24 SOATLIK O'ZGARISH","24 СОАТЛИК ЎЗГАРИШ","24-ЧАСОВАЯ ДИНАМИКА",'24-HOUR TREND')}</div>
       <div style="background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.05);border-radius:14px;padding:12px 12px 8px;margin-bottom:14px">
         <div style="display:flex;align-items:flex-end;gap:4px;height:54px">${trendBarsHtml}</div>
         <div style="display:flex;justify-content:space-between;margin-top:6px">
-          ${['00:00','06:00','12:00','18:00', _l('now',_lang)].map(l=>`<span style="font-size:7px;color:rgba(232,223,200,.28)">${l}</span>`).join('')}
+          ${['00:00','06:00','12:00','18:00', _l('now',_lang)].map(l=>`<span style="font-size:7px;color:rgba(22,33,43,.28)">${l}</span>`).join('')}
         </div>
       </div>
 
-      <div style="font-size:9px;font-weight:700;color:rgba(232,223,200,.28);letter-spacing:1.3px;text-transform:uppercase;margin-bottom:8px">${_T("SOG'LIQ TAVSIYALARI","СОҒЛИҚ ТАВСИЯЛАРИ","РЕКОМЕНДАЦИИ ДЛЯ ЗДОРОВЬЯ",'HEALTH RECOMMENDATIONS')}</div>
+      <div style="font-size:9px;font-weight:700;color:rgba(22,33,43,.28);letter-spacing:1.3px;text-transform:uppercase;margin-bottom:8px">${_T("SOG'LIQ TAVSIYALARI","СОҒЛИҚ ТАВСИЯЛАРИ","РЕКОМЕНДАЦИИ ДЛЯ ЗДОРОВЬЯ",'HEALTH RECOMMENDATIONS')}</div>
       <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
         ${recs.map(x=>`
           <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.05);border-radius:12px;padding:9px 12px">
             <span style="font-size:16px">${x.ic}</span>
-            <span style="flex:1;font-size:11px;font-weight:600;color:#e8dfc8">${x.t}</span>
+            <span style="flex:1;font-size:11px;font-weight:600;color:#16212B">${x.t}</span>
             <span style="font-size:10px;font-weight:700;color:${lvl.safe?'#4fcfa0':lvl.color};text-align:right;max-width:130px;line-height:1.35">${x.v}</span>
           </div>`).join('')}
       </div>
 
-      <div style="background:${lvl.safe?'rgba(232,193,90,.07)':lvl.color+'0d'};border:1px solid ${lvl.safe?'rgba(232,193,90,.2)':lvl.color+'33'};border-radius:12px;padding:10px 12px">
-        <div style="font-size:9px;font-weight:700;color:${lvl.safe?'#E8C15A':lvl.color};letter-spacing:1.2px;text-transform:uppercase;margin-bottom:5px">${_T("NAMOZGA TA'SIR","НАМОЗГА ТА'СИР","ВЛИЯНИЕ НА НАМАЗ",'EFFECT ON PRAYER')}</div>
+      <div style="background:${lvl.safe?'rgba(22,121,74,.07)':lvl.color+'0d'};border:1px solid ${lvl.safe?'rgba(22,121,74,.2)':lvl.color+'33'};border-radius:12px;padding:10px 12px">
+        <div style="font-size:9px;font-weight:700;color:${lvl.safe?'#16794A':lvl.color};letter-spacing:1.2px;text-transform:uppercase;margin-bottom:5px">${_T("NAMOZGA TA'SIR","НАМОЗГА ТА'СИР","ВЛИЯНИЕ НА НАМАЗ",'EFFECT ON PRAYER')}</div>
         <div style="font-size:11px;font-weight:600;color:${lvl.safe?'#4fcfa0':lvl.color}">
           ${lvl.safe?`✓ ${_T("Havo toza — masjidga borishga to'sqinlik yo'q","Ҳаво тоза — масжидга боришга тўсқинлик йўқ","Воздух чистый — посещение мечети не ограничено","Air is clean — no restriction on mosque visit")}`:`⚠ ${_T("Havo ifloslanishi yuqori — ehtiyot bo'ling","Ҳаво ифлосланиши юқори — эҳтиёт бўлинг","Высокое загрязнение — соблюдайте осторожность",'High pollution — take precautions')}`}
         </div>

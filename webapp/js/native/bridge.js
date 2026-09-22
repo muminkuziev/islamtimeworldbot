@@ -53,7 +53,7 @@
   /* ── Status Bar ─────────────────────────────────────────── */
   if (StatusBar) {
     StatusBar.setStyle({ style: 'DARK' }).catch(() => {});
-    StatusBar.setBackgroundColor({ color: '#080D1A' }).catch(() => {});
+    StatusBar.setBackgroundColor({ color: '#FFFFFF' }).catch(() => {});
   }
 
   /* ── Splash Screen ──────────────────────────────────────── */

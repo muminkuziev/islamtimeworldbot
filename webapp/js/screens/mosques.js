@@ -336,21 +336,22 @@ out center tags;`.trim();
   function _buildHTML() {
     return `
 <div class="ms-hdr">
+  <img class="ms-hdr-photo" src="assets/landing/haram-madinah.webp" alt="Masjid an-Nabawi" loading="eager">
   <div class="nm-tile-bg"></div>
-  <div class="nm-tile-ov" style="background:rgba(9,18,31,0.65)"></div>
+  <div class="nm-tile-ov"></div>
   <div class="ms-hdr-inner">
     <div class="ms-nav-row">
       <button class="ms-back" id="ms-back">← ${_T('Menyu','Меню','Меню','Menu')}</button>
-      <button class="ms-change-loc" id="ms-change-loc">📍 ${_T("O'zgartirish","Ўзгартириш","Изменить","Change")}</button>
+      <button class="ms-change-loc" id="ms-change-loc"><span class="material-symbols-rounded" data-icon="location_on" aria-hidden="true">location_on</span> ${_T("O'zgartirish","Ўзгартириш","Изменить","Change")}</button>
       <div id="ms-status"></div>
     </div>
     <div class="ms-title">${_T('Yaqin masjidlar','Яқин масжидлар','Ближайшие мечети','Nearby Mosques')}</div>
     <div class="ms-loc" id="ms-loc">${_locLine()}</div>
     <div class="ms-divider"></div>
     <div class="ms-tabs">
-      <button class="ms-tab${_tab === 'royxat' ? ' active' : ''}" data-tab="royxat">☰ ${_T("Ro'yxat","Рўйхат","Список","List")}</button>
-      <button class="ms-tab${_tab === 'xarita' ? ' active' : ''}" data-tab="xarita">🗺 ${_T('Xarita','Харита','Карта','Map')}</button>
-      <button class="ms-tab${_tab === 'jadval' ? ' active' : ''}" data-tab="jadval">📅 ${_T('Jadval','Жадвал','Расписание','Schedule')}</button>
+      <button class="ms-tab${_tab === 'royxat' ? ' active' : ''}" data-tab="royxat"><span class="material-symbols-rounded" data-icon="view_list" aria-hidden="true">view_list</span> ${_T("Ro'yxat","Рўйхат","Список","List")}</button>
+      <button class="ms-tab${_tab === 'xarita' ? ' active' : ''}" data-tab="xarita"><span class="material-symbols-rounded" data-icon="map" aria-hidden="true">map</span> ${_T('Xarita','Харита','Карта','Map')}</button>
+      <button class="ms-tab${_tab === 'jadval' ? ' active' : ''}" data-tab="jadval"><span class="material-symbols-rounded" data-icon="calendar_month" aria-hidden="true">calendar_month</span> ${_T('Jadval','Жадвал','Расписание','Schedule')}</button>
     </div>
   </div>
 </div>
@@ -427,7 +428,7 @@ out center tags;`.trim();
       const dist   = _fmtDist(m.distance);
       const walk   = Math.max(1, Math.round(m.distance / 80));
       const isOpen = _isOpen(m.opening_hours);
-      const dot    = isOpen === true ? '#4fcfa0' : isOpen === false ? '#e05555' : 'rgba(232,223,200,.28)';
+      const dot    = isOpen === true ? '#4fcfa0' : isOpen === false ? '#e05555' : 'rgba(22,33,43,.28)';
       const txt    = isOpen === true ? `${_T('Ochiq','Очиқ','Открыто','Open')} · ${m.closes || ''}`.trimEnd().replace(/·\s*$/, '') : isOpen === false ? _T('Yopiq','Ёпиқ','Закрыто','Closed') : '';
       return `<div class="ms-card" data-idx="${i}">
   <div class="ms-card-top">
@@ -460,7 +461,7 @@ out center tags;`.trim();
     const bus      = Math.max(1, Math.round(m.distance / 300));
     const drive    = Math.max(1, Math.round(m.distance / 500));
     const isOpen   = _isOpen(m.opening_hours);
-    const openC    = isOpen === true ? '#4fcfa0' : isOpen === false ? '#e05555' : '#e8dfc8';
+    const openC    = isOpen === true ? '#4fcfa0' : isOpen === false ? '#e05555' : '#16212B';
     const openTxt  = isOpen === true ? _T('Ochiq','Очиқ','Открыто','Open') : isOpen === false ? _T('Yopiq','Ёпиқ','Закрыто','Closed') : '—';
     const routeUrl = `https://www.google.com/maps/dir/?api=1&destination=${m.lat},${m.lon}`;
     const rows = [
@@ -487,7 +488,7 @@ out center tags;`.trim();
 ${[
   { ic:'🚶', l:_T('Piyoda','Пиёда','Пешком','Walking'),   t:`${walk} ${_T('daqiqa','дақиқа','мин.','min')}`,  c:'#4fcfa0' },
   { ic:'🚌', l:_T('Avtobus','Автобус','Автобус','Bus'),    t:`${bus} ${_T('daqiqa','дақиқа','мин.','min')}`,  c:'#5b9bd5' },
-  { ic:'🚗', l:_T('Mashina','Машина','Машина','Car'),      t:`${drive} ${_T('daqiqa','дақиқа','мин.','min')}`, c:'#E8C15A' },
+  { ic:'🚗', l:_T('Mashina','Машина','Машина','Car'),      t:`${drive} ${_T('daqiqa','дақиқа','мин.','min')}`, c:'#16794A' },
 ].map(r => `
 <a class="ms-route-row" href="${routeUrl}" target="_blank" rel="noopener">
   <span class="ms-route-ic">${r.ic}</span>
@@ -517,25 +518,25 @@ ${[
   <svg class="ms-map-svg" viewBox="0 0 300 130" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <pattern id="msgrid" width="18" height="18" patternUnits="userSpaceOnUse">
-        <path d="M 18 0 L 0 0 0 18" fill="none" stroke="rgba(232,193,90,.05)" stroke-width="0.5"/>
+        <path d="M 18 0 L 0 0 0 18" fill="none" stroke="rgba(22,121,74,.05)" stroke-width="0.5"/>
       </pattern>
     </defs>
-    <rect width="300" height="130" fill="#0a1628"/>
+    <rect width="300" height="130" fill="#F6FAF8"/>
     <rect width="300" height="130" fill="url(#msgrid)"/>
     <line x1="0"   y1="65"  x2="300" y2="65"  stroke="rgba(255,255,255,.06)" stroke-width="1.5"/>
     <line x1="150" y1="0"   x2="150" y2="130" stroke="rgba(255,255,255,.06)" stroke-width="1.5"/>
     ${pts.map(p => `
     <line x1="150" y1="65" x2="${p.svgX}" y2="${p.svgY}"
-      stroke="rgba(232,193,90,.12)" stroke-width="1" stroke-dasharray="3 3"/>
+      stroke="rgba(22,121,74,.12)" stroke-width="1" stroke-dasharray="3 3"/>
     <circle cx="${p.svgX}" cy="${p.svgY}" r="${_selIdx === p.i ? 8 : 5}"
       fill="${_selIdx === p.i ? '#4fcfa0' : 'rgba(79,207,160,.5)'}"
       stroke="${_selIdx === p.i ? '#4fcfa0' : 'transparent'}" stroke-width="2"/>
     <text x="${p.svgX}" y="${p.svgY - 7}" text-anchor="middle"
-      font-size="8" fill="rgba(232,223,200,.55)"
+      font-size="8" fill="rgba(22,33,43,.55)"
       font-family="Inter,system-ui,sans-serif" font-weight="600">${p.i + 1}</text>
     `).join('')}
-    <circle cx="150" cy="65" r="6" fill="#E8C15A" opacity=".9"/>
-    <circle cx="150" cy="65" r="12" fill="none" stroke="#E8C15A" stroke-width="1" opacity=".3"/>
+    <circle cx="150" cy="65" r="6" fill="#16794A" opacity=".9"/>
+    <circle cx="150" cy="65" r="12" fill="none" stroke="#16794A" stroke-width="1" opacity=".3"/>
   </svg>
   <div class="ms-map-you">${_T('Siz','Сиз','Вы','You')}</div>
 </div>
@@ -554,7 +555,7 @@ ${[
     return `<div class="ms-sec-lbl">${_T('NAMOZ VAQTLARI (JUMA)','НАМОЗ ВАҚТЛАРИ (ЖУМА)','РАСПИСАНИЕ НАМАЗОВ (ДЖУМА)','PRAYER SCHEDULE (FRIDAY)')}</div>
 ${_mosques.slice(0, 8).map(m => {
   const isOpen = _isOpen(m.opening_hours);
-  const dot    = isOpen === true ? '#4fcfa0' : isOpen === false ? '#e05555' : 'rgba(232,223,200,.28)';
+  const dot    = isOpen === true ? '#4fcfa0' : isOpen === false ? '#e05555' : 'rgba(22,33,43,.28)';
   const txt    = isOpen === true ? _T('Ochiq','Очиқ','Открыто','Open') : isOpen === false ? _T('Yopiq','Ёпиқ','Закрыто','Closed') : '—';
   const walk   = Math.max(1, Math.round(m.distance / 80));
   return `<div class="ms-jadval-card">

@@ -79,7 +79,7 @@ const DuasScreen = (function () {
     return `
 <div class="du-hdr">
   <div class="nm-tile-bg"></div>
-  <div class="nm-tile-ov" style="background:rgba(9,18,31,0.65)"></div>
+  <div class="nm-tile-ov"></div>
   <div class="du-hdr-inner">
     <div class="du-nav-row">
       <button class="du-back" id="du-back">${_esc(backLbl)}</button>
@@ -166,7 +166,7 @@ ${results.length === 0
     const saved    = favs.includes(dua.id);
     const transl   = _resolveTransl(dua.translation || {}, _lang);
     const isUz     = _lang === 'uz' || _lang === 'uz_cyr';
-    const translit = dua.transliteration || (isUz ? _T("O'qilishi hozircha qo'shilmagan","Ўқилиши ҳозирча қўшилмаган",'',' ') : '');
+    const translit = dua.transliteration || (isUz ? _T("O'qilishi hozircha qo'shilmagan","Ўқилиши ҳозирча қўшилмаган",'','Transliteration is not available yet.') : '');
     return `
 <button class="du-detail-back" id="du-detail-back">← ${_T('Orqaga','Орқага','Назад','Back')}</button>
 <div class="du-detail-box">
@@ -193,7 +193,7 @@ ${results.length === 0
     const all   = (typeof DUAS_DATA !== 'undefined') ? Object.values(DUAS_DATA).flat() : [];
     const saved = all.filter(d => favIds.includes(d.id));
     const favs  = _getFavs();
-    return `<div class="du-sec-lbl">${_T('SAQLANGAN','САҚЛАНГАН','СОХРАНЁННЫЕ','SAVED')} · ${saved.length} ${_T('TA','ТА','ШТ.','')}</div>
+    return `<div class="du-sec-lbl">${_T('SAQLANGAN','САҚЛАНГАН','СОХРАНЁННЫЕ','SAVED')} · ${saved.length} ${_T('TA','ТА','ШТ.','ITEMS')}</div>
 ${saved.map(d => _buildCard(d, favs, false)).join('\n')}`;
   }
 
@@ -202,7 +202,7 @@ ${saved.map(d => _buildCard(d, favs, false)).join('\n')}`;
     const transl   = _resolveTransl(dua.translation || {}, _lang);
     const saved    = favs.includes(dua.id);
     const isUz     = _lang === 'uz' || _lang === 'uz_cyr';
-    const translit = dua.transliteration || (isUz ? _T("O'qilishi hozircha qo'shilmagan","Ўқилиши ҳозирча қўшилмаган",'',' ') : '');
+    const translit = dua.transliteration || (isUz ? _T("O'qilishi hozircha qo'shilmagan","Ўқилиши ҳозирча қўшилмаган",'','Transliteration is not available yet.') : '');
     return `<div class="du-card" data-id="${dua.id}">
   <div class="du-card-ar">${dua.arabic}</div>
   ${!compact && translit ? `<div class="du-card-translit">${_esc(translit)}</div>` : ''}
@@ -300,7 +300,7 @@ ${saved.map(d => _buildCard(d, favs, false)).join('\n')}`;
           const body = el.querySelector('#du-body');
           const cnt  = body?.querySelectorAll('.du-card').length || 0;
           const lbl  = body?.querySelector('.du-sec-lbl');
-          if (lbl) lbl.textContent = `${_T('SAQLANGAN','САҚЛАНГАН','СОХРАНЁННЫЕ','SAVED')} · ${cnt} ${_T('TA','ТА','ШТ.','')}`;
+          if (lbl) lbl.textContent = `${_T('SAQLANGAN','САҚЛАНГАН','СОХРАНЁННЫЕ','SAVED')} · ${cnt} ${_T('TA','ТА','ШТ.','ITEMS')}`;
           if (cnt === 0 && body) body.innerHTML = `<div class="du-empty">⭐ ${_T('Hali hech narsa saqlanmagan','Ҳали ҳеч нарса сақланмаган','Пока ничего не сохранено','Nothing saved yet')}</div>`;
         }
         window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('medium');

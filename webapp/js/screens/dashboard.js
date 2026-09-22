@@ -44,6 +44,8 @@ const DashboardScreen = (function () {
     ur:     ['جنوری','فروری','مارچ','اپریل','مئی','جون','جولائی','اگست','ستمبر','اکتوبر','نومبر','دسمبر'],
   };
   /* ── Module definitions ── */
+  const HOME_MODULES = new Set(['quran','hadith','qibla','calendar','dhikr','boshqalar']);
+  const MODULE_ICONS = { quran:'menu_book', hadith:'import_contacts', qibla:'explore', calendar:'calendar_month', dhikr:'prayer_times', boshqalar:'grid_view' };
   const MODULES = [
     { key:'prayer',
       sub:     '5 vaqt · Ob-havo · AQI',   sub_cyr:'5 вақт · Об-ҳаво · AQI',
@@ -182,7 +184,7 @@ const DashboardScreen = (function () {
   ══════════════════════════════════════════════ */
   function _buildHTML() {
     const flag  = getLangFlag(_lang);
-    const tiles = MODULES.map(mod => {
+    const tiles = MODULES.filter(mod => HOME_MODULES.has(mod.key)).map(mod => {
       const title = t('modules_list.' + mod.key, _lang);
       const sub   = _lang === 'uz'     ? mod.sub
                   : _lang === 'uz_cyr' ? (mod.sub_cyr || mod.sub)
@@ -190,6 +192,7 @@ const DashboardScreen = (function () {
       return `
         <div class="db-tile-wrap">
           <div class="db-cell" data-module="${mod.key}" role="button" tabindex="0">
+            <span class="material-symbols-rounded db-cell-icon" data-icon="${MODULE_ICONS[mod.key] || 'apps'}" aria-hidden="true">${MODULE_ICONS[mod.key] || 'apps'}</span>
             <div class="db-cell-title">${title}</div>
             <div class="db-cell-sub">${sub}</div>
           </div>
@@ -199,7 +202,7 @@ const DashboardScreen = (function () {
     return `
 <div class="db-hdr">
   <img class="db-hdr-photo" src="assets/landing/haram-madinah.webp" alt="Masjid an-Nabawi" loading="eager">
-  <div class="nm-tile-ov" style="background:rgba(9,18,31,0.65)"></div>
+  <div class="nm-tile-ov db-hero-overlay"></div>
   <div class="db-hdr-inner">
 
     <div class="db-top-row">
@@ -207,6 +210,7 @@ const DashboardScreen = (function () {
         <div class="db-brand">IslamTimeWorld</div>
         <div class="db-date-uz" id="db-date-uz">—</div>
         <div class="db-date-ar" id="db-date-ar">—</div>
+        <div class="db-slogan">${t('sloganDua', _lang)}</div>
       </div>
       <div class="db-top-right">
         <div class="db-city-badge" id="db-city-badge">
@@ -245,6 +249,7 @@ const DashboardScreen = (function () {
         </div>
       </div>
     </div>
+    <div class="db-prayer-strip" id="db-prayer-strip" aria-label="Prayer times"></div>
 
   </div>
 </div>
@@ -255,7 +260,13 @@ const DashboardScreen = (function () {
   <div class="db-section-lbl">${_l('services')}</div>
   <div class="db-grid">${tiles}</div>
 
-  <div class="db-section-lbl">${_T('Haramayn LIVE','Ҳарамайн LIVE','Харамайн LIVE','Haramayn LIVE')}</div>
+  <button class="db-hadith-card" id="db-hadith-card" type="button">
+    <span class="material-symbols-rounded db-hadith-icon" data-icon="auto_stories" aria-hidden="true">auto_stories</span>
+    <span class="db-hadith-copy"><strong>${_T('Kun hadisi','Кун ҳадиси','Хадис дня','Hadith of the day')}</strong><small>${_T('Tasdiqlangan hadislar','Тасдиқланган ҳадислар','Проверенные хадисы','Verified hadiths')} · HadeethEnc</small></span>
+    <span class="material-symbols-rounded db-hadith-arrow" data-icon="chevron_right" aria-hidden="true">chevron_right</span>
+  </button>
+
+  <div class="db-section-lbl db-haramayn-label"><span>${_T('Haramayn LIVE','Ҳарамайн LIVE','Харамайн LIVE','Haramayn LIVE')}</span><button type="button" id="db-haramayn-all">${_T("Barchasini ko'rish",'Барчасини кўриш','Смотреть все','View all')} <span aria-hidden="true">›</span></button></div>
   <div class="db-haramayn-row" id="db-haramayn-row">
     <div class="db-haramayn-mini db-haramayn-mini--loading">${_l('loading')}</div>
   </div>
@@ -299,6 +310,9 @@ const DashboardScreen = (function () {
      Events
   ══════════════════════════════════════════════ */
   function _bindEvents() {
+    _el.querySelector('#db-hadith-card')?.addEventListener('click', () => _onModuleTap('hadith'));
+    _el.querySelector('#db-haramayn-all')?.addEventListener('click', () => { HaramaynScreen.load(_lang); window.App.navigate('screen-haramayn'); });
+
     _el.querySelector('#db-lang-btn')?.addEventListener('click', () => {
       window.App.navigate('screen-language');
       window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
@@ -480,6 +494,14 @@ const DashboardScreen = (function () {
     if (secs != null && secs > 0) _startCountdown(secs, remainEl);
     else remainEl.textContent = _l('allDone');
 
+    const strip = _el?.querySelector('#db-prayer-strip');
+    if (strip) {
+      strip.innerHTML = prayers.slice(0, 6).map(p => `<button class="db-prayer-chip${p.key === np.key ? ' active' : ''}" type="button" data-prayer="${p.key}">
+        <span class="db-prayer-name">${_esc(p.name || p.key)}</span><strong>${_esc(p.time || '—')}</strong>
+      </button>`).join('');
+      strip.querySelectorAll('.db-prayer-chip').forEach(btn => btn.addEventListener('click', () => _onModuleTap('prayer')));
+    }
+
     /* weather widget */
     _renderWeather(data.weather);
   }
@@ -504,24 +526,24 @@ const DashboardScreen = (function () {
       <div style="background:linear-gradient(135deg,rgba(91,155,213,.1),rgba(91,155,213,.04));border:1px solid rgba(91,155,213,.2);border-radius:14px;padding:12px 14px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
           <div>
-            <div style="font-size:30px;font-weight:800;color:#e8dfc8;line-height:1;letter-spacing:-1px">${w.temp_c}°</div>
-            <div style="font-size:11px;color:rgba(232,223,200,.65);margin-top:3px">${_esc(w.description || '')}</div>
+            <div style="font-size:30px;font-weight:800;color:#16212B;line-height:1;letter-spacing:-1px">${w.temp_c}°</div>
+            <div style="font-size:11px;color:rgba(22,33,43,.65);margin-top:3px">${_esc(w.description || '')}</div>
           </div>
-          <div style="text-align:right;font-size:11px;color:rgba(232,223,200,.45);line-height:1.8">
-            <div>${wt('feelsLike')}: <span style="color:#e8dfc8;font-weight:600">${w.feels_like_c}°</span></div>
-            <div>💧 ${wt('humidity')}: <span style="color:#e8dfc8;font-weight:600">${w.humidity}%</span></div>
-            <div>💨 ${wt('wind')}: <span style="color:#e8dfc8;font-weight:600">${w.wind_kmph} km/h</span></div>
+          <div style="text-align:right;font-size:11px;color:rgba(22,33,43,.45);line-height:1.8">
+            <div>${wt('feelsLike')}: <span style="color:#16212B;font-weight:600">${w.feels_like_c}°</span></div>
+            <div>💧 ${wt('humidity')}: <span style="color:#16212B;font-weight:600">${w.humidity}%</span></div>
+            <div>💨 ${wt('wind')}: <span style="color:#16212B;font-weight:600">${w.wind_kmph} km/h</span></div>
           </div>
         </div>
         ${(w.sunrise || w.sunset) ? `
         <div style="display:flex;gap:12px;border-top:1px solid rgba(91,155,213,.12);padding-top:8px">
           <div style="flex:1;text-align:center">
-            <div style="font-size:9px;color:rgba(232,223,200,.35);margin-bottom:2px">🌅 ${wt('sunrise')}</div>
-            <div style="font-size:13px;font-weight:700;color:#E8C15A">${w.sunrise || '—'}</div>
+            <div style="font-size:9px;color:rgba(22,33,43,.35);margin-bottom:2px">🌅 ${wt('sunrise')}</div>
+            <div style="font-size:13px;font-weight:700;color:#16794A">${w.sunrise || '—'}</div>
           </div>
           <div style="width:1px;background:rgba(91,155,213,.12)"></div>
           <div style="flex:1;text-align:center">
-            <div style="font-size:9px;color:rgba(232,223,200,.35);margin-bottom:2px">🌇 ${wt('sunset')}</div>
+            <div style="font-size:9px;color:rgba(22,33,43,.35);margin-bottom:2px">🌇 ${wt('sunset')}</div>
             <div style="font-size:13px;font-weight:700;color:#5b9bd5">${w.sunset || '—'}</div>
           </div>
         </div>` : ''}

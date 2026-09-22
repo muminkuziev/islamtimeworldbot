@@ -92,7 +92,12 @@ const HaramaynScreen = (function () {
         <div class="hl-card-body">
           <div class="hl-card-name">${name}</div>
           <div class="hl-card-mosque">${mosque}</div>
-          <div class="hl-card-note">${_esc(s.note)}</div>
+          <div class="hl-card-note">${isLive ? '' : _T(
+            "Jonli efir hozircha ulanmagan. Rasmiy manba orqali tomosha qiling.",
+            "Жонли эфир ҳозирча уланмаган. Расмий манба орқали томоша қилинг.",
+            'Прямой эфир пока не подключён. Смотрите через официальный источник.',
+            'Live stream is not connected yet. Watch via the official source.'
+          )}</div>
           <button class="hl-card-btn" data-url="${s.official_external_url}">
             ${_T("Rasmiy manbani ochish", "Расмий манбани очиш", 'Открыть официальный источник', 'Open official source')} ↗
           </button>

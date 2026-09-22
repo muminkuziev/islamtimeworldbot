@@ -11,7 +11,7 @@
   },
 
   "android": {
-    "backgroundColor":             "#080D1A",
+    "backgroundColor":             "#FFFFFF",
     "allowMixedContent":           false,
     "captureInput":                true,
     "webContentsDebuggingEnabled": true,
@@ -24,7 +24,7 @@
       "launchShowDuration":        2500,
       "launchAutoHide":            true,
       "launchFadeOutDuration":     500,
-      "backgroundColor":           "#080D1A",
+      "backgroundColor":           "#FFFFFF",
       "androidSplashResourceName": "splash",
       "androidScaleType":          "CENTER_CROP",
       "showSpinner":               false,
@@ -35,7 +35,7 @@
 
     "StatusBar": {
       "style":           "Dark",
-      "backgroundColor": "#080D1A",
+      "backgroundColor": "#FFFFFF",
       "overlaysWebView": true,
       "animation":       "SLIDE"
     },
@@ -46,7 +46,7 @@
 
     "LocalNotifications": {
       "smallIcon":          "ic_notification",
-      "iconColor":          "#F5C542",
+      "iconColor":          "#16794A",
       "sound":              "beep.wav"
     },
 

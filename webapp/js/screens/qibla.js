@@ -95,8 +95,9 @@ const QiblaScreen = (function () {
   function _buildHTML() {
     return `
 <div class="qb-hdr">
+  <img class="qb-hdr-photo" src="assets/earth/earth_atmos_2048.jpg" alt="Earth view toward Makkah" loading="eager">
   <div class="nm-tile-bg"></div>
-  <div class="nm-tile-ov" style="background:rgba(9,18,31,0.65)"></div>
+  <div class="nm-tile-ov"></div>
   <div class="qb-hdr-inner">
     <div class="qb-nav-row">
       <button class="qb-back" id="qb-back">← ${_T('Menyu','Меню','Меню','Menu')}</button>
@@ -106,9 +107,9 @@ const QiblaScreen = (function () {
     <div class="qb-artitle">اتجاه القبلة · Masjid al-Haram</div>
     <div class="qb-hdivider"></div>
     <div class="qb-tabs">
-      <button class="qb-tab active" data-tab="kompas">🧭 ${_T('Kompas','Компас','Компас','Compass')}</button>
-      <button class="qb-tab" data-tab="xarita">🗺 ${_T('Xarita','Харита','Карта','Map')}</button>
-      <button class="qb-tab" data-tab="malumot">📐 ${_T("Ma'lumot","Маълумот","Информация","Info")}</button>
+      <button class="qb-tab active" data-tab="kompas"><span class="material-symbols-rounded" data-icon="explore" aria-hidden="true">explore</span> ${_T('Kompas','Компас','Компас','Compass')}</button>
+      <button class="qb-tab" data-tab="xarita"><span class="material-symbols-rounded" data-icon="map" aria-hidden="true">map</span> ${_T('Xarita','Харита','Карта','Map')}</button>
+      <button class="qb-tab" data-tab="malumot"><span class="material-symbols-rounded" data-icon="info" aria-hidden="true">info</span> ${_T("Ma'lumot","Маълумот","Информация","Info")}</button>
     </div>
   </div>
 </div>
@@ -135,7 +136,7 @@ const QiblaScreen = (function () {
       const x2 = CX + (R - 2 - len) * Math.cos(rad), y2 = CY + (R - 2 - len) * Math.sin(rad);
       return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}"
         x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"
-        stroke="${isMaj ? 'rgba(232,193,90,.6)' : 'rgba(232,193,90,.2)'}"
+        stroke="${isMaj ? 'rgba(22,121,74,.6)' : 'rgba(22,121,74,.2)'}"
         stroke-width="${isMaj ? 1.5 : 0.8}"/>`;
     }).join('');
 
@@ -153,7 +154,7 @@ const QiblaScreen = (function () {
         y="${(CY + r2*Math.sin(rad) + 4).toFixed(1)}"
         text-anchor="middle" font-size="11"
         font-family="Inter,system-ui,sans-serif" font-weight="700"
-        fill="${a === 0 ? '#E8C15A' : 'rgba(232,223,200,.4)'}">${l}</text>`;
+        fill="${a === 0 ? '#16794A' : 'rgba(22,33,43,.4)'}">${l}</text>`;
     }).join('');
 
     /* needle geometry at 0° (pointing up); rotated dynamically via transform */
@@ -178,7 +179,7 @@ const QiblaScreen = (function () {
   <div id="qb-found-badge" class="qb-found-badge" style="display:none">
     <div class="qb-found-dot"></div>
     <span class="qb-found-txt">${_T('Qibla topildi','Қибла топилди','Кибла найдена','Qibla found')}</span>
-    <span style="color:rgba(232,223,200,.55)">·</span>
+    <span style="color:rgba(22,33,43,.55)">·</span>
     <span id="qb-badge-deg" class="qb-badge-deg">—°</span>
     <span id="qb-badge-dir" class="qb-badge-dir">—</span>
   </div>
@@ -205,21 +206,21 @@ const QiblaScreen = (function () {
         <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
       </filter>
       <radialGradient id="qb-bg" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stop-color="#0f2040" stop-opacity="0.35"/>
-        <stop offset="100%" stop-color="#09121f" stop-opacity="0.55"/>
+        <stop offset="0%" stop-color="#EFF6F2" stop-opacity="0.35"/>
+        <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.55"/>
       </radialGradient>
     </defs>
     <circle cx="${CX}" cy="${CY}" r="${R+6}" fill="none"
-      stroke="rgba(232,193,90,.08)" stroke-width="1"/>
+      stroke="rgba(22,121,74,.08)" stroke-width="1"/>
     <circle cx="${CX}" cy="${CY}" r="${R}" fill="url(#qb-bg)"/>
     <circle cx="${CX}" cy="${CY}" r="${R}" fill="none"
-      stroke="rgba(232,193,90,.25)" stroke-width="1.5"/>
+      stroke="rgba(22,121,74,.25)" stroke-width="1.5"/>
     ${ticks}
     ${cardText}
     <circle cx="${CX}" cy="${CY}" r="${(R*0.65).toFixed(0)}"
-      fill="none" stroke="rgba(232,193,90,.07)" stroke-width="1"/>
+      fill="none" stroke="rgba(22,121,74,.07)" stroke-width="1"/>
     <circle cx="${CX}" cy="${CY}" r="${(R*0.4).toFixed(0)}"
-      fill="none" stroke="rgba(232,193,90,.07)" stroke-width="1"/>
+      fill="none" stroke="rgba(22,121,74,.07)" stroke-width="1"/>
     <!-- North: static red dashed line pointing up -->
     <line x1="${CX}" y1="${CY}" x2="${CX}" y2="${CY-(R-30)}"
       stroke="#e05555" stroke-width="1.5" opacity=".5"
@@ -238,9 +239,9 @@ const QiblaScreen = (function () {
     </g>
     <!-- Center circle on top -->
     <circle cx="${CX}" cy="${CY}" r="20"
-      fill="#111e33" stroke="rgba(232,193,90,.3)" stroke-width="1.5"/>
+      fill="#F6FAF8" stroke="rgba(22,121,74,.3)" stroke-width="1.5"/>
     <circle cx="${CX}" cy="${CY}" r="14"
-      fill="rgba(232,193,90,.1)" stroke="rgba(232,193,90,.2)" stroke-width="1"/>
+      fill="rgba(22,121,74,.1)" stroke="rgba(22,121,74,.2)" stroke-width="1"/>
     <text x="${CX}" y="${CY+5}" text-anchor="middle" font-size="14">🕋</text>
   </svg>
   </div>
@@ -252,21 +253,21 @@ const QiblaScreen = (function () {
     </div>
     <div class="qb-icell">
       <div class="qb-icell-lbl">${_T('Shimoldan','Шимолдан','От Севера','From North')}</div>
-      <div class="qb-icell-val" id="qb-ig-north" style="color:#E8C15A">—</div>
+      <div class="qb-icell-val" id="qb-ig-north" style="color:#16794A">—</div>
     </div>
     <div class="qb-icell">
       <div class="qb-icell-lbl">${_T("Yo'nalish","Йўналиш","Направление","Direction")}</div>
-      <div class="qb-icell-val" id="qb-ig-dir" style="color:#e8dfc8">—</div>
+      <div class="qb-icell-val" id="qb-ig-dir" style="color:#16212B">—</div>
     </div>
     <div class="qb-icell">
       <div class="qb-icell-lbl">${_T('Kompas aniqligi','Компас аниқлиги','Точность компаса','Compass accuracy')}</div>
-      <div class="qb-icell-val" id="qb-ig-accuracy" style="color:rgba(232,223,200,.55)">—</div>
+      <div class="qb-icell-val" id="qb-ig-accuracy" style="color:rgba(22,33,43,.55)">—</div>
     </div>
   </div>
 
   <div class="qb-calibrate-tip">
     ${_T('Aniqroq natija uchun telefoningizni','Аниқроқ натижа учун телефонингизни','Для точного результата переместите телефон','For better accuracy, move your phone')}
-    ${(_lang === 'ru' || _lang === 'en') ? '' : `<span style="color:#E8C15A;font-weight:600"> "8-${_T('raqam','рақам')}" </span>`}
+    ${(_lang === 'ru' || _lang === 'en') ? '' : `<span style="color:#16794A;font-weight:600"> "8-${_T('raqam','рақам')}" </span>`}
     ${_T('shaklida harakatlantiring','шаклида ҳаракатлантиринг',_lang === 'ru' ? 'в форме цифры "8"' : '', _lang === 'en' ? 'in a figure-8 pattern' : '')}
   </div>
 </div>`;
@@ -292,19 +293,19 @@ const QiblaScreen = (function () {
       <defs>
         <pattern id="qbmg" width="15" height="15" patternUnits="userSpaceOnUse">
           <path d="M 15 0 L 0 0 0 15" fill="none"
-            stroke="rgba(232,193,90,.06)" stroke-width="0.4"/>
+            stroke="rgba(22,121,74,.06)" stroke-width="0.4"/>
         </pattern>
       </defs>
-      <rect width="300" height="160" fill="#0a1628"/>
+      <rect width="300" height="160" fill="#F6FAF8"/>
       <rect width="300" height="160" fill="url(#qbmg)"/>
-      <circle cx="150" cy="88" r="30"  fill="none" stroke="rgba(232,193,90,.08)" stroke-width="0.6"/>
-      <circle cx="150" cy="88" r="55"  fill="none" stroke="rgba(232,193,90,.06)" stroke-width="0.5"/>
-      <circle cx="150" cy="88" r="80"  fill="none" stroke="rgba(232,193,90,.05)" stroke-width="0.5"/>
-      <circle cx="150" cy="88" r="105" fill="none" stroke="rgba(232,193,90,.04)" stroke-width="0.4"/>
+      <circle cx="150" cy="88" r="30"  fill="none" stroke="rgba(22,121,74,.08)" stroke-width="0.6"/>
+      <circle cx="150" cy="88" r="55"  fill="none" stroke="rgba(22,121,74,.06)" stroke-width="0.5"/>
+      <circle cx="150" cy="88" r="80"  fill="none" stroke="rgba(22,121,74,.05)" stroke-width="0.5"/>
+      <circle cx="150" cy="88" r="105" fill="none" stroke="rgba(22,121,74,.04)" stroke-width="0.4"/>
       <line id="qb-map-line" x1="150" y1="88" x2="${lx2}" y2="${ly2}"
         stroke="#4fcfa0" stroke-width="1.2" opacity=".7" stroke-dasharray="5 3"/>
-      <circle cx="150" cy="88" r="4" fill="#E8C15A" opacity=".9"/>
-      <circle cx="150" cy="88" r="8" fill="none" stroke="#E8C15A" stroke-width="0.8" opacity=".4"/>
+      <circle cx="150" cy="88" r="4" fill="#16794A" opacity=".9"/>
+      <circle cx="150" cy="88" r="8" fill="none" stroke="#16794A" stroke-width="0.8" opacity=".4"/>
       <circle id="qb-mecca-dot"  cx="${mx}" cy="${my}" r="4" fill="#4fcfa0" opacity=".9"/>
       <circle id="qb-mecca-ring" cx="${mx}" cy="${my}" r="8"
         fill="none" stroke="#4fcfa0" stroke-width="0.8" opacity=".4"/>
@@ -387,7 +388,7 @@ const QiblaScreen = (function () {
   <div class="qb-verse-card">
     <div class="qb-verse-ar">فَوَلِّ وَجْهَكَ شَطْرَ الْمَسْجِدِ الْحَرَامِ</div>
     <div class="qb-verse-tr">"${_T('Masjid al-Haram tomonga yuzlan','Масжид ал-Ҳарам томонига юзлан','Обратись лицом к Масджид аль-Храму','Turn your face toward Masjid al-Haram')}"</div>
-    <div class="qb-verse-ref">Al-Baqara, 144</div>
+    <div class="qb-verse-ref">Al-Baqara, 2:144</div>
   </div>
 
 </div>`;

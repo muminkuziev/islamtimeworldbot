@@ -1425,6 +1425,20 @@ const _EXTRA_T = {
     id:'Layanan aplikasi dapat diperbarui atau diubah dari waktu ke waktu.',
     hi:'ऐप की सेवाएं समय-समय पर अपडेट या बदली जा सकती हैं।',
     ur:'ایپ کی خدمات وقتاً فوقتاً اپ ڈیٹ یا تبدیل ہو سکتی ہیں۔', bn:"অ্যাপ সেবা সময়ে সময়ে আপডেট বা পরিবর্তিত হতে পারে।", fa:"خدمات برنامه ممکن است هر از گاهی به‌روزرسانی یا تغییر یابد.", ms:"Perkhidmatan aplikasi mungkin dikemas kini atau diubah dari semasa ke semasa." },
+  'Your location → Kaaba': { tr:'Konumunuz → Kâbe', ar:'موقعك ← الكعبة', kk:'Орналасуыңыз → Қағба', tg:'Ҷойи шумо → Каъба', ky:'Жайгашкан жериңиз → Кааба', de:'Ihr Standort → Kaaba', fr:'Votre position → Kaaba', id:"Lokasi Anda → Ka'bah", hi:'आपका स्थान → काबा', ur:'آپ کا مقام ← کعبہ' },
+  'Calibrating compass — move your phone in a figure-8': { tr:'Pusula kalibre ediliyor — telefonu 8 şeklinde hareket ettirin', ar:'تجري معايرة البوصلة — حرّك الهاتف على شكل رقم ٨', kk:'Компас калибрленуде — телефонды 8 пішінінде қозғаңыз', tg:'Қутбнамо танзим мешавад — телефонро ба шакли 8 ҳаракат диҳед', ky:'Компас калибрленүүдө — телефонду 8 формасында кыймылдатыңыз', de:'Kompass wird kalibriert — bewegen Sie das Telefon in einer Acht', fr:'Étalonnage de la boussole — déplacez le téléphone en forme de 8', id:'Mengkalibrasi kompas — gerakkan ponsel membentuk angka 8', hi:'कम्पास कैलिब्रेट हो रहा है — फ़ोन को 8 के आकार में घुमाएँ', ur:'کمپاس کیلیبریٹ ہو رہا ہے — فون کو 8 کی شکل میں حرکت دیں' },
+  'Enable compass': { tr:'Pusulayı etkinleştir', ar:'تفعيل البوصلة', kk:'Компасты қосу', tg:'Фаъол кардани қутбнамо', ky:'Компасты иштетүү', de:'Kompass aktivieren', fr:'Activer la boussole', id:'Aktifkan kompas', hi:'कम्पास चालू करें', ur:'کمپاس فعال کریں' },
+  'Compass permission denied. Enable it in your device settings.': { tr:'Pusula izni reddedildi. Cihaz ayarlarından etkinleştirin.', ar:'رُفض إذن البوصلة. فعّله من إعدادات الجهاز.', kk:'Компас рұқсаты берілмеді. Оны құрылғы баптауларынан қосыңыз.', tg:'Иҷозаи қутбнамо рад шуд. Онро дар танзимоти дастгоҳ фаъол кунед.', ky:'Компаска уруксат берилген жок. Аны түзмөк жөндөөлөрүнөн иштетиңиз.', de:'Kompassberechtigung abgelehnt. Aktivieren Sie sie in den Geräteeinstellungen.', fr:'Autorisation de la boussole refusée. Activez-la dans les réglages de l’appareil.', id:'Izin kompas ditolak. Aktifkan di pengaturan perangkat.', hi:'कम्पास की अनुमति अस्वीकृत है। इसे डिवाइस सेटिंग में चालू करें।', ur:'کمپاس کی اجازت مسترد ہے۔ اسے ڈیوائس کی ترتیبات میں فعال کریں۔' },
+  'Compass accuracy': { tr:'Pusula doğruluğu', ar:'دقة البوصلة', kk:'Компас дәлдігі', tg:'Дақиқии қутбнамо', ky:'Компастын тактыгы', de:'Kompassgenauigkeit', fr:'Précision de la boussole', id:'Akurasi kompas', hi:'कम्पास की सटीकता', ur:'کمپاس کی درستگی' },
+  'Watch Live': { tr:'Canlı izle', ar:'مشاهدة البث المباشر', kk:'Тікелей көру', tg:'Пахши зиндаро дидан', ky:'Түз көрүү', de:'Live ansehen', fr:'Voir en direct', id:'Tonton langsung', hi:'लाइव देखें', ur:'براہ راست دیکھیں' },
+  'Unknown': { tr:'Bilinmiyor', ar:'غير معروف', kk:'Белгісіз', tg:'Номаълум', ky:'Белгисиз', de:'Unbekannt', fr:'Inconnu', id:'Tidak diketahui', hi:'अज्ञात', ur:'نامعلوم' },
+  'Arabic Script Style': { tr:'Arapça yazı stili', ar:'نمط الخط العربي', kk:'Араб жазуының үлгісі', tg:'Услуби хатти арабӣ', ky:'Араб жазуу стили', de:'Arabischer Schriftstil', fr:'Style de l’écriture arabe', id:'Gaya tulisan Arab', hi:'अरबी लिपि शैली', ur:'عربی رسم الخط کا انداز' },
+  'Indo-Pak style is not supported by the current text provider.': { tr:'Hint-Pakistan stili mevcut metin kaynağı tarafından desteklenmiyor.', ar:'نمط المصحف الهندي الباكستاني غير مدعوم من مصدر النص الحالي.', kk:'Үнді-Пәкістан үлгісін қазіргі мәтін көзі қолдамайды.', tg:'Услуби ҳинду покистониро манбаи ҷории матн дастгирӣ намекунад.', ky:'Индо-Пак стилин учурдагы текст булагы колдобойт.', de:'Der Indo-Pak-Stil wird von der aktuellen Textquelle nicht unterstützt.', fr:'Le style indo-pakistanais n’est pas pris en charge par la source de texte actuelle.', id:'Gaya Indo-Pak tidak didukung oleh sumber teks saat ini.', hi:'वर्तमान पाठ स्रोत इंडो-पाक शैली का समर्थन नहीं करता।', ur:'موجودہ متن کا ماخذ ہند و پاک رسم الخط کی معاونت نہیں کرتا۔' },
+  'Font Size': { tr:'Yazı boyutu', ar:'حجم الخط', kk:'Қаріп өлшемі', tg:'Андозаи ҳуруф', ky:'Ариптин өлчөмү', de:'Schriftgröße', fr:'Taille de police', id:'Ukuran huruf', hi:'फ़ॉन्ट आकार', ur:'حرف کا سائز' },
+  'Line Spacing': { tr:'Satır aralığı', ar:'تباعد الأسطر', kk:'Жол аралығы', tg:'Фосилаи сатрҳо', ky:'Сап аралыгы', de:'Zeilenabstand', fr:'Interligne', id:'Jarak baris', hi:'पंक्ति अंतर', ur:'سطروں کا فاصلہ' },
+  'Hadith': { tr:'Hadis', ar:'الحديث', kk:'Хадис', tg:'Ҳадис', ky:'Хадис', de:'Hadith', fr:'Hadith', id:'Hadis', hi:'हदीस', ur:'حدیث' },
+  'Transliteration is not available yet.': { tr:'Transkripsiyon henüz mevcut değil.', ar:'النقل الصوتي غير متاح حاليًا.', kk:'Транслитерация әзірше қолжетімсіз.', tg:'Тарҷуманависӣ ҳоло дастрас нест.', ky:'Транслитерация азырынча жеткиликтүү эмес.', de:'Die Transliteration ist noch nicht verfügbar.', fr:'La translittération n’est pas encore disponible.', id:'Transliterasi belum tersedia.', hi:'लिप्यंतरण अभी उपलब्ध नहीं है।', ur:'نقل حرفی ابھی دستیاب نہیں ہے۔' },
+  'ITEMS': { tr:'ADET', ar:'عناصر', kk:'ДАНА', tg:'АДАД', ky:'ДАНА', de:'EINTRÄGE', fr:'ÉLÉMENTS', id:'ITEM', hi:'आइटम', ur:'آئٹمز' },
 };
 
 const _I18N_EN_IDX = {};
@@ -1441,8 +1455,10 @@ function _resolveT(lat, cyr, ru, en, lang) {
   if (lang === 'ru')     return ru  !== undefined ? ru  : lat;
   if (lang === 'en')     return en  !== undefined ? en  : lat;
   if (lang === 'uz')     return lat;
-  const node = _I18N_EN_IDX[en] || _EXTRA_T[en];
+  const node = _I18N_EN_IDX[en];
   if (node && node[lang]) return node[lang];
+  const extra = _EXTRA_T[en];
+  if (extra && extra[lang]) return extra[lang];
   return lat;
 }
 
