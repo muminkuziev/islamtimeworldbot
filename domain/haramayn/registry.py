@@ -5,25 +5,16 @@ Haramayn LIVE source status — Masjid al-Haram (Makkah) and Masjid an-Nabawi
 Hard rule: never embed/proxy a third-party stream without confirmed official
 permission, never mark a static image as LIVE, never fabricate availability.
 
-Current state: no direct embed is activated. Multiple independent sources
-(Wikipedia, Saudi Press Agency, Arab News) corroborate that the General
-Presidency for the Affairs of the Two Holy Mosques (gph.gov.sa, a .gov.sa
-government domain) is the legitimate official authority for these sites and
-their broadcasts — but this session's network access could not independently
-confirm gph.gov.sa is currently reachable or that it exposes a directly
-embeddable stream. Embedding requires that confirmation; this registry keeps
-the dependency explicit rather than guessing.
-
-The app must never claim a fabricated/unofficial stream is official. Until
-someone confirms a specific embeddable official URL, the UI shows a real
-status card (real photo, real labeling, no fake LIVE indicator) with a button
-that opens the official destination in an external browser tab — it is never
-embedded or proxied through this app.
+The external LIVE destinations are the verified Saudi Quran TV and Saudi
+Sunnah TV channels operated by the Saudi Broadcasting Authority. Stable
+channel `/live` URLs are used so rotating YouTube video IDs do not break the
+buttons. The app never proxies or re-hosts either official stream.
 """
 from dataclasses import dataclass
 
 UNAVAILABLE_NOT_CONFIRMED = "UNAVAILABLE_NOT_CONFIRMED"
 LIVE_EMBED_ACTIVE = "LIVE_EMBED_ACTIVE"
+LIVE_EXTERNAL_ACTIVE = "LIVE_EXTERNAL_ACTIVE"
 
 
 @dataclass
@@ -43,28 +34,26 @@ SITES: dict[str, HaramaynSite] = {
         site_id="makkah",
         name_en="Makkah",
         mosque_en="Masjid al-Haram",
-        status=UNAVAILABLE_NOT_CONFIRMED,
+        status=LIVE_EXTERNAL_ACTIVE,
         embed_url=None,
-        official_external_url="https://www.gph.gov.sa",
-        official_authority="General Presidency for the Affairs of the Two Holy Mosques",
+        official_external_url="https://www.youtube.com/@SaudiQuranTv/live",
+        official_authority="Saudi Broadcasting Authority · Saudi Quran TV",
         note=(
-            "Direct embed not activated: official embeddable stream URL not "
-            "independently confirmed from this environment. Opens the "
-            "official authority's site externally instead of embedding."
+            "Official 24/7 Makkah broadcast. Opens the verified Saudi Quran "
+            "TV channel externally."
         ),
     ),
     "madinah": HaramaynSite(
         site_id="madinah",
         name_en="Madinah",
         mosque_en="Masjid an-Nabawi",
-        status=UNAVAILABLE_NOT_CONFIRMED,
+        status=LIVE_EXTERNAL_ACTIVE,
         embed_url=None,
-        official_external_url="https://www.gph.gov.sa",
-        official_authority="General Presidency for the Affairs of the Two Holy Mosques",
+        official_external_url="https://www.youtube.com/@SaudiSunnahTv/live",
+        official_authority="Saudi Broadcasting Authority · Saudi Sunnah TV",
         note=(
-            "Direct embed not activated: official embeddable stream URL not "
-            "independently confirmed from this environment. Opens the "
-            "official authority's site externally instead of embedding."
+            "Official 24/7 Madinah broadcast. Opens the verified Saudi Sunnah "
+            "TV channel externally."
         ),
     ),
 }

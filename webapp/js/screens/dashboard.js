@@ -306,8 +306,8 @@ const DashboardScreen = (function () {
     const wrap = _el?.querySelector('#db-haramayn-row');
     if (!wrap) return;
     const fallback = [
-      { site_id:'makkah', mosque_en:'Masjid al-Haram', status:'UNAVAILABLE_NOT_CONFIRMED' },
-      { site_id:'madinah', mosque_en:'Masjid an-Nabawi', status:'UNAVAILABLE_NOT_CONFIRMED' },
+      { site_id:'makkah', mosque_en:'Masjid al-Haram', status:'LIVE_EXTERNAL_ACTIVE', official_external_url:'https://www.youtube.com/@SaudiQuranTv/live' },
+      { site_id:'madinah', mosque_en:'Masjid an-Nabawi', status:'LIVE_EXTERNAL_ACTIVE', official_external_url:'https://www.youtube.com/@SaudiSunnahTv/live' },
     ];
     const paint = sites => {
       const IMG = { makkah:'assets/landing/haram-makkah.webp', madinah:'assets/landing/haram-madinah.webp' };
@@ -315,12 +315,14 @@ const DashboardScreen = (function () {
       wrap.innerHTML = sites.map(site => `
         <button class="db-haramayn-mini" data-site="${site.site_id}">
           <img src="${IMG[site.site_id]}" alt="${site.mosque_en}" loading="lazy">
-          <div class="db-haramayn-mini-badge">${site.status === 'LIVE_EMBED_ACTIVE' ? '🔴 LIVE' : _T('Mavjud emas','Мавжуд эмас','Недоступно','Unavailable')}</div>
+          <div class="db-haramayn-mini-badge">${site.status === 'LIVE_EXTERNAL_ACTIVE' || site.status === 'LIVE_EMBED_ACTIVE' ? '🔴 LIVE' : _T('Mavjud emas','Мавжуд эмас','Недоступно','Unavailable')}</div>
           <div class="db-haramayn-mini-name">${NAME[site.site_id]}</div>
         </button>`).join('');
-      wrap.querySelectorAll('.db-haramayn-mini').forEach(btn => btn.addEventListener('click', () => {
-        HaramaynScreen.load(_lang);
-        window.App.navigate('screen-haramayn');
+      wrap.querySelectorAll('.db-haramayn-mini').forEach((btn, index) => btn.addEventListener('click', () => {
+        const url = sites[index]?.official_external_url;
+        if (!url) { HaramaynScreen.load(_lang); window.App.navigate('screen-haramayn'); return; }
+        if (window.Telegram?.WebApp?.openLink) window.Telegram.WebApp.openLink(url);
+        else window.open(url, '_blank', 'noopener');
       }));
     };
     try {

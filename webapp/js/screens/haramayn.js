@@ -24,8 +24,8 @@ const HaramaynScreen = (function () {
     madinah: { uz:'Madina', uz_cyr:'Мадина', ru:'Медина', en:'Madinah' },
   };
   const FALLBACK_SITES = [
-    { site_id:'makkah', name_en:'Makkah', mosque_en:'Masjid al-Haram', status:'UNAVAILABLE_NOT_CONFIRMED', embed_url:null, official_external_url:'https://www.gph.gov.sa', official_authority:'General Presidency for the Affairs of the Two Holy Mosques' },
-    { site_id:'madinah', name_en:'Madinah', mosque_en:'Masjid an-Nabawi', status:'UNAVAILABLE_NOT_CONFIRMED', embed_url:null, official_external_url:'https://www.gph.gov.sa', official_authority:'General Presidency for the Affairs of the Two Holy Mosques' },
+    { site_id:'makkah', name_en:'Makkah', mosque_en:'Masjid al-Haram', status:'LIVE_EXTERNAL_ACTIVE', embed_url:null, official_external_url:'https://www.youtube.com/@SaudiQuranTv/live', official_authority:'Saudi Broadcasting Authority · Saudi Quran TV' },
+    { site_id:'madinah', name_en:'Madinah', mosque_en:'Masjid an-Nabawi', status:'LIVE_EXTERNAL_ACTIVE', embed_url:null, official_external_url:'https://www.youtube.com/@SaudiSunnahTv/live', official_authority:'Saudi Broadcasting Authority · Saudi Sunnah TV' },
   ];
   const MOSQUES = {
     makkah:  { uz:'Masjid al-Haram', uz_cyr:'Масжид ал-Ҳаром', ru:'Masjid al-Haram', en:'Masjid al-Haram' },
@@ -83,7 +83,7 @@ const HaramaynScreen = (function () {
     const img = IMAGES[s.site_id];
     const name = NAMES[s.site_id]?.[_lang] || NAMES[s.site_id]?.en || s.name_en;
     const mosque = MOSQUES[s.site_id]?.[_lang] || MOSQUES[s.site_id]?.en || s.mosque_en;
-    const isLive = s.status === 'LIVE_EMBED_ACTIVE' && s.embed_url;
+    const isLive = (s.status === 'LIVE_EXTERNAL_ACTIVE' && s.official_external_url) || (s.status === 'LIVE_EMBED_ACTIVE' && s.embed_url);
 
     return `
       <div class="hl-card">
@@ -96,14 +96,19 @@ const HaramaynScreen = (function () {
         <div class="hl-card-body">
           <div class="hl-card-name">${name}</div>
           <div class="hl-card-mosque">${mosque}</div>
-          <div class="hl-card-note">${isLive ? '' : _T(
+          <div class="hl-card-note">${isLive ? _T(
+            "Saudiya rasmiy kanalining 24/7 jonli efiri.",
+            "Саудия расмий каналининг 24/7 жонли эфири.",
+            'Официальная круглосуточная трансляция саудовского телеканала.',
+            'Official 24/7 broadcast from Saudi state television.'
+          ) : _T(
             "Jonli efir hozircha ulanmagan. Rasmiy manba orqali tomosha qiling.",
             "Жонли эфир ҳозирча уланмаган. Расмий манба орқали томоша қилинг.",
             'Прямой эфир пока не подключён. Смотрите через официальный источник.',
             'Live stream is not connected yet. Watch via the official source.'
           )}</div>
           <button class="hl-card-btn" data-url="${s.official_external_url}">
-            ${_T("Rasmiy manbani ochish", "Расмий манбани очиш", 'Открыть официальный источник', 'Open official source')} ↗
+            ${isLive ? _T("Jonli efirni ochish", "Жонли эфирни очиш", 'Открыть прямой эфир', 'Open live stream') : _T("Rasmiy manbani ochish", "Расмий манбани очиш", 'Открыть официальный источник', 'Open official source')} ↗
           </button>
           <div class="hl-card-authority">${_esc(s.official_authority)}</div>
         </div>
