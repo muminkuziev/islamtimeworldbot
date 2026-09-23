@@ -1,0 +1,253 @@
+/* IslamTimeWorld reference UI — faithful mobile reconstruction, 2026-09-23 */
+:root {
+  --ref-green: #07875e;
+  --ref-green-dark: #006c4b;
+  --ref-green-soft: #e9f8f2;
+  --ref-ink: #071d26;
+  --ref-muted: #687b82;
+  --ref-line: #dcebe6;
+  --ref-shadow: 0 7px 24px rgba(10, 77, 56, .10);
+}
+
+html, body { background:#f7fbfa; color:var(--ref-ink); }
+.screen.active { background:#f8fcfb; }
+.screen-inner { max-width:520px; margin:0 auto; }
+button, input { font-family:'Plus Jakarta Sans','Inter',system-ui,sans-serif; }
+
+/* Reference bottom navigation */
+.app-bottom-nav {
+  height:calc(68px + var(--sab, 0px))!important;
+  padding:5px 8px calc(5px + var(--sab, 0px))!important;
+  background:rgba(255,255,255,.97)!important;
+  border-top:1px solid #e5efec!important;
+  box-shadow:0 -8px 24px rgba(13,75,55,.05)!important;
+  backdrop-filter:blur(18px);
+}
+.app-nav-item { min-height:56px!important; border-radius:16px!important; color:#64767b!important; gap:2px!important; }
+.app-nav-item.active { color:var(--ref-green)!important; background:transparent!important; }
+.app-nav-icon { font-size:24px!important; }
+.app-nav-label { font-size:9px!important; font-weight:700!important; }
+
+/* ---------- Dashboard ---------- */
+#screen-dashboard { background:#f8fcfb!important; }
+#screen-dashboard .db-hdr {
+  min-height:315px!important; padding:0!important; overflow:hidden; background:#fff!important;
+  border-bottom:0!important;
+}
+#screen-dashboard .db-hdr-photo {
+  inset:76px 12px auto 12px!important; width:calc(100% - 24px)!important; height:157px!important;
+  border-radius:19px!important; object-fit:cover!important; object-position:center 64%!important;
+  content:url('../assets/reference-ui/makkah-hero.png'); filter:saturate(1.08) contrast(1.02)!important;
+}
+#screen-dashboard .db-hero-overlay {
+  inset:76px 12px auto 12px!important; width:calc(100% - 24px)!important; height:157px!important;
+  border-radius:19px!important; background:linear-gradient(90deg,rgba(0,88,61,.94) 0%,rgba(0,103,71,.78) 45%,rgba(0,79,55,.10) 100%)!important;
+}
+#screen-dashboard .db-hdr-inner { padding:10px 14px 0!important; }
+#screen-dashboard .db-top-row { height:57px!important; align-items:flex-start!important; }
+#screen-dashboard .db-location-pin { color:var(--ref-green)!important; font-size:20px!important; }
+#screen-dashboard .db-city-name { font-size:14px!important; font-weight:800!important; color:#0b2028!important; }
+#screen-dashboard .db-location-date { margin-left:23px!important; font-size:8px!important; color:#65777e!important; }
+#screen-dashboard .db-slogan, #screen-dashboard .db-divider { display:none!important; }
+#screen-dashboard .db-lang-btn {
+  width:42px!important; height:42px!important; padding:0!important; justify-content:center!important;
+  background:#fff!important; border:1px solid var(--ref-line)!important; border-radius:50%!important; box-shadow:var(--ref-shadow)!important;
+}
+#screen-dashboard .db-lang-btn span:last-child { display:none!important; }
+#screen-dashboard .db-next-wrap { margin:9px 8px 0!important; }
+#screen-dashboard .db-next-box { min-height:130px!important; padding:15px 14px 10px!important; background:transparent!important; border:0!important; box-shadow:none!important; }
+#screen-dashboard .db-next-topline { display:none!important; }
+#screen-dashboard .db-next-lbl { font-size:11px!important; color:rgba(255,255,255,.85)!important; letter-spacing:0!important; text-transform:none!important; }
+#screen-dashboard .db-next-name { color:#fff!important; font-size:28px!important; font-weight:800!important; }
+#screen-dashboard .db-next-remain { color:#fff!important; font-size:22px!important; font-weight:800!important; margin-top:3px!important; }
+#screen-dashboard .db-next-time { color:#fff!important; font-size:12px!important; margin-top:7px!important; }
+#screen-dashboard .db-next-sub { color:rgba(255,255,255,.75)!important; }
+#screen-dashboard .db-prog, #screen-dashboard .db-prog-labels { display:none!important; }
+#screen-dashboard .db-prayer-strip {
+  position:absolute!important; top:240px!important; left:12px!important; right:12px!important; height:68px!important;
+  padding:8px 4px!important; border-radius:17px!important; background:#fff!important; border:1px solid #e6efec!important;
+  box-shadow:var(--ref-shadow)!important; gap:1px!important;
+}
+#screen-dashboard .db-prayer-item { border-radius:12px!important; padding:4px 1px!important; }
+#screen-dashboard .db-prayer-item.active { background:var(--ref-green)!important; color:#fff!important; }
+#screen-dashboard .db-prayer-name { font-size:7px!important; }
+#screen-dashboard .db-prayer-time { font-size:9px!important; }
+#screen-dashboard .db-body { padding:5px 12px 28px!important; }
+#screen-dashboard .db-section-lbl:first-child { display:none!important; }
+#screen-dashboard .db-grid { grid-template-columns:repeat(3,minmax(0,1fr))!important; gap:8px!important; margin:0 0 11px!important; }
+#screen-dashboard .db-tile-wrap { min-width:0!important; }
+#screen-dashboard .db-cell {
+  min-height:102px!important; padding:12px 5px 9px!important; border:1px solid #e7f0ed!important; border-radius:18px!important;
+  background:#fff!important; box-shadow:0 4px 16px rgba(19,78,58,.055)!important; display:flex!important; flex-direction:column!important;
+  align-items:center!important; justify-content:center!important; text-align:center!important;
+}
+#screen-dashboard .db-cell-icon { font-size:0!important; color:var(--ref-green)!important; margin:0 0 5px!important; }
+#screen-dashboard .db-cell-icon::before { font-size:30px!important; }
+#screen-dashboard .db-cell-title { font-size:11px!important; line-height:1.2!important; font-weight:800!important; color:#102229!important; }
+#screen-dashboard .db-cell-sub { font-size:7px!important; line-height:1.25!important; color:#7a898d!important; margin-top:3px!important; max-width:96px!important; }
+#screen-dashboard .db-hadith-card {
+  min-height:78px!important; border:1px solid #efdca7!important; border-radius:18px!important; background:linear-gradient(135deg,#fffdf4,#fff9e7)!important;
+  box-shadow:0 5px 18px rgba(154,118,20,.08)!important; padding:12px!important;
+}
+#screen-dashboard .db-hadith-icon { width:43px!important; height:43px!important; border-radius:13px!important; display:grid!important; place-items:center!important; background:var(--ref-green)!important; color:#fff!important; }
+#screen-dashboard .db-hadith-copy strong { font-size:12px!important; }
+#screen-dashboard .db-hadith-copy small { color:#62767a!important; font-size:8px!important; }
+#screen-dashboard .db-haramayn-label { margin:16px 3px 8px!important; font-size:15px!important; text-transform:none!important; letter-spacing:0!important; color:#0a2029!important; }
+#screen-dashboard .db-haramayn-row { gap:9px!important; }
+#screen-dashboard .db-haramayn-mini { height:112px!important; border-radius:16px!important; overflow:hidden!important; box-shadow:var(--ref-shadow)!important; }
+#screen-dashboard .db-haramayn-mini img { height:100%!important; }
+#screen-dashboard .db-haramayn-mini-name { font-size:12px!important; bottom:10px!important; }
+#screen-dashboard .db-footer-credit { display:none!important; }
+
+/* ---------- Shared Quran / Prayer header ---------- */
+#screen-quran .q-header, #screen-prayer .q-header { border-bottom:0!important; }
+#screen-quran .q-header {
+  min-height:256px!important; padding:13px 18px 13px!important; background:#eaf7fb!important;
+}
+#screen-quran .q-header-photo { inset:0!important; width:100%!important; height:100%!important; content:url('../assets/reference-ui/makkah-hero.png'); opacity:1!important; mask-image:none!important; -webkit-mask-image:none!important; object-position:58% 45%!important; }
+#screen-quran .q-header::after { background:linear-gradient(90deg,rgba(255,255,255,.98) 0%,rgba(255,255,255,.88) 42%,rgba(255,255,255,.08) 100%)!important; }
+#screen-quran .q-nav-row { height:41px!important; margin-bottom:3px!important; justify-content:flex-end!important; }
+#screen-quran .q-back-btn { display:none!important; }
+#screen-quran .q-qori-badge {
+  width:40px!important; height:40px!important; padding:0!important; border-radius:50%!important; justify-content:center!important;
+  color:var(--ref-green)!important; background:#fff!important; box-shadow:var(--ref-shadow)!important; border:0!important;
+}
+#screen-quran .q-qori-badge span:first-child { display:none!important; }
+#screen-quran .q-qori-badge span:last-child { font-size:0!important; }
+#screen-quran .q-qori-badge span:last-child::after { content:'⌕'; font-family:'Segoe UI Symbol',sans-serif; font-size:25px; }
+#screen-quran .q-title-block { margin-top:-4px!important; margin-bottom:0!important; width:70%!important; }
+#screen-quran .q-title-main, #screen-prayer .q-title-main {
+  font-family:Georgia,'Times New Roman',serif!important; font-size:35px!important; line-height:1.04!important; font-weight:700!important; letter-spacing:-1.1px!important; color:#051a24!important;
+}
+#screen-quran .q-title-sub { margin-top:7px!important; font-family:'Plus Jakarta Sans',system-ui,sans-serif!important; font-size:13px!important; color:#50676f!important; }
+#screen-quran .q-title-sub::after { content:'\A“Bu, unda shubha yo\2018q Kitobdir, muttaqiylar uchun hidoyatdir.”\A(Baqara, 2:2)'; white-space:pre; display:block; margin-top:5px; font-size:9px; line-height:1.5; color:#344f58; }
+#screen-quran .q-divider { display:none!important; }
+#screen-quran .q-tabs-row {
+  position:absolute!important; left:16px!important; right:16px!important; bottom:11px!important; height:45px!important; padding:4px!important; gap:2px!important;
+  background:rgba(255,255,255,.95)!important; border-radius:16px!important; box-shadow:var(--ref-shadow)!important;
+}
+#screen-quran .q-tab-btn { border:0!important; background:transparent!important; border-radius:13px!important; color:#65757b!important; font-size:10px!important; }
+#screen-quran .q-tab-btn.active { background:var(--ref-green)!important; color:#fff!important; }
+#screen-quran .q-content { padding:12px 16px 24px!important; background:linear-gradient(#f8fcfb,#fff)!important; }
+#screen-quran .q-search-box { min-height:48px!important; margin-bottom:10px!important; border:0!important; border-radius:15px!important; background:#edf7f4!important; box-shadow:none!important; }
+#screen-quran .q-search-input { font-size:10px!important; }
+#screen-quran .q-filters-row { gap:6px!important; margin-bottom:11px!important; }
+#screen-quran .q-filter-btn { min-height:39px!important; border-radius:14px!important; background:#fff!important; border:1px solid var(--ref-line)!important; color:#5d7075!important; font-size:9px!important; }
+#screen-quran .q-filter-btn.active { background:var(--ref-green)!important; border-color:var(--ref-green)!important; color:#fff!important; }
+#screen-quran .q-continue-banner {
+  min-height:84px!important; padding:10px 14px 10px 105px!important; position:relative!important; border-radius:17px!important; margin-bottom:13px!important;
+  background:#fff!important; border:1px solid var(--ref-line)!important; box-shadow:var(--ref-shadow)!important;
+}
+#screen-quran .q-continue-banner::before { content:''; position:absolute; left:9px; top:9px; bottom:9px; width:84px; border-radius:12px; background:url('../assets/reference-ui/quran-open.png') center/cover; }
+#screen-quran .q-continue-banner > span:first-child { display:none!important; }
+#screen-quran .q-banner-title { font-size:12px!important; }
+#screen-quran .q-banner-sub { font-size:9px!important; }
+#screen-quran .q-sura-row { min-height:62px!important; margin:6px 0!important; padding:8px 10px!important; border:1px solid #e5efec!important; border-radius:16px!important; background:#fff!important; box-shadow:0 3px 13px rgba(13,78,57,.04)!important; }
+#screen-quran .q-sura-sep { display:none!important; }
+#screen-quran .q-sura-num { width:36px!important; height:36px!important; border-radius:50%!important; border:0!important; background:#e6f7f1!important; font-family:'Plus Jakarta Sans',system-ui,sans-serif!important; font-weight:800!important; }
+#screen-quran .q-sura-name { font-size:12px!important; }
+#screen-quran .q-sura-meta { font-size:8px!important; }
+#screen-quran .q-sura-ar { font-size:18px!important; color:#142b30!important; }
+
+/* ---------- Qibla ---------- */
+#screen-qibla { background:#f8fcfb!important; }
+#screen-qibla .qb-hdr { min-height:315px!important; padding:14px 17px 13px!important; overflow:visible!important; }
+#screen-qibla .qb-hdr-photo { height:275px!important; object-position:center 40%!important; filter:saturate(1.05) contrast(1.03)!important; }
+#screen-qibla .qb-hdr .nm-tile-ov { display:block!important; height:275px!important; background:linear-gradient(90deg,rgba(255,255,255,.96),rgba(255,255,255,.55) 52%,rgba(255,255,255,.04))!important; }
+#screen-qibla .qb-nav-row { height:47px!important; margin:0 0 8px!important; }
+#screen-qibla .qb-back { visibility:visible!important; width:auto!important; overflow:visible!important; color:#10262d!important; font-weight:700!important; font-size:10px!important; }
+#screen-qibla #qb-gps-badge { min-width:132px!important; min-height:38px!important; border:0!important; background:#fff!important; box-shadow:var(--ref-shadow)!important; color:#10262d!important; }
+#screen-qibla .qb-title { font-family:Georgia,'Times New Roman',serif!important; font-size:33px!important; letter-spacing:-1px!important; margin-top:4px!important; }
+#screen-qibla .qb-artitle { font-size:12px!important; color:#526a70!important; }
+#screen-qibla .qb-artitle::after { content:'\A“Qayerda bo\2018lsangiz ham, Allohning yuziga qaratinglar.”\A(Baqara 2:115)'; white-space:pre; display:block; font-family:'Plus Jakarta Sans',system-ui,sans-serif; margin-top:8px; color:#203a42; line-height:1.5; font-size:9px; }
+#screen-qibla .qb-hdivider { display:none!important; }
+#screen-qibla .qb-tabs { position:absolute!important; left:12px!important; right:12px!important; bottom:-21px!important; height:48px!important; padding:4px!important; background:#fff!important; border-radius:16px!important; box-shadow:var(--ref-shadow)!important; }
+#screen-qibla .qb-tab { min-height:40px!important; border-radius:13px!important; font-size:9px!important; }
+#screen-qibla .qb-body { padding:31px 16px 26px!important; gap:11px!important; }
+#screen-qibla .qb-panel { gap:11px!important; }
+#screen-qibla .qb-found-badge, #screen-qibla .qb-load-badge { order:-5; min-height:45px!important; border-radius:15px!important; }
+#screen-qibla .qb-route-globe-wrap { order:-4; height:155px!important; margin:0 0 -122px!important; overflow:visible!important; }
+#screen-qibla .qb-route-globe { height:225px!important; border-radius:50%!important; width:225px!important; margin:auto!important; box-shadow:none!important; overflow:hidden!important; }
+#screen-qibla .qb-route-globe-label { display:none!important; }
+#screen-qibla .qb-compass-stack { order:-3; margin-top:-160px!important; width:282px!important; height:282px!important; filter:drop-shadow(0 10px 22px rgba(2,80,54,.15))!important; }
+#screen-qibla .qb-compass-globe-wrap { opacity:.12!important; }
+#screen-qibla .qb-igrid { order:2; gap:8px!important; }
+#screen-qibla .qb-icell { min-height:76px!important; padding:12px!important; border-radius:17px!important; background:#fff!important; border:1px solid #e4efec!important; box-shadow:var(--ref-shadow)!important; }
+#screen-qibla .qb-icell-lbl { font-size:8px!important; text-transform:none!important; letter-spacing:0!important; }
+#screen-qibla .qb-icell-val { color:var(--ref-green)!important; font-size:18px!important; }
+#screen-qibla .qb-calibrate-tip, #screen-qibla .qb-calibrate-badge { order:3; min-height:60px!important; border-radius:16px!important; display:flex!important; align-items:center!important; justify-content:center!important; }
+
+/* ---------- Prayer times ---------- */
+#screen-prayer .q-header {
+  min-height:342px!important; padding:14px 17px 12px!important; overflow:hidden!important; background:#eef9f7!important;
+}
+#screen-prayer .q-header::before { content:''; position:absolute; inset:0; background:url('../assets/reference-ui/makkah-hero.png') 58% 44%/cover no-repeat; }
+#screen-prayer .q-header::after { background:linear-gradient(90deg,rgba(255,255,255,.98) 0%,rgba(255,255,255,.76) 60%,rgba(255,255,255,.12) 100%)!important; }
+#screen-prayer .q-nav-row { height:43px!important; margin-bottom:5px!important; }
+#screen-prayer .q-back-btn { color:#142b32!important; font-size:10px!important; font-weight:700!important; }
+#screen-prayer .pm-refresh-btn { width:39px!important; height:39px!important; background:#fff!important; border:1px solid #dfebe7!important; border-radius:50%!important; box-shadow:var(--ref-shadow)!important; color:#09232a!important; }
+#screen-prayer .pm-tools-btn { position:absolute; top:14px; right:61px; z-index:4; width:39px; height:39px; padding:0; display:grid; place-items:center; border:1px solid #dfebe7; border-radius:50%; background:#fff; color:#10252d; box-shadow:var(--ref-shadow); }
+#screen-prayer .pm-tools-btn .material-symbols-rounded { font-size:0!important; }
+#screen-prayer .pm-tools-btn .material-symbols-rounded::before { font-size:21px!important; }
+#screen-prayer .q-title-block { width:75%!important; margin-bottom:8px!important; }
+#screen-prayer .pm-hdr-meta { font-family:Georgia,'Times New Roman',serif!important; font-size:12px!important; color:#324a52!important; margin-top:4px!important; }
+#screen-prayer .pm-hdr-date { font-family:Georgia,'Times New Roman',serif!important; font-size:11px!important; color:#1d373f!important; margin-top:8px!important; }
+#screen-prayer .pm-banner { min-height:126px!important; padding:14px 16px!important; margin-top:10px!important; background:rgba(245,255,251,.94)!important; border:1px solid #cce5dc!important; border-radius:18px!important; box-shadow:var(--ref-shadow)!important; }
+#screen-prayer .pm-banner-label { font-size:8px!important; }
+#screen-prayer .pm-banner-name { font-size:26px!important; }
+#screen-prayer .pm-banner-bigtime { font-size:35px!important; }
+#screen-prayer .q-divider { display:none!important; }
+#screen-prayer .q-tabs-row { display:none!important; position:absolute!important; top:59px!important; right:16px!important; width:210px!important; height:auto!important; padding:6px!important; z-index:10!important; border:1px solid #dce9e5!important; border-radius:15px!important; background:rgba(255,255,255,.98)!important; box-shadow:var(--ref-shadow)!important; }
+#screen-prayer .q-tabs-row.pm-tabs-open { display:flex!important; }
+#screen-prayer .q-tab-btn { display:block!important; min-height:37px!important; padding:5px!important; border-radius:11px!important; font-size:8px!important; }
+#screen-prayer .pm-content { padding:11px 16px 28px!important; background:linear-gradient(#f8fcfb,#fff)!important; }
+#screen-prayer .pm-vaqt-list { display:flex!important; flex-direction:column!important; gap:7px!important; }
+#screen-prayer .pm-row { min-height:61px!important; padding:10px 14px 10px 58px!important; border-radius:17px!important; background:#fff!important; border:1px solid #e7efed!important; box-shadow:0 4px 14px rgba(16,79,59,.05)!important; position:relative!important; opacity:1!important; }
+#screen-prayer .pm-row::before { content:'◷'; position:absolute; left:14px; top:50%; transform:translateY(-50%); font-family:'Segoe UI Symbol',sans-serif; font-size:28px; color:var(--ref-green); }
+#screen-prayer .pm-row--sun::before { content:'☀'; }
+#screen-prayer .pm-row--next { background:#e9f8f2!important; border-color:#abdac9!important; }
+#screen-prayer .pm-row-name { font-size:13px!important; color:#0a2029!important; }
+#screen-prayer .pm-row-ar { display:none!important; }
+#screen-prayer .pm-row-time { font-size:15px!important; color:#0b2028!important; }
+#screen-prayer .pm-row-time--next { color:var(--ref-green)!important; }
+#screen-prayer .pm-row-check { width:25px!important; height:25px!important; }
+#screen-prayer .pm-card { border-radius:18px!important; background:#fff!important; border:1px solid #e2ede9!important; box-shadow:var(--ref-shadow)!important; }
+#screen-prayer .pm-card--gold { background:linear-gradient(135deg,#fff,#f3fbf7)!important; }
+
+/* ---------- Nearby mosques ---------- */
+#screen-mosques { background:#f8fcfb!important; }
+#screen-mosques .ms-hdr { min-height:318px!important; padding:14px 17px 13px!important; overflow:visible!important; }
+#screen-mosques .ms-hdr-photo { height:274px!important; content:url('../assets/reference-ui/mosque-hero.png'); object-position:center 44%!important; }
+#screen-mosques .ms-hdr .nm-tile-ov { display:block!important; height:274px!important; background:linear-gradient(90deg,rgba(255,255,255,.97),rgba(255,255,255,.68) 60%,rgba(255,255,255,.08))!important; }
+#screen-mosques .ms-nav-row { height:44px!important; margin-bottom:8px!important; }
+#screen-mosques .ms-back { visibility:visible!important; width:auto!important; overflow:visible!important; color:#10252d!important; font-size:10px!important; font-weight:700!important; }
+#screen-mosques .ms-change-loc { background:#fff!important; border:0!important; min-height:38px!important; border-radius:20px!important; box-shadow:var(--ref-shadow)!important; color:#10252d!important; }
+#screen-mosques .ms-title { font-family:Georgia,'Times New Roman',serif!important; font-size:34px!important; line-height:1!important; letter-spacing:-1px!important; color:#061b25!important; }
+#screen-mosques .ms-loc { margin-top:7px!important; color:#4a646b!important; font-size:11px!important; }
+#screen-mosques .ms-loc::after { content:'\A“Allohning masjidlarini faqat Allohga va oxirat kuniga iymon keltirgan bandalar obod qilur.”\A(Tavba 9:18)'; white-space:pre; display:block; margin-top:8px; color:#203940; font-size:8px; line-height:1.5; max-width:255px; }
+#screen-mosques .ms-divider { display:none!important; }
+#screen-mosques .ms-tabs { position:absolute!important; left:12px!important; right:12px!important; bottom:-21px!important; height:49px!important; padding:4px!important; border-radius:16px!important; background:#fff!important; box-shadow:var(--ref-shadow)!important; }
+#screen-mosques .ms-tab { min-height:41px!important; border:0!important; border-radius:13px!important; background:transparent!important; color:#63747a!important; }
+#screen-mosques .ms-tab.active { background:var(--ref-green)!important; color:#fff!important; }
+#screen-mosques .ms-body { padding:32px 16px 26px!important; }
+#screen-mosques .ms-radius-bar { display:flex; align-items:center; gap:6px; margin:0 0 12px; overflow-x:auto; scrollbar-width:none; }
+#screen-mosques .ms-radius-btn { flex:0 0 auto; min-width:59px; height:36px; padding:0 10px; border:1px solid #dfece8; border-radius:18px; background:#fff; color:#617479; font-size:9px; font-weight:700; }
+#screen-mosques .ms-radius-btn.active { border-color:var(--ref-green); background:var(--ref-green); color:#fff; }
+#screen-mosques .ms-radius-filter { margin-left:auto; color:var(--ref-green-dark); font-size:9px; font-weight:800; white-space:nowrap; }
+#screen-mosques .ms-list { display:flex!important; flex-direction:column!important; gap:11px!important; }
+#screen-mosques .ms-card { min-height:186px!important; padding:10px!important; border-radius:19px!important; background:#fff!important; border:1px solid #e3eeea!important; box-shadow:var(--ref-shadow)!important; display:grid!important; grid-template-columns:112px minmax(0,1fr)!important; grid-template-rows:auto auto!important; column-gap:10px!important; overflow:hidden!important; }
+#screen-mosques .ms-card-photo { grid-row:1 / span 2!important; grid-column:1!important; width:112px!important; height:144px!important; border-radius:14px!important; object-fit:cover!important; }
+#screen-mosques .ms-card-top { grid-column:2!important; grid-row:1!important; padding:2px 0 5px!important; margin:0!important; min-width:0!important; }
+#screen-mosques .ms-card-foot { grid-column:2!important; grid-row:2!important; padding:0!important; align-content:flex-start!important; }
+#screen-mosques .ms-card-name { font-size:12px!important; line-height:1.25!important; }
+#screen-mosques .ms-card-addr { font-size:8px!important; margin-top:4px!important; }
+#screen-mosques .ms-card-dist { font-size:14px!important; color:var(--ref-green)!important; }
+#screen-mosques .ms-card-walk { font-size:8px!important; }
+#screen-mosques .ms-open-txt, #screen-mosques .ms-card-hours { font-size:8px!important; }
+#screen-mosques .ms-facility { font-size:7px!important; padding:4px 6px!important; background:var(--ref-green-soft)!important; color:var(--ref-green-dark)!important; }
+#screen-mosques .ms-card-route { width:100%!important; min-height:34px!important; margin-top:5px!important; display:flex!important; align-items:center!important; justify-content:center!important; border-radius:11px!important; background:var(--ref-green)!important; color:#fff!important; }
+#screen-mosques .ms-osm-attr { font-size:7px!important; color:#8a989b!important; }
+
+@media (min-width:521px) {
+  #screen-dashboard .db-hdr, #screen-quran .q-header, #screen-prayer .q-header, #screen-qibla .qb-hdr, #screen-mosques .ms-hdr { max-width:520px; margin-inline:auto; }
+}

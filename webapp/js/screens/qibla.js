@@ -364,7 +364,7 @@ const QiblaScreen = (function () {
       <div class="qb-minfo-ar">الكعبة المشرفة</div>
       <div class="qb-minfo-name">Ka'ba · Masjid al-Haram</div>
       <div class="qb-minfo-city">${_T('Makka al-Mukarrama, Saudiya Arabistoni','Макка ал-Мукаррама, Саудия Арабистони','Мекка аль-Мукаррама, Саудовская Аравия','Makkah al-Mukarramah, Saudi Arabia')}</div>
-      <button class="qb-live-btn" id="qb-open-haramayn">🔴 ${_T('Live ko\'rish','Live кўриш','Смотреть Live','Watch Live')}</button>
+      <button class="qb-live-btn" id="qb-open-haramayn">${_T("Haramaynni ko'rish",'Ҳарамайнни кўриш','Открыть Харамайн','Open Haramayn')}</button>
     </div>
     <div class="qb-mrow"><span class="qb-mrow-lbl">${_T('Qibla burchagi','Қибла бурчаги','Угол Киблы','Qibla angle')}</span><span class="qb-mrow-val" id="qb-m-angle">—</span></div>
     <div class="qb-mrow"><span class="qb-mrow-lbl">${_T('Masofa','Масофа','Расстояние','Distance')}</span><span class="qb-mrow-val" id="qb-m-dist">—</span></div>

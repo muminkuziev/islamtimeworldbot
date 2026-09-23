@@ -165,8 +165,7 @@ ${results.length === 0
     const favs     = _getFavs();
     const saved    = favs.includes(dua.id);
     const transl   = _resolveTransl(dua.translation || {}, _lang);
-    const isUz     = _lang === 'uz' || _lang === 'uz_cyr';
-    const translit = dua.transliteration || (isUz ? _T("O'qilishi hozircha qo'shilmagan","Ўқилиши ҳозирча қўшилмаган",'','Transliteration is not available yet.') : '');
+    const translit = dua.transliteration || '';
     return `
 <button class="du-detail-back" id="du-detail-back">← ${_T('Orqaga','Орқага','Назад','Back')}</button>
 <div class="du-detail-box">
@@ -201,8 +200,7 @@ ${saved.map(d => _buildCard(d, favs, false)).join('\n')}`;
   function _buildCard(dua, favs, compact) {
     const transl   = _resolveTransl(dua.translation || {}, _lang);
     const saved    = favs.includes(dua.id);
-    const isUz     = _lang === 'uz' || _lang === 'uz_cyr';
-    const translit = dua.transliteration || (isUz ? _T("O'qilishi hozircha qo'shilmagan","Ўқилиши ҳозирча қўшилмаган",'','Transliteration is not available yet.') : '');
+    const translit = dua.transliteration || '';
     return `<div class="du-card" data-id="${dua.id}">
   <div class="du-card-ar">${dua.arabic}</div>
   ${!compact && translit ? `<div class="du-card-translit">${_esc(translit)}</div>` : ''}

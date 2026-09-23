@@ -49,7 +49,7 @@ const SettingsScreen = (function () {
       lang:              localStorage.getItem('islamtime_lang')                  || 'uz',
       mazhab:            localStorage.getItem('islamtime_madhab')                || 'hanafi',
       method:            parseInt(localStorage.getItem('islamtime_method')        || '3'),
-      theme:             localStorage.getItem('islamtime_theme')                 || 'dark',
+      theme:             'light',
       gps:               (localStorage.getItem('islamtime_gps')                  ?? 'true')  === 'true',
       push:              (localStorage.getItem('islamtime_push')                 ?? 'true')  === 'true',
       ayah:              (localStorage.getItem('islamtime_notif_ayah')           ?? 'true')  === 'true',
@@ -176,7 +176,7 @@ const SettingsScreen = (function () {
       { v:'location',      t:_T('Joylashuv',              'Жойлашув',              'Местоположение',             'Location'),              s: locSub },
       { v:'prayer',        t:_T('Namoz hisoblash usuli',  'Намоз ҳисоблаш усули',  'Метод расчёта намаза',       'Prayer Calculation Method'), s: methN  },
       { v:'langmazhab',    t:_T('Til va Mazhab',          'Тил ва Мазҳаб',          'Язык и Мазхаб',             'Language and Madhab'),   s: `${lm ? lm.flag+' '+lm.name : ''} · ${_mzLabel(mz)}` },
-      { v:'interface',     t:_T('Interfeys',              'Интерфейс',              'Интерфейс',                 'Interface'),             s: _s.theme === 'dark' ? _T('Tungi rejim','Тунги режим','Тёмный режим','Dark mode') : _T('Kunduzgi rejim','Кундузги режим','Светлый режим','Light mode') },
+      { v:'interface',     t:_T('Interfeys',              'Интерфейс',              'Интерфейс',                 'Interface'),             s: _T('Yorug‘ rejim','Ёруғ режим','Светлый режим','Light mode') },
       { v:'notifications', t:_T('Bildirishnomalar',       'Билдиришномалар',        'Уведомления',               'Notifications'),         s: `${notifN} ${_T('ta yoqilgan','та ёқилган','вкл.','enabled')}` },
       { v:'briefing',      t:_T('Kunlik briefing',       'Кунлик брифинг',         'Ежедневная сводка',         'Daily Briefing'),        s: _s.daily_briefing ? `${_T("Yoqilgan","Ёқилган","Включено","Enabled")} · ${_s.briefing_time}` : _T("O'chirilgan","Ўчирилган","Отключено","Disabled") },
       { v:'cloudsync',     t:_T('Bulut sinxronizatsiyasi','Булут синхронизацияси',  'Синхронизация с облаком',   'Cloud Sync'),            s: online ? _T("Bog'langan","Боғланган","Подключён",'Connected') : _T('Offline rejim','Офлайн режим','Режим офлайн','Offline mode') },
@@ -264,22 +264,13 @@ const SettingsScreen = (function () {
   function _htmlInterface() {
     return `
       <div class="st-sect">
-        <div class="st-tema-row" data-theme="dark">
-          <span class="st-tema-ic">🌙</span>
-          <div class="st-rb">
-            <div class="st-rl">${_T('Tungi rejim','Тунги режим','Тёмный режим','Dark mode')}</div>
-            <div class="st-rs">${_T('Navy + oltin (hozirgi)','Navy + олтин (ҳозирги)','Navy + золото (текущий)','Navy + gold (current)')}</div>
-          </div>
-          ${_s.theme === 'dark' ? '<div class="st-check">✓</div>' : ''}
-        </div>
-        <div class="st-div" style="margin-left:48px"></div>
-        <div class="st-tema-row st-disabled" data-theme="light">
+        <div class="st-tema-row">
           <span class="st-tema-ic">☀️</span>
           <div class="st-rb">
-            <div class="st-rl st-muted">${_T('Kunduzgi rejim','Кундузги режим','Светлый режим','Light mode')}</div>
-            <div class="st-rs">${_T('Tez orada...','Тез орада...','Скоро...','Coming soon...')}</div>
+            <div class="st-rl">${_T('Yorug‘ rejim','Ёруғ режим','Светлый режим','Light mode')}</div>
+            <div class="st-rs">${_T('Oq, yalpiz va zumrad','Оқ, ялпиз ва зумрад','Белый, мятный и изумрудный','White, mint and emerald')}</div>
           </div>
-          <span class="st-soon-badge">${_T('Tez orada','Тез орада','Скоро','Soon')}</span>
+          <div class="st-check">✓</div>
         </div>
       </div>`;
   }
@@ -553,7 +544,7 @@ const SettingsScreen = (function () {
         <div class="ab-sources-lbl">${_T("MA'LUMOT MANBALARI","МАЪЛУМОТ МАНБАЛАРИ","ИСТОЧНИКИ ДАННЫХ","DATA SOURCES")}</div>
         <div class="ab-sources-list">
           Aladhan API &nbsp;·&nbsp; Al-Quran Cloud &nbsp;·&nbsp;
-          HadithAPI &nbsp;·&nbsp; OpenStreetMap &nbsp;·&nbsp;
+          HadeethEnc &nbsp;·&nbsp; OpenStreetMap &nbsp;·&nbsp;
           Open-Meteo &nbsp;·&nbsp; OpenAQ
         </div>
       </div>
@@ -950,8 +941,8 @@ const SettingsScreen = (function () {
   }
 
   /* Apply saved theme on module load */
-  const _initTheme = localStorage.getItem('islamtime_theme') || 'dark';
-  document.documentElement.setAttribute('data-theme', _initTheme);
+  localStorage.setItem('islamtime_theme', 'light');
+  document.documentElement.setAttribute('data-theme', 'light');
 
   return { render, load };
 })();

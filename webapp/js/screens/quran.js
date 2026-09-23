@@ -148,15 +148,7 @@ const QuranScreen = (function () {
     106:'Quraysh',107:"Al-Mo'un",108:'Al-Kavsar',109:'Al-Kofirun',110:'An-Nasr',
     111:'Al-Masad',112:'Al-Ixlos',113:'Al-Falaq',114:'An-Nos'
   };
-  const _uz = s => UZ[s[0]] || s[1];
-
-  /* Translations disabled — sources under license verification (MVP) */
-  const TRANSLATIONS = {
-    uz:null, uz_cyr:null, en:null, ru:null,
-    tr:null, ar:null, kk:null, tg:null,
-    ky:null, de:null, fr:null,
-    id:null, hi:null, ur:null
-  };
+  const _uz = s => ['ar','ur','fa'].includes(_lang) ? s[2] : (UZ[s[0]] || s[1]);
 
   const LS_RECITER = 'quran_reciter';
   function _getReciters() {
@@ -253,7 +245,7 @@ const QuranScreen = (function () {
     return `
       <div class="screen-inner q-screen">
         <div class="q-header">
-          <img class="q-header-photo" src="assets/landing/haram-makkah.webp" alt="Makkah" loading="eager">
+          <img class="q-header-photo" src="assets/landing/hero-bg.webp" alt="Makkah" loading="eager">
           <div class="q-nav-row">
             <button id="quran-back" class="q-back-btn">${_qt('back')}</button>
             <div class="q-qori-badge">
@@ -378,7 +370,7 @@ const QuranScreen = (function () {
 
   /* ── Tab: Suralar ── */
   function _suralarHTML() {
-    const lastRead = _getLast();
+    const lastRead = _getLast() || { num: 1 };
     const bm       = _getBM();
 
     const continueBanner = lastRead ? (() => {
@@ -408,7 +400,7 @@ const QuranScreen = (function () {
             <div class="q-sura-meta">${verses} ${_qt('verses')} · ${_qt('juz')} ${juz} · ${type==='M'?_qt('makka'):_qt('madina')}</div>
           </div>
           <div class="q-sura-ar">${ar}</div>
-          <button class="q-bm-btn${hasBm?' bm-on':''}" data-bm="${num}">🔖</button>
+          <button class="q-bm-btn${hasBm?' bm-on':''}" data-bm="${num}" aria-label="Bookmark">☆</button>
         </div>
         <div class="q-sura-sep"></div>`;
     }).join('');
@@ -636,18 +628,17 @@ const QuranScreen = (function () {
     }
 
     try {
-      const edition = TRANSLATIONS[_lang];
-      const [arData, trData, txData] = await Promise.all([
-        fetch(`https://api.alquran.cloud/v1/surah/${s[0]}/${scriptStyle}`).then(r => r.json()),
-        edition
-          ? fetch(`https://api.alquran.cloud/v1/surah/${s[0]}/${edition}`).then(r => r.json())
-          : Promise.resolve(null),
-        fetch(`https://api.alquran.cloud/v1/surah/${s[0]}/en.transliteration`).then(r => r.json()),
+      const provider = window.QuranProvider;
+      if (!provider?.getAyahs) throw new Error('Quran provider unavailable');
+      const providerLang = _lang === 'uz_cyr' ? 'uz' : _lang;
+      const [ayahs, txData] = await Promise.all([
+        provider.getAyahs(s[0], { lang:providerLang, translation:true, withArabic:true, reciter:_getReciter().id }),
+        fetch('https://api.alquran.cloud/v1/surah/' + s[0] + '/en.transliteration').then(r => r.json()).catch(() => null),
       ]);
-      const arabic    = arData?.code===200 ? arData.data.ayahs.map(a => a.text) : [];
-      const rawTransl = trData?.code===200 ? trData.data.ayahs.map(a => a.text) : [];
-      const transl    = (_lang === 'uz') ? rawTransl.map(_cyrToLat) : rawTransl;
-      const translit  = txData?.code===200 ? txData.data.ayahs.map(a => a.text) : [];
+      const arabic = ayahs.map(a => a.arabic);
+      const rawTransl = ayahs.map(a => a.translation || '');
+      const transl = (_lang === 'uz') ? rawTransl.map(_cyrToLat) : rawTransl;
+      const translit = txData?.code === 200 ? txData.data.ayahs.map(a => a.text) : [];
       try { localStorage.setItem(cacheKey, JSON.stringify({arabic, translation:transl, translit})); } catch {}
       _renderAyahs(el, s, arabic, transl, translit);
     } catch {
@@ -789,7 +780,6 @@ const QuranScreen = (function () {
                       data-action="bm" data-n="${n}" data-sn="${num}">
                 ${isBm?'🔖':'🏷️'}
               </button>
-              <button class="quran-ayah-icon-btn" data-action="tafsir" data-n="${n}">📝</button>
               <button class="quran-ayah-icon-btn" data-action="share"  data-n="${n}" data-sn="${num}">📤</button>
             </div>
           </div>
@@ -798,22 +788,7 @@ const QuranScreen = (function () {
             <div class="quran-ayah-translit"${(_showTranslit || _lang === 'uz') ? '' : ' style="display:none"'}>
               ${_esc(translit[i])}
             </div>` : ''}
-          <div class="quran-ayah-tr" style="opacity:.35;font-style:italic;font-size:12px">🚧 ${{
-              uz:     "Qur'on tarjimasi tekshirilmoqda va tasdiqlanmoqda.",
-              uz_cyr: "Қуръон таржимаси текширилмоқда ва тасдиқланмоқда.",
-              ru:     "Перевод Корана проходит проверку.",
-              en:     "Quran translation is under verification.",
-              tr:     "Kur'an tercümesi doğrulama sürecindedir.",
-              ar:     "ترجمة القرآن قيد المراجعة والتحقق.",
-              kk:     "Құран аудармасы тексеріліп жатыр.",
-              tg:     "Тарҷумаи Қуръон дар ҳоли санҷиш аст.",
-              ky:     "Курандың котормосу текшерилүүдө.",
-              de:     "Die Koranübersetzung wird derzeit überprüft.",
-              fr:     "La traduction du Coran est en cours de vérification.",
-              id:     "Terjemahan Al-Quran sedang dalam proses verifikasi.",
-              hi:     "क़ुरआन का अनुवाद सत्यापन प्रक्रिया में है।",
-              ur:     "قرآن کا ترجمہ تصدیق کے مرحلے میں ہے۔",
-            }[_lang]||"Qur'on tarjimasi tekshirilmoqda va tasdiqlanmoqda."}</div>
+          ${translation[i] ? `<div class="quran-ayah-tr">${_esc(translation[i])}</div>` : ''}
           <div class="quran-tafsir-wrap" id="tafsir-${n}" style="display:none">
             <div class="quran-tafsir-loading">
               <span class="quran-spinner" style="width:14px;height:14px;border-width:2px"></span>
@@ -863,28 +838,7 @@ const QuranScreen = (function () {
   /* ════════════════════════════════════════════════════════
      TAFSIR
   ════════════════════════════════════════════════════════ */
-  async function _toggleTafsir(body, surahNum, ayahNum) {
-    const wrap = body.querySelector(`#tafsir-${ayahNum}`);
-    if (!wrap) return;
-    if (wrap.style.display !== 'none') { wrap.style.display = 'none'; return; }
-    wrap.style.display = 'block';
-    wrap.innerHTML = `<div class="quran-tafsir-text quran-tafsir-na">🚧 ${{
-      uz:     "Tafsir bo'limi tekshirilmoqda.",
-      uz_cyr: "Тафсир бўлими текширилмоқда.",
-      ru:     "Раздел тафсира проходит проверку.",
-      en:     "Tafsir section is under verification.",
-      tr:     "Tefsir bölümü inceleme aşamasındadır.",
-      ar:     "قسم التفسير قيد المراجعة.",
-      kk:     "Тафсир бөлімі тексеріліп жатыр.",
-      tg:     "Бахши тафсир дар ҳоли санҷиш аст.",
-      ky:     "Тафсир бөлүмү текшерилүүдө.",
-      de:     "Der Tafsir-Bereich wird derzeit überprüft.",
-      fr:     "La section tafsir est en cours de vérification.",
-      id:     "Bagian tafsir sedang diverifikasi.",
-      hi:     "तफ़सीर अनुभाग सत्यापन प्रक्रिया में है।",
-      ur:     "تفسیر سیکشن تصدیق کے مرحلے میں ہے۔",
-    }[_lang]||"Tafsir tekshiruvda."}</div>`;
-  }
+  async function _toggleTafsir() {}
 
   /* ════════════════════════════════════════════════════════
      AUDIO

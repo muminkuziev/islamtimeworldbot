@@ -43,6 +43,17 @@ const DashboardScreen = (function () {
     hi:     ['जनवरी','फ़रवरी','मार्च','अप्रैल','मई','जून','जुलाई','अगस्त','सितंबर','अक्तूबर','नवंबर','दिसंबर'],
     ur:     ['جنوری','فروری','مارچ','اپریل','مئی','جون','جولائی','اگست','ستمبر','اکتوبر','نومبر','دسمبر'],
   };
+  Object.assign(DAYS_MAP, {
+    fa:['یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنجشنبه','جمعه','شنبه'],
+    bn:['রবিবার','সোমবার','মঙ্গলবার','বুধবার','বৃহস্পতিবার','শুক্রবার','শনিবার'],
+    ms:['Ahad','Isnin','Selasa','Rabu','Khamis','Jumaat','Sabtu'],
+  });
+  Object.assign(MONTHS_MAP, {
+    fa:['ژانویه','فوریه','مارس','آوریل','مه','ژوئن','ژوئیه','اوت','سپتامبر','اکتبر','نوامبر','دسامبر'],
+    bn:['জানুয়ারি','ফেব্রুয়ারি','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্টেম্বর','অক্টোবর','নভেম্বর','ডিসেম্বর'],
+    ms:['Januari','Februari','Mac','April','Mei','Jun','Julai','Ogos','September','Oktober','November','Disember'],
+  });
+
   /* ── Module definitions ── */
   const HOME_MODULES = new Set(['quran','hadith','qibla','calendar','dhikr','boshqalar']);
   const MODULE_ICONS = { quran:'menu_book', hadith:'import_contacts', qibla:'explore', calendar:'calendar_month', dhikr:'prayer_times', boshqalar:'grid_view' };
@@ -104,13 +115,13 @@ const DashboardScreen = (function () {
       sub_fr:  'Compteur · Matin · Soir',    sub_id: 'Penghitung · Pagi · Sore',
       sub_hi:  'काउंटर · सुबह · शाम',         sub_ur: 'کاؤنٹر · صبح · شام' },
     { key:'calendar',
-      sub:     '1447 · Islomiy kunlar',     sub_cyr:'1447 · Исломий кунлар',
-      sub_ru:  '1447 · Исламские даты',    sub_en: '1447 · Islamic dates',
-      sub_tr:  '1447 · İslam Takvimi',     sub_ar: '١٤٤٧ · التقويم الهجري',
-      sub_kk:  '1447 · Ислам мерзімдері', sub_tg: '1447 · Санаҳои исломӣ',
-      sub_ky:  '1447 · Ислам күндөрү',    sub_de: '1447 · Islamische Daten',
-      sub_fr:  '1447 · Dates islamiques',  sub_id: '1447 · Kalender Islam',
-      sub_hi:  '१४४७ · इस्लामी तिथियाँ',   sub_ur: '۱۴۴۷ · اسلامی تاریخیں' },
+      sub:     '1448 · Islomiy kunlar',     sub_cyr:'1448 · Исломий кунлар',
+      sub_ru:  '1448 · Исламские даты',    sub_en: '1448 · Islamic dates',
+      sub_tr:  '1448 · İslam Takvimi',     sub_ar: '١٤٤٨ · التقويم الهجري',
+      sub_kk:  '1448 · Ислам мерзімдері', sub_tg: '1448 · Санаҳои исломӣ',
+      sub_ky:  '1448 · Ислам күндөрү',    sub_de: '1448 · Islamische Daten',
+      sub_fr:  '1448 · Dates islamiques',  sub_id: '1448 · Kalender Islam',
+      sub_hi:  '१४४८ · इस्लामी तिथियाँ',   sub_ur: '۱۴۴۸ · اسلامی تاریخیں' },
     { key:'names',
       sub:     'Arabcha · Tafsir · Zikr',  sub_cyr:'Арабча · Тафсир · Зикр',
       sub_ru:  'Арабский · Тафсир · Зикр', sub_en: 'Arabic · Tafsir · Dhikr',
@@ -137,6 +148,12 @@ const DashboardScreen = (function () {
       sub_hi:  'शहादा · कलिमा',            sub_ur: 'شہادت · کلمات' },
   ];
 
+  const CANONICAL_HOME_SUBS = {
+    fa:{qibla:'قطب‌نما · فاصله تا کعبه',quran:'۱۱۴ سوره · صوت · قاری',hadith:'بخاری · مسلم · ترجمه',dhikr:'شمارنده · صبح · شام',calendar:'۱۴۴۸ · تاریخ‌های اسلامی',boshqalar:'شهادت · کلمات'},
+    bn:{qibla:'কম্পাস · কাবার দূরত্ব',quran:'১১৪ সূরা · অডিও · কারি',hadith:'বুখারি · মুসলিম · অনুবাদ',dhikr:'গণনা · সকাল · সন্ধ্যা',calendar:'১৪৪৮ · ইসলামি তারিখ',boshqalar:'শাহাদাত · কালিমা'},
+    ms:{qibla:'Kompas · Jarak Kaabah',quran:'114 Surah · Audio · Qari',hadith:'Bukhari · Muslim · Terjemahan',dhikr:'Penghitung · Pagi · Petang',calendar:'1448 · Tarikh Islam',boshqalar:'Syahadah · Kalimah'},
+  };
+
   let _el      = null;
   let _lang    = 'uz';
   let _ptTimer = null;
@@ -153,6 +170,13 @@ const DashboardScreen = (function () {
     seconds:    { uz:'soniya',         uz_cyr:'сония',          en:'s',                 ru:'с',                tr:'sn',             ar:'ث',              kk:'с',              tg:'сон',             ky:'с',              de:'Sek',                      fr:'s',                          id:'dtk',               hi:'से',              ur:'سی'            },
     remaining:  { uz:'qoldi',          uz_cyr:'қолди',          en:'left',              ru:'осталось',         tr:'kaldı',          ar:'باقي',           kk:'қалды',          tg:'монд',            ky:'калды',          de:'noch',                     fr:'restant',                    id:'lagi',              hi:'शेष',             ur:'باقی'           },
   };
+  Object.assign(L.nextPrayer,{fa:'نماز بعدی',bn:'পরবর্তী নামাজ',ms:'SOLAT SETERUSNYA'});
+  Object.assign(L.services,{fa:'خدمات',bn:'সেবাসমূহ',ms:'Perkhidmatan'});
+  Object.assign(L.loading,{fa:'در حال بارگذاری…',bn:'লোড হচ্ছে…',ms:'Memuatkan…'});
+  Object.assign(L.allDone,{fa:'نمازهای امروز تمام شد 🌙',bn:'আজকের সব নামাজ শেষ 🌙',ms:'Semua solat hari ini selesai 🌙'});
+  Object.assign(L.timeUp,{fa:'وقت نماز است! 🕌',bn:'নামাজের সময় হয়েছে! 🕌',ms:'Sudah masuk waktu solat! 🕌'});
+  Object.assign(L.hours,{fa:'ساعت',bn:'ঘণ্টা',ms:'jam'}); Object.assign(L.minutes,{fa:'دقیقه',bn:'মিনিট',ms:'minit'});
+  Object.assign(L.seconds,{fa:'ثانیه',bn:'সেকেন্ড',ms:'saat'}); Object.assign(L.remaining,{fa:'مانده',bn:'বাকি',ms:'lagi'});
   function _l(key) {
     const d = L[key];
     return d ? (d[_lang] || d.en || '') : key;
@@ -188,7 +212,7 @@ const DashboardScreen = (function () {
       const title = t('modules_list.' + mod.key, _lang);
       const sub   = _lang === 'uz'     ? mod.sub
                   : _lang === 'uz_cyr' ? (mod.sub_cyr || mod.sub)
-                  : (mod['sub_' + _lang] || mod.sub_en || mod.sub);
+                  : (CANONICAL_HOME_SUBS[_lang]?.[mod.key] || mod['sub_' + _lang] || mod.sub_en || mod.sub);
       return `
         <div class="db-tile-wrap">
           <div class="db-cell" data-module="${mod.key}" role="button" tabindex="0">
@@ -201,22 +225,23 @@ const DashboardScreen = (function () {
 
     return `
 <div class="db-hdr">
-  <img class="db-hdr-photo" src="assets/landing/haram-madinah.webp" alt="Masjid an-Nabawi" loading="eager">
+  <img class="db-hdr-photo" src="assets/landing/hero-bg.webp" alt="Masjid al-Haram" loading="eager">
   <div class="nm-tile-ov db-hero-overlay"></div>
   <div class="db-hdr-inner">
 
     <div class="db-top-row">
-      <div>
-        <div class="db-brand">IslamTimeWorld</div>
-        <div class="db-date-uz" id="db-date-uz">—</div>
-        <div class="db-date-ar" id="db-date-ar">—</div>
+      <div class="db-location-block">
+        <div class="db-location-line">
+          <span class="db-location-pin" aria-hidden="true">●</span>
+          <span class="db-city-name" id="db-city-name">GPS</span>
+        </div>
+        <div class="db-location-date">
+          <span class="db-date-uz" id="db-date-uz">—</span>
+          <span class="db-date-ar" id="db-date-ar">—</span>
+        </div>
         <div class="db-slogan">${t('sloganDua', _lang)}</div>
       </div>
       <div class="db-top-right">
-        <div class="db-city-badge" id="db-city-badge">
-          <span class="db-city-dot"></span>
-          <span class="db-city-name" id="db-city-name">GPS</span>
-        </div>
         <button class="db-lang-btn" id="db-lang-btn" aria-label="Change language">
           <span>${flag}</span>
           <span>${_lang.toUpperCase()}</span>
@@ -262,11 +287,11 @@ const DashboardScreen = (function () {
 
   <button class="db-hadith-card" id="db-hadith-card" type="button">
     <span class="material-symbols-rounded db-hadith-icon" data-icon="auto_stories" aria-hidden="true">auto_stories</span>
-    <span class="db-hadith-copy"><strong>${_T('Kun hadisi','Кун ҳадиси','Хадис дня','Hadith of the day')}</strong><small>${_T('Tasdiqlangan hadislar','Тасдиқланган ҳадислар','Проверенные хадисы','Verified hadiths')} · HadeethEnc</small></span>
+    <span class="db-hadith-copy"><strong>${_T('Kun hadisi','Кун ҳадиси','Хадис дня','Hadith of the day')}</strong><small id="db-hadith-daily">${_T('Tasdiqlangan hadislar','Тасдиқланган ҳадислар','Проверенные хадисы','Verified hadiths')} · HadeethEnc</small></span>
     <span class="material-symbols-rounded db-hadith-arrow" data-icon="chevron_right" aria-hidden="true">chevron_right</span>
   </button>
 
-  <div class="db-section-lbl db-haramayn-label"><span>${_T('Haramayn LIVE','Ҳарамайн LIVE','Харамайн LIVE','Haramayn LIVE')}</span><button type="button" id="db-haramayn-all">${_T("Barchasini ko'rish",'Барчасини кўриш','Смотреть все','View all')} <span aria-hidden="true">›</span></button></div>
+  <div class="db-section-lbl db-haramayn-label"><span>${_T('Haramayn','Ҳарамайн','Харамайн','Haramayn')}</span><button type="button" id="db-haramayn-all">${_T("Barchasini ko'rish",'Барчасини кўриш','Смотреть все','View all')} <span aria-hidden="true">›</span></button></div>
   <div class="db-haramayn-row" id="db-haramayn-row">
     <div class="db-haramayn-mini db-haramayn-mini--loading">${_l('loading')}</div>
   </div>
@@ -280,29 +305,31 @@ const DashboardScreen = (function () {
   async function _loadHaramaynRow() {
     const wrap = _el?.querySelector('#db-haramayn-row');
     if (!wrap) return;
-    try {
-      const r = await fetch('/api/haramayn/status');
-      const d = await r.json();
-      const sites = d.sites || [];
-      const IMG = { makkah: 'assets/landing/haram-makkah.webp', madinah: 'assets/landing/haram-madinah.webp' };
-      const NAME = {
-        makkah:  _T('Makkah LIVE','Макка LIVE','Мекка LIVE','Makkah LIVE'),
-        madinah: _T('Madina LIVE','Мадина LIVE','Медина LIVE','Madinah LIVE'),
-      };
-      wrap.innerHTML = sites.map(s => `
-        <button class="db-haramayn-mini" data-site="${s.site_id}">
-          <img src="${IMG[s.site_id]}" alt="${s.mosque_en}" loading="lazy">
-          <div class="db-haramayn-mini-badge">${s.status === 'LIVE_EMBED_ACTIVE' ? '🔴 LIVE' : _T('Tez orada','Тез орада','Скоро','Soon')}</div>
-          <div class="db-haramayn-mini-name">${NAME[s.site_id] || s.name_en}</div>
+    const fallback = [
+      { site_id:'makkah', mosque_en:'Masjid al-Haram', status:'UNAVAILABLE_NOT_CONFIRMED' },
+      { site_id:'madinah', mosque_en:'Masjid an-Nabawi', status:'UNAVAILABLE_NOT_CONFIRMED' },
+    ];
+    const paint = sites => {
+      const IMG = { makkah:'assets/landing/haram-makkah.webp', madinah:'assets/landing/haram-madinah.webp' };
+      const NAME = { makkah:_T('Makkah','Макка','Мекка','Makkah'), madinah:_T('Madina','Мадина','Медина','Madinah') };
+      wrap.innerHTML = sites.map(site => `
+        <button class="db-haramayn-mini" data-site="${site.site_id}">
+          <img src="${IMG[site.site_id]}" alt="${site.mosque_en}" loading="lazy">
+          <div class="db-haramayn-mini-badge">${site.status === 'LIVE_EMBED_ACTIVE' ? '🔴 LIVE' : _T('Mavjud emas','Мавжуд эмас','Недоступно','Unavailable')}</div>
+          <div class="db-haramayn-mini-name">${NAME[site.site_id]}</div>
         </button>`).join('');
-      wrap.querySelectorAll('.db-haramayn-mini').forEach(btn => {
-        btn.addEventListener('click', () => {
-          HaramaynScreen.load(_lang);
-          window.App.navigate('screen-haramayn');
-        });
-      });
+      wrap.querySelectorAll('.db-haramayn-mini').forEach(btn => btn.addEventListener('click', () => {
+        HaramaynScreen.load(_lang);
+        window.App.navigate('screen-haramayn');
+      }));
+    };
+    try {
+      const r = await fetch('/api/haramayn/status', { signal: AbortSignal.timeout(5000) });
+      if (!r.ok) throw new Error('status unavailable');
+      const d = await r.json();
+      paint(d.sites?.length ? d.sites : fallback);
     } catch {
-      wrap.innerHTML = `<div class="db-haramayn-mini db-haramayn-mini--loading">—</div>`;
+      paint(fallback);
     }
   }
 
@@ -412,7 +439,10 @@ const DashboardScreen = (function () {
         return { key: p.key, time: p.time, countdown_seconds: Math.max(0, (pMin - nowMin) * 60 - nowSec) };
       }
     }
-    return null;  // all prayers done for today
+    const first = prayers.find(p => p.time && p.time.includes(':'));
+    if (!first) return null;
+    const [fh, fm] = first.time.split(':').map(Number);
+    return { key:first.key, time:first.time, tomorrow:true, countdown_seconds:Math.max(0, ((24 * 60 - nowMin) + fh * 60 + fm) * 60 - nowSec) };
   }
 
   function _loadPrayer() {
@@ -504,6 +534,13 @@ const DashboardScreen = (function () {
 
     /* weather widget */
     _renderWeather(data.weather);
+
+    const hadithEl = _el?.querySelector('#db-hadith-daily');
+    const dailyHadith = data.daily_hadith;
+    if (hadithEl && dailyHadith?.text) {
+      const text = String(dailyHadith.text).trim();
+      hadithEl.textContent = `“${text.length > 82 ? text.slice(0, 79) + '…' : text}” · ${dailyHadith.source || 'HadeethEnc'}`;
+    }
   }
 
   function _renderWeather(w) {

@@ -84,122 +84,49 @@ const HadithScreen = (function () {
   let _katView      = 'grid'; // 'grid' | 'chapters' | 'muslim-books'
 
   /* ══════════════════════════════════════════════
-     Under-Verification screen (MVP)
-  ══════════════════════════════════════════════ */
-  function _underVerificationHTML() {
-    const isAr  = _lang === 'ar';
-    const _ML = (map) => map[_lang] || map.uz;
-    const title = _ML({
-      uz:'Ilmiy va huquqiy tekshiruv ostida', uz_cyr:'Илмий ва ҳуқуқий текшируv остида',
-      ru:'На научной и юридической проверке',  en:'Under Scholarly and Legal Review',
-      tr:'İlmi ve hukuki inceleme altında',    ar:'قيد المراجعة العلمية والقانونية',
-      kk:'Ғылыми және заңдық тексеруде',       tg:'Таҳти баррасии илмӣ ва ҳуқуқӣ',
-      ky:'Илимий жана юридикалык текшерүүдө', de:'Unter wissenschaftlicher und rechtlicher Prüfung',
-      fr:'En cours d\'examen scientifique et juridique', id:'Di Bawah Tinjauan Ilmiah dan Hukum',
-      hi:'वैज्ञानिक और कानूनी समीक्षा के अंतर्गत', ur:'علمی اور قانونی جائزے کے مرحلے میں',
-    });
-    const body1 = _ML({
-      uz:     "Hadislar bo'limi ilmiy va huquqiy tekshiruvdan o'tmoqda.",
-      uz_cyr: "Ҳадислар бўлими илмий ва ҳуқуқий текширувдан ўтмоқда.",
-      ru:     "Раздел хадисов проходит научную и юридическую проверку.",
-      en:     "Hadith module is under scholarly and legal review.",
-      tr:     "Hadis bölümü ilmî ve hukuki inceleme sürecindedir.",
-      ar:     "قسم الأحاديث قيد المراجعة العلمية والقانونية.",
-      kk:     "Хадис бөлімі ғылыми және құқықтық тексерістен өтіп жатыр.",
-      tg:     "Бахши ҳадисҳо дар ҳоли санҷиши илмӣ ва ҳуқуқӣ аст.",
-      ky:     "Хадис бөлүмү илимий жана укуктук текшерүүдөн өтүүдө.",
-      de:     "Der Hadith-Bereich befindet sich in wissenschaftlicher und rechtlicher Prüfung.",
-      fr:     "Le module des hadiths est en cours de vérification scientifique et juridique.",
-      id:     "Modul Hadis sedang dalam proses verifikasi ilmiah dan hukum.",
-      hi:     "हदीस अनुभाग शैक्षिक और कानूनी सत्यापन प्रक्रिया में है।",
-      ur:     "حدیث کا شعبہ علمی اور قانونی تصدیق کے مرحلے میں ہے۔",
-    });
-    const body2 = _ML({
-      uz:     "Faqat tekshirilgan va litsenziyalangan manbalar nashr etiladi.",
-      uz_cyr: "Фақат текширилган ва лицензияланган манбалар нашр этилади.",
-      ru:     "Будут опубликованы только проверенные и лицензированные источники.",
-      en:     "Only verified and licensed sources will be published.",
-      tr:     "Yalnızca doğrulanmış ve lisanslı kaynaklar yayınlanacaktır.",
-      ar:     "ستُنشر فقط المصادر الموثقة والمرخصة.",
-      kk:     "Тек тексерілген және лицензияланған көздер жарияланады.",
-      tg:     "Танҳо сарчашмаҳои тасдиқшуда ва иҷозатнома дошта нашр мешаванд.",
-      ky:     "Текшерилген жана лицензияланган булактар гана жарыяланат.",
-      de:     "Nur geprüfte und lizenzierte Quellen werden veröffentlicht.",
-      fr:     "Seules les sources vérifiées et licenciées seront publiées.",
-      id:     "Hanya sumber yang terverifikasi dan berlisensi yang akan diterbitkan.",
-      hi:     "केवल सत्यापित और लाइसेंस प्राप्त स्रोत प्रकाशित किए जाएंगे।",
-      ur:     "صرف تصدیق شدہ اور لائسنس یافتہ ذرائع شائع کیے جائیں گے۔",
-    });
-    const backLbl = _ML({uz:'Menyu',uz_cyr:'Меню',ru:'Меню',en:'Menu',tr:'Menü',ar:'القائمة',
-      kk:'Мәзір',tg:'Меню',ky:'Меню',de:'Menü',fr:'Menu',id:'Menu',hi:'मेनू',ur:'مینو'});
-    return `<div class="screen-inner" style="padding:0">
-  <div class="hd-hdr hd-hdr--photo">
-    <img class="hd-hdr-photo" src="assets/landing/haram-makkah.webp" alt="Masjid al-Haram" loading="eager">
-    <div class="nm-tile-bg"></div>
-    <div class="nm-tile-ov"></div>
-    <div class="hd-hdr-inner">
-      <div class="hd-nav-row">
-        <button class="hd-back" id="hd-verify-back">← ${backLbl}</button>
-      </div>
-      <div class="hd-title">${_T('Hadis kitoblari','Ҳадис китоблари','Книги хадисов','Hadith Books')}</div>
-      <div class="hd-ar-sub">كتب الحديث الشريف</div>
-    </div>
-  </div>
-  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:50vh;padding:32px 24px;text-align:${isAr ? 'right' : 'center'}" dir="${isAr ? 'rtl' : 'ltr'}">
-    <span class="material-symbols-rounded hd-state-icon" data-icon="verified_user" aria-hidden="true">verified_user</span>
-    <div style="font-size:18px;font-weight:700;color:#16794A;margin-bottom:12px">${title}</div>
-    <div style="font-size:14px;color:rgba(22,33,43,.75);line-height:1.65;max-width:300px;margin-bottom:8px">${body1}</div>
-    <div style="font-size:13px;color:rgba(22,33,43,.5);line-height:1.65;max-width:300px">${body2}</div>
-  </div>
-</div>`;
-  }
-
-  /* ══════════════════════════════════════════════
      Entry points
   ══════════════════════════════════════════════ */
   function render() {
     _lang = window.App?.state?.lang || 'uz';
     _el = document.getElementById('screen-hadith');
     if (!_el) return;
-    _el.innerHTML = _underVerificationHTML();
-    _el.querySelector('#hd-verify-back')?.addEventListener('click', () => window.App.navigate('screen-dashboard'));
+    _el.innerHTML = _buildHTML();
+    _bind();
   }
 
   function load(lang) {
-    _lang = lang;
+    _lang = lang || window.App?.state?.lang || 'uz';
     _el = document.getElementById('screen-hadith');
     if (!_el) return;
-    _el.innerHTML = _underVerificationHTML();
-    _el.querySelector('#hd-verify-back')?.addEventListener('click', () => window.App.navigate('screen-dashboard'));
+    _collection = 'verified';
+    _tab = 'hadiths'; _page = 1; _selIdx = null; _searchVal = '';
+    _el.innerHTML = _buildHTML();
+    _bind();
+    _fetchPage();
   }
 
   /* ══════════════════════════════════════════════
      HTML builders
   ══════════════════════════════════════════════ */
   function _buildHTML() {
-    const langMeta = (typeof LANG_META !== 'undefined') ? LANG_META[_lang] : null;
+    const langMeta = (typeof LANG_META !== 'undefined' && Array.isArray(LANG_META)) ? LANG_META.find(x => x.code === _lang) : null;
     const langLbl  = langMeta ? (langMeta.flag + ' ' + langMeta.name) : _lang.toUpperCase();
 
-    const booksHTML = ['bukhari', 'muslim'].map(k => {
-      const b   = BOOKS[k];
-      const act = _collection === k;
-      const c   = k === 'bukhari' ? 'gold' : 'purple';
-      return `<button class="hd-book-btn${act ? ' ' + c : ''}" data-col="${k}">
-  <div class="hd-book-name${act ? ' ' + c : ''}">${_esc(_bLbl(b))}</div>
-  <div class="hd-book-cnt">${b.count} ${_T('hadis','ҳадис','хадисов','hadiths')}</div>
-</button>`;
-    }).join('\n');
+    const booksHTML = `<div class="hd-book-btn gold" aria-label="HadeethEnc verified collection">
+  <div class="hd-book-name gold">HadeethEnc</div>
+  <div class="hd-book-cnt">144 ${_T('tasdiqlangan hadis','тасдиқланган ҳадис','проверенных хадисов','verified hadiths')}</div>
+</div>`;
 
     const tabsHTML = [
-      { k: 'hadiths',    l: '📜 ' + _T('Hadislar','Ҳадислар','Хадисы','Hadiths')      },
-      { k: 'qidiruv',    l: '🔍 ' + _T('Qidiruv','Қидирув','Поиск','Search')          },
-      { k: 'kategoriya', l: "📂 " + _T("Bo'limlar","Бўлимлар","Разделы",'Categories') },
+      { k: 'hadiths', l: _T('Hadislar','Ҳадислар','Хадисы','Hadiths') },
+      { k: 'qidiruv', l: _T('Qidiruv','Қидирув','Поиск','Search') },
     ].map(t =>
       `<button class="hd-tab${_tab === t.k ? ' active' : ''}" data-tab="${t.k}">${t.l}</button>`
     ).join('\n');
 
     return `
-<div class="hd-hdr">
+<div class="hd-hdr hd-hdr--photo">
+  <img class="hd-hdr-photo" src="assets/landing/hero-bg.webp" alt="Masjid al-Haram" loading="eager">
   <div class="nm-tile-bg"></div>
   <div class="nm-tile-ov"></div>
   <div class="hd-hdr-inner">
@@ -664,9 +591,8 @@ ${loading}`;
     _refreshBody(); // shows spinner (empty list = spinner)
 
     try {
-      const chParam = _selChapterId !== null ? `&chapter_id=${_selChapterId}` : '';
       const resp = await fetch(
-        `/api/hadith?collection=${_collection}&page=${_page}&limit=${PAGE_SIZE}&lang=${_lang}${chParam}`
+        `/api/hadeethenc?page=${_page}&limit=${PAGE_SIZE}&lang=${_lang}`
       );
       if (!resp.ok) throw new Error('api');
       const data   = await resp.json();
@@ -693,7 +619,7 @@ ${loading}`;
 
     try {
       const resp = await fetch(
-        `/api/hadith/search?q=${encodeURIComponent(q)}&collection=${_collection}&lang=${_lang}`
+        `/api/hadeethenc?q=${encodeURIComponent(q)}&limit=50&lang=${_lang}`
       );
       if (!resp.ok) throw new Error('api');
       const data   = await resp.json();

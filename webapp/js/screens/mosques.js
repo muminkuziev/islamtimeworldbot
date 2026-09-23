@@ -187,7 +187,7 @@ const MosquesScreen = (function () {
   function _changeLocation() {
     localStorage.removeItem('islamtime_last_lat');
     localStorage.removeItem('islamtime_last_lon');
-    ['uz','uz_cyr','ru','en','tr','ar','kk','tg','ky','de','fr','id','hi','ur'].forEach(l =>
+    ['ar','en','id','ur','bn','fr','hi','fa','tr','ru','uz','de','ms','uz_cyr','kk','tg','ky'].forEach(l =>
       localStorage.removeItem('islamtime_mosques_' + l + '_v2')
     );
     _lat = null; _lon = null; _city = '';
@@ -245,9 +245,6 @@ const MosquesScreen = (function () {
 );
 out center tags;`.trim();
 
-    /* Log for debugging (req 6) */
-    console.log(`[MOSQUES] user_id=${_userId} lat=${_lat?.toFixed(4)} lon=${_lon?.toFixed(4)} city="${_city||'-'}" radius=${radius}m`);
-
     try {
       const resp = await fetch(OVERPASS_URL, {
         method : 'POST',
@@ -271,6 +268,10 @@ out center tags;`.trim();
           opening_hours: t.opening_hours || '',
           phone: t.phone || t['contact:phone'] || t['contact:mobile'] || '',
           juma : t['prayer:friday'] || '',
+          photo: /^https:\/\//i.test(t.image || '') ? t.image : '',
+          website: /^https?:\/\//i.test(t.website || t['contact:website'] || '') ? (t.website || t['contact:website']) : '',
+          wheelchair: t.wheelchair === 'yes',
+          toilets: t.toilets === 'yes',
           distance: _haversine(_lat, _lon, lat, lon),
         };
       }).filter(Boolean).sort((a, b) => a.distance - b.distance);
@@ -416,9 +417,13 @@ out center tags;`.trim();
         ).replace('{n}', rKm)}</div>`
       : '';
     const notice = expandNotice;
-    if (_tab === 'royxat') return notice + (_selIdx !== null ? _buildDetail() : _buildList());
-    if (_tab === 'xarita') return notice + _buildMap();
-    if (_tab === 'jadval') return notice + _buildJadval();
+    const radiusBar = `<div class="ms-radius-bar" aria-label="${_T('Qidiruv radiusi','Қидирув радиуси','Радиус поиска','Search radius')}">
+      ${[2,5,10,25].map(km => `<button type="button" class="ms-radius-btn${_radius === km * 1000 ? ' active' : ''}" data-radius="${km * 1000}">${km} km</button>`).join('')}
+      <span class="ms-radius-filter">☰ ${_T('Filtr','Филтр','Фильтр','Filter')}</span>
+    </div>`;
+    if (_tab === 'royxat') return radiusBar + notice + (_selIdx !== null ? _buildDetail() : _buildList());
+    if (_tab === 'xarita') return radiusBar + notice + _buildMap();
+    if (_tab === 'jadval') return radiusBar + notice + _buildJadval();
     return '';
   }
 
@@ -430,7 +435,10 @@ out center tags;`.trim();
       const isOpen = _isOpen(m.opening_hours);
       const dot    = isOpen === true ? '#4fcfa0' : isOpen === false ? '#e05555' : 'rgba(22,33,43,.28)';
       const txt    = isOpen === true ? `${_T('Ochiq','Очиқ','Открыто','Open')} · ${m.closes || ''}`.trimEnd().replace(/·\s*$/, '') : isOpen === false ? _T('Yopiq','Ёпиқ','Закрыто','Closed') : '';
+      const routeUrl = `https://www.google.com/maps/dir/?api=1&destination=${m.lat},${m.lon}`;
+      const facility = [m.wheelchair ? _T('Nogironlar uchun','Ногиронлар учун','Доступная среда','Wheelchair access') : '', m.toilets ? _T('Tahoratxona','Таҳоратхона','Удобства','Facilities') : ''].filter(Boolean);
       return `<div class="ms-card" data-idx="${i}">
+  <img class="ms-card-photo" src="${m.photo ? _esc(m.photo) : 'assets/reference-ui/mosque-hero.png'}" alt="${_esc(m.name || 'Masjid')}" loading="lazy" referrerpolicy="no-referrer">
   <div class="ms-card-top">
     <div class="ms-card-left">
       <div class="ms-card-name">${_esc(m.name || 'Masjid')}</div>
@@ -443,9 +451,10 @@ out center tags;`.trim();
     </div>
   </div>
   <div class="ms-card-foot">
-    <div class="ms-open-dot" style="background:${dot}"></div>
-    ${txt ? `<span class="ms-open-txt" style="color:${dot}">${_esc(txt)}</span>` : ''}
-    ${m.opening_hours && !txt ? `<span class="ms-card-hours">${_esc(m.opening_hours.substring(0, 16))}</span>` : ''}
+    ${txt ? `<div class="ms-open-dot" style="background:${dot}"></div><span class="ms-open-txt" style="color:${dot}">${_esc(txt)}</span>` : ''}
+    ${m.opening_hours && !txt ? `<span class="ms-card-hours">${_esc(m.opening_hours.substring(0, 28))}</span>` : ''}
+    ${facility.map(x => `<span class="ms-facility">${_esc(x)}</span>`).join('')}
+    <a class="ms-card-route" href="${routeUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${_T("Yo'nalish","Йўналиш","Маршрут","Directions")} ↗</a>
   </div>
 </div>`;
     }).join('')}</div>
@@ -569,7 +578,7 @@ ${_mosques.slice(0, 8).map(m => {
     </div>
   </div>
   <div class="ms-jadval-grid">
-    <div class="ms-jadval-cell"><div class="ms-jadval-lbl">${_T('Juma','Жума','Джума','Jumu\'ah')}</div><div class="ms-jadval-val">${_esc(m.juma || '13:00')}</div></div>
+    <div class="ms-jadval-cell"><div class="ms-jadval-lbl">${_T('Juma','Жума','Джума','Jumu\'ah')}</div><div class="ms-jadval-val">${m.juma ? _esc(m.juma) : '—'}</div></div>
     <div class="ms-jadval-cell"><div class="ms-jadval-lbl">${_T('Ish vaqti','Иш вақти','Часы работы','Opening hours')}</div><div class="ms-jadval-val">${m.opening_hours ? _esc(m.opening_hours.substring(0,10)) : '—'}</div></div>
     <div class="ms-jadval-cell"><div class="ms-jadval-lbl">${_T('Yurish','Юриш','Ходьба','Walk')}</div><div class="ms-jadval-val">${walk} min</div></div>
   </div>
@@ -595,6 +604,14 @@ ${_mosques.slice(0, 8).map(m => {
       });
     });
     _el.querySelector('#ms-body')?.addEventListener('click', e => {
+      const radiusBtn = e.target.closest('.ms-radius-btn');
+      if (radiusBtn) {
+        _selIdx = null;
+        _loading = true;
+        _refreshBody();
+        _fetchMosques(false, Number(radiusBtn.dataset.radius));
+        return;
+      }
       if (e.target.closest('#ms-request-loc'))  { _changeLocation(); return; }
       if (e.target.closest('#ms-go-location'))  { window.App.navigate('screen-location'); return; }
       if (e.target.closest('#ms-go-home'))      { window.App.navigate('screen-dashboard'); return; }

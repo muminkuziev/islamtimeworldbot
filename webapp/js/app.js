@@ -41,11 +41,11 @@
     { id: 'screen-others',    icon: 'grid_view',      key: 'more' },
   ];
   const NAV_LABELS = {
-    home:     {uz:'Bosh sahifa',uz_cyr:'Бош саҳифа',ru:'Главная',en:'Home',tr:'Ana sayfa',ar:'الرئيسية',kk:'Басты бет',tg:'Асосӣ',ky:'Башкы бет',de:'Start',fr:'Accueil',id:'Beranda',hi:'होम',ur:'ہوم'},
-    quran:    {uz:"Qur'on",uz_cyr:'Қуръон',ru:'Коран',en:'Quran',tr:'Kur’an',ar:'القرآن',kk:'Құран',tg:'Қуръон',ky:'Куран',de:'Koran',fr:'Coran',id:'Al-Quran',hi:'क़ुरआन',ur:'قرآن'},
-    prayer:   {uz:'Namoz',uz_cyr:'Намоз',ru:'Намаз',en:'Prayer',tr:'Namaz',ar:'الصلاة',kk:'Намаз',tg:'Намоз',ky:'Намаз',de:'Gebet',fr:'Prière',id:'Salat',hi:'नमाज़',ur:'نماز'},
-    calendar: {uz:'Taqvim',uz_cyr:'Тақвим',ru:'Календарь',en:'Calendar',tr:'Takvim',ar:'التقويم',kk:'Күнтізбе',tg:'Тақвим',ky:'Жылнаама',de:'Kalender',fr:'Calendrier',id:'Kalender',hi:'कैलेंडर',ur:'تقویم'},
-    more:     {uz:"Ko'proq",uz_cyr:'Кўпроқ',ru:'Ещё',en:'More',tr:'Daha fazla',ar:'المزيد',kk:'Қосымша',tg:'Бештар',ky:'Дагы',de:'Mehr',fr:'Plus',id:'Lainnya',hi:'और',ur:'مزید'},
+    home:     {uz:'Bosh sahifa',uz_cyr:'Бош саҳифа',ru:'Главная',en:'Home',tr:'Ana sayfa',ar:'الرئيسية',kk:'Басты бет',tg:'Асосӣ',ky:'Башкы бет',de:'Start',fr:'Accueil',id:'Beranda',hi:'होम',ur:'ہوم',bn:'হোম',fa:'خانه',ms:'Utama'},
+    quran:    {uz:"Qur'on",uz_cyr:'Қуръон',ru:'Коран',en:'Quran',tr:'Kur’an',ar:'القرآن',kk:'Құран',tg:'Қуръон',ky:'Куран',de:'Koran',fr:'Coran',id:'Al-Quran',hi:'क़ुरआन',ur:'قرآن',bn:'কুরআন',fa:'قرآن',ms:'Al-Quran'},
+    prayer:   {uz:'Namoz',uz_cyr:'Намоз',ru:'Намаз',en:'Prayer',tr:'Namaz',ar:'الصلاة',kk:'Намаз',tg:'Намоз',ky:'Намаз',de:'Gebet',fr:'Prière',id:'Salat',hi:'नमाज़',ur:'نماز',bn:'নামাজ',fa:'نماز',ms:'Solat'},
+    calendar: {uz:'Taqvim',uz_cyr:'Тақвим',ru:'Календарь',en:'Calendar',tr:'Takvim',ar:'التقويم',kk:'Күнтізбе',tg:'Тақвим',ky:'Жылнаама',de:'Kalender',fr:'Calendrier',id:'Kalender',hi:'कैलेंडर',ur:'تقویم',bn:'ক্যালেন্ডার',fa:'تقویم',ms:'Kalendar'},
+    more:     {uz:"Ko'proq",uz_cyr:'Кўпроқ',ru:'Ещё',en:'More',tr:'Daha fazla',ar:'المزيد',kk:'Қосымша',tg:'Бештар',ky:'Дагы',de:'Mehr',fr:'Plus',id:'Lainnya',hi:'और',ur:'مزید',bn:'আরও',fa:'بیشتر',ms:'Lagi'},
   };
   const MORE_SCREENS = new Set([
     'screen-others','screen-settings','screen-qibla','screen-mosques','screen-hadith',
@@ -156,13 +156,13 @@
   }
 
   /* ── Supported active languages — all 14 enabled ── */
-  const _ACTIVE_LANGS = new Set(['uz','uz_cyr','ru','en','tr','ar','kk','tg','ky','de','fr','id','hi','ur']);
+  const _ACTIVE_LANGS = new Set(['ar','en','id','ur','bn','fr','hi','fa','tr','ru','uz','de','ms','uz_cyr','kk','tg','ky']);
 
   /* ── Auto-detect language from URL param or Telegram SDK ── */
   function _detectLang() {
     const _LANG_MAP = {
       uz: 'uz', ru: 'ru', en: 'en', ar: 'ar',
-      tr: 'tr', de: 'de', fr: 'fr',
+      tr: 'tr', de: 'de', fr: 'fr', fa: 'fa', bn: 'bn', ms: 'ms',
       kk: 'kk', id: 'id', hi: 'hi', ur: 'ur',
       ky: 'ky', tg: 'tg',
     };

@@ -42,6 +42,8 @@ const DhikrScreen = (function () {
   let _snd      = false;
   let _modal    = null;
   let _audioCtx = null;
+  let _listFilter = 'all';
+  let _search = '';
 
   /* ── localStorage ─────────────────────────────────────────────────────── */
   function _counts()   { try { return JSON.parse(localStorage.getItem(LS)||'{}'); } catch { return {}; } }
@@ -133,7 +135,14 @@ const DhikrScreen = (function () {
     const total  = Object.values(counts).reduce((a, b) => a + b, 0);
     const circ   = 2 * Math.PI * 17;
 
-    const rows = ZIKIRLAR.map(z => {
+    const visible = ZIKIRLAR.filter(z => {
+      const cnt = counts[z.id] || 0;
+      const matchesState = _listFilter === 'all' || (_listFilter === 'done' && cnt >= z.t);
+      const needle = _search.trim().toLocaleLowerCase();
+      const haystack = [z.ar, z.tr, _zUz(z), z.ref].join(' ').toLocaleLowerCase();
+      return matchesState && (!needle || haystack.includes(needle));
+    });
+    const rows = visible.map(z => {
       const cnt  = counts[z.id] || 0;
       const done = cnt >= z.t;
       const dash = (Math.min(cnt / z.t, 1) * circ).toFixed(2);
@@ -171,11 +180,18 @@ const DhikrScreen = (function () {
                 <span class="zk-today-num">${total}</span>
               </div>` : '<div></div>'}
             </div>
-            <div class="zk-h-title">Zikr &amp; Salavot</div>
+            <div class="zk-h-title">${_T('Zikr va Salovot','Зикр ва Саловот','Зикр и салават','Dhikr & Salawat')}</div>
             <div class="zk-h-ar">الأذكار والصلاة على النبي</div>
           </div>
         </div>
         <div class="zk-list-body">
+          <div class="zk-list-tools">
+            <div class="zk-list-tabs" role="tablist">
+              <button type="button" class="zk-list-tab${_listFilter === 'all' ? ' active' : ''}" data-filter="all">${_T('Barchasi','Барчаси','Все','All')}</button>
+              <button type="button" class="zk-list-tab${_listFilter === 'done' ? ' active' : ''}" data-filter="done">${_T('Bajarilgan','Бажарилган','Выполнено','Completed')}</button>
+            </div>
+            <label class="zk-list-search"><span aria-hidden="true">⌕</span><input id="zk-search" type="search" value="${_search.replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" placeholder="${_T('Zikr qidirish...','Зикр қидириш...','Поиск зикра...','Search dhikr...')}" autocomplete="off"></label>
+          </div>
           <div class="zk-list-hint">${_T('ZIKRNI BOSING — TASBEH REJIMI OCHILADI','ЗИКРНИ БОСИНГ — ТАСБЕҲ РЕЖИМИ ОЧИЛАДИ','НАЖМИТЕ НА ЗИКР — ОТКРОЕТСЯ РЕЖИМ ТАСБИХ','TAP DHIKR — TASBIH MODE OPENS')}</div>
           ${rows}
         </div>
@@ -184,6 +200,13 @@ const DhikrScreen = (function () {
 
   function _bindList(el) {
     el.querySelector('#zk-back')?.addEventListener('click', () => window.App.navigate('screen-dashboard'));
+    el.querySelectorAll('.zk-list-tab').forEach(btn => btn.addEventListener('click', () => {
+      _listFilter = btn.dataset.filter; el.innerHTML = _listHTML(); _bindList(el);
+    }));
+    el.querySelector('#zk-search')?.addEventListener('input', e => {
+      _search = e.target.value; el.innerHTML = _listHTML(); _bindList(el);
+      const input = el.querySelector('#zk-search'); if (input) { input.focus(); input.setSelectionRange(_search.length, _search.length); }
+    });
     el.querySelectorAll('.zk-row').forEach(row => {
       row.addEventListener('click', () => {
         _zikr = ZIKIRLAR.find(z => z.id === row.dataset.id);

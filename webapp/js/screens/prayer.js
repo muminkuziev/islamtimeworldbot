@@ -243,6 +243,9 @@ const PrayerScreen = (function () {
                 <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
               </svg>
             </button>
+            <button id="prayer-tools" class="pm-tools-btn" type="button" aria-label="Bo'limlar" aria-expanded="false">
+              <span class="material-symbols-rounded" data-icon="settings" aria-hidden="true">settings</span>
+            </button>
           </div>
           <div class="q-title-block">
             <div class="q-title-main" id="prayer-title">${_l('title', _lang)}</div>
@@ -265,6 +268,11 @@ const PrayerScreen = (function () {
 
     document.getElementById('prayer-back').addEventListener('click', _goBack);
     document.getElementById('prayer-hdr-refresh').addEventListener('click', _onRefresh);
+    document.getElementById('prayer-tools')?.addEventListener('click', function () {
+      const row = document.getElementById('pm-tabs-row');
+      const open = row?.classList.toggle('pm-tabs-open') || false;
+      this.setAttribute('aria-expanded', String(open));
+    });
     _bindTabs();
     _fitContent();
     try { window.Telegram?.WebApp?.onEvent('viewportChanged', _fitContent); } catch (_) {}
@@ -331,6 +339,8 @@ const PrayerScreen = (function () {
         _tab = btn.dataset.tab;
         row.querySelectorAll('.q-tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
+        row.classList.remove('pm-tabs-open');
+        document.getElementById('prayer-tools')?.setAttribute('aria-expanded', 'false');
         if (_data) _renderTabContent();
         window.Telegram?.WebApp?.HapticFeedback?.selectionChanged();
       });

@@ -41,7 +41,7 @@ class HaramaynSite:
 SITES: dict[str, HaramaynSite] = {
     "makkah": HaramaynSite(
         site_id="makkah",
-        name_en="Makkah LIVE",
+        name_en="Makkah",
         mosque_en="Masjid al-Haram",
         status=UNAVAILABLE_NOT_CONFIRMED,
         embed_url=None,
@@ -55,7 +55,7 @@ SITES: dict[str, HaramaynSite] = {
     ),
     "madinah": HaramaynSite(
         site_id="madinah",
-        name_en="Madinah LIVE",
+        name_en="Madinah",
         mosque_en="Masjid an-Nabawi",
         status=UNAVAILABLE_NOT_CONFIRMED,
         embed_url=None,

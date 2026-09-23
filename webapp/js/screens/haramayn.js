@@ -20,9 +20,13 @@ const HaramaynScreen = (function () {
     madinah: 'assets/landing/haram-madinah.webp',
   };
   const NAMES = {
-    makkah:  { uz:'Makkah LIVE', uz_cyr:'Макка LIVE', ru:'Мекка LIVE', en:'Makkah LIVE' },
-    madinah: { uz:'Madina LIVE', uz_cyr:'Мадина LIVE', ru:'Медина LIVE', en:'Madinah LIVE' },
+    makkah:  { uz:'Makkah', uz_cyr:'Макка', ru:'Мекка', en:'Makkah' },
+    madinah: { uz:'Madina', uz_cyr:'Мадина', ru:'Медина', en:'Madinah' },
   };
+  const FALLBACK_SITES = [
+    { site_id:'makkah', name_en:'Makkah', mosque_en:'Masjid al-Haram', status:'UNAVAILABLE_NOT_CONFIRMED', embed_url:null, official_external_url:'https://www.gph.gov.sa', official_authority:'General Presidency for the Affairs of the Two Holy Mosques' },
+    { site_id:'madinah', name_en:'Madinah', mosque_en:'Masjid an-Nabawi', status:'UNAVAILABLE_NOT_CONFIRMED', embed_url:null, official_external_url:'https://www.gph.gov.sa', official_authority:'General Presidency for the Affairs of the Two Holy Mosques' },
+  ];
   const MOSQUES = {
     makkah:  { uz:'Masjid al-Haram', uz_cyr:'Масжид ал-Ҳаром', ru:'Masjid al-Haram', en:'Masjid al-Haram' },
     madinah: { uz:'Masjid an-Nabaviy', uz_cyr:'Масжид ан-Набавий', ru:'Masjid an-Nabawi', en:'Masjid an-Nabawi' },
@@ -51,7 +55,7 @@ const HaramaynScreen = (function () {
       <div class="hl-screen">
         <div class="hl-header">
           <button class="hl-back" id="hl-back">← ${_T('Bosh sahifa','Бош саҳифа','Главная','Home')}</button>
-          <div class="hl-title">${_T('Haramayn LIVE','Ҳарамайн LIVE','Харамайн LIVE','Haramayn LIVE')}</div>
+          <div class="hl-title">${_T('Haramayn','Ҳарамайн','Харамайн','Haramayn')}</div>
         </div>
         <div id="hl-body" class="hl-body">
           <div class="hl-loading">${_T('Yuklanmoqda…','Юкланмоқда…','Загрузка…','Loading…')}</div>
@@ -62,16 +66,16 @@ const HaramaynScreen = (function () {
   async function _load(el) {
     const body = el.querySelector('#hl-body');
     try {
-      const r = await fetch('/api/haramayn/status');
+      const r = await fetch('/api/haramayn/status', { signal: AbortSignal.timeout(5000) });
+      if (!r.ok) throw new Error('status unavailable');
       const d = await r.json();
       _sites = d.sites || [];
       body.innerHTML = _sites.map(s => _cardHTML(s)).join('');
       _bindCards(el);
     } catch {
-      body.innerHTML = `<div class="hl-error">⚠️ ${_T(
-        "Holatni yuklab bo'lmadi.", "Ҳолатни юклаб бўлмади.",
-        'Не удалось загрузить статус.', 'Could not load status.'
-      )}</div>`;
+      _sites = FALLBACK_SITES;
+      body.innerHTML = _sites.map(s => _cardHTML(s)).join('');
+      _bindCards(el);
     }
   }
 

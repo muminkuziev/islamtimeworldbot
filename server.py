@@ -1934,320 +1934,163 @@ def _muslim_row(r, lang: str) -> dict:
     }
 
 
-# ── Hadith API ─────────────────────────────────────────────────────────────
+# ── Hadith API compatibility (verified HadeethEnc corpus only) ───────────────
 @app.get("/api/hadith")
 async def api_hadith(
-    collection: str      = Query("bukhari"),
-    page:       int      = Query(1, ge=1),
-    limit:      int      = Query(20, ge=1, le=50),
-    lang:       str      = Query("en"),
+    collection: str = Query("hadeethenc"),
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=50),
+    lang: str = Query("en"),
     chapter_id: int|None = Query(None),
 ):
-    """Paginated hadith list. chapter_id filters by specific Bukhari chapter (uz only)."""
-    import math
-    db_path = BASE_DIR / "data" / "hadiths.db"
-    if not db_path.exists():
-        return JSONResponse({"hadiths": [], "total": 0, "page": page, "pages": 0})
+    return await api_hadeethenc(lang=lang, page=page, limit=limit, q="", book="", hadith_id=None)
 
-    col    = "bukhari" if collection != "muslim" else "muslim"
+
+@app.get("/api/hadith/search")
+async def api_hadith_search(
+    q: str = Query(..., max_length=160),
+    collection: str = Query("hadeethenc"),
+    lang: str = Query("en"),
+):
+    return await api_hadeethenc(lang=lang, page=1, limit=50, q=q, book="", hadith_id=None)
+
+
+@app.get("/api/hadith/categories")
+async def api_hadith_categories(lang: str = Query("en")):
+    response = await api_hadeethenc_books(lang)
+    payload = json.loads(response.body)
+    return JSONResponse({"categories": payload.get("books", []), "verified": True})
+
+
+@app.get("/api/hadith/muslim/books")
+async def api_hadith_muslim_books(lang: str = Query("en")):
+    response = await api_hadeethenc_books(lang)
+    payload = json.loads(response.body)
+    return JSONResponse({"books": payload.get("books", []), "verified": True})
+
+
+@app.get("/api/hadith/category")
+async def api_hadith_category(name: str = Query(...), lang: str = Query("en")):
+    return await api_hadeethenc(lang=lang, page=1, limit=50, q="", book=name, hadith_id=None)
+
+
+# ── Verified HadeethEnc API ────────────────────────────────────────────────
+# Every row served here belongs to the integrity-tested 144 x 13 corpus.
+_HADEETHENC_LANGS = {"ar", "en", "id", "ur", "bn", "fr", "hi", "fa", "tr", "ru", "uz", "de", "ms"}
+_HADEETHENC_ALIASES = {"uz_cyr": "uz"}
+
+
+def _hadeethenc_lang(lang: str) -> str:
+    code = (lang or "en").lower().replace("-", "_")
+    code = _HADEETHENC_ALIASES.get(code, code)
+    return code if code in _HADEETHENC_LANGS else "en"
+
+
+def _verified_hadith_row(row, arabic_text: str = "") -> dict:
+    return {
+        "id": row["id"],
+        "title": row["title"] or "",
+        "text": row["hadeeth_text"],
+        "arabic": arabic_text or (row["hadeeth_text"] if row["language"] == "ar" else ""),
+        "attribution": row["attribution"] or "",
+        "grade": row["grade"] or "",
+        "explanation": row["explanation"] or "",
+        "source": row["source"],
+        "source_api": row["source_api"] or "",
+        "language": row["language"],
+    }
+
+
+@app.get("/api/hadeethenc")
+async def api_hadeethenc(
+    lang: str = Query("en"),
+    page: int = Query(1, ge=1),
+    limit: int = Query(12, ge=1, le=50),
+    q: str = Query("", max_length=160),
+    book: str = Query("", max_length=160),
+    hadith_id: str|None = Query(None, max_length=32),
+):
+    """Verified HadeethEnc list, search and detail."""
+    import math
+    import sqlite3
+
+    db_path = BASE_DIR / "data" / "hadeethenc_verified.db"
+    if not db_path.exists():
+        return JSONResponse({"hadiths": [], "total": 0, "page": page, "pages": 0}, status_code=503)
+
+    language = _hadeethenc_lang(lang)
     offset = (page - 1) * limit
-    use_uz = False  # hadiths_uz_bukhari disabled — source under license verification
 
     def _query():
-        import sqlite3
         con = sqlite3.connect(str(db_path))
         con.row_factory = sqlite3.Row
         cur = con.cursor()
-
-        if use_uz:
-            tbl_ok = cur.execute(
-                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='hadiths_uz_bukhari'"
-            ).fetchone()[0]
-            if tbl_ok:
-                if chapter_id is not None:
-                    total = cur.execute(
-                        "SELECT COUNT(*) FROM hadiths_uz_bukhari WHERE chapter_id=?",
-                        (chapter_id,)
-                    ).fetchone()[0]
-                    rows = cur.execute(
-                        "SELECT sort_order, apk_id, jild_id, chapter_id, chapter_name, uz_text "
-                        "FROM hadiths_uz_bukhari WHERE chapter_id=? ORDER BY sort_order LIMIT ? OFFSET ?",
-                        (chapter_id, limit, offset)
-                    ).fetchall()
-                else:
-                    total = cur.execute("SELECT COUNT(*) FROM hadiths_uz_bukhari").fetchone()[0]
-                    rows  = cur.execute(
-                        "SELECT sort_order, apk_id, jild_id, chapter_id, chapter_name, uz_text "
-                        "FROM hadiths_uz_bukhari ORDER BY sort_order LIMIT ? OFFSET ?",
-                        (limit, offset)
-                    ).fetchall()
-                result = [{
-                    "id":            r["sort_order"],
-                    "collection":    "bukhari",
-                    "hadith_number": r["sort_order"],
-                    "narrator":      "",
-                    "text":          r["uz_text"],
-                    "arabic":        "",
-                    "chapter":       r["chapter_name"],
-                    "chapter_id":    r["chapter_id"],
-                    "jild":          r["jild_id"],
-                    "apk_id":        r["apk_id"],
-                } for r in rows]
-                con.close()
-                return result, total
-
-        if col == "muslim":
-            if chapter_id is not None:
-                total = cur.execute(
-                    "SELECT COUNT(*) FROM hadiths_muslim WHERE book_id=?", (chapter_id,)
-                ).fetchone()[0]
-                rows = cur.execute(
-                    "SELECT * FROM hadiths_muslim WHERE book_id=? ORDER BY hadith_number LIMIT ? OFFSET ?",
-                    (chapter_id, limit, offset)
-                ).fetchall()
-            else:
-                total = cur.execute("SELECT COUNT(*) FROM hadiths_muslim").fetchone()[0]
-                rows  = cur.execute(
-                    "SELECT * FROM hadiths_muslim ORDER BY hadith_number LIMIT ? OFFSET ?",
-                    (limit, offset)
-                ).fetchall()
-            result = [_muslim_row(r, lang) for r in rows]
-            con.close()
-            return result, total
-
-        total = cur.execute("SELECT COUNT(*) FROM hadiths WHERE collection=?", (col,)).fetchone()[0]
-        rows  = cur.execute(
-            "SELECT * FROM hadiths WHERE collection=? ORDER BY hadith_number LIMIT ? OFFSET ?",
-            (col, limit, offset)
+        params: list = [language]
+        where = ["h.language=?"]
+        if hadith_id:
+            where.append("h.id=?")
+            params.append(hadith_id)
+        if book:
+            where.append("h.attribution=?")
+            params.append(book)
+        if q.strip():
+            term = f"%{q.strip()}%"
+            where.append("(h.id LIKE ? OR h.title LIKE ? OR h.hadeeth_text LIKE ? OR h.attribution LIKE ? OR h.explanation LIKE ?)")
+            params.extend([term, term, term, term, term])
+        predicate = " AND ".join(where)
+        total = cur.execute(f"SELECT COUNT(*) FROM hadeeth_verified h WHERE {predicate}", params).fetchone()[0]
+        rows = cur.execute(
+            f"SELECT h.* FROM hadeeth_verified h WHERE {predicate} ORDER BY CAST(h.id AS INTEGER), h.id LIMIT ? OFFSET ?",
+            [*params, limit, offset],
         ).fetchall()
-        result = [dict(r) for r in rows]
+        ids = [r["id"] for r in rows]
+        arabic = {}
+        if ids:
+            marks = ",".join("?" for _ in ids)
+            arabic = {r["id"]: r["hadeeth_text"] for r in cur.execute(
+                f"SELECT id, hadeeth_text FROM hadeeth_verified WHERE language='ar' AND id IN ({marks})", ids
+            ).fetchall()}
+        result = [_verified_hadith_row(r, arabic.get(r["id"], "")) for r in rows]
         con.close()
         return result, total
 
     try:
         rows, total = await asyncio.to_thread(_query)
-        return JSONResponse({"hadiths": rows, "total": total,
-                             "page": page, "pages": math.ceil(total / limit)})
-    except Exception as e:
-        return JSONResponse({"error": str(e)}, status_code=500)
+        return JSONResponse({
+            "hadiths": rows, "total": total, "page": page,
+            "pages": math.ceil(total / limit) if total else 0,
+            "language": language, "verified": True,
+        })
+    except Exception as exc:
+        return JSONResponse({"error": str(exc)}, status_code=500)
 
 
-@app.get("/api/hadith/categories")
-async def api_hadith_categories(lang: str = Query("en")):
-    """Returns all categories with hadith counts (uz/bukhari only)."""
-    if lang not in ("uz", "uz_cyr"):
-        return JSONResponse({"categories": []})
-    db_path = BASE_DIR / "data" / "hadiths.db"
+@app.get("/api/hadeethenc/books")
+async def api_hadeethenc_books(lang: str = Query("en")):
+    """Collection facets derived only from the verified attribution field."""
+    import sqlite3
+
+    db_path = BASE_DIR / "data" / "hadeethenc_verified.db"
     if not db_path.exists():
-        return JSONResponse({"categories": []})
+        return JSONResponse({"books": [], "total": 0}, status_code=503)
+    language = _hadeethenc_lang(lang)
 
     def _query():
-        import sqlite3
         con = sqlite3.connect(str(db_path))
-        cur = con.cursor()
-        out = []
-        for name, ids in CATEGORY_CHAPTERS.items():
-            if not ids:
-                continue
-            ph  = ",".join("?" * len(ids))
-            row = cur.execute(
-                f"SELECT COUNT(*) FROM hadiths_uz_bukhari WHERE chapter_id IN ({ph})", ids
-            ).fetchone()
-            out.append({"name": name, "count": row[0] if row else 0, "chapter_count": len(ids)})
-        con.close()
-        return out
-
-    try:
-        cats = await asyncio.to_thread(_query)
-        return JSONResponse({"categories": cats})
-    except Exception as e:
-        return JSONResponse({"error": str(e)}, status_code=500)
-
-
-@app.get("/api/hadith/muslim/books")
-async def api_hadith_muslim_books():
-    """Returns the 57 Sahih Muslim books with hadith counts."""
-    db_path = BASE_DIR / "data" / "hadiths.db"
-    if not db_path.exists():
-        return JSONResponse({"books": []})
-
-    def _query():
-        import sqlite3
-        con = sqlite3.connect(str(db_path))
-        cur = con.cursor()
-        rows = cur.execute(
-            "SELECT book_id, chapter_name, COUNT(*) "
-            "FROM hadiths_muslim GROUP BY book_id, chapter_name ORDER BY book_id"
+        rows = con.execute(
+            "SELECT attribution, COUNT(*) FROM hadeeth_verified WHERE language=? "
+            "AND attribution IS NOT NULL AND TRIM(attribution) != '' "
+            "GROUP BY attribution ORDER BY COUNT(*) DESC, attribution",
+            (language,),
         ).fetchall()
         con.close()
-        return [{"book_id": r[0], "name": r[1], "count": r[2]} for r in rows]
+        return [{"name": r[0], "count": r[1]} for r in rows]
 
     try:
         books = await asyncio.to_thread(_query)
-        return JSONResponse({"books": books})
-    except Exception as e:
-        return JSONResponse({"error": str(e)}, status_code=500)
-
-
-@app.get("/api/hadith/category")
-async def api_hadith_category(name: str = Query(...), lang: str = Query("en")):
-    """Returns chapters for a named category (uz/bukhari only)."""
-    ids = CATEGORY_CHAPTERS.get(name, [])
-    if lang not in ("uz", "uz_cyr") or not ids:
-        return JSONResponse({"category": name, "chapters": [], "total": 0})
-    db_path = BASE_DIR / "data" / "hadiths.db"
-    if not db_path.exists():
-        return JSONResponse({"category": name, "chapters": [], "total": 0})
-
-    def _query():
-        import sqlite3
-        con = sqlite3.connect(str(db_path))
-        cur = con.cursor()
-        ph  = ",".join("?" * len(ids))
-        rows = cur.execute(
-            f"SELECT chapter_id, chapter_name, jild_id, COUNT(*) "
-            f"FROM hadiths_uz_bukhari WHERE chapter_id IN ({ph}) "
-            f"GROUP BY chapter_id, chapter_name, jild_id ORDER BY chapter_id",
-            ids
-        ).fetchall()
-        total = cur.execute(
-            f"SELECT COUNT(*) FROM hadiths_uz_bukhari WHERE chapter_id IN ({ph})", ids
-        ).fetchone()[0]
-        chapters = [{"chapter_id": r[0], "chapter_name": r[1], "jild": r[2], "count": r[3]}
-                    for r in rows]
-        con.close()
-        return chapters, total
-
-    try:
-        chapters, total = await asyncio.to_thread(_query)
-        return JSONResponse({"category": name, "chapters": chapters, "total": total})
-    except Exception as e:
-        return JSONResponse({"error": str(e)}, status_code=500)
-
-
-def _strip_harakat(s: str) -> str:
-    """Remove Arabic diacritical marks (harakat/tashkeel) for flexible search."""
-    import re
-    return re.sub(r'[ً-ْٰۖ-ۜ۟-ۭ]', '', s or '')
-
-
-@app.get("/api/hadith/search")
-async def api_hadith_search(
-    q:          str = Query(...),
-    collection: str = Query("bukhari"),
-    lang:       str = Query("en"),
-):
-    """Full-text search. For lang=uz/uz_cyr + bukhari: searches Uzbek translation table."""
-    db_path = BASE_DIR / "data" / "hadiths.db"
-    if not db_path.exists():
-        return JSONResponse({"hadiths": [], "total": 0})
-
-    col    = "bukhari" if collection != "muslim" else "muslim"
-    use_uz = False  # hadiths_uz_bukhari disabled — source under license verification
-
-    def _search():
-        import sqlite3
-        con = sqlite3.connect(str(db_path))
-        con.row_factory = sqlite3.Row
-        cur  = con.cursor()
-        like = f"%{q}%"
-
-        if use_uz:
-            tbl_ok = cur.execute(
-                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='hadiths_uz_bukhari'"
-            ).fetchone()[0]
-            if tbl_ok:
-                # Try numeric search by sort_order
-                try:
-                    num = int(q.strip())
-                    rows = cur.execute(
-                        "SELECT sort_order, apk_id, jild_id, chapter_name, uz_text "
-                        "FROM hadiths_uz_bukhari WHERE sort_order=? LIMIT 1",
-                        (num,)
-                    ).fetchall()
-                except ValueError:
-                    rows = []
-                if not rows:
-                    rows = cur.execute(
-                        "SELECT sort_order, apk_id, jild_id, chapter_name, uz_text "
-                        "FROM hadiths_uz_bukhari "
-                        "WHERE uz_text LIKE ? OR chapter_name LIKE ? LIMIT 50",
-                        (like, like)
-                    ).fetchall()
-                results = [{
-                    "id":            r["sort_order"],
-                    "collection":    "bukhari",
-                    "hadith_number": r["sort_order"],
-                    "narrator":      "",
-                    "text":          r["uz_text"],
-                    "arabic":        "",
-                    "chapter":       r["chapter_name"],
-                    "jild":          r["jild_id"],
-                    "apk_id":        r["apk_id"],
-                } for r in rows]
-                con.close()
-                return results
-
-        if col == "muslim":
-            try:
-                num = int(q.strip())
-                rows = cur.execute(
-                    "SELECT * FROM hadiths_muslim WHERE hadith_number=? LIMIT 1", (num,)
-                ).fetchall()
-            except ValueError:
-                rows = []
-            if not rows:
-                rows = cur.execute(
-                    "SELECT * FROM hadiths_muslim WHERE "
-                    "en_text LIKE ? OR chapter_name LIKE ? LIMIT 50",
-                    (like, like)
-                ).fetchall()
-            q_norm = _strip_harakat(q)
-            if len(rows) < 50 and q_norm and any(0x0600 <= ord(c) <= 0x06FF for c in q_norm):
-                ar_rows = cur.execute(
-                    "SELECT * FROM hadiths_muslim WHERE arabic IS NOT NULL LIMIT 3000"
-                ).fetchall()
-                seen = {r["id"] for r in rows}
-                for row in ar_rows:
-                    if len(rows) >= 50:
-                        break
-                    if row["id"] not in seen and q_norm in _strip_harakat(row["arabic"] or ""):
-                        rows.append(row)
-                        seen.add(row["id"])
-            con.close()
-            return [_muslim_row(r, lang) for r in rows]
-
-        sql_rows = cur.execute(
-            "SELECT * FROM hadiths WHERE collection=? AND "
-            "(narrator LIKE ? OR text LIKE ? OR chapter LIKE ?) LIMIT 50",
-            (col, like, like, like)
-        ).fetchall()
-        results  = [dict(r) for r in sql_rows]
-        seen_ids = {r["id"] for r in results}
-
-        if len(results) < 50:
-            q_norm = _strip_harakat(q)
-            if q_norm and any(0x0600 <= ord(c) <= 0x06FF for c in q_norm):
-                ar_rows = cur.execute(
-                    "SELECT * FROM hadiths WHERE collection=? AND arabic != '' LIMIT 3000",
-                    (col,)
-                ).fetchall()
-                for row in ar_rows:
-                    if len(results) >= 50:
-                        break
-                    d = dict(row)
-                    if d["id"] not in seen_ids and q_norm in _strip_harakat(d.get("arabic", "")):
-                        results.append(d)
-                        seen_ids.add(d["id"])
-
-        con.close()
-        return results
-
-    try:
-        results = await asyncio.to_thread(_search)
-        return JSONResponse({"hadiths": results, "total": len(results)})
-    except Exception as e:
-        return JSONResponse({"error": str(e)}, status_code=500)
+        return JSONResponse({"books": books, "total": 144, "language": language, "verified": True})
+    except Exception as exc:
+        return JSONResponse({"error": str(exc)}, status_code=500)
 
 
 # ── Android App: Device Registration (FCM token) ──────────────────────────
