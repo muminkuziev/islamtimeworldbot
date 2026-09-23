@@ -954,28 +954,18 @@
     .hero-actions .btn-playstore,
     .hero-actions .btn-video { padding: 12px 20px; }
 
-    /* Hero background photo — real photograph of the Kaaba and Masjid
-       al-Haram courtyard (Zakaryaamr, 29 June 2006), Wikimedia Commons,
-       CC BY-SA 3.0 / GNU FDL (https://commons.wikimedia.org/wiki/File:Kaaba_2.JPG).
-       Predates the site's modern construction cranes, so the Kaaba, the
-       arcades and a clear blue sky are all visible with zero crane/
-       construction-site elements. Kept fully visible and bright; only the
-       separate .hero-readability layer below fades the LEFT text column,
-       never the photo itself. */
+    /* Panoramic Makkah scene matched to the approved homepage reference. */
     .hero-bg {
       position: absolute;
       inset: 0;
-      background: url("assets/landing/hero-bg.webp") 61% 50% / cover no-repeat;
-      opacity: 0.92;
+      background: url("assets/landing/hero-makkah-panorama.png") 50% 50% / cover no-repeat;
       pointer-events: none;
     }
-    /* Sibling overlay (not masked/faded itself) — a controlled readability
-       wash over the text column only. The mosque on the right/center stays
-       fully recognizable, never covered by this gradient. */
+    /* A localized wash protects the copy while leaving the panorama vivid. */
     .hero-readability {
       position: absolute;
       inset: 0;
-      background: linear-gradient(100deg, rgba(247,251,249,.97) 0%, rgba(247,251,249,.8) 30%, rgba(247,251,249,.25) 48%, transparent 62%);
+      background: linear-gradient(100deg, rgba(255,255,255,.76) 0%, rgba(255,255,255,.54) 25%, rgba(255,255,255,.12) 43%, transparent 58%);
       pointer-events: none;
     }
     .hero::before { z-index: 0; }
@@ -1238,6 +1228,10 @@
     }
 
     @media (max-width: 1100px) {
+      .hero-bg { background-position: 43% 50%; }
+      .hero-readability {
+        background: linear-gradient(180deg, rgba(255,255,255,.86) 0%, rgba(255,255,255,.66) 45%, rgba(255,255,255,.16) 72%, transparent 100%);
+      }
       .hero-grid {
         grid-template-columns: 1fr;
         text-align: center;
