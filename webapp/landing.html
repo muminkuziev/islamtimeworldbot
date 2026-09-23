@@ -958,7 +958,7 @@
     .hero-bg {
       position: absolute;
       inset: 0;
-      background: url("assets/landing/hero-makkah-panorama.png") 50% 50% / cover no-repeat;
+      background: url("assets/landing/hero-makkah-panorama.png") 0% 50% / cover no-repeat;
       pointer-events: none;
     }
     /* A localized wash protects the copy while leaving the panorama vivid. */
@@ -979,6 +979,7 @@
       width: 100%;
       max-width: 700px;
       margin-inline: auto;
+      transform: translateX(36px);
       aspect-ratio: 1 / 0.97;
       container-type: inline-size;
     }
@@ -1228,7 +1229,8 @@
     }
 
     @media (max-width: 1100px) {
-      .hero-bg { background-position: 43% 50%; }
+      .hero-bg { background-position: 0% 50%; }
+      .phones-showcase { transform: none; }
       .hero-readability {
         background: linear-gradient(180deg, rgba(255,255,255,.86) 0%, rgba(255,255,255,.66) 45%, rgba(255,255,255,.16) 72%, transparent 100%);
       }
@@ -1342,16 +1344,6 @@
   <nav class="navbar" aria-label="Asosiy menyu">
     <div class="container nav-inner">
       <a href="#hero" class="brand" aria-label="IslamTimeWorld — bosh sahifa">
-        <div class="brand-icon" aria-hidden="true">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 3c-1.5 1.5-2 3.5-2 5h4c0-1.5-.5-3.5-2-5z"/>
-            <path d="M4 10h16v11H4z"/>
-            <path d="M9 21v-4a3 3 0 0 1 6 0v4"/>
-            <path d="M2 13h2v8H2z"/>
-            <path d="M20 13h2v8h-2z"/>
-            <path d="M12 3V1"/>
-          </svg>
-        </div>
         <div>
           <div class="brand-title">IslamTimeWorld</div>
           <div class="brand-tagline">Har kuningiz Allohga yaqinroq bo'lsin!</div>
