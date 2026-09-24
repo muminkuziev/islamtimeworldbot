@@ -12,9 +12,9 @@ const QiblaScreen = (function () {
      compass and the 3D globes never disagree. See native/qibla-geo.js */
   const KAABA_LAT = QiblaGeo.KAABA_LAT;
   const KAABA_LON = QiblaGeo.KAABA_LON;
-  const S  = 220;               /* SVG compass size */
-  const CX = 110, CY = 110;    /* center */
-  const R  = 102;               /* radius = S/2 - 8 */
+  const S  = 300;               /* SVG compass size */
+  const CX = 150, CY = 150;    /* center */
+  const R  = 140;               /* radius = S/2 - 10 */
 
   let _lang        = 'uz';
   let _tab         = 'kompas';
@@ -101,10 +101,14 @@ const QiblaScreen = (function () {
   <div class="qb-hdr-inner">
     <div class="qb-nav-row">
       <button class="qb-back" id="qb-back">← ${_T('Menyu','Меню','Меню','Menu')}</button>
-      <div id="qb-gps-badge"></div>
+      <div class="qb-nav-actions">
+        <div id="qb-gps-badge"></div>
+        <button class="qb-settings-btn" id="qb-settings" aria-label="Settings"><span class="material-symbols-rounded" data-icon="settings" aria-hidden="true">settings</span></button>
+      </div>
     </div>
     <div class="qb-title">${_T("Qibla yo'nalishi","Қибла йўналиши","Направление Киблы","Qibla Direction")}</div>
     <div class="qb-artitle">اتجاه القبلة · Masjid al-Haram</div>
+    <div class="qb-verse-intro">“${_T('Masjid al-Haram tomonga yuzlan','Масжид ал-Ҳарам томонига юзлан','Обратись лицом к Масджид аль-Хараму','Turn your face toward Masjid al-Haram')}”<br><span>Al-Baqara 2:144</span></div>
     <div class="qb-hdivider"></div>
     <div class="qb-tabs">
       <button class="qb-tab active" data-tab="kompas"><span class="material-symbols-rounded" data-icon="explore" aria-hidden="true">explore</span> ${_T('Kompas','Компас','Компас','Compass')}</button>
@@ -140,14 +144,8 @@ const QiblaScreen = (function () {
         stroke-width="${isMaj ? 1.5 : 0.8}"/>`;
     }).join('');
 
-    /* S=Shimol(N) Sh=Sharq(E) J=Janub(S) G=G'arb(W) */
-    const cards = _lang === 'uz_cyr'
-      ? [{a:0,l:'Ш'},{a:90,l:'Шр'},{a:180,l:'Ж'},{a:270,l:'Ғ'}]
-      : _lang === 'ru'
-      ? [{a:0,l:'С'},{a:90,l:'В'},{a:180,l:'Ю'},{a:270,l:'З'}]
-      : _lang === 'en'
-      ? [{a:0,l:'N'},{a:90,l:'E'},{a:180,l:'S'},{a:270,l:'W'}]
-      : [{a:0,l:'S'},{a:90,l:'Sh'},{a:180,l:'J'},{a:270,l:'G'}];
+    /* International compass marks stay unambiguous in all 13 languages. */
+    const cards = [{a:0,l:'N'},{a:90,l:'E'},{a:180,l:'S'},{a:270,l:'W'}];
     const cardText = cards.map(({a, l}) => {
       const rad = (a - 90) * Math.PI / 180, r2 = R - 22;
       return `<text x="${(CX + r2*Math.cos(rad)).toFixed(1)}"
@@ -270,6 +268,12 @@ const QiblaScreen = (function () {
     ${(_lang === 'ru' || _lang === 'en') ? '' : `<span style="color:#16794A;font-weight:600"> "8-${_T('raqam','рақам')}" </span>`}
     ${_T('shaklida harakatlantiring','шаклида ҳаракатлантиринг',_lang === 'ru' ? 'в форме цифры "8"' : '', _lang === 'en' ? 'in a figure-8 pattern' : '')}
   </div>
+
+  <button class="qb-masjid-card" id="qb-open-haramayn-card">
+    <img src="assets/haram-makkah.webp" alt="Masjid al-Haram" loading="lazy">
+    <span><strong>Masjid al-Haram</strong><small>${_T('Makka, Saudiya Arabistoni','Макка, Саудия Арабистони','Мекка, Саудовская Аравия','Makkah, Saudi Arabia')}</small></span>
+    <span class="material-symbols-rounded" data-icon="chevron_right" aria-hidden="true">chevron_right</span>
+  </button>
 </div>`;
   }
 
@@ -403,6 +407,12 @@ const QiblaScreen = (function () {
       window.App.navigate('screen-dashboard');
     });
 
+    _el.querySelector('#qb-settings')?.addEventListener('click', () => {
+      unload();
+      SettingsScreen.load(_lang);
+      window.App.navigate('screen-settings');
+    });
+
     _el.querySelectorAll('.qb-tab').forEach(btn => {
       btn.addEventListener('click', () => {
         _tab = btn.dataset.tab;
@@ -418,12 +428,12 @@ const QiblaScreen = (function () {
       });
     });
 
-    _el.querySelector('#qb-open-haramayn')?.addEventListener('click', () => {
+    _el.querySelectorAll('#qb-open-haramayn, #qb-open-haramayn-card').forEach(btn => btn.addEventListener('click', () => {
       // Reuses the one canonical Haramayn module (domain/haramayn/registry.py
       // + HaramaynScreen) — never a second, independent video implementation.
       HaramaynScreen.load(_lang);
       window.App.navigate('screen-haramayn');
-    });
+    }));
 
     _el.querySelector('#qb-ios-permission-btn')?.addEventListener('click', () => {
       DeviceOrientationEvent.requestPermission().then(state => {

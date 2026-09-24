@@ -1,0 +1,123 @@
+/* Reference design extension: secondary screens */
+:root {
+  --rp-green:#008d63;
+  --rp-dark:#0b2630;
+  --rp-muted:#6f8184;
+  --rp-line:#dfece8;
+  --rp-bg:#f7fcfa;
+  --rp-shadow:0 8px 24px rgba(19,76,58,.08);
+}
+
+#screen-hadith,#screen-duas,#screen-dhikr,#screen-calendar,#screen-names,
+#screen-others,#screen-shahodat,#screen-haramayn,#screen-settings,
+#screen-qazo,#screen-monthly-calendar { background:var(--rp-bg)!important; color:var(--rp-dark); }
+#screen-hadith .screen-inner,#screen-duas .screen-inner,#screen-dhikr .screen-inner,
+#screen-calendar .screen-inner,#screen-names .screen-inner,#screen-settings .screen-inner { width:100%; }
+
+/* Photo-led headers, matching the supplied Quran / prayer references. */
+#screen-duas .du-hdr,#screen-names .nm-header,#screen-settings .st-header,
+#screen-calendar .hc-hdr { position:relative; overflow:hidden; min-height:190px; border-radius:0 0 24px 24px; background:#eef8f4; box-shadow:var(--rp-shadow); }
+#screen-duas .du-hdr::before,#screen-names .nm-header::before,
+#screen-settings .st-header::before,#screen-calendar .hc-hdr::before { content:""; position:absolute; inset:0; background:url('../assets/reference-ui/makkah-hero.png') 58% 46%/cover no-repeat; }
+#screen-duas .nm-tile-bg,#screen-names .nm-tile-bg,#screen-settings .nm-tile-bg,#screen-calendar .nm-tile-bg { display:none!important; }
+#screen-duas .nm-tile-ov,#screen-names .nm-tile-ov,#screen-settings .nm-tile-ov,#screen-calendar .nm-tile-ov { display:block!important; background:linear-gradient(90deg,rgba(255,255,255,.98),rgba(255,255,255,.82) 62%,rgba(255,255,255,.16))!important; }
+#screen-duas .du-hdr-inner,#screen-names .nm-header-inner,#screen-settings .st-header-in,#screen-calendar .hc-hdr-inner { position:relative; z-index:1; }
+#screen-duas .du-title,#screen-hadith .hd-title,#screen-dhikr .zk-h-title,
+#screen-names .nm-title,#screen-settings .st-title,#screen-calendar .hc-title {
+  font-family:Georgia,'Times New Roman',serif!important; color:var(--rp-dark)!important;
+  font-size:28px!important; font-weight:700!important; letter-spacing:-.8px!important;
+}
+#screen-duas .du-hdr { padding:12px 14px 14px!important; }
+#screen-duas .du-search-wrap,#screen-names .nm-search-box,#screen-hadith .hd-search-wrap,
+#screen-dhikr .zk-list-search { min-height:46px!important; border:1px solid var(--rp-line)!important; border-radius:15px!important; background:rgba(255,255,255,.92)!important; box-shadow:0 4px 16px rgba(18,72,55,.05); }
+#screen-duas .du-tabs,#screen-hadith .hd-tabs,#screen-calendar .hc-tabs,
+#screen-dhikr .zk-list-tabs { padding:4px!important; border:1px solid var(--rp-line)!important; border-radius:15px!important; background:rgba(255,255,255,.94)!important; box-shadow:var(--rp-shadow); }
+#screen-duas .du-tab,#screen-hadith .hd-tab,#screen-calendar .hc-tab,#screen-dhikr .zk-list-tab { min-height:38px!important; border:0!important; border-radius:11px!important; }
+#screen-duas .du-tab.active,#screen-hadith .hd-tab.active,#screen-calendar .hc-tab.active,#screen-dhikr .zk-list-tab.active { color:#fff!important; background:var(--rp-green)!important; }
+
+/* Content cards */
+#screen-duas .du-cat-card,#screen-duas .du-card,#screen-hadith .hd-card,
+#screen-dhikr .zk-row,#screen-names .nm-card,#screen-calendar .hc-selected-card,
+#screen-calendar .hc-info-card,#screen-calendar .hc-event-card,
+#screen-settings .st-main-card,#screen-settings .st-cat-card,
+#screen-qazo .qz-row,#screen-shahodat .sh-card,#screen-haramayn .hl-card,
+#screen-others .ot-row,#screen-monthly-calendar .mc-table-wrap {
+  border:1px solid var(--rp-line)!important; border-radius:18px!important;
+  background:#fff!important; box-shadow:var(--rp-shadow)!important;
+}
+#screen-duas .du-body,#screen-hadith .hd-body,#screen-dhikr .zk-list-body,
+#screen-names .nm-content,#screen-calendar .hc-body,#screen-settings .nm-content { padding:12px 12px 108px!important; }
+#screen-duas .du-cat-grid { gap:9px!important; }
+#screen-duas .du-cat-card { min-height:102px!important; padding:14px!important; }
+#screen-duas .du-cat-name { color:var(--rp-dark)!important; font-size:13px!important; }
+#screen-duas .du-cat-ar,#screen-names .nm-card-ar { color:var(--rp-green)!important; }
+#screen-hadith .hd-hdr--photo { min-height:205px!important; border-radius:0 0 24px 24px!important; }
+#screen-hadith .hd-hdr-photo { object-position:center 54%!important; }
+#screen-hadith .hd-body { background:var(--rp-bg)!important; }
+#screen-hadith .hd-card { padding:15px!important; }
+#screen-dhikr .zk-hdr { min-height:194px!important; border-radius:0 0 24px 24px; }
+#screen-dhikr .zk-row { min-height:94px!important; }
+#screen-names .nm-header { padding:12px 14px 14px!important; }
+#screen-names .nm-grid { gap:9px!important; }
+#screen-names .nm-card { min-height:118px!important; }
+#screen-settings .st-header { min-height:152px; padding:12px 18px 16px!important; }
+#screen-settings .st-main-card { overflow:hidden; }
+
+/* Compact feature pages gain the same visual header and card rhythm. */
+#screen-others .ot-screen,#screen-shahodat .sh-screen,#screen-haramayn .hl-screen,
+#screen-qazo .qz-screen,#screen-monthly-calendar .mc-screen { padding:0 12px 110px!important; }
+#screen-others .ot-header,#screen-shahodat .sh-header,#screen-haramayn .hl-header,
+#screen-qazo .qz-header,#screen-monthly-calendar .mc-header {
+  position:relative!important; top:auto!important; min-height:126px!important;
+  margin:0 -12px 14px!important; padding:18px 16px 14px!important;
+  align-items:flex-start!important; border:0!important; border-radius:0 0 24px 24px;
+  background:linear-gradient(90deg,rgba(255,255,255,.97),rgba(255,255,255,.72)),url('../assets/reference-ui/mosque-hero.png') center 48%/cover no-repeat!important;
+  box-shadow:var(--rp-shadow); backdrop-filter:none!important;
+}
+#screen-others .ot-title,#screen-shahodat .sh-title,#screen-haramayn .hl-title,
+#screen-qazo .qz-title,#screen-monthly-calendar .mc-title {
+  align-self:flex-end; margin:0 0 10px 2px; font-family:Georgia,'Times New Roman',serif!important;
+  font-size:23px!important; line-height:1.08!important; color:var(--rp-dark)!important;
+  white-space:normal!important; overflow:visible!important;
+}
+#screen-others .ot-back,#screen-shahodat .sh-back,#screen-haramayn .hl-back,
+#screen-qazo .qz-back,#screen-monthly-calendar .mc-back { color:#174437!important; font-weight:700!important; }
+#screen-others .ot-list { gap:10px!important; }
+#screen-others .ot-row { min-height:94px!important; padding:13px!important; }
+#screen-others .ot-row-icon { width:42px!important; height:42px!important; border-radius:14px!important; color:var(--rp-green)!important; background:#e5f6ef!important; }
+#screen-others .ot-row-label { font-size:11.5px!important; color:var(--rp-dark)!important; }
+#screen-shahodat .sh-card { padding:18px 16px!important; }
+#screen-shahodat .sh-ar { font-family:'Amiri',serif; font-size:25px!important; }
+#screen-shahodat .sh-memorize-btn { min-height:44px; border-radius:13px!important; color:var(--rp-green)!important; border-color:#9ad5c2!important; }
+#screen-qazo .qz-total-card { border:1px solid #bce2d6!important; border-radius:20px!important; background:linear-gradient(145deg,#eefaf6,#e1f5ef)!important; box-shadow:var(--rp-shadow); }
+#screen-qazo .qz-total-num { color:var(--rp-green)!important; }
+#screen-qazo .qz-row { min-height:70px; padding:12px!important; }
+#screen-qazo .qz-btn { border-radius:12px!important; }
+#screen-qazo .qz-btn--plus { color:var(--rp-green)!important; border-color:#9cd9c5!important; background:#effaf6!important; }
+#screen-monthly-calendar .mc-month-nav { min-height:54px; padding:0 4px; border:1px solid var(--rp-line); border-radius:16px; background:#fff; box-shadow:var(--rp-shadow); }
+#screen-monthly-calendar .mc-nav-btn { width:42px!important; height:42px!important; border-radius:13px!important; color:var(--rp-green)!important; border-color:#abd9ca!important; background:#edf8f4!important; }
+
+/* Haramayn live cards */
+#screen-haramayn .hl-list { gap:14px!important; }
+#screen-haramayn .hl-card { overflow:hidden; border-radius:22px!important; }
+#screen-haramayn .hl-card-img-wrap { height:176px!important; }
+#screen-haramayn .hl-card-body { padding:15px!important; }
+#screen-haramayn .hl-card-name { font-family:Georgia,'Times New Roman',serif; font-size:21px!important; color:var(--rp-dark)!important; }
+#screen-haramayn .hl-card-btn { min-height:48px!important; border-radius:14px!important; background:var(--rp-green)!important; }
+
+/* RTL keeps the exact composition while mirroring reading order. */
+html[dir="rtl"] #screen-qibla .qb-masjid-card,
+html[dir="rtl"] #screen-others .ot-row,
+html[dir="rtl"] #screen-haramayn .hl-card-body,
+html[dir="rtl"] #screen-settings .st-main-card { text-align:right; }
+html[dir="rtl"] #screen-qibla .qb-hdr .nm-tile-ov,
+html[dir="rtl"] #screen-duas .nm-tile-ov,
+html[dir="rtl"] #screen-names .nm-tile-ov,
+html[dir="rtl"] #screen-settings .nm-tile-ov,
+html[dir="rtl"] #screen-calendar .nm-tile-ov { transform:scaleX(-1); }
+
+@media (min-width:521px) {
+  #screen-hadith>*,#screen-duas>*,#screen-dhikr>*,#screen-calendar>*,#screen-names>*,
+  #screen-others>*,#screen-shahodat>*,#screen-haramayn>*,#screen-settings>*,
+  #screen-qazo>*,#screen-monthly-calendar>* { max-width:520px; margin-inline:auto; }
+}

@@ -1466,6 +1466,29 @@ Object.assign(_EXTRA_T, {
   'Unavailable':{ar:'غير متاح',en:'Unavailable',id:'Tidak tersedia',ur:'دستیاب نہیں',bn:'অনুপলব্ধ',fr:'Indisponible',hi:'उपलब्ध नहीं',fa:'در دسترس نیست',tr:'Kullanılamıyor',ru:'Недоступно',uz:'Mavjud emas',de:'Nicht verfügbar',ms:'Tidak tersedia'}
 });
 
+/* Secondary navigation labels used by the reference-design screens. */
+Object.assign(_EXTRA_T, {
+  'Home': {
+    ar:'الرئيسية', en:'Home', id:'Beranda', ur:'ہوم', bn:'হোম', fr:'Accueil', hi:'मुखपृष्ठ',
+    fa:'خانه', tr:'Ana sayfa', ru:'Главная', uz:'Bosh sahifa', de:'Startseite', ms:'Laman utama'
+  },
+  'Missed prayers': {
+    ar:'الصلوات الفائتة', en:'Missed prayers', id:'Salat yang tertinggal', ur:'قضا نمازیں',
+    bn:'কাজা নামাজ', fr:'Prières manquées', hi:'क़ज़ा नमाज़', fa:'نمازهای قضا',
+    tr:'Kaza namazları', ru:'Пропущенные намазы', uz:'Qazo namozlari', de:'Nachholgebete', ms:'Solat qada'
+  },
+  'Monthly prayer calendar': {
+    ar:'جدول الصلاة الشهري', en:'Monthly prayer calendar', id:'Kalender salat bulanan', ur:'ماہانہ نماز کیلنڈر',
+    bn:'মাসিক নামাজের সময়সূচি', fr:'Calendrier mensuel des prières', hi:'मासिक नमाज़ कैलेंडर', fa:'تقویم ماهانه نماز',
+    tr:'Aylık namaz takvimi', ru:'Месячное расписание намаза', uz:'Oylik namoz taqvimi', de:'Monatlicher Gebetskalender', ms:'Kalendar solat bulanan'
+  },
+  'Shahodat & Kalimas': {
+    ar:'الشهادة والكلمات', en:'Shahodat & Kalimas', id:'Syahadat & Kalimah', ur:'شہادت اور کلمات',
+    bn:'শাহাদাত ও কালিমা', fr:'Shahada et Kalimas', hi:'शहादत और कलिमा', fa:'شهادت و کلمات',
+    tr:'Şehadet ve Kelimeler', ru:'Шахада и Калимы', uz:'Shahodat va Kalimalar', de:'Schahada und Kalimas', ms:'Syahadah & Kalimah'
+  }
+});
+
 function _resolveT(lat, cyr, ru, en, lang) {
   if (lang === 'uz_cyr') return cyr !== undefined ? cyr : lat;
   if (lang === 'ru')     return ru  !== undefined ? ru  : lat;

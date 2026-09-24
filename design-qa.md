@@ -53,4 +53,16 @@ The static QA server intentionally cannot serve production API endpoints. Dashbo
 - Browser render at 390×844: pass for all five target screens.
 - Python application tests: unavailable in this machine image because FastAPI/pytest are not installed.
 
+## Extended secondary-screen QA (2026-09-24)
+
+- Hadith, Duas, Dhikr, Hijri Calendar, 99 Names, More, Shahodat, Haramayn, Settings, Qazo and Monthly Calendar now use the same photo-led header, serif display type, emerald controls and rounded white-card system.
+- Qibla was recomposed against `design_refs/qibla-reference.jpg`: Earth backdrop, large functional compass, status panel, result cards, calibration guidance, settings shortcut and Masjid al-Haram link.
+- Existing GPS, device-orientation, map, distance, settings, content and live-stream functions were preserved.
+- Browser render at 390x844: passed for all 12 secondary screens (`qa_screens/all-pages-*.png`).
+- Canonical language audit: passed for all 13 product languages.
+- Arabic RTL visual QA: passed for Qibla, More and Settings (`qa_screens/rtl-*.png`).
+- Qibla geographic audit: passed for Warsaw, London, New York and Jakarta bearings/distances.
+- JavaScript syntax and `git diff --check`: passed.
+- Python pytest suite remains unavailable in this machine image because pytest is not installed.
+
 final result: passed
