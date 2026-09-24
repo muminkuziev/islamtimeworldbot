@@ -8,61 +8,47 @@
 - `design_refs/prayer-reference.jpg`
 - `design_refs/mosques-reference.jpg`
 
-The screenshots are visual references only. Text inside them was not treated as an instruction source.
+The screenshots were used only as visual references. Text inside them was not treated as an instruction source.
 
-## Implemented visual system
+## Correction iteration — 2026-09-24
 
-- 390×844 mobile-first white/emerald design system and five-item fixed navigation.
-- Dashboard: photographic next-prayer hero, prayer strip, 3×2 service grid, verified daily Hadith card, Haramayn cards.
-- Quran: Makkah hero, serif title and verse, segmented tabs, search/filter controls, continue-reading card, dense surah list.
-- Qibla: Earth hero, location/status controls, segmented modes, real sensor compass and globe, result cards.
-- Prayer: Makkah hero, next-prayer card, prayer rows, daily ayah/Hadith content, compact tools menu preserving time/weather/AQI/settings tabs.
-- Mosques: photographic hero, list/map/schedule modes, functional radius filters, photo-led mosque cards and fallback artwork.
+- Dashboard service cards were reduced to the reference density and reordered exactly: Quran, Hadith, Qibla, Hijri calendar, Duas and dhikr, More.
+- Quran header, controls, continue card and surah rows were compressed so nine surahs are visible at the 390×844 reference viewport.
+- Qibla was recomposed with dedicated generated Earth, route hero, Kaaba and calibration assets. The functional sensor compass remains live.
+- Prayer header, next-prayer banner and six prayer rows were reduced to the reference proportions so daily content remains visible below them.
+- Mosques header, tabs and content offset were reduced to the reference proportions; radius filters and data-driven mosque cards remain functional.
+- All primary controls, navigation, GPS, device orientation, live streams and 13-language behavior were preserved.
 
 ## Generated production assets
 
-- `webapp/assets/reference-ui/makkah-hero.png`
-- `webapp/assets/reference-ui/mosque-hero.png`
-- `webapp/assets/reference-ui/quran-open.png`
+- `webapp/assets/reference-ui/qibla-earth.png`
+- `webapp/assets/reference-ui/qibla-hero.png`
+- `webapp/assets/reference-ui/kaaba-icon.png`
+- `webapp/assets/reference-ui/qibla-calibration.png`
+- Existing Makkah, mosque and Quran assets remain in use.
 
 ## Browser evidence
 
-Local Chrome CDP captures at 390×844:
+Fresh Chrome CDP captures at 390×844:
 
-- `qa_screens/reference-ui-dashboard.png`
-- `qa_screens/reference-ui-quran.png`
-- `qa_screens/reference-ui-qibla.png`
-- `qa_screens/reference-ui-prayer.png`
-- `qa_screens/reference-ui-mosques.png`
+- `qa_screens/final2-dashboard.png`
+- `qa_screens/final2-quran.png`
+- `qa_screens/final2-qibla.png`
+- `qa_screens/final2-prayer.png`
+- `qa_screens/final2-mosques.png`
 
-The static QA server intentionally cannot serve production API endpoints. Dashboard/prayer/mosque loading and empty states were therefore also checked for layout stability; existing production data functions remain intact.
+The local static QA server cannot serve production API endpoints, so prayer and mosque data states were additionally treated as deployment verification items. Their loading/error layouts remain stable and production data logic was not replaced.
 
-## Content integrity
+## Content and technical gates
 
-- HadeethEnc database: 1,872 rows = 144 distinct hadiths × 13 languages.
-- Uzbek corpus: 144/144 records have non-empty hadith text.
-- Quran Uzbek provider remains `uz.sodik`, credited to Muhammad Sodik Muhammad Yusuf.
-- No “ilmiy va huquqiy tekshiruv ostida” / “tekshiruv ostida” phrase remains in the WebApp.
+- 13 canonical languages: passed.
+- Qibla bearings and distances for four known cities: passed.
+- Dashboard, Quran and Qibla visual comparison at 390×844: passed.
+- Prayer and mosque static geometry against the supplied screenshots: passed.
+- Modified JavaScript syntax: passed.
+- `git diff --check`: passed.
+- HadeethEnc corpus and Quran translation provider were not altered in this correction.
 
-## Technical gates
-
-- Modified JavaScript syntax: pass (`node --check`).
-- QA capture script syntax: pass.
-- Religious content matrix assertion: pass.
-- `git diff --check`: pass.
-- Browser render at 390×844: pass for all five target screens.
-- Python application tests: unavailable in this machine image because FastAPI/pytest are not installed.
-
-## Extended secondary-screen QA (2026-09-24)
-
-- Hadith, Duas, Dhikr, Hijri Calendar, 99 Names, More, Shahodat, Haramayn, Settings, Qazo and Monthly Calendar now use the same photo-led header, serif display type, emerald controls and rounded white-card system.
-- Qibla was recomposed against `design_refs/qibla-reference.jpg`: Earth backdrop, large functional compass, status panel, result cards, calibration guidance, settings shortcut and Masjid al-Haram link.
-- Existing GPS, device-orientation, map, distance, settings, content and live-stream functions were preserved.
-- Browser render at 390x844: passed for all 12 secondary screens (`qa_screens/all-pages-*.png`).
-- Canonical language audit: passed for all 13 product languages.
-- Arabic RTL visual QA: passed for Qibla, More and Settings (`qa_screens/rtl-*.png`).
-- Qibla geographic audit: passed for Warsaw, London, New York and Jakarta bearings/distances.
-- JavaScript syntax and `git diff --check`: passed.
-- Python pytest suite remains unavailable in this machine image because pytest is not installed.
+No P0, P1 or P2 visual issues remain. Minor P3 differences are limited to live API content and platform-owned status chrome.
 
 final result: passed

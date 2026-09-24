@@ -618,7 +618,7 @@ const PrayerScreen = (function () {
         return `
           <div class="pm-row pm-row--sun">
             <div style="display:flex;align-items:baseline;gap:7px">
-              <span class="pm-row-name">☀️ ${_esc(p.name)}</span>
+              <span class="pm-row-name"><span class="material-symbols-rounded" data-icon="wb_sunny" aria-hidden="true">wb_sunny</span>${_esc(p.name)}</span>
               ${ar ? `<span class="pm-row-ar">${ar}</span>` : ''}
             </div>
             <span class="pm-row-time pm-row-time--muted">${p.time}</span>

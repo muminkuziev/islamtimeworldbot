@@ -7,7 +7,7 @@
      - External (CDN, Telegram SDK)     : network-only
    ================================================================ */
 
-const CACHE = 'islamtime-v10';
+const CACHE = 'islamtime-v12';
 
 const PRECACHE = [
   '/app',
@@ -58,6 +58,10 @@ const PRECACHE = [
   '/assets/reference-ui/makkah-hero.png',
   '/assets/reference-ui/mosque-hero.png',
   '/assets/reference-ui/quran-open.png',
+  '/assets/reference-ui/qibla-earth.png',
+  '/assets/reference-ui/qibla-calibration.png',
+  '/assets/reference-ui/qibla-hero.png',
+  '/assets/reference-ui/kaaba-icon.png',
 ];
 
 /* ── Install: precache static shell ── */

@@ -12,9 +12,9 @@ const QiblaScreen = (function () {
      compass and the 3D globes never disagree. See native/qibla-geo.js */
   const KAABA_LAT = QiblaGeo.KAABA_LAT;
   const KAABA_LON = QiblaGeo.KAABA_LON;
-  const S  = 300;               /* SVG compass size */
-  const CX = 150, CY = 150;    /* center */
-  const R  = 140;               /* radius = S/2 - 10 */
+  const S  = 250;               /* SVG compass size */
+  const CX = 125, CY = 125;    /* center */
+  const R  = 116;               /* radius = S/2 - 9 */
 
   let _lang        = 'uz';
   let _tab         = 'kompas';
@@ -95,7 +95,7 @@ const QiblaScreen = (function () {
   function _buildHTML() {
     return `
 <div class="qb-hdr">
-  <img class="qb-hdr-photo" src="assets/earth/earth_atmos_2048.jpg" alt="Earth view toward Makkah" loading="eager">
+  <img class="qb-hdr-photo" src="assets/reference-ui/qibla-hero.png" alt="Earth view toward Makkah" loading="eager">
   <div class="nm-tile-bg"></div>
   <div class="nm-tile-ov"></div>
   <div class="qb-hdr-inner">
@@ -186,11 +186,11 @@ const QiblaScreen = (function () {
   </div>
   <div id="qb-ios-permission-badge" class="qb-found-badge qb-ios-permission-badge" style="display:none">
     <button id="qb-ios-permission-btn" class="qb-ios-permission-btn">
-      🧭 ${_T('Kompasni yoqish','Компасни ёқиш','Включить компас','Enable compass')}
+      ${_T('Kompasni yoqish','Компасни ёқиш','Включить компас','Enable compass')}
     </button>
   </div>
   <div id="qb-ios-denied-badge" class="qb-found-badge qb-ios-denied-badge" style="display:none">
-    ⚠️ ${_T("Kompas ruxsati berilmadi. Sozlamalarda yoqing.","Компас рухсати берилмади. Созламаларда ёқинг.",'Разрешение на компас не дано. Включите в настройках устройства.','Compass permission denied. Enable it in your device settings.')}
+    ${_T("Kompas ruxsati berilmadi. Sozlamalarda yoqing.","Компас рухсати берилмади. Созламаларда ёқинг.",'Разрешение на компас не дано. Включите в настройках устройства.','Compass permission denied. Enable it in your device settings.')}
   </div>
 
   <div class="qb-compass-stack" style="width:${S}px;height:${S}px">
@@ -207,6 +207,7 @@ const QiblaScreen = (function () {
         <stop offset="0%" stop-color="#EFF6F2" stop-opacity="0.35"/>
         <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.55"/>
       </radialGradient>
+      <clipPath id="qb-kaaba-clip"><circle cx="${CX}" cy="${CY}" r="14"/></clipPath>
     </defs>
     <circle cx="${CX}" cy="${CY}" r="${R+6}" fill="none"
       stroke="rgba(22,121,74,.08)" stroke-width="1"/>
@@ -240,37 +241,42 @@ const QiblaScreen = (function () {
       fill="#F6FAF8" stroke="rgba(22,121,74,.3)" stroke-width="1.5"/>
     <circle cx="${CX}" cy="${CY}" r="14"
       fill="rgba(22,121,74,.1)" stroke="rgba(22,121,74,.2)" stroke-width="1"/>
-    <text x="${CX}" y="${CY+5}" text-anchor="middle" font-size="14">🕋</text>
+    <image href="assets/reference-ui/kaaba-icon.png" x="${CX-14}" y="${CY-14}" width="28" height="28" preserveAspectRatio="xMidYMid meet" clip-path="url(#qb-kaaba-clip)"/>
   </svg>
   </div>
 
   <div id="qb-igrid" class="qb-igrid" style="display:none">
     <div class="qb-icell">
-      <div class="qb-icell-lbl">${_T('Qibla burchagi','Қибла бурчаги','Угол Киблы','Qibla angle')}</div>
-      <div class="qb-icell-val" id="qb-ig-angle" style="color:#4fcfa0">—</div>
+      <span class="qb-icell-icon material-symbols-rounded" data-icon="explore" aria-hidden="true">explore</span>
+      <div><div class="qb-icell-lbl">${_T('Qibla burchagi','Қибла бурчаги','Угол Киблы','Qibla angle')}</div>
+      <div class="qb-icell-val" id="qb-ig-angle">—</div></div>
     </div>
     <div class="qb-icell">
-      <div class="qb-icell-lbl">${_T('Shimoldan','Шимолдан','От Севера','From North')}</div>
-      <div class="qb-icell-val" id="qb-ig-north" style="color:#16794A">—</div>
+      <span class="qb-icell-icon material-symbols-rounded" data-icon="map" aria-hidden="true">map</span>
+      <div><div class="qb-icell-lbl">${_T("Yo'nalish","Йўналиш","Направление","Direction")}</div>
+      <div class="qb-icell-val" id="qb-ig-north">—</div></div>
     </div>
     <div class="qb-icell">
-      <div class="qb-icell-lbl">${_T("Yo'nalish","Йўналиш","Направление","Direction")}</div>
-      <div class="qb-icell-val" id="qb-ig-dir" style="color:#16212B">—</div>
+      <span class="qb-icell-icon material-symbols-rounded" data-icon="location_on" aria-hidden="true">location_on</span>
+      <div><div class="qb-icell-lbl">${_T("Ka'baga masofa","Каъбага масофа","Расстояние до Каабы","Distance to Ka'bah")}</div>
+      <div class="qb-icell-val" id="qb-ig-dir">—</div></div>
     </div>
     <div class="qb-icell">
-      <div class="qb-icell-lbl">${_T('Kompas aniqligi','Компас аниқлиги','Точность компаса','Compass accuracy')}</div>
-      <div class="qb-icell-val" id="qb-ig-accuracy" style="color:rgba(22,33,43,.55)">—</div>
+      <span class="qb-icell-icon material-symbols-rounded" data-icon="verified_user" aria-hidden="true">verified_user</span>
+      <div><div class="qb-icell-lbl">${_T('Aniqlik','Аниқлик','Точность','Accuracy')}</div>
+      <div class="qb-icell-val" id="qb-ig-accuracy">—</div></div>
     </div>
   </div>
 
   <div class="qb-calibrate-tip">
-    ${_T('Aniqroq natija uchun telefoningizni','Аниқроқ натижа учун телефонингизни','Для точного результата переместите телефон','For better accuracy, move your phone')}
-    ${(_lang === 'ru' || _lang === 'en') ? '' : `<span style="color:#16794A;font-weight:600"> "8-${_T('raqam','рақам')}" </span>`}
-    ${_T('shaklida harakatlantiring','шаклида ҳаракатлантиринг',_lang === 'ru' ? 'в форме цифры "8"' : '', _lang === 'en' ? 'in a figure-8 pattern' : '')}
+    <div class="qb-calibrate-copy">${_T('Aniqroq natija uchun telefoningizni','Аниқроқ натижа учун телефонингизни','Для точного результата переместите телефон','For better accuracy, move your phone')}
+    ${(_lang === 'ru' || _lang === 'en') ? '' : `<span> "8-${_T('raqam','рақам')}" </span>`}
+    ${_T('shaklida harakatlantiring','шаклида ҳаракатлантиринг',_lang === 'ru' ? 'в форме цифры "8"' : '', _lang === 'en' ? 'in a figure-8 pattern' : '')}</div>
+    <img src="assets/reference-ui/qibla-calibration.png" alt="" aria-hidden="true">
   </div>
 
   <button class="qb-masjid-card" id="qb-open-haramayn-card">
-    <img src="assets/haram-makkah.webp" alt="Masjid al-Haram" loading="lazy">
+    <img src="assets/landing/haram-makkah.webp" alt="Masjid al-Haram" loading="lazy">
     <span><strong>Masjid al-Haram</strong><small>${_T('Makka, Saudiya Arabistoni','Макка, Саудия Арабистони','Мекка, Саудовская Аравия','Makkah, Saudi Arabia')}</small></span>
     <span class="material-symbols-rounded" data-icon="chevron_right" aria-hidden="true">chevron_right</span>
   </button>
@@ -522,8 +528,8 @@ const QiblaScreen = (function () {
     const grid = _el?.querySelector('#qb-igrid');
     if (grid) grid.style.display = 'grid';
     _setText('#qb-ig-angle', `${ang}°`);
-    _setText('#qb-ig-north', `${ang}° ${_T('Sh','Ш','С','N')}`);
-    _setText('#qb-ig-dir',   dir);
+    _setText('#qb-ig-north', dir);
+    _setText('#qb-ig-dir',   `${Math.round(_distKm).toLocaleString()} km`);
 
     /* Xarita */
     _updateMap();

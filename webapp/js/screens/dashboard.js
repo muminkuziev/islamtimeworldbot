@@ -56,6 +56,7 @@ const DashboardScreen = (function () {
 
   /* ── Module definitions ── */
   const HOME_MODULES = new Set(['quran','hadith','qibla','calendar','dhikr','boshqalar']);
+  const HOME_ORDER = ['quran','hadith','qibla','calendar','dhikr','boshqalar'];
   const MODULE_ICONS = { quran:'menu_book', hadith:'import_contacts', qibla:'explore', calendar:'calendar_month', dhikr:'prayer_times', boshqalar:'grid_view' };
   const MODULES = [
     { key:'prayer',
@@ -208,8 +209,9 @@ const DashboardScreen = (function () {
   ══════════════════════════════════════════════ */
   function _buildHTML() {
     const flag  = getLangFlag(_lang);
-    const tiles = MODULES.filter(mod => HOME_MODULES.has(mod.key)).map(mod => {
-      const title = t('modules_list.' + mod.key, _lang);
+    const uzHomeTitles = { quran:"Qur’on", hadith:'Hadislar', qibla:'Qibla', calendar:'Hijriy taqvim', dhikr:'Duolar va zikr', boshqalar:'Boshqalar' };
+    const tiles = MODULES.filter(mod => HOME_MODULES.has(mod.key)).sort((a, b) => HOME_ORDER.indexOf(a.key) - HOME_ORDER.indexOf(b.key)).map(mod => {
+      const title = _lang === 'uz' ? uzHomeTitles[mod.key] : t('modules_list.' + mod.key, _lang);
       const sub   = _lang === 'uz'     ? mod.sub
                   : _lang === 'uz_cyr' ? (mod.sub_cyr || mod.sub)
                   : (CANONICAL_HOME_SUBS[_lang]?.[mod.key] || mod['sub_' + _lang] || mod.sub_en || mod.sub);
