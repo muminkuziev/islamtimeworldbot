@@ -208,7 +208,6 @@ const DashboardScreen = (function () {
      HTML
   ══════════════════════════════════════════════ */
   function _buildHTML() {
-    const flag  = getLangFlag(_lang);
     const uzHomeTitles = { quran:"Qur’on", hadith:'Hadislar', qibla:'Qibla', calendar:'Hijriy taqvim', dhikr:'Duolar va zikr', boshqalar:'Boshqalar' };
     const tiles = MODULES.filter(mod => HOME_MODULES.has(mod.key)).sort((a, b) => HOME_ORDER.indexOf(a.key) - HOME_ORDER.indexOf(b.key)).map(mod => {
       const title = _lang === 'uz' ? uzHomeTitles[mod.key] : t('modules_list.' + mod.key, _lang);
@@ -218,7 +217,7 @@ const DashboardScreen = (function () {
       return `
         <div class="db-tile-wrap">
           <div class="db-cell" data-module="${mod.key}" role="button" tabindex="0">
-            <span class="material-symbols-rounded db-cell-icon" data-icon="${MODULE_ICONS[mod.key] || 'apps'}" aria-hidden="true">${MODULE_ICONS[mod.key] || 'apps'}</span>
+            <span class="db-cell-icon" aria-hidden="true">${_moduleIconSvg(mod.key)}</span>
             <div class="db-cell-title">${title}</div>
             <div class="db-cell-sub">${sub}</div>
           </div>
@@ -234,7 +233,7 @@ const DashboardScreen = (function () {
     <div class="db-top-row">
       <div class="db-location-block">
         <div class="db-location-line">
-          <span class="db-location-pin" aria-hidden="true">●</span>
+          <span class="db-location-pin" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 22s7-6.2 7-13A7 7 0 1 0 5 9c0 6.8 7 13 7 13Z"/><circle cx="12" cy="9" r="2.4"/></svg></span>
           <span class="db-city-name" id="db-city-name">GPS</span>
         </div>
         <div class="db-location-date">
@@ -244,9 +243,9 @@ const DashboardScreen = (function () {
         <div class="db-slogan">${t('sloganDua', _lang)}</div>
       </div>
       <div class="db-top-right">
-        <button class="db-lang-btn" id="db-lang-btn" aria-label="Change language">
-          <span>${flag}</span>
-          <span>${_lang.toUpperCase()}</span>
+        <button class="db-notify-btn" id="db-notify-btn" type="button" aria-label="${_T('Bildirishnomalar','Билдиришномалар','Уведомления','Notifications')}">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
+          <i aria-hidden="true"></i>
         </button>
       </div>
     </div>
@@ -257,15 +256,14 @@ const DashboardScreen = (function () {
       <div class="db-next-box">
         <div class="db-next-topline"></div>
         <div class="db-next-row">
-          <div>
+          <div class="db-next-main">
             <div class="db-next-lbl">${_l('nextPrayer')}</div>
             <div class="db-next-name" id="db-np-name">—</div>
             <div class="db-next-remain" id="db-np-remain">${_l('loading')}</div>
+            <div class="db-next-time-line"><span class="material-symbols-rounded" data-icon="schedule" aria-hidden="true">schedule</span><span class="db-next-time" id="db-np-time">—:—</span><span>${_T('da','да','в','')}</span></div>
           </div>
-          <div style="text-align:right">
-            <div class="db-next-time" id="db-np-time">—:—</div>
-            <div class="db-next-sub"  id="db-np-sub">—</div>
-          </div>
+          <button class="db-adhan-btn" type="button" aria-label="${_T('Azon','Азон','Азан','Adhan')}"><span class="material-symbols-rounded" data-icon="volume_up" aria-hidden="true">volume_up</span></button>
+          <div class="db-next-sub" id="db-np-sub">—</div>
         </div>
         <div class="db-prog">
           <div class="db-prog-fill" id="db-prog-fill" style="width:0%"></div>
@@ -289,7 +287,12 @@ const DashboardScreen = (function () {
 
   <button class="db-hadith-card" id="db-hadith-card" type="button">
     <span class="material-symbols-rounded db-hadith-icon" data-icon="auto_stories" aria-hidden="true">auto_stories</span>
-    <span class="db-hadith-copy"><strong>${_T('Kun hadisi','Кун ҳадиси','Хадис дня','Hadith of the day')}</strong><small id="db-hadith-daily">${_T('Tasdiqlangan hadislar','Тасдиқланган ҳадислар','Проверенные хадисы','Verified hadiths')} · HadeethEnc</small></span>
+    <span class="db-hadith-copy">
+      <strong>${_T('Kun hadisi','Кун ҳадиси','Хадис дня','Hadith of the day')}</strong>
+      <span class="db-hadith-quote" id="db-hadith-daily">“${_T("Amallar niyatlariga bog‘liqdir.","Амаллар ниятларига боғлиқдир.","Дела оцениваются по намерениям.","Actions are judged by intentions.")}”</span>
+      <small id="db-hadith-source">HadeethEnc ID: 65000 | ${_T('Buxoriy, Muslim','Бухорий, Муслим','Аль-Бухари, Муслим','Bukhari, Muslim')}</small>
+    </span>
+    <span class="db-hadith-grade">${_T('Sahih','Саҳиҳ','Сахих','Sahih')}</span>
     <span class="material-symbols-rounded db-hadith-arrow" data-icon="chevron_right" aria-hidden="true">chevron_right</span>
   </button>
 
@@ -304,6 +307,25 @@ const DashboardScreen = (function () {
 
   function _T(lat, cyr, ru, en) { return _resolveT(lat, cyr, ru, en, _lang); }
 
+  function _moduleIconSvg(key) {
+    const start = '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">';
+    const icons = {
+      quran:'<path d="M4 7c4-1 8 .2 12 3v17c-4-3-8-4-12-3V7Zm24 0c-4-1-8 .2-12 3v17c4-3 8-4 12-3V7Z"/><path d="M16 10v17"/>',
+      hadith:'<rect x="5" y="7" width="22" height="20" rx="2"/><path d="M10 4v6m12-6v6M5 13h22M10 18h3m4 0h3m-10 5h3m4 0h3"/>',
+      qibla:'<circle cx="16" cy="16" r="12"/><path d="m20.5 11.5-3 7-7 3 3-7 7-3Z"/>',
+      calendar:'<rect x="5" y="7" width="22" height="20" rx="2"/><path d="M10 4v6m12-6v6M5 13h22M10 18h3m4 0h3m-10 5h3m4 0h3"/>',
+      dhikr:'<path d="M10 27c-3-3-5-6-5-10 0-2 2-3 3-1v-6c0-2 3-2 3 0v5-8c0-2 3-2 3 0v8-6c0-2 3-2 3 0v8-4c0-2 3-2 3 0v8c0 3-2 5-4 7m6-2c3-2 5-5 5-9 0-2-2-3-3-1"/>',
+      boshqalar:'<circle cx="7" cy="16" r="2.4" fill="currentColor" stroke="none"/><circle cx="16" cy="16" r="2.4" fill="currentColor" stroke="none"/><circle cx="25" cy="16" r="2.4" fill="currentColor" stroke="none"/>'
+    };
+    return start + (icons[key] || icons.boshqalar) + '</svg>';
+  }
+
+  function _prayerIconSvg(index) {
+    if (index === 0) return '<svg viewBox="0 0 24 24"><path d="M4 15h16M6 15a6 6 0 0 1 12 0M12 4v3M4.5 7.5l2 2M19.5 7.5l-2 2"/></svg>';
+    if (index === 1 || index === 2) return '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10 2 2M19 5l-2 2M7 17l-2 2"/></svg>';
+    return '<svg viewBox="0 0 24 24"><path d="M20 15.5A8 8 0 0 1 8.5 4 8.5 8.5 0 1 0 20 15.5Z"/></svg>';
+  }
+
   async function _loadHaramaynRow() {
     const wrap = _el?.querySelector('#db-haramayn-row');
     if (!wrap) return;
@@ -313,12 +335,13 @@ const DashboardScreen = (function () {
     ];
     const paint = sites => {
       const IMG = { makkah:'assets/landing/haram-makkah.webp', madinah:'assets/landing/haram-madinah.webp' };
-      const NAME = { makkah:_T('Makkah','Макка','Мекка','Makkah'), madinah:_T('Madina','Мадина','Медина','Madinah') };
+      const NAME = { makkah:_T('Makkah LIVE','Макка LIVE','Мекка LIVE','Makkah LIVE'), madinah:_T('Madinah LIVE','Мадина LIVE','Медина LIVE','Madinah LIVE') };
+      const MOSQUE = { makkah:'Masjid al-Haram', madinah:'Masjid an-Nabaviy' };
       wrap.innerHTML = sites.map(site => `
         <button class="db-haramayn-mini" data-site="${site.site_id}">
           <img src="${IMG[site.site_id]}" alt="${site.mosque_en}" loading="lazy">
-          <div class="db-haramayn-mini-badge">${site.status === 'LIVE_EXTERNAL_ACTIVE' || site.status === 'LIVE_EMBED_ACTIVE' ? '🔴 LIVE' : _T('Mavjud emas','Мавжуд эмас','Недоступно','Unavailable')}</div>
-          <div class="db-haramayn-mini-name">${NAME[site.site_id]}</div>
+          <div class="db-haramayn-mini-badge">${site.status === 'LIVE_EXTERNAL_ACTIVE' || site.status === 'LIVE_EMBED_ACTIVE' ? '<span aria-hidden="true">▶</span> LIVE' : _T('Mavjud emas','Мавжуд эмас','Недоступно','Unavailable')}</div>
+          <div class="db-haramayn-mini-copy"><strong>${NAME[site.site_id]}</strong><small>${MOSQUE[site.site_id]}</small></div>
         </button>`).join('');
       wrap.querySelectorAll('.db-haramayn-mini').forEach((btn, index) => btn.addEventListener('click', () => {
         const url = sites[index]?.official_external_url;
@@ -344,8 +367,9 @@ const DashboardScreen = (function () {
     _el.querySelector('#db-hadith-card')?.addEventListener('click', () => _onModuleTap('hadith'));
     _el.querySelector('#db-haramayn-all')?.addEventListener('click', () => { HaramaynScreen.load(_lang); window.App.navigate('screen-haramayn'); });
 
-    _el.querySelector('#db-lang-btn')?.addEventListener('click', () => {
-      window.App.navigate('screen-language');
+    _el.querySelector('#db-notify-btn')?.addEventListener('click', () => {
+      SettingsScreen.load(_lang);
+      window.App.navigate('screen-settings');
       window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
     });
 
@@ -530,8 +554,8 @@ const DashboardScreen = (function () {
 
     const strip = _el?.querySelector('#db-prayer-strip');
     if (strip) {
-      strip.innerHTML = prayers.slice(0, 6).map(p => `<button class="db-prayer-chip${p.key === np.key ? ' active' : ''}" type="button" data-prayer="${p.key}">
-        <span class="db-prayer-name">${_esc(p.name || p.key)}</span><strong>${_esc(p.time || '—')}</strong>
+      strip.innerHTML = prayers.slice(0, 6).map((p, index) => `<button class="db-prayer-chip${p.key === np.key ? ' active' : ''}" type="button" data-prayer="${p.key}">
+        <span class="db-prayer-icon" aria-hidden="true">${_prayerIconSvg(index)}</span><span class="db-prayer-name">${_esc(p.name || p.key)}</span><strong>${_esc(p.time || '—')}</strong>
       </button>`).join('');
       strip.querySelectorAll('.db-prayer-chip').forEach(btn => btn.addEventListener('click', () => _onModuleTap('prayer')));
     }
@@ -540,10 +564,12 @@ const DashboardScreen = (function () {
     _renderWeather(data.weather);
 
     const hadithEl = _el?.querySelector('#db-hadith-daily');
+    const hadithSourceEl = _el?.querySelector('#db-hadith-source');
     const dailyHadith = data.daily_hadith;
     if (hadithEl && dailyHadith?.text) {
       const text = String(dailyHadith.text).trim();
-      hadithEl.textContent = `“${text.length > 82 ? text.slice(0, 79) + '…' : text}” · ${dailyHadith.source || 'HadeethEnc'}`;
+      hadithEl.textContent = `“${text.length > 62 ? text.slice(0, 59) + '…' : text}”`;
+      if (hadithSourceEl) hadithSourceEl.textContent = dailyHadith.source || 'HadeethEnc';
     }
   }
 

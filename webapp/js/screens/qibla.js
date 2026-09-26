@@ -35,6 +35,9 @@ const QiblaScreen = (function () {
   let _calibrating    = false; // true when we've detected the compass needs the figure-8 gesture
   let _routeGlobe     = null;  // EarthGlobe instance — top "global route" view
   let _compassGlobe   = null;  // EarthGlobe instance — behind the SVG compass
+  let _orientationStarted = false;
+  let _hasAbsoluteOrientation = false;
+  let _awaitingOrientationPermission = false;
 
   /* ══════════════════════════════════════════════
      Entry points
@@ -47,15 +50,14 @@ const QiblaScreen = (function () {
     _el.innerHTML = _buildHTML();
     _bind();
     _initGlobes();
-    const sLat = parseFloat(localStorage.getItem('islamtime_last_lat') || '');
-    const sLon = parseFloat(localStorage.getItem('islamtime_last_lon') || '');
-    if (sLat && sLon) { _lat = sLat; _lon = sLon; _computeAndShow(); }
+    _startLocation();
   }
 
   function load(lang) {
     _lang = lang;
     _tab = 'kompas'; _found = false;
     unload();
+    _resetRuntimeState();
     _el = document.getElementById('screen-qibla');
     if (!_el) return;
     _el.innerHTML = _buildHTML();
@@ -87,6 +89,15 @@ const QiblaScreen = (function () {
       window.removeEventListener('deviceorientation', _orientCb);
       _orientCb = null;
     }
+    _orientationStarted = false;
+  }
+
+  function _resetRuntimeState() {
+    _lat = null; _lon = null; _city = '';
+    _qiblaAngle = 0; _distKm = 0; _deviceNorth = 0;
+    _found = false; _gpsAccuracyM = null; _compassAccDeg = null;
+    _hasOrientation = false; _hasAbsoluteOrientation = false;
+    _calibrating = false; _awaitingOrientationPermission = false;
   }
 
   /* ══════════════════════════════════════════════
@@ -173,6 +184,10 @@ const QiblaScreen = (function () {
   <div id="qb-load-badge" class="qb-load-badge">
     <span class="qb-load-spin"></span>
     <span>${_T('Joylashuv aniqlanmoqda...','Жойлашув аниқланмоқда...','Определение местоположения...','Detecting location...')}</span>
+  </div>
+  <div id="qb-location-error-badge" class="qb-found-badge qb-location-error-badge" style="display:none">
+    <span id="qb-location-error-text">${_T('Joylashuv olinmadi','Жойлашув олинмади','Не удалось определить местоположение','Location unavailable')}</span>
+    <button id="qb-location-retry-btn" type="button">${_T('Qayta urinish','Қайта уриниш','Повторить','Retry')}</button>
   </div>
   <div id="qb-found-badge" class="qb-found-badge" style="display:none">
     <div class="qb-found-dot"></div>
@@ -443,10 +458,23 @@ const QiblaScreen = (function () {
 
     _el.querySelector('#qb-ios-permission-btn')?.addEventListener('click', () => {
       DeviceOrientationEvent.requestPermission().then(state => {
+        _awaitingOrientationPermission = false;
         _show('#qb-ios-permission-badge', false);
         if (state === 'granted') _attachOrientationListener();
         else _show('#qb-ios-denied-badge', true);
-      }).catch(() => _show('#qb-ios-permission-badge', false));
+        _updateQualityBadge();
+      }).catch(() => {
+        _awaitingOrientationPermission = false;
+        _show('#qb-ios-permission-badge', false);
+        _show('#qb-ios-denied-badge', true);
+        _updateQualityBadge();
+      });
+    });
+
+    _el.querySelector('#qb-location-retry-btn')?.addEventListener('click', () => {
+      _show('#qb-location-error-badge', false);
+      _show('#qb-load-badge', true);
+      _browserGeo();
     });
   }
 
@@ -457,14 +485,18 @@ const QiblaScreen = (function () {
     /* cached coords → instant */
     const sLat = parseFloat(localStorage.getItem('islamtime_last_lat') || '');
     const sLon = parseFloat(localStorage.getItem('islamtime_last_lon') || '');
-    if (sLat && sLon) {
+    const cachedValid = Number.isFinite(sLat) && Number.isFinite(sLon)
+      && Math.abs(sLat) <= 90 && Math.abs(sLon) <= 180;
+    if (cachedValid) {
       _lat = sLat; _lon = sLon;
+      const cachedAccuracy = parseFloat(localStorage.getItem('islamtime_last_accuracy') || '');
+      _gpsAccuracyM = Number.isFinite(cachedAccuracy) && cachedAccuracy > 0 ? cachedAccuracy : null;
       _computeAndShow();
       _startOrientation();
-      return;
     }
 
-    /* Telegram location */
+    /* Always refresh cached coordinates: users travel, and a stale Qibla is
+       worse than a short GPS wait. The cache is only the instant first paint. */
     const lm = window.Telegram?.WebApp?.LocationManager;
     if (lm) {
       lm.init(() => {
@@ -483,18 +515,43 @@ const QiblaScreen = (function () {
   }
 
   function _browserGeo() {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
+    if (!navigator.geolocation) {
+      _showLocationError(_T('Bu qurilmada GPS mavjud emas','Бу қурилмада GPS мавжуд эмас','GPS недоступен на этом устройстве','GPS is unavailable on this device'));
+      return;
+    }
+
+    const requestLocation = () => navigator.geolocation.getCurrentPosition(
       pos => {
         _lat = pos.coords.latitude; _lon = pos.coords.longitude;
         _gpsAccuracyM = (typeof pos.coords.accuracy === 'number' && pos.coords.accuracy > 0) ? pos.coords.accuracy : null;
         localStorage.setItem('islamtime_last_lat', _lat);
         localStorage.setItem('islamtime_last_lon', _lon);
+        if (_gpsAccuracyM !== null) localStorage.setItem('islamtime_last_accuracy', _gpsAccuracyM);
+        localStorage.setItem('islamtime_last_location_at', Date.now());
+        _show('#qb-location-error-badge', false);
         _computeAndShow(); _startOrientation();
       },
-      () => {},
-      { timeout: 8000, maximumAge: 300000, enableHighAccuracy: false }
+      err => {
+        const denied = err && err.code === 1;
+        _showLocationError(denied
+          ? _T('GPS ruxsatini yoqing','GPS рухсатини ёқинг','Разрешите доступ к геолокации','Enable location permission')
+          : _T('Joylashuv olinmadi','Жойлашув олинмади','Не удалось определить местоположение','Location unavailable'));
+      },
+      { timeout: 15000, maximumAge: 60000, enableHighAccuracy: true }
     );
+
+    if (typeof window._requestLocationPermission === 'function') {
+      window._requestLocationPermission()
+        .then(granted => granted ? requestLocation() : _showLocationError(
+          _T('GPS ruxsatini yoqing','GPS рухсатини ёқинг','Разрешите доступ к геолокации','Enable location permission')))
+        .catch(requestLocation);
+    } else requestLocation();
+  }
+
+  function _showLocationError(message) {
+    if (!_found) _show('#qb-load-badge', false);
+    _setText('#qb-location-error-text', message);
+    _show('#qb-location-error-badge', true);
   }
 
   /* ══════════════════════════════════════════════
@@ -578,13 +635,17 @@ const QiblaScreen = (function () {
     const needsIosPermission = typeof DeviceOrientationEvent !== 'undefined'
       && typeof DeviceOrientationEvent.requestPermission === 'function';
     if (needsIosPermission) {
+      _awaitingOrientationPermission = true;
       _show('#qb-ios-permission-badge', true);
+      _updateQualityBadge();
       return; // _attachOrientationListener() runs after the user taps the prompt
     }
     _attachOrientationListener();
   }
 
   function _attachOrientationListener() {
+    if (_orientationStarted) return;
+    _orientationStarted = true;
     let _lastHeading = null;
     let _bigJumpCount = 0;
     _orientCb = e => {
@@ -596,7 +657,18 @@ const QiblaScreen = (function () {
       const hasUsableReading = hasWebkit || typeof e.alpha === 'number';
       if (!hasUsableReading) return;
 
-      _deviceNorth = hasWebkit ? e.webkitCompassHeading : (360 - e.alpha) % 360;
+      const screenAngle = Number(screen.orientation?.angle ?? window.orientation ?? 0) || 0;
+      const rawHeading = hasWebkit
+        ? e.webkitCompassHeading
+        : ((360 - e.alpha + screenAngle) % 360 + 360) % 360;
+      if (_hasOrientation) {
+        const smoothDelta = ((rawHeading - _deviceNorth + 540) % 360) - 180;
+        _deviceNorth = (_deviceNorth + smoothDelta * 0.22 + 360) % 360;
+      } else {
+        _deviceNorth = rawHeading;
+      }
+      _hasAbsoluteOrientation = _hasAbsoluteOrientation || hasWebkit
+        || e.absolute === true || e.type === 'deviceorientationabsolute';
 
       // iOS reports a real per-reading uncertainty; Android's DeviceOrientation
       // API does not expose one at all — leave it unknown rather than invent one.
@@ -623,32 +695,33 @@ const QiblaScreen = (function () {
       _updateQualityBadge();
       if (_compassGlobe) _compassGlobe.setHeadingDeg(_deviceNorth);
     };
-    if ('ondeviceorientationabsolute' in window) {
-      window.addEventListener('deviceorientationabsolute', _orientCb);
-    } else {
-      window.addEventListener('deviceorientation', _orientCb);
-    }
+    /* Some Android WebViews expose the absolute event property but only
+       dispatch deviceorientation, so listen to both variants. */
+    window.addEventListener('deviceorientationabsolute', _orientCb);
+    window.addEventListener('deviceorientation', _orientCb);
   }
 
-  /* Real quality gate: never claim "Qibla found" before we actually have
-     both a GPS fix AND at least one live compass reading. GPS accuracy and
-     compass accuracy are tracked and shown separately — never merged into
-     one fabricated number. */
+  /* The bearing is valid as soon as GPS is known. This stricter quality gate
+     is only for the live physical compass: it requires an absolute sensor
+     reading and keeps GPS/compass accuracy separate. */
   function _qualityGood() {
     if (!_hasOrientation) return false;
+    if (!_hasAbsoluteOrientation) return false;
     if (_gpsAccuracyM !== null && _gpsAccuracyM > 100) return false; // >100m fix is too coarse to trust
+    if (_calibrating) return false;
     return true;
   }
 
   function _updateQualityBadge() {
     const good = _qualityGood();
-    _show('#qb-found-badge', good);
+    const calculated = _found && Number.isFinite(_qiblaAngle);
+    _show('#qb-found-badge', calculated);
     // Whenever we're not confidently "found" — whether because no compass
     // reading has arrived yet, or because jitter suggests it needs
     // calibrating — show the figure-8 guidance rather than leaving a blank
     // gap that could be mistaken for a frozen screen.
-    _show('#qb-calibrate-badge', !good);
-    if (good) {
+    _show('#qb-calibrate-badge', calculated && !good && !_awaitingOrientationPermission);
+    if (calculated) {
       const ang = Math.round(_qiblaAngle);
       _setText('#qb-badge-deg', `${ang}°`);
       _setText('#qb-badge-dir', _dirLabel(_qiblaAngle));

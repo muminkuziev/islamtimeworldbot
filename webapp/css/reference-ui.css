@@ -26,78 +26,107 @@ button, input { font-family:'Plus Jakarta Sans','Inter',system-ui,sans-serif; }
 .app-nav-item { min-height:56px!important; border-radius:16px!important; color:#64767b!important; gap:2px!important; }
 .app-nav-item.active { color:var(--ref-green)!important; background:transparent!important; }
 .app-nav-icon { font-size:24px!important; }
-.app-nav-label { font-size:9px!important; font-weight:700!important; }
+.app-nav-icon svg { display:block; width:25px; height:25px; }
+.app-nav-item.active .app-nav-icon svg { stroke-width:2.4; }
+.app-nav-label { font-size:10px!important; font-weight:700!important; }
 
 /* ---------- Dashboard ---------- */
-#screen-dashboard { background:#f8fcfb!important; }
-#screen-dashboard .db-hdr {
-  min-height:315px!important; padding:0!important; overflow:hidden; background:#fff!important;
-  border-bottom:0!important;
-}
-#screen-dashboard .db-hdr-photo {
-  inset:76px 12px auto 12px!important; width:calc(100% - 24px)!important; height:157px!important;
-  border-radius:19px!important; object-fit:cover!important; object-position:center 64%!important;
-  content:url('../assets/reference-ui/makkah-hero.png'); filter:saturate(1.08) contrast(1.02)!important;
-}
-#screen-dashboard .db-hero-overlay {
-  inset:76px 12px auto 12px!important; width:calc(100% - 24px)!important; height:157px!important;
-  border-radius:19px!important; background:linear-gradient(90deg,rgba(0,88,61,.94) 0%,rgba(0,103,71,.78) 45%,rgba(0,79,55,.10) 100%)!important;
-}
-#screen-dashboard .db-hdr-inner { padding:10px 14px 0!important; }
-#screen-dashboard .db-top-row { height:57px!important; align-items:flex-start!important; }
-#screen-dashboard .db-location-pin { color:var(--ref-green)!important; font-size:20px!important; }
-#screen-dashboard .db-city-name { font-size:14px!important; font-weight:800!important; color:#0b2028!important; }
-#screen-dashboard .db-location-date { margin-left:23px!important; font-size:8px!important; color:#65777e!important; }
-#screen-dashboard .db-slogan, #screen-dashboard .db-divider { display:none!important; }
-#screen-dashboard .db-lang-btn {
-  width:42px!important; height:42px!important; padding:0!important; justify-content:center!important;
-  background:#fff!important; border:1px solid var(--ref-line)!important; border-radius:50%!important; box-shadow:var(--ref-shadow)!important;
-}
-#screen-dashboard .db-lang-btn span:last-child { display:none!important; }
+#screen-dashboard { background:#fff!important; }
+#screen-dashboard .db-hdr { min-height:310px!important; padding:0!important; overflow:hidden!important; background:#fff!important; }
+#screen-dashboard .db-hdr-photo { inset:75px 12px auto!important; width:calc(100% - 24px)!important; height:153px!important; border-radius:18px!important; object-fit:cover!important; object-position:center 64%!important; content:url('../assets/reference-ui/makkah-hero.png'); filter:saturate(1.06) contrast(1.03)!important; box-shadow:none!important; }
+#screen-dashboard .db-hero-overlay { inset:75px 12px auto!important; width:calc(100% - 24px)!important; height:153px!important; border-radius:18px!important; background:linear-gradient(90deg,rgba(0,118,80,.95),rgba(0,116,80,.70) 47%,rgba(0,72,48,.06) 100%)!important; }
+#screen-dashboard .db-hdr-inner { padding:11px 14px 0!important; }
+#screen-dashboard .db-top-row { height:55px!important; min-height:0!important; margin:0!important; align-items:center!important; }
+#screen-dashboard .db-location-line { gap:8px!important; }
+#screen-dashboard .db-location-pin { width:20px!important; height:24px!important; padding:0!important; color:var(--ref-green)!important; background:transparent!important; }
+#screen-dashboard .db-location-pin svg { width:20px; height:24px; fill:currentColor; }
+#screen-dashboard .db-location-pin circle { fill:#fff; }
+#screen-dashboard .db-city-name { font-size:15px!important; font-weight:800!important; color:#0b1820!important; letter-spacing:-.35px!important; }
+#screen-dashboard .db-location-date { margin:2px 0 0 28px!important; gap:5px!important; font-size:9px!important; color:#63727a!important; }
+#screen-dashboard .db-date-ar::before { content:'•'; margin-right:5px; }
+#screen-dashboard .db-slogan,#screen-dashboard .db-divider { display:none!important; }
+#screen-dashboard .db-notify-btn { position:relative; width:40px!important; min-height:40px!important; height:40px!important; padding:0!important; display:grid; place-items:center; color:#14252c; background:transparent; border:0; }
+#screen-dashboard .db-notify-btn svg { width:25px; height:25px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+#screen-dashboard .db-notify-btn i { position:absolute; top:5px; right:5px; width:7px; height:7px; border-radius:50%; background:#ef3d4e; border:2px solid #fff; }
 #screen-dashboard .db-next-wrap { margin:9px 8px 0!important; }
-#screen-dashboard .db-next-box { min-height:130px!important; padding:15px 14px 10px!important; background:transparent!important; border:0!important; box-shadow:none!important; }
-#screen-dashboard .db-next-topline { display:none!important; }
-#screen-dashboard .db-next-lbl { font-size:11px!important; color:rgba(255,255,255,.85)!important; letter-spacing:0!important; text-transform:none!important; }
-#screen-dashboard .db-next-name { color:#fff!important; font-size:28px!important; font-weight:800!important; }
-#screen-dashboard .db-next-remain { color:#fff!important; font-size:22px!important; font-weight:800!important; margin-top:3px!important; }
-#screen-dashboard .db-next-time { color:#fff!important; font-size:12px!important; margin-top:7px!important; }
-#screen-dashboard .db-next-sub { color:rgba(255,255,255,.75)!important; }
-#screen-dashboard .db-prog, #screen-dashboard .db-prog-labels { display:none!important; }
-#screen-dashboard .db-prayer-strip {
-  position:absolute!important; top:240px!important; left:12px!important; right:12px!important; height:68px!important;
-  padding:8px 4px!important; border-radius:17px!important; background:#fff!important; border:1px solid #e6efec!important;
-  box-shadow:var(--ref-shadow)!important; gap:1px!important;
-}
-#screen-dashboard .db-prayer-item { border-radius:12px!important; padding:4px 1px!important; }
-#screen-dashboard .db-prayer-item.active { background:var(--ref-green)!important; color:#fff!important; }
-#screen-dashboard .db-prayer-name { font-size:7px!important; }
-#screen-dashboard .db-prayer-time { font-size:9px!important; }
-#screen-dashboard .db-body { padding:5px 12px 28px!important; }
+#screen-dashboard .db-next-box { min-height:126px!important; padding:14px 14px 10px!important; background:transparent!important; border:0!important; box-shadow:none!important; }
+#screen-dashboard .db-next-topline,#screen-dashboard .db-next-sub,#screen-dashboard .db-prog,#screen-dashboard .db-prog-labels { display:none!important; }
+#screen-dashboard .db-next-row { position:relative; height:102px; align-items:flex-start!important; }
+#screen-dashboard .db-next-lbl { margin:0 0 2px!important; font-size:12px!important; font-weight:500!important; color:rgba(255,255,255,.85)!important; letter-spacing:0!important; text-transform:none!important; }
+#screen-dashboard .db-next-name { margin:0!important; color:#fff!important; font-size:27px!important; line-height:1.05!important; font-weight:800!important; }
+#screen-dashboard .db-next-remain { margin-top:4px!important; color:#fff!important; font-size:25px!important; line-height:1!important; font-weight:800!important; letter-spacing:.2px; }
+#screen-dashboard .db-next-time-line { display:flex; align-items:center; gap:5px; margin-top:8px; color:rgba(255,255,255,.88); font-size:12px; }
+#screen-dashboard .db-next-time-line .material-symbols-rounded::before { font-size:13px; }
+#screen-dashboard .db-next-time { margin:0!important; color:#fff!important; font-size:12px!important; line-height:1!important; font-weight:600!important; letter-spacing:0!important; text-shadow:none!important; }
+#screen-dashboard .db-adhan-btn { position:absolute; right:0; bottom:5px; width:31px; min-height:31px!important; height:31px; padding:0; display:grid; place-items:center; color:#25383d; background:rgba(255,255,255,.88); border:0; border-radius:50%; }
+#screen-dashboard .db-adhan-btn .material-symbols-rounded::before { content:'◖))'; font-size:12px; letter-spacing:-2px; }
+#screen-dashboard .db-prayer-strip { position:absolute!important; top:235px!important; left:12px!important; right:12px!important; height:68px!important; min-height:0!important; margin:0!important; padding:6px 4px!important; border-radius:17px!important; background:#fff!important; border:0!important; box-shadow:0 6px 20px rgba(19,68,53,.09)!important; gap:1px!important; }
+#screen-dashboard .db-prayer-chip { min-height:56px!important; padding:4px 1px!important; gap:1px!important; border-radius:12px!important; color:#17242a!important; }
+#screen-dashboard .db-prayer-chip.active { background:var(--ref-green)!important; color:#fff!important; box-shadow:none!important; }
+#screen-dashboard .db-prayer-icon { height:19px; color:#748388; }
+#screen-dashboard .db-prayer-icon svg { width:19px; height:19px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+#screen-dashboard .db-prayer-chip.active .db-prayer-icon { color:#fff; }
+#screen-dashboard .material-symbols-rounded[data-icon='wb_twilight']::before { content:'☼'; }
+#screen-dashboard .material-symbols-rounded[data-icon='light_mode']::before { content:'☀'; }
+#screen-dashboard .material-symbols-rounded[data-icon='bedtime']::before { content:'◒'; }
+#screen-dashboard .material-symbols-rounded[data-icon='mode_night']::before { content:'◔'; }
+#screen-dashboard .db-prayer-name { font-size:9px!important; line-height:1.1; }
+#screen-dashboard .db-prayer-chip strong { font-size:10px!important; line-height:1.1; }
+#screen-dashboard .db-body { padding:3px 12px 24px!important; background:#fff; }
 #screen-dashboard .db-section-lbl:first-child { display:none!important; }
-#screen-dashboard .db-grid { grid-template-columns:repeat(3,minmax(0,1fr))!important; gap:8px!important; margin:0 0 11px!important; }
+#screen-dashboard .db-grid { grid-template-columns:repeat(3,minmax(0,1fr))!important; gap:8px!important; margin:0 0 10px!important; }
 #screen-dashboard .db-tile-wrap { min-width:0!important; }
-#screen-dashboard .db-cell {
-  min-height:82px!important; padding:8px 5px 7px!important; border:1px solid #e7f0ed!important; border-radius:17px!important;
-  background:#fff!important; box-shadow:0 4px 16px rgba(19,78,58,.055)!important; display:flex!important; flex-direction:column!important;
-  align-items:center!important; justify-content:center!important; text-align:center!important;
-}
-#screen-dashboard .db-cell-icon { font-size:0!important; color:var(--ref-green)!important; margin:0 0 5px!important; }
-#screen-dashboard .db-cell-icon::before { font-size:27px!important; }
-#screen-dashboard .db-cell-title { font-size:10px!important; line-height:1.15!important; font-weight:800!important; color:#102229!important; }
-#screen-dashboard .db-cell-sub { font-size:7px!important; line-height:1.25!important; color:#7a898d!important; margin-top:3px!important; max-width:96px!important; }
-#screen-dashboard .db-hadith-card {
-  min-height:78px!important; border:1px solid #efdca7!important; border-radius:18px!important; background:linear-gradient(135deg,#fffdf4,#fff9e7)!important;
-  box-shadow:0 5px 18px rgba(154,118,20,.08)!important; padding:12px!important;
-}
-#screen-dashboard .db-hadith-icon { width:43px!important; height:43px!important; border-radius:13px!important; display:grid!important; place-items:center!important; background:var(--ref-green)!important; color:#fff!important; }
-#screen-dashboard .db-hadith-copy strong { font-size:12px!important; }
-#screen-dashboard .db-hadith-copy small { color:#62767a!important; font-size:8px!important; }
-#screen-dashboard .db-haramayn-label { margin:16px 3px 8px!important; font-size:15px!important; text-transform:none!important; letter-spacing:0!important; color:#0a2029!important; }
-#screen-dashboard .db-haramayn-row { gap:9px!important; }
-#screen-dashboard .db-haramayn-mini { height:112px!important; border-radius:16px!important; overflow:hidden!important; box-shadow:var(--ref-shadow)!important; }
-#screen-dashboard .db-haramayn-mini img { height:100%!important; }
-#screen-dashboard .db-haramayn-mini-name { font-size:12px!important; bottom:10px!important; }
+#screen-dashboard .db-cell { min-height:89px!important; padding:8px 4px!important; border:0!important; border-radius:17px!important; background:#fff!important; box-shadow:0 4px 17px rgba(23,66,52,.075)!important; display:flex!important; flex-direction:column!important; align-items:center!important; justify-content:center!important; text-align:center!important; }
+#screen-dashboard .db-cell-icon { width:31px!important; height:31px!important; color:var(--ref-green)!important; background:transparent!important; margin:0 0 5px!important; }
+#screen-dashboard .db-cell-icon svg { display:block; width:31px; height:31px; }
+#screen-dashboard .db-cell-title { align-self:center!important; margin:0!important; font-size:12px!important; line-height:1.15!important; font-weight:800!important; color:#102229!important; }
+#screen-dashboard .db-cell-sub { align-self:center!important; font-size:8.5px!important; line-height:1.25!important; color:#6f7d82!important; margin-top:3px!important; max-width:104px!important; text-align:center!important; }
+#screen-dashboard .db-hadith-card { position:relative; min-height:87px!important; margin:4px 0 0!important; gap:10px!important; padding:11px 26px 9px 12px!important; border:1px solid #efd89a!important; border-radius:17px!important; background:linear-gradient(135deg,#fffdf5,#fff9e7)!important; box-shadow:none!important; }
+#screen-dashboard .db-hadith-icon { width:43px!important; height:43px!important; flex:0 0 43px!important; border-radius:13px!important; background:var(--ref-green)!important; color:#fff!important; box-shadow:none!important; }
+#screen-dashboard .db-hadith-icon::before { font-size:25px!important; }
+#screen-dashboard .db-hadith-copy { gap:2px!important; padding-top:0; overflow:hidden; }
+#screen-dashboard .db-hadith-copy strong { font-size:13px!important; line-height:1.2; }
+#screen-dashboard .db-hadith-quote { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#15262d; font-size:10.5px; font-weight:700; }
+#screen-dashboard .db-hadith-copy small { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#51656c!important; font-size:8px!important; }
+#screen-dashboard .db-hadith-grade { position:absolute; top:8px; right:9px; padding:3px 7px; color:#fff; font-size:7px; border-radius:10px; background:#e7bd67; }
+#screen-dashboard .db-hadith-arrow { position:absolute; right:8px; bottom:7px; color:#17292f!important; }
+#screen-dashboard .db-hadith-arrow::before { font-size:23px!important; }
+#screen-dashboard .db-haramayn-label { margin:13px 3px 7px!important; font-size:15px!important; line-height:1!important; text-transform:none!important; letter-spacing:-.25px!important; color:#0a1820!important; }
+#screen-dashboard .db-haramayn-label button { min-height:28px!important; color:#18272d!important; font-size:9px!important; }
+#screen-dashboard .db-haramayn-row { gap:9px!important; margin-top:0!important; }
+#screen-dashboard .db-haramayn-mini { height:112px!important; border-radius:15px!important; overflow:hidden!important; box-shadow:none!important; }
+#screen-dashboard .db-haramayn-mini img { height:100%!important; opacity:1!important; }
+#screen-dashboard .db-haramayn-mini::after { inset:32% 0 0!important; background:linear-gradient(transparent,rgba(0,42,28,.86))!important; }
+#screen-dashboard .db-haramayn-mini-badge { top:8px!important; right:8px!important; padding:4px 7px!important; border-radius:5px!important; background:#fa4e66!important; font-size:8px!important; font-weight:800!important; }
+#screen-dashboard .db-haramayn-mini-badge span { font-size:7px; }
+#screen-dashboard .db-haramayn-mini-copy { position:absolute; z-index:2; left:10px; right:8px; bottom:8px; display:flex; flex-direction:column; align-items:flex-start; color:#fff; text-align:left; }
+#screen-dashboard .db-haramayn-mini-copy strong { font-size:14px; line-height:1.1; }
+#screen-dashboard .db-haramayn-mini-copy small { margin-top:2px; color:rgba(255,255,255,.9); font-size:9px; }
 #screen-dashboard .db-footer-credit { display:none!important; }
+.material-symbols-rounded[data-icon='person']::before { content:'♙'; }
+
+@media(max-width:370px) {
+  #screen-dashboard .db-hdr { min-height:300px!important; }
+  #screen-dashboard .db-hdr-photo,#screen-dashboard .db-hero-overlay { inset-inline:10px!important; width:calc(100% - 20px)!important; height:145px!important; }
+  #screen-dashboard .db-prayer-strip { top:227px!important; left:10px!important; right:10px!important; height:66px!important; }
+  #screen-dashboard .db-prayer-chip { min-height:54px!important; }
+  #screen-dashboard .db-cell { min-height:83px!important; }
+  #screen-dashboard .db-cell-title { font-size:11px!important; }
+  #screen-dashboard .db-cell-sub { font-size:7.5px!important; }
+  #screen-dashboard .db-hadith-card { min-height:82px!important; }
+  #screen-dashboard .db-haramayn-mini { height:103px!important; }
+}
+
+@media(min-width:390px) and (min-height:880px) {
+  #screen-dashboard .db-hdr { min-height:330px!important; }
+  #screen-dashboard .db-hdr-photo,#screen-dashboard .db-hero-overlay { height:173px!important; }
+  #screen-dashboard .db-next-box { min-height:146px!important; }
+  #screen-dashboard .db-next-row { height:121px!important; }
+  #screen-dashboard .db-prayer-strip { top:255px!important; }
+  #screen-dashboard .db-cell { min-height:101px!important; }
+  #screen-dashboard .db-hadith-card { min-height:95px!important; }
+  #screen-dashboard .db-haramayn-mini { height:126px!important; }
+}
 
 /* ---------- Shared Quran / Prayer header ---------- */
 #screen-quran .q-header, #screen-prayer .q-header { border-bottom:0!important; }
@@ -174,7 +203,8 @@ button, input { font-family:'Plus Jakarta Sans','Inter',system-ui,sans-serif; }
 #screen-qibla .qb-panel { gap:8px!important; }
 #screen-qibla .qb-found-badge, #screen-qibla .qb-load-badge { order:-5; min-height:36px!important; padding:6px 12px!important; border-radius:14px!important; }
 #screen-qibla .qb-route-globe-wrap { order:-4; position:relative; width:calc(100% + 32px)!important; height:275px!important; margin:0 -16px!important; overflow:hidden!important; }
-#screen-qibla .qb-route-globe { height:340px!important; width:340px!important; margin:-22px auto 0!important; border:0!important; border-radius:50%!important; overflow:hidden!important; box-shadow:none!important; opacity:1; background:url('../assets/reference-ui/qibla-earth.png') center/contain no-repeat!important; }
+#screen-qibla .qb-route-globe { position:relative; height:340px!important; width:340px!important; margin:-22px auto 0!important; border:0!important; border-radius:50%!important; overflow:hidden!important; box-shadow:none!important; opacity:1; background:none!important; isolation:isolate; }
+#screen-qibla .qb-route-globe::before { content:''; position:absolute; inset:0; z-index:0; border-radius:50%; background:url('../assets/reference-ui/qibla-earth.png') center/contain no-repeat; transform:scale(1.015) rotate(0deg); transform-origin:50% 50%; animation:qb-earth-spin 72s linear infinite; will-change:transform; pointer-events:none; }
 #screen-qibla .qb-route-globe canvas { opacity:0!important; }
 #screen-qibla .qb-route-globe-label { display:none!important; }
 #screen-qibla .qb-compass-stack { order:-3; z-index:2; margin-top:-272px!important; margin-bottom:0!important; width:250px!important; height:250px!important; border:1px solid rgba(7,135,94,.12); border-radius:50%; background:rgba(255,255,255,.89); box-shadow:0 12px 30px rgba(2,80,54,.14); backdrop-filter:blur(2px); filter:none!important; }
@@ -197,6 +227,14 @@ button, input { font-family:'Plus Jakarta Sans','Inter',system-ui,sans-serif; }
 #screen-qibla .qb-masjid-card strong, #screen-qibla .qb-masjid-card small { display:block; }
 #screen-qibla .qb-masjid-card strong { font-size:13px; margin-bottom:4px; }
 #screen-qibla .qb-masjid-card small { color:#71817b; font-size:9px; }
+
+@keyframes qb-earth-spin {
+  to { transform:scale(1.015) rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #screen-qibla .qb-route-globe::before { animation:none; }
+}
 
 /* ---------- Prayer times ---------- */
 #screen-prayer .q-header {

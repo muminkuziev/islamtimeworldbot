@@ -38,7 +38,7 @@
     { id: 'screen-quran',     icon: 'menu_book',      key: 'quran' },
     { id: 'screen-prayer',    icon: 'schedule',       key: 'prayer' },
     { id: 'screen-calendar',  icon: 'calendar_month', key: 'calendar' },
-    { id: 'screen-others',    icon: 'grid_view',      key: 'more' },
+    { id: 'screen-settings',  icon: 'person',         key: 'profile' },
   ];
   const NAV_LABELS = {
     home:     {uz:'Bosh sahifa',uz_cyr:'Бош саҳифа',ru:'Главная',en:'Home',tr:'Ana sayfa',ar:'الرئيسية',kk:'Басты бет',tg:'Асосӣ',ky:'Башкы бет',de:'Start',fr:'Accueil',id:'Beranda',hi:'होम',ur:'ہوم',bn:'হোম',fa:'خانه',ms:'Utama'},
@@ -46,6 +46,7 @@
     prayer:   {uz:'Namoz',uz_cyr:'Намоз',ru:'Намаз',en:'Prayer',tr:'Namaz',ar:'الصلاة',kk:'Намаз',tg:'Намоз',ky:'Намаз',de:'Gebet',fr:'Prière',id:'Salat',hi:'नमाज़',ur:'نماز',bn:'নামাজ',fa:'نماز',ms:'Solat'},
     calendar: {uz:'Taqvim',uz_cyr:'Тақвим',ru:'Календарь',en:'Calendar',tr:'Takvim',ar:'التقويم',kk:'Күнтізбе',tg:'Тақвим',ky:'Жылнаама',de:'Kalender',fr:'Calendrier',id:'Kalender',hi:'कैलेंडर',ur:'تقویم',bn:'ক্যালেন্ডার',fa:'تقویم',ms:'Kalendar'},
     more:     {uz:"Ko'proq",uz_cyr:'Кўпроқ',ru:'Ещё',en:'More',tr:'Daha fazla',ar:'المزيد',kk:'Қосымша',tg:'Бештар',ky:'Дагы',de:'Mehr',fr:'Plus',id:'Lainnya',hi:'और',ur:'مزید',bn:'আরও',fa:'بیشتر',ms:'Lagi'},
+    profile:  {uz:'Profil',uz_cyr:'Профил',ru:'Профиль',en:'Profile',tr:'Profil',ar:'الملف',kk:'Профиль',tg:'Профил',ky:'Профиль',de:'Profil',fr:'Profil',id:'Profil',hi:'प्रोफ़ाइल',ur:'پروفائل',bn:'প্রোফাইল',fa:'پروفایل',ms:'Profil'},
   };
   const MORE_SCREENS = new Set([
     'screen-others','screen-settings','screen-qibla','screen-mosques','screen-hadith',
@@ -57,6 +58,18 @@
   function _navLabel(key) {
     const values = NAV_LABELS[key] || {};
     return values[state.lang] || values.en || key;
+  }
+
+  function _navIcon(key) {
+    const start = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
+    const paths = {
+      home:'<path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10M9 20v-6h6v6"/>',
+      quran:'<path d="M3 5c3-1 6 0 9 2v14c-3-2-6-3-9-2V5Zm18 0c-3-1-6 0-9 2v14c3-2 6-3 9-2V5Z"/>',
+      prayer:'<circle cx="12" cy="13" r="8"/><path d="M12 1v3M8 2h8m-4 7v5l3 2"/>',
+      calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 2v6m10-6v6M3 10h18m-13 4h3m2 0h3m-8 3h3"/>',
+      profile:'<circle cx="12" cy="8" r="4"/><path d="M4 21c.7-4.3 3.4-7 8-7s7.3 2.7 8 7"/>'
+    };
+    return start + (paths[key] || paths.home) + '</svg>';
   }
 
   function _ensureBottomNav() {
@@ -71,7 +84,7 @@
     nav.innerHTML = NAV_ITEMS.map(item => {
       const label = _navLabel(item.key);
       return `<button class="app-nav-item" type="button" data-screen="${item.id}" aria-label="${label}">
-        <span class="material-symbols-rounded app-nav-icon" data-icon="${item.icon}" aria-hidden="true">${item.icon}</span>
+        <span class="app-nav-icon">${_navIcon(item.key)}</span>
         <span class="app-nav-label">${label}</span>
       </button>`;
     }).join('');
@@ -86,6 +99,7 @@
       if (screenId === 'screen-prayer') PrayerScreen.load(lang);
       if (screenId === 'screen-calendar') CalendarScreen.load(lang);
       if (screenId === 'screen-others') OthersScreen.load(lang);
+      if (screenId === 'screen-settings') SettingsScreen.load(lang);
     } catch (e) { console.warn('primary navigation load failed:', e); }
     navigate(screenId);
     try { tg?.HapticFeedback?.selectionChanged(); } catch (_) {}
@@ -97,7 +111,7 @@
     const hidden = ONBOARDING_SCREENS.has(screenId);
     nav.classList.toggle('is-hidden', hidden);
     document.body.classList.toggle('has-bottom-nav', !hidden);
-    const activeId = MORE_SCREENS.has(screenId) ? 'screen-others' : screenId;
+    const activeId = MORE_SCREENS.has(screenId) ? 'screen-settings' : screenId;
     nav.querySelectorAll('.app-nav-item').forEach(btn => {
       const active = btn.dataset.screen === activeId;
       btn.classList.toggle('active', active);
