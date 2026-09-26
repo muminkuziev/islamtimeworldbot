@@ -1424,7 +1424,10 @@ async def terms_of_service():
 async def landing():
     return FileResponse(
         str(WEBAPP_DIR / "landing.html"),
-        headers={"Cache-Control": "public, max-age=3600"},
+        headers={
+            "Cache-Control": "no-cache, must-revalidate, max-age=0",
+            "Pragma": "no-cache",
+        },
     )
 
 # ── Telegram WebApp entry point ────────────────────────────────────────────
