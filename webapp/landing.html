@@ -1170,6 +1170,8 @@
       box-shadow: var(--shadow-md);
       padding: 8px;
       z-index: 150;
+      max-height: min(70vh, 520px);
+      overflow-y: auto;
     }
     .lang-item {
       display: flex;
@@ -1179,10 +1181,22 @@
       border-radius: 10px;
       font-size: 14px;
       font-weight: 600;
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: var(--text-main);
+      font-family: inherit;
+      text-align: start;
+      cursor: pointer;
     }
+    .lang-item:hover, .lang-item:focus-visible { background: var(--bg-light); outline: none; }
     .lang-item.is-current { background: var(--primary-light); color: var(--primary-dark); }
     .lang-state { margin-left: auto; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .4px; }
     .lang-note { font-size: 12.5px; color: var(--text-muted); padding: 8px 10px 4px; line-height: 1.45; }
+    [dir="rtl"] .lang-menu { right: auto; left: 0; }
+    [dir="rtl"] .lang-state { margin-left: 0; margin-right: auto; }
+    .haramayn-actions { display:flex; flex-wrap:wrap; gap:10px; }
+    .haramayn-actions .btn-haramayn { width:auto; }
 
     .phones-caption {
       text-align: center;
@@ -1364,8 +1378,7 @@
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
           </button>
           <div class="lang-menu" id="langMenu" hidden>
-            <div class="lang-item is-current" aria-current="true"><img class="lang-flag" src="assets/landing/flags/uz.svg" width="20" height="20" alt=""> O'zbekcha <span class="lang-state">faol</span></div>
-            <p class="lang-note">Sayt boshqa tillarda tez orada. Ilovaning o'zi ko'p tillarni qo'llaydi.</p>
+            <button type="button" class="lang-item is-current" aria-current="true"><img class="lang-flag" src="assets/landing/flags/uz.svg" width="20" height="20" alt=""> O'zbekcha <span class="lang-state">faol</span></button>
           </div>
         </div>
         <a href="https://t.me/IslamTimeWorldBot" target="_blank" rel="noopener" class="btn-download-top">
@@ -1593,7 +1606,7 @@
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
           </div>
           <h3 class="feature-card-title">Haramayn LIVE</h3>
-          <p class="feature-card-desc">Makkah va Madinah jonli efiri — rasmiy manba bilan integratsiya tayyorlanmoqda.</p>
+          <p class="feature-card-desc">Makkah va Madinahning rasmiy 24/7 jonli efiri.</p>
         </article>
         <article class="feature-card">
           <div class="feature-icon-wrap" aria-hidden="true">
@@ -1619,10 +1632,11 @@
         <div class="haramayn-content">
           <div class="haramayn-tag">Haramayn LIVE</div>
           <h3 class="haramayn-title" id="haramaynTitle">Makkah va Madinah — har doim siz bilan</h3>
-          <p class="haramayn-text">Masjid al-Haram va Masjid an-Nabaviy jonli translyatsiyasi rasmiy manbaga ulanish orqali taqdim etiladi. Integratsiya tayyorlanmoqda.</p>
-          <span class="btn-haramayn btn-playstore is-disabled" role="link" aria-disabled="true">
-            Jonli efirni ochish <span class="soon-chip">Tez orada</span>
-          </span>
+          <p class="haramayn-text">Masjid al-Haram va Masjid an-Nabaviy jonli efirini Saudiya rasmiy kanallarida tomosha qiling.</p>
+          <div class="haramayn-actions">
+            <a class="btn-haramayn btn-playstore" data-live="makkah" href="https://www.youtube.com/@SaudiQuranTv/live" target="_blank" rel="noopener noreferrer">Makkah jonli efiri</a>
+            <a class="btn-haramayn btn-playstore" data-live="madinah" href="https://www.youtube.com/@SaudiSunnahTv/live" target="_blank" rel="noopener noreferrer">Madina jonli efiri</a>
+          </div>
         </div>
       </aside>
     </div>
@@ -1756,6 +1770,7 @@
     </div>
   </footer>
 
+  <script src="js/landing-i18n.js?v=1"></script>
   <script>
     (function () {
       var nav = document.querySelector('.navbar');
@@ -1765,7 +1780,7 @@
       function setOpen(open) {
         nav.classList.toggle('open', open);
         toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-        toggle.setAttribute('aria-label', open ? 'Menyuni yopish' : 'Menyuni ochish');
+        toggle.setAttribute('aria-label', window.landingMenuLabel ? window.landingMenuLabel(open) : (open ? 'Menyuni yopish' : 'Menyuni ochish'));
       }
       toggle.addEventListener('click', function () { setOpen(!nav.classList.contains('open')); });
       links.forEach(function (a) { a.addEventListener('click', function () { setOpen(false); }); });
