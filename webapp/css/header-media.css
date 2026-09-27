@@ -106,3 +106,26 @@ html[dir="rtl"] #app #screen-dashboard .db-hero-overlay {
     width: 100%;
   }
 }
+
+/* A short window must scroll the header and its controls together. Nested
+   body-only scrolling otherwise leaves the last header tabs behind the nav. */
+@media (max-height: 600px) {
+  #app :is(#screen-hadith, #screen-duas, #screen-dhikr,
+    #screen-calendar, #screen-names, #screen-settings) {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  #app :is(#screen-hadith, #screen-duas, #screen-dhikr,
+    #screen-calendar, #screen-names, #screen-settings) :is(.screen-inner, .zk-screen) {
+    flex: 0 0 auto;
+    height: auto;
+    min-height: 100%;
+    overflow: visible;
+  }
+  #app :is(#screen-hadith, #screen-duas, #screen-dhikr,
+    #screen-calendar, #screen-names, #screen-settings)
+    :is(.hd-body, .du-body, .hc-body, .nm-content, .zk-list-body) {
+    flex: 0 0 auto;
+    overflow: visible;
+  }
+}
