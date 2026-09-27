@@ -5,8 +5,9 @@ const fs = require('node:fs');
 
 const geography = fs.readFileSync('webapp/js/native/qibla-geo.js', 'utf8');
 const screenSource = fs.readFileSync('webapp/js/screens/qibla.js', 'utf8');
+const appSource = fs.readFileSync('webapp/js/app.js', 'utf8');
 
-function setup({ native = false, available = true, ios = false, deferredListener = false } = {}) {
+function setup({ native = false, available = true, ios = false, deferredListener = false, integrated = false } = {}) {
   const nodes = new Map();
   const windowEvents = new Map();
   const documentEvents = new Map();
@@ -19,15 +20,25 @@ function setup({ native = false, available = true, ios = false, deferredListener
   let nativeHeading;
   let resolveListener;
   let permission;
+  const classes = () => {
+    const values = new Set();
+    return {
+      add: value => values.add(value), remove: value => values.delete(value),
+      contains: value => values.has(value),
+      toggle: (value, enabled) => enabled ? values.add(value) : values.delete(value),
+    };
+  };
   const node = id => {
     if (!nodes.has(id)) nodes.set(id, {
-      style: {}, dataset: {}, attributes: {}, events: {}, textContent: '',
+      style: {}, dataset: {}, attributes: {}, events: {}, textContent: '', innerHTML: '', classList: classes(),
+      querySelectorAll: () => [],
       setAttribute(k, v) { this.attributes[k] = v; },
       addEventListener(k, cb) { this.events[k] = cb; },
     });
     return nodes.get(id);
   };
-  const root = { innerHTML: '', querySelector: node, querySelectorAll: () => [] };
+  const root = node('#screen-qibla');
+  root.querySelector = node;
   const plugin = {
     addListener: async (_, callback) => {
       nativeHeading = callback;
@@ -40,7 +51,9 @@ function setup({ native = false, available = true, ios = false, deferredListener
   };
   const document = {
     hidden: false,
-    getElementById: () => root,
+    getElementById: id => integrated ? node('#' + id) : root,
+    querySelector: () => Array.from(nodes.values()).find(el => el.classList.contains('active')) || null,
+    body: { classList: classes() },
     addEventListener: (event, cb) => documentEvents.set(event, cb),
     removeEventListener: event => documentEvents.delete(event),
   };
@@ -65,6 +78,18 @@ function setup({ native = false, available = true, ios = false, deferredListener
   if (ios) context.DeviceOrientationEvent = { requestPermission: () => new Promise(resolve => { permission = resolve; }) };
   vm.createContext(context);
   vm.runInContext(geography + '\n' + screenSource + '\nglobalThis.screen = QiblaScreen; globalThis.geo = QiblaGeo;', context);
+  if (integrated) {
+    window.location = { search: '' };
+    for (const name of ['SplashScreen','LanguageScreen','MazhabScreen','LocationScreen','PrayerScreen',
+      'QazoScreen','MonthlyCalendarScreen','MosquesScreen','QuranScreen','HadithScreen','DuasScreen',
+      'DhikrScreen','CalendarScreen','NamesScreen','OthersScreen','ShahodatScreen','HaramaynScreen',
+      'SettingsScreen','DashboardScreen']) context[name] = { render() {}, update() {} };
+    Object.assign(context, {
+      URLSearchParams, normalizeLanguage: lang => lang || 'en', t: key => key,
+      applyLangDir() {}, setTimeout() {}, requestAnimationFrame: callback => callback(),
+    });
+    vm.runInContext(appSource, context);
+  }
   const fix = (index = locations.length - 1, lat = 52.2297, lon = 21.0122) => locations[index].success({ coords: { latitude: lat, longitude: lon, accuracy: 8 } });
   return {
     context, node, calls, locations, timers, stored, root, windowEvents,
@@ -79,6 +104,59 @@ function setup({ native = false, available = true, ios = false, deferredListener
 }
 
 async function settle() { for (let i = 0; i < 10; i++) await Promise.resolve(); }
+
+test('app boot leaves Qibla inactive; route entry, exit and back entry own the native sensor lifecycle', async () => {
+  const app = setup({ native: true, integrated: true });
+  await settle();
+  assert.match(app.root.innerHTML, /qb-compass-svg/);
+  assert.equal(app.calls.starts, 0);
+  assert.equal(app.locations.length, 0);
+  assert.equal(app.timers.size, 0);
+  assert.equal(app.windowEvents.size, 0);
+
+  app.context.window.App.navigate('screen-qibla');
+  app.fix(); await settle();
+  assert.equal(app.calls.starts, 1);
+  app.native({ absolute: true, heading: 20 });
+  assert.equal(app.node('#qb-compass-svg').dataset.heading, '20.0');
+  app.context.window.App.navigate('screen-qibla');
+  await settle();
+  assert.equal(app.calls.starts, 1, 'repeated activation must not register another sensor');
+
+  app.context.window.App.navigate('screen-dashboard');
+  await settle();
+  assert.equal(app.calls.stops, 1);
+  assert.equal(app.calls.removes, 1);
+  assert.equal(app.windowEvents.size, 0);
+  assert.equal(app.timers.size, 0);
+
+  // Simulate a back/deep-link route with no QiblaScreen.load call.
+  app.context.window.App.navigate('screen-qibla');
+  app.fix(); await settle();
+  assert.equal(app.calls.starts, 2);
+  app.native({ absolute: true, heading: 90 });
+  assert.equal(app.node('#qb-compass-svg').dataset.heading, '90.0');
+  assert.equal(app.node('#qb-live-heading').style.display, 'flex');
+});
+
+test('route activation does not reload a Qibla screen already loaded by a Home tile', async () => {
+  const app = setup({ native: true, integrated: true });
+  app.load(); await settle();
+  app.context.window.App.navigate('screen-qibla');
+  await settle();
+  assert.equal(app.calls.starts, 1);
+  assert.equal(app.calls.stops, 0);
+  assert.equal(app.locations.length, 1);
+});
+
+test('native Android compass does not wait for modern browser sensor permission', async () => {
+  const app = setup({ native: true, ios: true });
+  app.load(); app.fix(); await settle();
+  assert.equal(app.calls.starts, 1);
+  app.native({ absolute: true, heading: 148 });
+  assert.equal(app.node('#qb-compass-svg').dataset.heading, '148.0');
+  assert.notEqual(app.node('#qb-ios-permission-badge').style.display, 'flex');
+});
 
 test('absolute heading conversion rejects relative, null, infinite and invalid iOS readings', () => {
   const { geo } = setup().context;

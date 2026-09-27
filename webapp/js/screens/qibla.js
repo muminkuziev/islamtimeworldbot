@@ -56,7 +56,20 @@ const QiblaScreen = (function () {
      Entry points
   ══════════════════════════════════════════════ */
   function render() {
-    load(window.App?.state?.lang || 'uz');
+    // App boot builds every screen, including hidden ones. Sensors and GPS
+    // belong to an explicitly activated route, not to that initial shell.
+    _lang = window.App?.state?.lang || 'uz';
+    _tab = 'kompas';
+    unload();
+    _resetRuntimeState();
+    _el = document.getElementById('screen-qibla');
+    if (!_el) return;
+    _el.innerHTML = _buildHTML();
+    _bind();
+  }
+
+  function activate(lang) {
+    if (!_active || _lang !== lang) load(lang);
   }
 
   function load(lang) {
@@ -691,7 +704,12 @@ const QiblaScreen = (function () {
     // iOS 13+ requires an explicit, user-gesture-triggered permission grant
     // before deviceorientation events fire at all — without this, the
     // compass silently never works on iOS (no error, just zero events).
-    const needsIosPermission = typeof DeviceOrientationEvent !== 'undefined'
+    const cap = window.Capacitor;
+    const nativeCompass = cap?.isNativePlatform?.() && cap.getPlatform?.() === 'android'
+      && cap.isPluginAvailable?.('Compass');
+    // Modern Chromium can expose requestPermission too. Android's native
+    // Compass plugin does not depend on permission for browser sensor events.
+    const needsIosPermission = !nativeCompass && typeof DeviceOrientationEvent !== 'undefined'
       && typeof DeviceOrientationEvent.requestPermission === 'function';
     if (needsIosPermission && !_iosPermissionGranted) {
       _awaitingOrientationPermission = true;
@@ -940,5 +958,5 @@ const QiblaScreen = (function () {
     if (el) el.style.display = visible ? 'flex' : 'none';
   }
 
-  return { render, load, unload };
+  return { render, activate, load, unload };
 })();

@@ -121,10 +121,14 @@
     const next    = document.getElementById(screenId);
     const current = document.querySelector('.screen.active');
 
-    if (!next || current === next) return;
+    if (!next) return;
+    // Back buttons and deep links may enter Qibla without a manual load call.
+    // activate is idempotent for callers that already loaded this language.
+    if (screenId === 'screen-qibla') QiblaScreen.activate(state.lang);
+    if (current === next) return;
 
     /* Cleanup outgoing screen sensors */
-    if (state.currentScreen === 'screen-qibla') {
+    if (state.currentScreen === 'screen-qibla' && screenId !== 'screen-qibla') {
       try { QiblaScreen.unload(); } catch (_) {}
     }
 
