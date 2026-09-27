@@ -24,8 +24,8 @@ const SplashScreen = (function () {
 
   function render() {
     const el = document.getElementById('screen-splash');
-    const savedLang = localStorage.getItem('islamtime_lang') || 'uz';
-    const tagline   = TAGLINES[savedLang] || TAGLINES['en'];
+    const savedLang = normalizeLanguage(window.App?.state?.lang || localStorage.getItem('islamtime_lang'));
+    const tagline   = t('sloganDua', savedLang);
 
     el.innerHTML = `
       <div class="geo-bg"></div>

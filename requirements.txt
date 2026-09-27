@@ -13,3 +13,5 @@ python-dotenv==1.0.1
 
 # ── Utilities ─────────────────────────────────────────────
 requests==2.32.3
+# IANA time zones for Windows and minimal hosts used by prayer calculations.
+tzdata==2026.4

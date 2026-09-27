@@ -52,7 +52,7 @@ const _TRANSLATION_SOURCES = {
   tr: { edition: 'tr.diyanet',     translator: 'Diyanet İşleri Başkanlığı',             verification: 'provider_published' },
   fr: { edition: 'fr.hamidullah',  translator: 'Muhammad Hamidullah',                   verification: 'provider_published' },
   de: { edition: 'de.bubenheim',   translator: 'Bubenheim & Elyas',                     verification: 'provider_published' },
-  id: { edition: 'id.indonesian',  translator: 'Kementerian Agama Republik Indonesia',  verification: 'provider_published' },
+  id: { edition: 'id.indonesian',  translator: null, verification: 'provider_published', translator_verification: 'unconfirmed_project_attribution', project_attribution: 'Kementerian Agama Republik Indonesia' },
   ur: { edition: 'ur.jalandhry',   translator: 'Fateh Muhammad Jalandhry',              verification: 'provider_published' },
   hi: { edition: 'hi.hindi',       translator: 'Suhel Farooq Khan & Saifur Rahman Nadwi', verification: 'provider_published' },
   bn: { edition: 'bn.bengali',     translator: 'Muhiuddin Khan',                        verification: 'provider_published' },
@@ -72,8 +72,7 @@ registerQuranProvider({
   languages: Object.keys(_TRANSLATION_SOURCES).filter(l => l !== 'ar'),
 
   listSurahs: async function () {
-    const r = await fetch('https://api.alquran.cloud/v1/surah');
-    const d = await r.json();
+    const d = await _fetchQuranData('surah');
     _cacheSurahOffsets(d.data || []);
     return (d.data || []).map(s => ({
       id:                   s.number,
@@ -87,22 +86,28 @@ registerQuranProvider({
   },
 
   getAyahs: async function (surahId, opts = {}) {
-    const lang    = opts.lang || 'en';
+    if (!Number.isInteger(surahId) || surahId < 1 || surahId > 114) throw new Error('Invalid surah');
+    const lang    = opts.lang === 'uz_cyr' ? 'uz' : (opts.lang || 'en');
     const edition = _editionFor(lang);
     if (!_surahOffsetsReady()) await this.listSurahs();
     const urls = [
-      fetch(`https://api.alquran.cloud/v1/surah/${surahId}/quran-uthmani`).then(r => r.json()),
-      edition ? fetch(`https://api.alquran.cloud/v1/surah/${surahId}/${edition}`).then(r => r.json()) : null,
+      _fetchQuranData(`surah/${surahId}/quran-uthmani`),
+      edition ? _fetchQuranData(`surah/${surahId}/${edition}`) : null,
     ];
     const [arabicRes, transRes] = await Promise.all(urls);
-    const arabic   = arabicRes?.data?.ayahs || [];
-    const transl   = transRes?.data?.ayahs  || [];
-    return arabic.map((a, i) => ({
+    const arabic = _validateSurah(arabicRes, surahId, 'quran-uthmani');
+    const transl = edition ? _validateSurah(transRes, surahId, edition) : [];
+    if (edition && transl.length !== arabic.length) throw new Error('Incomplete Quran translation');
+    const translated = new Map(transl.map(ayah => [ayah.numberInSurah, ayah]));
+    if (edition && arabic.some(ayah => translated.get(ayah.numberInSurah)?.number !== ayah.number)) {
+      throw new Error('Quran translation verse mismatch');
+    }
+    return arabic.map(a => ({
       id:              a.number,
       surah_id:        surahId,
       ayah:            a.numberInSurah,
       arabic:          a.text,
-      translation:     transl[i]?.text || '',
+      translation:     translated.get(a.numberInSurah)?.text || '',
       transliteration: '',
       audio_url:       _audioUrl(surahId, a.numberInSurah, opts.reciter || 'mishary'),
       source:          _sourceMetaFor(lang),
@@ -120,19 +125,47 @@ registerQuranProvider({
 
 /* ── Edition mapping by language ───────────────────────────── */
 function _editionFor(lang) {
-  return (_TRANSLATION_SOURCES[lang] || _TRANSLATION_SOURCES.en).edition;
+  const source = _TRANSLATION_SOURCES[lang === 'uz_cyr' ? 'uz' : lang];
+  if (!source) throw new Error('Unsupported Quran translation language');
+  return source.edition;
+}
+
+async function _fetchQuranData(path) {
+  const response = await fetch(`https://api.alquran.cloud/v1/${path}`);
+  if (!response.ok) throw new Error('Quran provider unavailable');
+  const result = await response.json();
+  if (result.code !== 200 || !result.data) throw new Error('Invalid Quran provider response');
+  return result;
+}
+
+function _validateSurah(result, surahId, edition) {
+  const data = result?.data;
+  if (data?.number !== surahId || data?.edition?.identifier !== edition ||
+      !Array.isArray(data.ayahs) || data.ayahs.length !== _surahAyahCounts[surahId]) {
+    throw new Error('Quran source or surah mismatch');
+  }
+  if (data.ayahs.some((ayah, index) => ayah.numberInSurah !== index + 1 ||
+      !Number.isInteger(ayah.number) || typeof ayah.text !== 'string' || !ayah.text.trim())) {
+    throw new Error('Incomplete Quran verses');
+  }
+  return data.ayahs;
 }
 
 /* ── Source/provenance metadata for the reader's "source" panel ── */
 function _sourceMetaFor(lang) {
-  const s = _TRANSLATION_SOURCES[lang] || _TRANSLATION_SOURCES.en;
+  const s = _TRANSLATION_SOURCES[lang === 'uz_cyr' ? 'uz' : lang];
+  if (!s) return { language: lang, verification: 'unavailable', edition: null, translator: null, is_fallback: false };
   return {
     language:      lang,
     provider:      'Al-Quran Cloud (api.alquran.cloud)',
     edition:       s.edition,
     translator:    s.translator,
+    translator_verification: s.translator_verification || 'provider_metadata',
+    project_attribution: s.project_attribution || null,
     verification:  s.verification,
     is_fallback:   !!s.fallback,
+    terms_url:     'https://alquran.cloud/terms-and-conditions',
+    legal_clearance: false,
   };
 }
 
@@ -182,6 +215,11 @@ let _surahAyahCounts = null; // [null, count_of_surah_1, count_of_surah_2, ...]
 
 function _cacheSurahOffsets(surahs) {
   if (_surahAyahCounts) return;
+  if (surahs.length !== 114 || surahs.some((surah, index) => surah.number !== index + 1 ||
+      !Number.isInteger(surah.numberOfAyahs) || surah.numberOfAyahs < 1) ||
+      surahs.reduce((total, surah) => total + surah.numberOfAyahs, 0) !== 6236) {
+    throw new Error('Incomplete Quran surah metadata');
+  }
   _surahAyahCounts = [null];
   for (const s of surahs) _surahAyahCounts[s.number] = s.numberOfAyahs;
 }
@@ -192,13 +230,10 @@ function _surahOffsetsReady() {
 
 function _toGlobalAyah(surahId, ayahId) {
   if (!_surahAyahCounts) {
-    // Offsets not loaded yet (getAudio() called standalone, without a prior
-    // listSurahs()/getAyahs() call) — best effort rather than a silently
-    // wrong audio URL: fetch is unavailable synchronously here, so fall back
-    // to treating surahId/ayahId as already-global (correct only for Surah 1).
-    console.warn('[QuranProvider] surah offsets not cached yet; audio URL may be wrong for surah > 1');
-    return ayahId;
+    throw new Error('Quran audio requires verified surah metadata');
   }
+  if (!Number.isInteger(surahId) || !Number.isInteger(ayahId) || !Number.isInteger(_surahAyahCounts[surahId]) ||
+      ayahId < 1 || ayahId > _surahAyahCounts[surahId]) throw new Error('Invalid Quran audio verse');
   let offset = 0;
   for (let s = 1; s < surahId; s++) offset += _surahAyahCounts[s] || 0;
   return offset + ayahId;

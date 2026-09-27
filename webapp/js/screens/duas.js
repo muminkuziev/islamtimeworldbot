@@ -372,20 +372,16 @@ ${saved.map(d => _buildCard(d, favs, false)).join('\n')}`;
   }
 
   function _catLabel(key) {
-    const tried = t('duas_' + key, _lang);
-    if (tried && tried !== 'duas_' + key) return tried;
+    if (I18N['duas_' + key]) return t('duas_' + key, _lang);
     const meta = CAT_META[key];
     if (!meta) return key;
-    if (_lang === 'uz_cyr' && meta.uz_cyr) return meta.uz_cyr;
-    if (_lang === 'ru' && meta.ru) return meta.ru;
-    if (_lang === 'en' && meta.en) return meta.en;
-    return meta.uz || key;
+    return localizeRecord(meta, _lang);
   }
 
   function _resolveTransl(transl, lang) {
     const fb = { uz_cyr: 'uz', kk: 'ru', tg: 'ru', ky: 'ru' };
     const l  = fb[lang] || lang;
-    const result = transl[l] || transl['en'] || '';
+    const result = transl[l] || t('translation_unavailable', lang);
     return lang === 'uz_cyr' ? _cy(result) : result;
   }
 

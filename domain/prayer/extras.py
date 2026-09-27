@@ -30,14 +30,14 @@ def _cput(key, val, ttl: float):
 # ── Weather descriptions (14 languages) ──────────────────────────────────────
 
 _WEATHER_DESCS = {
-    "clear":   {"uz":"Ochiq","uz_cyr":"Очиқ","en":"Clear","ru":"Ясно","tr":"Açık","ar":"صافٍ","kk":"Ашық","tg":"Равшан","ky":"Ачык","de":"Klar","fr":"Clair","id":"Cerah","hi":"साफ","ur":"صاف"},
-    "partly":  {"uz":"Qisman bulutli","uz_cyr":"Қисман булутли","en":"Partly Cloudy","ru":"Переменная облачность","tr":"Parçalı bulutlu","ar":"غيوم جزئية","kk":"Ішінара бұлтты","tg":"Қисман абрнок","ky":"Жарым-жартылай булуттуу","de":"Teils bewölkt","fr":"Partiellement nuageux","id":"Berawan sebagian","hi":"आंशिक बादल","ur":"جزوی ابر"},
-    "cloudy":  {"uz":"Bulutli","uz_cyr":"Булутли","en":"Cloudy","ru":"Облачно","tr":"Bulutlu","ar":"غائم","kk":"Бұлтты","tg":"Абрнок","ky":"Булуттуу","de":"Bewölkt","fr":"Nuageux","id":"Berawan","hi":"बादल","ur":"ابر"},
-    "fog":     {"uz":"Tuman","uz_cyr":"Туман","en":"Foggy","ru":"Туман","tr":"Sisli","ar":"ضباب","kk":"Тұманды","tg":"Туманолуд","ky":"Туман","de":"Neblig","fr":"Brouillard","id":"Berkabut","hi":"कोहरा","ur":"دھند"},
-    "drizzle": {"uz":"Shivir yomg'ir","uz_cyr":"Шивир ёмғир","en":"Drizzle","ru":"Морось","tr":"Çiseleyen","ar":"رذاذ","kk":"Жаңбыршашырауы","tg":"Борони сабук","ky":"Чаш жамгыр","de":"Nieselregen","fr":"Bruine","id":"Gerimis","hi":"बूंदाबांदी","ur":"ہلکی بارش"},
-    "rain":    {"uz":"Yomg'ir","uz_cyr":"Ёмғир","en":"Rain","ru":"Дождь","tr":"Yağmurlu","ar":"ممطر","kk":"Жаңбырлы","tg":"Борондор","ky":"Жамгырлуу","de":"Regen","fr":"Pluvieux","id":"Hujan","hi":"बारिश","ur":"بارش"},
-    "snow":    {"uz":"Qor","uz_cyr":"Қор","en":"Snow","ru":"Снег","tr":"Karlı","ar":"ثلج","kk":"Қарлы","tg":"Барфолуд","ky":"Карлуу","de":"Schnee","fr":"Neige","id":"Bersalju","hi":"बर्फ","ur":"برف"},
-    "storm":   {"uz":"Bo'ron","uz_cyr":"Бўрон","en":"Thunderstorm","ru":"Гроза","tr":"Fırtınalı","ar":"عاصفة","kk":"Дауылды","tg":"Тӯфонӣ","ky":"Бороондуу","de":"Gewitter","fr":"Orageux","id":"Badai","hi":"तूफान","ur":"طوفان"},
+    "clear":   {"uz":"Ochiq","uz_cyr":"Очиқ","en":"Clear","ru":"Ясно","tr":"Açık","ar":"صافٍ","kk":"Ашық","tg":"Равшан","ky":"Ачык","de":"Klar","fr":"Clair","id":"Cerah","hi":"साफ","ur":"صاف", 'bn': 'পরিষ্কার', 'fa': 'صاف', 'ms': 'Cerah'},
+    "partly":  {"uz":"Qisman bulutli","uz_cyr":"Қисман булутли","en":"Partly Cloudy","ru":"Переменная облачность","tr":"Parçalı bulutlu","ar":"غيوم جزئية","kk":"Ішінара бұлтты","tg":"Қисман абрнок","ky":"Жарым-жартылай булуттуу","de":"Teils bewölkt","fr":"Partiellement nuageux","id":"Berawan sebagian","hi":"आंशिक बादल","ur":"جزوی ابر", 'bn': 'আংশিক মেঘলা', 'fa': 'نیمه\u200cابری', 'ms': 'Sebahagian berawan'},
+    "cloudy":  {"uz":"Bulutli","uz_cyr":"Булутли","en":"Cloudy","ru":"Облачно","tr":"Bulutlu","ar":"غائم","kk":"Бұлтты","tg":"Абрнок","ky":"Булуттуу","de":"Bewölkt","fr":"Nuageux","id":"Berawan","hi":"बादल","ur":"ابر", 'bn': 'মেঘলা', 'fa': 'ابری', 'ms': 'Berawan'},
+    "fog":     {"uz":"Tuman","uz_cyr":"Туман","en":"Foggy","ru":"Туман","tr":"Sisli","ar":"ضباب","kk":"Тұманды","tg":"Туманолуд","ky":"Туман","de":"Neblig","fr":"Brouillard","id":"Berkabut","hi":"कोहरा","ur":"دھند", 'bn': 'কুয়াশা', 'fa': 'مه\u200cآلود', 'ms': 'Berkabus'},
+    "drizzle": {"uz":"Shivir yomg'ir","uz_cyr":"Шивир ёмғир","en":"Drizzle","ru":"Морось","tr":"Çiseleyen","ar":"رذاذ","kk":"Жаңбыршашырауы","tg":"Борони сабук","ky":"Чаш жамгыр","de":"Nieselregen","fr":"Bruine","id":"Gerimis","hi":"बूंदाबांदी","ur":"ہلکی بارش", 'bn': 'গুঁড়ি গুঁড়ি বৃষ্টি', 'fa': 'باران ریز', 'ms': 'Hujan renyai'},
+    "rain":    {"uz":"Yomg'ir","uz_cyr":"Ёмғир","en":"Rain","ru":"Дождь","tr":"Yağmurlu","ar":"ممطر","kk":"Жаңбырлы","tg":"Борондор","ky":"Жамгырлуу","de":"Regen","fr":"Pluvieux","id":"Hujan","hi":"बारिश","ur":"بارش", 'bn': 'বৃষ্টি', 'fa': 'بارانی', 'ms': 'Hujan'},
+    "snow":    {"uz":"Qor","uz_cyr":"Қор","en":"Snow","ru":"Снег","tr":"Karlı","ar":"ثلج","kk":"Қарлы","tg":"Барфолуд","ky":"Карлуу","de":"Schnee","fr":"Neige","id":"Bersalju","hi":"बर्फ","ur":"برف", 'bn': 'তুষারপাত', 'fa': 'برفی', 'ms': 'Salji'},
+    "storm":   {"uz":"Bo'ron","uz_cyr":"Бўрон","en":"Thunderstorm","ru":"Гроза","tr":"Fırtınalı","ar":"عاصفة","kk":"Дауылды","tg":"Тӯфонӣ","ky":"Бороондуу","de":"Gewitter","fr":"Orageux","id":"Badai","hi":"तूफान","ur":"طوفان", 'bn': 'বজ্রঝড়', 'fa': 'رعدوبرق', 'ms': 'Ribut petir'},
 }
 
 _DAY_NAMES = {
@@ -55,6 +55,9 @@ _DAY_NAMES = {
     "id":     ["Senin","Selasa","Rabu","Kamis","Jumat","Sabtu","Minggu"],
     "hi":     ["सोमवार","मंगलवार","बुधवार","गुरुवार","शुक्रवार","शनिवार","रविवार"],
     "ur":     ["پیر","منگل","بدھ","جمعرات","جمعہ","ہفتہ","اتوار"],
+    'bn': ['সোমবার', 'মঙ্গলবার', 'বুধবার', 'বৃহস্পতিবার', 'শুক্রবার', 'শনিবার', 'রবিবার'],
+    'fa': ['دوشنبه', 'سه\u200cشنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه', 'شنبه', 'یکشنبه'],
+    'ms': ['Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu', 'Ahad'],
 }
 
 def _get_day_name(date_str: str, lang: str) -> str:
@@ -67,22 +70,22 @@ def _get_day_name(date_str: str, lang: str) -> str:
 
 # Wind direction codes → localized full names (ablative/from form where applicable)
 _WIND_DIR = {
-    "N":   {"uz":"Shimoldan","en":"From N","ru":"С севера","tr":"Kuzeyden","ar":"من الشمال","kk":"Солтүстіктен","de":"Von N","fr":"Du nord","id":"Dari U","hi":"उत्तर से","ur":"شمال سے"},
-    "NNE": {"uz":"Shimoli-sharqdan","en":"From NNE","ru":"С ССВ","tr":"Kuzey-Kuzeydoğudan","ar":"من الشمال الشمالي الشرقي","kk":"ССШ-дан","de":"Von NNO","fr":"Du NNE","id":"Dari UUL","hi":"उत्तर-उत्तरपूर्व से","ur":"شمال شمال مشرق سے"},
-    "NE":  {"uz":"Shimoli-sharqdan","en":"From NE","ru":"С СВ","tr":"Kuzeydoğudan","ar":"من الشمال الشرقي","kk":"СШ-дан","de":"Von NO","fr":"Du NE","id":"Dari TL","hi":"उत्तरपूर्व से","ur":"شمال مشرق سے"},
-    "ENE": {"uz":"Sharqdan","en":"From ENE","ru":"С ВСВ","tr":"Doğu-Kuzeydoğudan","ar":"من الشرق الشمالي الشرقي","kk":"ВСС-дан","de":"Von ONO","fr":"De l'ENE","id":"Dari TTL","hi":"पूर्व-उत्तरपूर्व से","ur":"مشرق شمال مشرق سے"},
-    "E":   {"uz":"Sharqdan","en":"From E","ru":"С востока","tr":"Doğudan","ar":"من الشرق","kk":"Шығыстан","de":"Von O","fr":"De l'est","id":"Dari T","hi":"पूर्व से","ur":"مشرق سے"},
-    "ESE": {"uz":"Sharqdan","en":"From ESE","ru":"С ВЮВ","tr":"Doğu-Güneydoğudan","ar":"من الشرق الجنوبي الشرقي","kk":"ВОЖ-дан","de":"Von OSO","fr":"De l'ESE","id":"Dari TTG","hi":"पूर्व-दक्षिणपूर्व से","ur":"مشرق جنوب مشرق سے"},
-    "SE":  {"uz":"Janubi-sharqdan","en":"From SE","ru":"С ЮВ","tr":"Güneydoğudan","ar":"من الجنوب الشرقي","kk":"ОЖ-дан","de":"Von SO","fr":"Du SE","id":"Dari TG","hi":"दक्षिणपूर्व से","ur":"جنوب مشرق سے"},
-    "SSE": {"uz":"Janubdan","en":"From SSE","ru":"С ЮЮВ","tr":"Güney-Güneydoğudan","ar":"من الجنوب الجنوبي الشرقي","kk":"ООЖ-дан","de":"Von SSO","fr":"Du SSE","id":"Dari SST","hi":"दक्षिण-दक्षिणपूर्व से","ur":"جنوب جنوب مشرق سے"},
-    "S":   {"uz":"Janubdan","en":"From S","ru":"С юга","tr":"Güneyden","ar":"من الجنوب","kk":"Оңтүстіктен","de":"Von S","fr":"Du sud","id":"Dari S","hi":"दक्षिण से","ur":"جنوب سے"},
-    "SSW": {"uz":"Janubdan","en":"From SSW","ru":"С ЮЮЗ","tr":"Güney-Güneybatıdan","ar":"من الجنوب الجنوبي الغربي","kk":"ООБ-дан","de":"Von SSW","fr":"Du SSO","id":"Dari SSB","hi":"दक्षिण-दक्षिणपश्चिम से","ur":"جنوب جنوب مغرب سے"},
-    "SW":  {"uz":"Janubi-g'arbdan","en":"From SW","ru":"С ЮЗ","tr":"Güneybatıdan","ar":"من الجنوب الغربي","kk":"ОБ-дан","de":"Von SW","fr":"Du SO","id":"Dari BD","hi":"दक्षिणपश्चिम से","ur":"جنوب مغرب سے"},
-    "WSW": {"uz":"G'arbdan","en":"From WSW","ru":"С ЗЮЗ","tr":"Batı-Güneybatıdan","ar":"من الغرب الجنوبي الغربي","kk":"БОЖ-дан","de":"Von WSW","fr":"De l'OSO","id":"Dari BBD","hi":"पश्चिम-दक्षिणपश्चिम से","ur":"مغرب جنوب مغرب سے"},
-    "W":   {"uz":"G'arbdan","en":"From W","ru":"С запада","tr":"Batıdan","ar":"من الغرب","kk":"Батыстан","de":"Von W","fr":"De l'ouest","id":"Dari B","hi":"पश्चिम से","ur":"مغرب سے"},
-    "WNW": {"uz":"G'arbdan","en":"From WNW","ru":"С ЗСЗ","tr":"Batı-Kuzeybatıdan","ar":"من الغرب الشمالي الغربي","kk":"БСС-дан","de":"Von WNW","fr":"De l'ONO","id":"Dari BBU","hi":"पश्चिम-उत्तरपश्चिम से","ur":"مغرب شمال مغرب سے"},
-    "NW":  {"uz":"Shimoli-g'arbdan","en":"From NW","ru":"С СЗ","tr":"Kuzeybatıdan","ar":"من الشمال الغربي","kk":"СБ-дан","de":"Von NW","fr":"Du NO","id":"Dari BL","hi":"उत्तरपश्चिम से","ur":"شمال مغرب سے"},
-    "NNW": {"uz":"Shimoldan","en":"From NNW","ru":"С ССЗ","tr":"Kuzey-Kuzeybatıdan","ar":"من الشمال الشمالي الغربي","kk":"ССБ-дан","de":"Von NNW","fr":"Du NNO","id":"Dari UUB","hi":"उत्तर-उत्तरपश्चिम से","ur":"شمال شمال مغرب سے"},
+    "N":   {"uz":"Shimoldan","en":"From N","ru":"С севера","tr":"Kuzeyden","ar":"من الشمال","kk":"Солтүстіктен","de":"Von N","fr":"Du nord","id":"Dari U","hi":"उत्तर से","ur":"شمال سے", 'bn': 'উত্তর থেকে', 'fa': 'از شمال', 'ms': 'Dari utara'},
+    "NNE": {"uz":"Shimoli-sharqdan","en":"From NNE","ru":"С ССВ","tr":"Kuzey-Kuzeydoğudan","ar":"من الشمال الشمالي الشرقي","kk":"ССШ-дан","de":"Von NNO","fr":"Du NNE","id":"Dari UUL","hi":"उत्तर-उत्तरपूर्व से","ur":"شمال شمال مشرق سے", 'bn': 'উত্তর-উত্তরপূর্ব থেকে', 'fa': 'از شمال-شمال\u200cشرق', 'ms': 'Dari utara-timur laut'},
+    "NE":  {"uz":"Shimoli-sharqdan","en":"From NE","ru":"С СВ","tr":"Kuzeydoğudan","ar":"من الشمال الشرقي","kk":"СШ-дан","de":"Von NO","fr":"Du NE","id":"Dari TL","hi":"उत्तरपूर्व से","ur":"شمال مشرق سے", 'bn': 'উত্তরপূর্ব থেকে', 'fa': 'از شمال\u200cشرق', 'ms': 'Dari timur laut'},
+    "ENE": {"uz":"Sharqdan","en":"From ENE","ru":"С ВСВ","tr":"Doğu-Kuzeydoğudan","ar":"من الشرق الشمالي الشرقي","kk":"ВСС-дан","de":"Von ONO","fr":"De l'ENE","id":"Dari TTL","hi":"पूर्व-उत्तरपूर्व से","ur":"مشرق شمال مشرق سے", 'bn': 'পূর্ব-উত্তরপূর্ব থেকে', 'fa': 'از شرق-شمال\u200cشرق', 'ms': 'Dari timur-timur laut'},
+    "E":   {"uz":"Sharqdan","en":"From E","ru":"С востока","tr":"Doğudan","ar":"من الشرق","kk":"Шығыстан","de":"Von O","fr":"De l'est","id":"Dari T","hi":"पूर्व से","ur":"مشرق سے", 'bn': 'পূর্ব থেকে', 'fa': 'از شرق', 'ms': 'Dari timur'},
+    "ESE": {"uz":"Sharqdan","en":"From ESE","ru":"С ВЮВ","tr":"Doğu-Güneydoğudan","ar":"من الشرق الجنوبي الشرقي","kk":"ВОЖ-дан","de":"Von OSO","fr":"De l'ESE","id":"Dari TTG","hi":"पूर्व-दक्षिणपूर्व से","ur":"مشرق جنوب مشرق سے", 'bn': 'পূর্ব-দক্ষিণপূর্ব থেকে', 'fa': 'از شرق-جنوب\u200cشرق', 'ms': 'Dari timur-tenggara'},
+    "SE":  {"uz":"Janubi-sharqdan","en":"From SE","ru":"С ЮВ","tr":"Güneydoğudan","ar":"من الجنوب الشرقي","kk":"ОЖ-дан","de":"Von SO","fr":"Du SE","id":"Dari TG","hi":"दक्षिणपूर्व से","ur":"جنوب مشرق سے", 'bn': 'দক্ষিণপূর্ব থেকে', 'fa': 'از جنوب\u200cشرق', 'ms': 'Dari tenggara'},
+    "SSE": {"uz":"Janubdan","en":"From SSE","ru":"С ЮЮВ","tr":"Güney-Güneydoğudan","ar":"من الجنوب الجنوبي الشرقي","kk":"ООЖ-дан","de":"Von SSO","fr":"Du SSE","id":"Dari SST","hi":"दक्षिण-दक्षिणपूर्व से","ur":"جنوب جنوب مشرق سے", 'bn': 'দক্ষিণ-দক্ষিণপূর্ব থেকে', 'fa': 'از جنوب-جنوب\u200cشرق', 'ms': 'Dari selatan-tenggara'},
+    "S":   {"uz":"Janubdan","en":"From S","ru":"С юга","tr":"Güneyden","ar":"من الجنوب","kk":"Оңтүстіктен","de":"Von S","fr":"Du sud","id":"Dari S","hi":"दक्षिण से","ur":"جنوب سے", 'bn': 'দক্ষিণ থেকে', 'fa': 'از جنوب', 'ms': 'Dari selatan'},
+    "SSW": {"uz":"Janubdan","en":"From SSW","ru":"С ЮЮЗ","tr":"Güney-Güneybatıdan","ar":"من الجنوب الجنوبي الغربي","kk":"ООБ-дан","de":"Von SSW","fr":"Du SSO","id":"Dari SSB","hi":"दक्षिण-दक्षिणपश्चिम से","ur":"جنوب جنوب مغرب سے", 'bn': 'দক্ষিণ-দক্ষিণপশ্চিম থেকে', 'fa': 'از جنوب-جنوب\u200cغرب', 'ms': 'Dari selatan-barat daya'},
+    "SW":  {"uz":"Janubi-g'arbdan","en":"From SW","ru":"С ЮЗ","tr":"Güneybatıdan","ar":"من الجنوب الغربي","kk":"ОБ-дан","de":"Von SW","fr":"Du SO","id":"Dari BD","hi":"दक्षिणपश्चिम से","ur":"جنوب مغرب سے", 'bn': 'দক্ষিণপশ্চিম থেকে', 'fa': 'از جنوب\u200cغرب', 'ms': 'Dari barat daya'},
+    "WSW": {"uz":"G'arbdan","en":"From WSW","ru":"С ЗЮЗ","tr":"Batı-Güneybatıdan","ar":"من الغرب الجنوبي الغربي","kk":"БОЖ-дан","de":"Von WSW","fr":"De l'OSO","id":"Dari BBD","hi":"पश्चिम-दक्षिणपश्चिम से","ur":"مغرب جنوب مغرب سے", 'bn': 'পশ্চিম-দক্ষিণপশ্চিম থেকে', 'fa': 'از غرب-جنوب\u200cغرب', 'ms': 'Dari barat-barat daya'},
+    "W":   {"uz":"G'arbdan","en":"From W","ru":"С запада","tr":"Batıdan","ar":"من الغرب","kk":"Батыстан","de":"Von W","fr":"De l'ouest","id":"Dari B","hi":"पश्चिम से","ur":"مغرب سے", 'bn': 'পশ্চিম থেকে', 'fa': 'از غرب', 'ms': 'Dari barat'},
+    "WNW": {"uz":"G'arbdan","en":"From WNW","ru":"С ЗСЗ","tr":"Batı-Kuzeybatıdan","ar":"من الغرب الشمالي الغربي","kk":"БСС-дан","de":"Von WNW","fr":"De l'ONO","id":"Dari BBU","hi":"पश्चिम-उत्तरपश्चिम से","ur":"مغرب شمال مغرب سے", 'bn': 'পশ্চিম-উত্তরপশ্চিম থেকে', 'fa': 'از غرب-شمال\u200cغرب', 'ms': 'Dari barat-barat laut'},
+    "NW":  {"uz":"Shimoli-g'arbdan","en":"From NW","ru":"С СЗ","tr":"Kuzeybatıdan","ar":"من الشمال الغربي","kk":"СБ-дан","de":"Von NW","fr":"Du NO","id":"Dari BL","hi":"उत्तरपश्चिम से","ur":"شمال مغرب سے", 'bn': 'উত্তরপশ্চিম থেকে', 'fa': 'از شمال\u200cغرب', 'ms': 'Dari barat laut'},
+    "NNW": {"uz":"Shimoldan","en":"From NNW","ru":"С ССЗ","tr":"Kuzey-Kuzeybatıdan","ar":"من الشمال الشمالي الغربي","kk":"ССБ-дан","de":"Von NNW","fr":"Du NNO","id":"Dari UUB","hi":"उत्तर-उत्तरपश्चिम से","ur":"شمال شمال مغرب سے", 'bn': 'উত্তর-উত্তরপশ্চিম থেকে', 'fa': 'از شمال-شمال\u200cغرب', 'ms': 'Dari utara-barat laut'},
 }
 
 def _calc_dew_point(temp_c: float, humidity: int) -> int:
@@ -277,12 +280,12 @@ async def fetch_weather(lat: float, lon: float, lang: str = "en") -> Optional[di
 # ── AQI labels (14 languages) ────────────────────────────────────────────────
 
 _AQI_LABELS = {
-    "Good":      {"uz":"Yaxshi",      "uz_cyr":"Яхши",         "en":"Good",       "ru":"Хорошее",        "tr":"İyi",          "ar":"جيد",         "kk":"Жақсы",       "tg":"Хуб",          "ky":"Жакшы",          "de":"Gut",          "fr":"Bon",          "id":"Baik",           "hi":"अच्छा",   "ur":"اچھا"},
-    "Fair":      {"uz":"Qoniqarli",   "uz_cyr":"Қониқарли",    "en":"Fair",       "ru":"Приемлемое",     "tr":"Orta",         "ar":"مقبول",        "kk":"Орташа",      "tg":"Қаноатбахш",   "ky":"Орто",           "de":"Mäßig",        "fr":"Correct",      "id":"Cukup",          "hi":"ठीक",     "ur":"ٹھیک"},
-    "Moderate":  {"uz":"O'rtacha",    "uz_cyr":"Ўртача",        "en":"Moderate",   "ru":"Умеренное",      "tr":"Kabul edilebilir","ar":"متوسط",      "kk":"Қалыпты",     "tg":"Мӯтадил",      "ky":"Орточо",         "de":"Mäßig",        "fr":"Modéré",       "id":"Sedang",         "hi":"मध्यम",   "ur":"معتدل"},
-    "Poor":      {"uz":"Yomon",       "uz_cyr":"Ёмон",          "en":"Poor",       "ru":"Плохое",         "tr":"Kötü",         "ar":"سيء",          "kk":"Нашар",       "tg":"Бад",          "ky":"Начар",          "de":"Schlecht",     "fr":"Mauvais",      "id":"Buruk",          "hi":"खराब",    "ur":"خراب"},
-    "Very Poor": {"uz":"Juda yomon",  "uz_cyr":"Жуда ёмон",    "en":"Very Poor",  "ru":"Очень плохое",   "tr":"Çok kötü",     "ar":"سيء جداً",     "kk":"Өте нашар",   "tg":"Хеле бад",     "ky":"Абдан начар",    "de":"Sehr schlecht","fr":"Très mauvais", "id":"Sangat Buruk",   "hi":"बहुत खराब","ur":"بہت خراب"},
-    "Hazardous": {"uz":"Xavfli",      "uz_cyr":"Хавфли",       "en":"Hazardous",  "ru":"Опасное",        "tr":"Tehlikeli",    "ar":"خطير",         "kk":"Қауіпті",     "tg":"Хавфнок",      "ky":"Коркунучтуу",    "de":"Gefährlich",   "fr":"Dangereux",    "id":"Berbahaya",      "hi":"खतरनाक",  "ur":"خطرناک"},
+    "Good":      {"uz":"Yaxshi",      "uz_cyr":"Яхши",         "en":"Good",       "ru":"Хорошее",        "tr":"İyi",          "ar":"جيد",         "kk":"Жақсы",       "tg":"Хуб",          "ky":"Жакшы",          "de":"Gut",          "fr":"Bon",          "id":"Baik",           "hi":"अच्छा",   "ur":"اچھا", 'bn': 'ভালো', 'fa': 'خوب', 'ms': 'Baik'},
+    "Fair":      {"uz":"Qoniqarli",   "uz_cyr":"Қониқарли",    "en":"Fair",       "ru":"Приемлемое",     "tr":"Orta",         "ar":"مقبول",        "kk":"Орташа",      "tg":"Қаноатбахш",   "ky":"Орто",           "de":"Mäßig",        "fr":"Correct",      "id":"Cukup",          "hi":"ठीक",     "ur":"ٹھیک", 'bn': 'গ্রহণযোগ্য', 'fa': 'قابل\u200cقبول', 'ms': 'Memuaskan'},
+    "Moderate":  {"uz":"O'rtacha",    "uz_cyr":"Ўртача",        "en":"Moderate",   "ru":"Умеренное",      "tr":"Kabul edilebilir","ar":"متوسط",      "kk":"Қалыпты",     "tg":"Мӯтадил",      "ky":"Орточо",         "de":"Mäßig",        "fr":"Modéré",       "id":"Sedang",         "hi":"मध्यम",   "ur":"معتدل", 'bn': 'মাঝারি', 'fa': 'متوسط', 'ms': 'Sederhana'},
+    "Poor":      {"uz":"Yomon",       "uz_cyr":"Ёмон",          "en":"Poor",       "ru":"Плохое",         "tr":"Kötü",         "ar":"سيء",          "kk":"Нашар",       "tg":"Бад",          "ky":"Начар",          "de":"Schlecht",     "fr":"Mauvais",      "id":"Buruk",          "hi":"खराब",    "ur":"خراب", 'bn': 'খারাপ', 'fa': 'بد', 'ms': 'Buruk'},
+    "Very Poor": {"uz":"Juda yomon",  "uz_cyr":"Жуда ёмон",    "en":"Very Poor",  "ru":"Очень плохое",   "tr":"Çok kötü",     "ar":"سيء جداً",     "kk":"Өте нашар",   "tg":"Хеле бад",     "ky":"Абдан начар",    "de":"Sehr schlecht","fr":"Très mauvais", "id":"Sangat Buruk",   "hi":"बहुत खराब","ur":"بہت خراب", 'bn': 'অত্যন্ত খারাপ', 'fa': 'بسیار بد', 'ms': 'Sangat buruk'},
+    "Hazardous": {"uz":"Xavfli",      "uz_cyr":"Хавфли",       "en":"Hazardous",  "ru":"Опасное",        "tr":"Tehlikeli",    "ar":"خطير",         "kk":"Қауіпті",     "tg":"Хавфнок",      "ky":"Коркунучтуу",    "de":"Gefährlich",   "fr":"Dangereux",    "id":"Berbahaya",      "hi":"खतरनाक",  "ur":"خطرناک", 'bn': 'বিপজ্জনক', 'fa': 'خطرناک', 'ms': 'Berbahaya'},
 }
 
 def _aqi_label_key(aqi: float) -> str:
@@ -401,66 +404,79 @@ def _uz_cyr_to_lat(text: str) -> str:
 
 # ── Daily Ayah (AlQuran.cloud) ────────────────────────────────────────────────
 
-_AYAH_EDITIONS = {
-    "uz": "uz.sodik", "uz_cyr": "uz.sodik",
-    "en": "en.sahih",
-    "ru": "ru.kuliev",
-    "tr": "tr.diyanet",
-    "ar": None,
-    "kk": "ru.kuliev", "tg": "ru.kuliev", "ky": "ru.kuliev",
-    "de": "de.aburida",
-    "fr": "fr.hamidullah",
-    "id": "id.indonesian",
-    "hi": "hi.hindi",
-    "ur": "ur.ahmedali",
-}
+# Share the Quran reader's selected, source-attributed editions.
+from dataclasses import asdict
+from domain.quran.translation_registry import get_translation_source, UNAVAILABLE
+
 
 async def fetch_daily_ayah(lang: str = "en") -> Optional[dict]:
-    """Return today's ayah. Cached 24 h per lang (same ayah all day for everyone)."""
-    day      = date.today().timetuple().tm_yday
-    cache_key = f"ayah:{day}:{lang}"
-
+    """Return exact provider text in the selected language, or no daily ayah."""
+    language = "uz" if lang == "uz_cyr" else lang
+    source = get_translation_source(language)
+    if source.status == UNAVAILABLE or (language != "ar" and not source.edition):
+        return None
+    today = date.today()
+    ayah_num = (today.timetuple().tm_yday % 6236) + 1
+    cache_key = f"ayah:v2:{today.isoformat()}:{language}"
     cached = _cget(cache_key)
     if cached is not None:
         return cached
 
-    ayah_num = (day % 6236) + 1
-    edition  = _AYAH_EDITIONS.get(lang, "en.sahih")
-    url = (
-        f"https://api.alquran.cloud/v1/ayah/{ayah_num}/editions/quran-uthmani,en.transliteration,{edition}"
-        if edition else
-        f"https://api.alquran.cloud/v1/ayah/{ayah_num}/editions/quran-uthmani,en.transliteration"
-    )
+    editions = ["quran-uthmani", "en.transliteration"]
+    if source.edition:
+        editions.append(source.edition)
+    url = f"https://api.alquran.cloud/v1/ayah/{ayah_num}/editions/{','.join(editions)}"
     try:
         async with aiohttp.ClientSession() as sess:
             async with sess.get(url, headers=_UA, timeout=_TIMEOUT) as resp:
-                if resp.status == 200:
-                    raw = await resp.json(content_type=None)
-                    if raw.get("code") == 200:
-                        data        = raw["data"]
-                        ar          = data[0]
-                        translit_ed = data[1] if len(data) > 1 else None
-                        tr_ed       = data[2] if edition and len(data) > 2 else None
-                        surah = ar.get("surah", {})
-                        translation = tr_ed.get("text", "") if tr_ed else ""
-                        if lang == "uz" and translation:
-                            translation = _uz_cyr_to_lat(translation)
-                        result = {
-                            "arabic":          ar.get("text", ""),
-                            "transliteration": translit_ed.get("text", "") if translit_ed else "",
-                            "translation":     translation,
-                            "surah_en":        surah.get("englishName", ""),
-                            "surah_ar":        surah.get("name", ""),
-                            "surah_number":    surah.get("number", 0),
-                            "ayah_number":     ar.get("numberInSurah", 0),
-                            "reference":       f"Surah {surah.get('englishName','')} ({surah.get('number','')}:{ar.get('numberInSurah','')})",
-                        }
-                        _cput(cache_key, result, 86400)  # cache 24 h
-                        return result
-    except Exception:
-        pass
-    return None
+                if resp.status != 200:
+                    return None
+                raw = await resp.json(content_type=None)
+        if raw.get("code") != 200 or not isinstance(raw.get("data"), list):
+            return None
+        by_edition = {row.get("edition", {}).get("identifier"): row
+                      for row in raw["data"] if isinstance(row, dict)}
+        ar = by_edition.get("quran-uthmani")
+        if not ar or ar.get("number") != ayah_num or not ar.get("text"):
+            return None
+        surah = ar.get("surah", {})
+        surah_number, ayah_number = surah.get("number"), ar.get("numberInSurah")
+        if not isinstance(surah_number, int) or not 1 <= surah_number <= 114:
+            return None
+        if not isinstance(ayah_number, int) or not 1 <= ayah_number <= 286:
+            return None
 
+        def same_ayah(row):
+            return (row and row.get("number") == ayah_num
+                    and row.get("surah", {}).get("number") == surah_number
+                    and row.get("numberInSurah") == ayah_number)
+
+        translated = by_edition.get(source.edition) if source.edition else None
+        if source.edition and (not same_ayah(translated)
+                               or translated.get("edition", {}).get("language") != language
+                               or not translated.get("text")):
+            return None
+        transliteration = by_edition.get("en.transliteration")
+        result = {
+            "arabic": ar["text"],
+            "transliteration": transliteration.get("text", "") if same_ayah(transliteration) else "",
+            "translation": translated["text"] if translated else "",
+            "language": language,
+            "surah_en": surah.get("englishName", ""),
+            "surah_ar": surah.get("name", ""),
+            "surah_number": surah_number,
+            "ayah_number": ayah_number,
+            "reference": f"{surah_number}:{ayah_number}",
+            "source": source.provider,
+            "source_api": url,
+            "edition": source.edition or "quran-uthmani",
+            "translator": source.translator,
+            "translation_source": asdict(source),
+        }
+        _cput(cache_key, result, 86400)
+        return result
+    except Exception:
+        return None
 
 # ── Daily Hadith (verified 144x13 HadeethEnc corpus) ─────────────────────────
 # Source: data/hadeethenc_verified.db, built by scripts/build_hadeethenc_verified_db.py
@@ -489,7 +505,7 @@ def get_daily_hadith(lang: str = "en") -> dict:
     if not db_path.exists():
         return {}
     try:
-        con = sqlite3.connect(str(db_path))
+        con = sqlite3.connect(db_path.resolve().as_uri() + "?mode=ro", uri=True)
         con.row_factory = sqlite3.Row
         ids = [r[0] for r in con.execute(
             "SELECT DISTINCT id FROM hadeeth_verified ORDER BY CAST(id AS INTEGER)"
@@ -500,7 +516,7 @@ def get_daily_hadith(lang: str = "en") -> dict:
         day = date.today().timetuple().tm_yday
         hadith_id = ids[day % len(ids)]
         row = con.execute(
-            "SELECT title, hadeeth_text, attribution, grade, source FROM hadeeth_verified "
+            "SELECT title, hadeeth_text, attribution, grade, source, source_api FROM hadeeth_verified "
             "WHERE id=? AND language=?",
             (hadith_id, l),
         ).fetchone()
@@ -512,8 +528,11 @@ def get_daily_hadith(lang: str = "en") -> dict:
             "text":        row["hadeeth_text"],
             "title":       row["title"],
             "narrator":    row["attribution"],
+            "attribution": row["attribution"],
+            "language":    l,
             "grade":       row["grade"],
             "source":      row["source"],
+            "source_api":  row["source_api"],
             "source_note": "HadeethEnc.com — verified 144-hadith, 13-language corpus",
         }
     except Exception:

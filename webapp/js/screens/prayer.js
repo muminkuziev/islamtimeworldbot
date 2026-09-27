@@ -221,10 +221,15 @@ const PrayerScreen = (function () {
 
   function _l(key, lang) {
     const d = L[key];
-    return d ? (d[lang] || d.en || Object.values(d)[0]) : key;
+    return d ? localizeRecord(d, lang) : key;
   }
   function _T(lat, cyr, ru, en) { return _resolveT(lat, cyr, ru, en, _lang); }
-  function _aqiLabel(lvl) { return lvl['label_' + _lang] || lvl['label_' + _lang.split('_')[0]] || lvl.label_en || lvl.label; }
+  function _aqiLabel(lvl) {
+    const labels = Object.fromEntries(LANG_META.map(({code}) => [code, lvl['label_' + code]]));
+    labels.uz = lvl.label;
+    labels.uz_cyr = lvl.label_cyr;
+    return localizeRecord(labels, _lang);
+  }
 
   /* ── Render shell ───────────────────────────────────────────── */
   function render() {
@@ -235,24 +240,26 @@ const PrayerScreen = (function () {
       <div class="screen-inner q-screen">
         <div class="q-header">
           <div class="q-nav-row">
-            <button id="prayer-back" class="q-back-btn">‹ ${_lang === 'ar' ? 'القائمة' : _T('Menyu','Меню','Меню','Menu')}</button>
-            <button id="prayer-hdr-refresh" class="pm-refresh-btn" aria-label="Refresh">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
-                   stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
-                <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
-              </svg>
+            <button id="prayer-back" class="q-back-btn">
+              <img src="assets/icons/tabler/chevron-right.svg" alt="" aria-hidden="true">
+              <span>${_lang === 'ar' ? 'الرئيسية' : _T('Bosh sahifa','Бош саҳифа','Главная','Home')}</span>
+            </button>
+            <button id="prayer-location-pill" class="pm-location-pill" type="button">
+              <img src="assets/icons/tabler/map-pin.svg" alt="" aria-hidden="true">
+              <span id="pm-nav-city">${_T('Joylashuv','Жойлашув','Место','Location')}</span>
+              <img class="pm-location-chevron" src="assets/icons/tabler/chevron-right.svg" alt="" aria-hidden="true">
             </button>
             <button id="prayer-tools" class="pm-tools-btn" type="button" aria-label="Bo'limlar" aria-expanded="false">
-              <span class="material-symbols-rounded" data-icon="settings" aria-hidden="true">settings</span>
+              <img src="assets/icons/tabler/settings.svg" alt="" aria-hidden="true">
             </button>
           </div>
           <div class="q-title-block">
             <div class="q-title-main" id="prayer-title">${_l('title', _lang)}</div>
             <div class="pm-hdr-meta" id="pm-hdr-meta">
-              <span id="pm-hdr-city" class="pm-hdr-city">الصلاة</span>
+              <span id="pm-hdr-method" class="pm-hdr-city">Muslim World League</span>
             </div>
             <div class="pm-hdr-date" id="pm-hdr-date"></div>
+            <div class="pm-hdr-quote" data-quran-verse="4:103"></div>
           </div>
           <div id="pm-banner-wrap"></div>
           <div class="q-divider" style="margin-top:10px"></div>
@@ -267,7 +274,7 @@ const PrayerScreen = (function () {
       </div>`;
 
     document.getElementById('prayer-back').addEventListener('click', _goBack);
-    document.getElementById('prayer-hdr-refresh').addEventListener('click', _onRefresh);
+    document.getElementById('prayer-location-pill')?.addEventListener('click', _onChangeLoc);
     document.getElementById('prayer-tools')?.addEventListener('click', function () {
       const row = document.getElementById('pm-tabs-row');
       const open = row?.classList.toggle('pm-tabs-open') || false;
@@ -314,7 +321,8 @@ const PrayerScreen = (function () {
 
     /* Back button — was set at render() time, must match current lang */
     const backBtn = document.getElementById('prayer-back');
-    if (backBtn) backBtn.textContent = '‹ ' + (_lang === 'ar' ? 'القائمة' : _T('Menyu','Меню','Меню','Menu'));
+    const backLabel = backBtn?.querySelector('span');
+    if (backLabel) backLabel.textContent = _lang === 'ar' ? 'الرئيسية' : _T('Bosh sahifa','Бош саҳифа','Главная','Home');
 
     /* Tab labels — also set at render() time, must be re-translated */
     const row = document.getElementById('pm-tabs-row');
@@ -355,7 +363,7 @@ const PrayerScreen = (function () {
     if (!forceNew) {
       const lat = parseFloat(localStorage.getItem('islamtime_last_lat'));
       const lon = parseFloat(localStorage.getItem('islamtime_last_lon'));
-      if (!isNaN(lat) && !isNaN(lon)) { _onLocation(lat, lon); return; }
+      if (!isNaN(lat) && !isNaN(lon)) { _onLocation(lat, lon, true); return; }
     }
 
     const tgLM = window.Telegram?.WebApp?.LocationManager;
@@ -411,8 +419,10 @@ const PrayerScreen = (function () {
     );
   }
 
-  function _onLocation(lat, lon) {
+  function _onLocation(lat, lon, fromCache = false) {
     _lat = lat; _lon = lon;
+    if (fromCache) window.ThemeEngine?.refresh();
+    else window.ThemeEngine?.setLocation(lat, lon);
     try {
       localStorage.setItem('islamtime_last_lat', lat);
       localStorage.setItem('islamtime_last_lon', lon);
@@ -436,17 +446,21 @@ const PrayerScreen = (function () {
   /* ══════════════════════════════════════════════════════════════
      API
   ══════════════════════════════════════════════════════════════ */
+  let _prayerRequest = 0;
   async function _fetchPrayerTimes(lat, lon) {
+    const request = ++_prayerRequest, lang = _lang, preferences = window.PrayerPreferences.key();
+    const isCurrent = () => request === _prayerRequest && lang === _lang && preferences === window.PrayerPreferences.key();
     try {
-      const url  = `${window.location.origin}/api/prayer-times?lat=${lat}&lon=${lon}&lang=${_lang}`;
+      const url  = `${window.location.origin}/api/prayer-times?lat=${lat}&lon=${lon}&lang=${_lang}&${window.PrayerPreferences.query()}`;
       const resp = await fetch(url);
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const json = await resp.json();
       if (json.error) throw new Error(json.error);
+      if (!isCurrent()) return;
       _data = json;
       _syncLocationToServer(lat, lon, json.city || '');
       _renderFull();
-    } catch { _showError(); }
+    } catch { if (isCurrent()) _showError('network'); }
   }
 
   function _syncLocationToServer(lat, lon, city) {
@@ -477,13 +491,13 @@ const PrayerScreen = (function () {
       </div>`;
   }
 
-  function _showError() {
+  function _showError(reason) {
     const el = document.getElementById('prayer-content');
     if (!el) return;
     el.innerHTML = `
       <div class="pm-loader">
         <div style="font-size:36px;margin-bottom:8px">📍</div>
-        <p class="pm-loader-text">${_l('locError', _lang)}</p>
+        <p class="pm-loader-text">${reason === 'network' ? _T('Xatolik yuz berdi','Хатолик юз берди','Произошла ошибка','Error occurred') : _l('locError', _lang)}</p>
         <button class="pm-retry-btn" id="prayer-retry">${_l('tryAgain', _lang)}</button>
       </div>`;
     document.getElementById('prayer-retry')
@@ -496,13 +510,11 @@ const PrayerScreen = (function () {
   function _renderFull() {
     if (!_data) return;
 
-    /* Header meta: city · method */
-    const cityEl = document.getElementById('pm-hdr-city');
-    if (cityEl) {
-      const city = _data.city || _data.country || '';
-      const meth = _data.method || '';
-      cityEl.textContent = [city, meth].filter(Boolean).join(' · ');
-    }
+    /* Header meta: location pill + calculation method */
+    const navCityEl = document.getElementById('pm-nav-city');
+    if (navCityEl) navCityEl.textContent = _data.city || _data.country || _T('Joylashuv','Жойлашув','Место','Location');
+    const methodEl = document.getElementById('pm-hdr-method');
+    if (methodEl) methodEl.textContent = _data.method || 'Muslim World League';
 
     /* Header dates: Gregorian + Hijri */
     const dateEl = document.getElementById('pm-hdr-date');
@@ -510,7 +522,7 @@ const PrayerScreen = (function () {
       const g = _data.gregorian;
       const hDate = window.HijriCalc.toHijriFromDate(new Date());
       dateEl.innerHTML = `
-        <span class="pm-hdr-greg">${g.day} ${g.month} ${g.year}</span>
+        <span class="pm-hdr-greg">${_esc(formatLocalizedDate(g, _lang))}</span>
         <span class="pm-hdr-sep">·</span>
         <span class="pm-hdr-hijri">${window.HijriCalc.format(hDate, _lang)}</span>`;
     }
@@ -519,6 +531,7 @@ const PrayerScreen = (function () {
     _renderTabContent();
     _fitContent();
 
+    _stopCountdown();
     const secs = _data.next_prayer?.countdown_seconds;
     if (secs != null && secs > 0) _startCountdown(secs);
     else {
@@ -541,8 +554,7 @@ const PrayerScreen = (function () {
       return;
     }
 
-    const pObj   = (_data.prayers || []).find(p => p.key === np.key) || {};
-    const arName = PRAYER_AR[np.key] || '';
+    const pObj = (_data.prayers || []).find(p => p.key === np.key) || {};
 
     /* Progress: current time between first and last prayer */
     const prayers = _data.prayers || [];
@@ -559,15 +571,18 @@ const PrayerScreen = (function () {
           <div>
             <div class="pm-banner-label">${_l('nextPrayer', _lang)}</div>
             <div class="pm-banner-name">${_esc(pObj.name || np.key)}</div>
-            ${arName ? `<div class="pm-banner-ar-sub">${arName}</div>` : ''}
-          </div>
-          <div style="text-align:right">
-            <div class="pm-banner-bigtime">${np.time || '—:—'}</div>
             <div class="pm-banner-cd" id="pm-countdown">—</div>
+          </div>
+          <div class="pm-banner-time-wrap">
+            <div class="pm-banner-bigtime">${np.time || '—:—'}</div>
           </div>
         </div>
         <div class="pm-banner-track">
           <div class="pm-banner-fill" style="width:${pct}%"></div>
+        </div>
+        <div class="pm-banner-foot">
+          <span>${_esc(prayers[0]?.name || '')} ${_esc(prayers[0]?.time || '')}</span>
+          <span>${_esc(prayers[prayers.length - 1]?.name || '')} ${_esc(prayers[prayers.length - 1]?.time || '')}</span>
         </div>
       </div>`;
   }
@@ -580,6 +595,14 @@ const PrayerScreen = (function () {
     switch (_tab) {
       case 'vaqt':
         el.innerHTML = _buildVaqtTab();
+        el.querySelectorAll('[data-daily-tab]').forEach(button => button.addEventListener('click', () => {
+          el.querySelectorAll('[data-daily-tab]').forEach(tab => { const on=tab===button;tab.classList.toggle('active',on);tab.setAttribute('aria-selected',String(on)); });
+          el.querySelectorAll('[data-daily-panel]').forEach(panel => panel.hidden=panel.dataset.dailyPanel!==button.dataset.dailyTab);
+        }));
+        el.querySelector('.pm-daily-expand')?.addEventListener('click', event => {
+          const button=event.currentTarget, card=button.closest('.pm-card');
+          const expanded=card.classList.toggle('pm-card--expanded');button.setAttribute('aria-expanded',String(expanded));
+        });
         el.querySelector('#pm-open-qazo')?.addEventListener('click', () => {
           QazoScreen.load(_lang);
           window.App.navigate('screen-qazo');
@@ -607,38 +630,35 @@ const PrayerScreen = (function () {
     const prayers = _data.prayers || [];
     const nextKey = _data.next_prayer?.key;
     const nextIdx = prayers.findIndex(p => p.key === nextKey);
+    const iconByKey = { fajr:'sunrise', sunrise:'sun', dhuhr:'sun', asr:'sun', maghrib:'sunrise', isha:'moon' };
+    const subtitleByKey = {
+      fajr:_T('Tong namozi','Тонг намози','Утренняя молитва','Dawn prayer'),
+      sunrise:_T('Quyosh chiqish vaqti','Қуёш чиқиш вақти','Восход солнца','Sunrise time'),
+      dhuhr:_T('Peshin namozi','Пешин намози','Полуденная молитва','Noon prayer'),
+      asr:_T('Asr namozi','Аср намози','Послеполуденная молитва','Afternoon prayer'),
+      maghrib:_T('Shom namozi','Шом намози','Вечерняя молитва','Sunset prayer'),
+      isha:_T('Xufton namozi','Хуфтон намози','Ночная молитва','Night prayer')
+    };
 
     const rows = prayers.map((p, i) => {
       const isNext = p.key === nextKey;
       const isDone = nextIdx > -1 && i < nextIdx;
-      const isSun  = p.key === 'sunrise';
-      const ar     = PRAYER_AR[p.key] || '';
-
-      if (isSun) {
-        return `
-          <div class="pm-row pm-row--sun">
-            <div style="display:flex;align-items:baseline;gap:7px">
-              <span class="pm-row-name"><span class="material-symbols-rounded" data-icon="wb_sunny" aria-hidden="true">wb_sunny</span>${_esc(p.name)}</span>
-              ${ar ? `<span class="pm-row-ar">${ar}</span>` : ''}
-            </div>
-            <span class="pm-row-time pm-row-time--muted">${p.time}</span>
-          </div>`;
-      }
+      const isSun  = p.key.toLowerCase() === 'sunrise';
 
       return `
-        <div class="pm-row${isNext ? ' pm-row--next' : ''}${isDone ? ' pm-row--done' : ''}">
+        <div class="pm-row${isSun ? ' pm-row--sun' : ''}${isNext ? ' pm-row--next' : ''}${isDone ? ' pm-row--done' : ''}">
           ${isNext ? '<div class="pm-row-accent-bar"></div>' : ''}
+          <img class="pm-row-leading" src="assets/icons/tabler/${iconByKey[p.key.toLowerCase()] || 'clock'}.svg" alt="" aria-hidden="true">
           <div class="pm-row-info">
-            <div style="display:flex;align-items:baseline;gap:8px">
-              <span class="pm-row-name${isNext ? ' pm-row-name--next' : ''}">${_esc(p.name)}</span>
-              ${ar ? `<span class="pm-row-ar">${ar}</span>` : ''}
-            </div>
+            <span class="pm-row-name${isNext ? ' pm-row-name--next' : ''}">${_esc(p.name)}</span>
+            <small>${_esc(subtitleByKey[p.key.toLowerCase()] || '')}</small>
           </div>
           <div class="pm-row-right">
             <span class="pm-row-time${isNext ? ' pm-row-time--next' : ''}">${p.time}</span>
             <div class="pm-row-check${isDone ? ' pm-row-check--done' : ''}">
-              ${isDone ? '✓' : ''}
+              ${isDone ? '<img src="assets/icons/tabler/check.svg" alt="" aria-hidden="true">' : ''}
             </div>
+            <img class="pm-row-chevron" src="assets/icons/tabler/chevron-right.svg" alt="" aria-hidden="true">
           </div>
         </div>`;
     }).join('');
@@ -653,7 +673,15 @@ const PrayerScreen = (function () {
       <button class="pm-card pm-card--gold pm-qazo-link" id="pm-open-monthly" style="width:100%;text-align:left;cursor:pointer;border:none">
         <div class="pm-card-label"><span class="pm-card-dot pm-card-dot--gold"></span>${_l('monthlyLink', _lang)}</div>
       </button>`;
-    return `<div class="pm-vaqt-list">${rows}</div>${ayah}${hadith}${qazo}${monthly}`;
+    const daily = (ayah || hadith) ? `<div class="pm-daily-wrap">
+      <div class="pm-daily-tabs" role="tablist">
+        ${ayah ? `<button type="button" class="active" data-daily-tab="ayah" role="tab" aria-selected="true">${_l('dailyAyah',_lang)}</button>` : ''}
+        ${hadith ? `<button type="button" class="${ayah?'':'active'}" data-daily-tab="hadith" role="tab" aria-selected="${!ayah}">${_l('dailyHadith',_lang)}</button>` : ''}
+      </div>
+      ${ayah ? `<div data-daily-panel="ayah">${ayah}</div>` : ''}
+      ${hadith ? `<div data-daily-panel="hadith" ${ayah?'hidden':''}>${hadith}</div>` : ''}
+    </div>` : '';
+    return `<div class="pm-vaqt-list">${rows}</div>${daily}${qazo}${monthly}`;
   }
 
   /* ── SVG weather icons (inline, no emoji) ──────────────────── */
@@ -785,12 +813,12 @@ const PrayerScreen = (function () {
           ${_weatherSvg(hr, 22)}
           <span style="font-size:9px;color:#5b9bd5;font-weight:600;width:34px;text-align:center;visibility:${pop>0?'visible':'hidden'}">${pop}%</span>
           <div style="flex:1;display:flex;align-items:center;gap:6px;justify-content:flex-end">
-            <span style="font-size:11px;color:rgba(22,33,43,.55);font-weight:600">${mn}°</span>
+            <span style="font-size:11px;color:rgba(22,33,43,.55);font-weight:600">${mn == null ? '—' : mn+'°'}</span>
             <div style="width:46px;height:3px;border-radius:2px;background:rgba(255,255,255,.08);position:relative;overflow:hidden">
               <div style="position:absolute;left:${left}%;width:${width}%;height:100%;
                           background:linear-gradient(90deg,#5b9bd5,#16794A);border-radius:2px"></div>
             </div>
-            <span style="font-size:12px;color:#16212B;font-weight:800">${mx}°</span>
+            <span style="font-size:12px;color:#16212B;font-weight:800">${mx == null ? '—' : mx+'°'}</span>
           </div>
         </div>`;
     }).join('');
@@ -811,7 +839,7 @@ const PrayerScreen = (function () {
           if (_data && !_data.weather) {
             try {
               const r = await fetch(
-                `${window.location.origin}/api/weather?lat=${_lat}&lon=${_lon}&lang=${_lang}`,
+                `${window.location.origin}/api/weather?lat=${_lat}&lon=${_lon}&lang=${_lang}&${window.PrayerPreferences.query()}`,
                 { signal: AbortSignal.timeout(8000) }
               );
               if (r.ok) {
@@ -907,7 +935,7 @@ const PrayerScreen = (function () {
 
     /* ── BATAFSIL (React prototype exact, inline styles only) ── */
     const details = [
-      { ic:'💨', l:_T('Shamol','Шамол','Ветер','Wind'),           v: w.wind_kmph     != null ? `${w.wind_kmph} km/s`  : '—', sub: w.wind_dir_full || w.wind_dir || '' },
+      { ic:'💨', l:_T('Shamol','Шамол','Ветер','Wind'),           v: w.wind_kmph     != null ? `${w.wind_kmph} km/h`  : '—', sub: w.wind_dir_full || w.wind_dir || '' },
       { ic:'💧', l:_T('Namlik','Намлик','Влажность','Humidity'),     v: w.humidity      != null ? `${w.humidity}%`        : '—', sub: _T('Qulay daraja','Қулай даража','Комфортный уровень','Comfortable level')  },
       { ic:'🌡️', l:_T('Bosim','Босим','Давление','Pressure'),       v: w.pressure_hpa  != null ? `${w.pressure_hpa}`    : '—', sub: _T('hPa · Barqaror','hPa · Барқарор','гПа · Устойчиво','hPa · Stable') },
       { ic:'☀️', l:_T('UV indeksi','УВ индекси','УФ-индекс','UV index'), v: w.uv_index  != null ? `${w.uv_index}`         : '—', sub: _T("O'rtacha",'Ўртача','Умеренно','Moderate')                       },
@@ -933,8 +961,8 @@ const PrayerScreen = (function () {
       <div style="font-size:9px;font-weight:700;color:rgba(22,33,43,.28);letter-spacing:1.3px;text-transform:uppercase;margin-bottom:8px">${_T('5 KUNLIK PROGNOZ','5 КУНЛИК ПРОГНОЗ','5-ДНЕВНЫЙ ПРОГНОЗ','5-DAY FORECAST')}</div>
       <div style="display:flex;flex-direction:column;gap:5px">
         ${w.forecast.map((day, i) => {
-          const mn  = day.temp_min_c != null ? day.temp_min_c : 10;
-          const mx  = day.temp_max_c != null ? day.temp_max_c : 26;
+          const mn  = day.temp_min_c != null ? day.temp_min_c : null;
+          const mx  = day.temp_max_c != null ? day.temp_max_c : null;
           const pop = day.precip_pct || 0;
           const lft = Math.max(0, ((mn - 8) / 22) * 100).toFixed(0);
           const wid = Math.min(100, ((mx - mn) / 22) * 100).toFixed(0);
@@ -943,21 +971,17 @@ const PrayerScreen = (function () {
             ${_weatherSvg(14, 20)}
             <span style="font-size:9px;color:#5b9bd5;font-weight:600;width:34px;text-align:center;visibility:${pop>0?'visible':'hidden'}">${pop}%</span>
             <div style="flex:1;display:flex;align-items:center;gap:6px;justify-content:flex-end">
-              <span style="font-size:11px;color:rgba(22,33,43,.55);font-weight:600">${mn}°</span>
+              <span style="font-size:11px;color:rgba(22,33,43,.55);font-weight:600">${mn == null ? '—' : mn+'°'}</span>
               <div style="width:46px;height:3px;border-radius:2px;background:rgba(255,255,255,.08);position:relative;overflow:hidden">
                 <div style="position:absolute;left:${lft}%;width:${wid}%;height:100%;background:linear-gradient(90deg,#5b9bd5,#16794A);border-radius:2px"></div>
               </div>
-              <span style="font-size:11px;color:#16212B;font-weight:800">${mx}°</span>
+              <span style="font-size:11px;color:#16212B;font-weight:800">${mx == null ? '—' : mx+'°'}</span>
             </div>
           </div>`;
         }).join('')}
       </div>` : '';
 
-    return heroHtml + sunArc + hourlyHtml + batafsil + forecastHtml + `
-      <div style="margin-top:12px;background:rgba(79,207,160,.07);border:1px solid rgba(79,207,160,.2);border-radius:12px;padding:10px 12px">
-        <div style="font-size:9px;font-weight:700;color:#4fcfa0;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:5px">${_T("NAMOZGA TA'SIR","НАМОЗГА ТА'СИР","ВЛИЯНИЕ НА НАМАЗ",'EFFECT ON PRAYER')}</div>
-        <div style="font-size:11px;color:#4fcfa0;font-weight:600">✓ ${_T('Ob-havo qulay — masjidga borish uchun yaxshi sharoit','Об-ҳаво қулай — масжидга бориш учун яхши шароит','Погода благоприятна — хорошие условия для мечети','Weather is favorable — good conditions for the mosque')}</div>
-      </div>`;
+    return heroHtml + sunArc + hourlyHtml + batafsil + forecastHtml;
   }
 
   /* ══════════════════════════════════════════════════════════════
@@ -1127,7 +1151,7 @@ const PrayerScreen = (function () {
     const d    = _data;
     const city = d.city ? `${d.city}, ${d.country}` : (d.country || '—');
     const flag = d.country_code ? _countryFlag(d.country_code) : '';
-    const greg = `${d.gregorian.day} ${d.gregorian.month} ${d.gregorian.year}`;
+    const greg = formatLocalizedDate(d.gregorian, _lang);
     const hij  = window.HijriCalc.format(window.HijriCalc.toHijriFromDate(new Date()), _lang);
     const meth = d.method || '—';
 
@@ -1252,11 +1276,11 @@ const PrayerScreen = (function () {
     const translationLine = _esc(ay.translation || '');
     return `
       <div class="pm-card pm-card--gold">
-        <div class="pm-card-label"><span class="pm-card-dot pm-card-dot--gold"></span>${_l('dailyAyah', _lang)}</div>
         <div class="pm-ayah-ar" dir="rtl">${_esc(ay.arabic)}</div>
         ${ay.transliteration ? `<div class="pm-ayah-translit">${_esc(ay.transliteration)}</div>` : ''}
         <div class="pm-ayah-tr">${translationLine}</div>
         <div class="pm-ayah-ref">— ${_esc(ay.reference)}</div>
+        <button type="button" class="pm-daily-expand" aria-expanded="false">${_T('BATAFSIL','БАТАФСИЛ','ПОДРОБНЕЕ','DETAILS')}</button>
       </div>`;
   }
 

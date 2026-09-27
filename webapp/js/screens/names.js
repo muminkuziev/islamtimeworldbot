@@ -90,8 +90,9 @@ const NamesScreen = (function () {
   }
 
   function _shortMean(name) {
+    if (_lang === 'tr') return t('translation_unavailable', _lang);
     const hasCyr = !!name[_lang];
-    const full = name[_lang] || name.uz || name.en || '';
+    const full = name[_lang] || t('translation_unavailable', _lang);
     const text = full.split(' — ')[0].trim();
     return (_lang === 'uz_cyr' && !hasCyr) ? _cy(text) : text;
   }
@@ -99,7 +100,7 @@ const NamesScreen = (function () {
   function _tafsir(name) {
     const d = name.desc || {};
     const hasCyr = !!d[_lang];
-    const text = d[_lang] || d.uz || d.en || '';
+    const text = d[_lang] || t('translation_unavailable', _lang);
     return (_lang === 'uz_cyr' && !hasCyr) ? _cy(text) : text;
   }
 

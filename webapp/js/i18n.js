@@ -32,6 +32,30 @@ const CANONICAL_LANGS = LANG_META.filter(l => l.canonical).map(l => l.code);
 
 const RTL_LANGS = new Set(['ar','ur','fa']);
 
+/* One language identifier for storage, API requests and document direction.
+   Preserve explicitly selected legacy languages, while accepting browser BCP-47
+   tags and aliases used by older clients. New choices use CANONICAL_LANGS. */
+function normalizeLanguage(code, fallback = 'uz') {
+  const value = String(code || '').trim().toLowerCase().replace(/_/g, '-');
+  const aliases = { 'in':'id', 'iw':'he', 'uz-cyr':'uz_cyr', 'uz-cyrl':'uz_cyr', 'uz-latn':'uz' };
+  const exact = aliases[value] || value;
+  if (LANG_META.some(item => item.code === exact)) return exact;
+  if (value.startsWith('uz-cyrl-')) return 'uz_cyr';
+  const base = aliases[value.split('-')[0]] || value.split('-')[0];
+  if (LANG_META.some(item => item.code === base)) return base;
+  return LANG_META.some(item => item.code === fallback) ? fallback : 'uz';
+}
+
+const _I18N_MISSING = new Set();
+function _missingTranslation(key, lang) {
+  const id = `${lang}:${key}`;
+  if (!_I18N_MISSING.has(id)) {
+    _I18N_MISSING.add(id);
+    console.warn(`[i18n] Missing translation: ${id}`);
+  }
+  return I18N.translation_unavailable[normalizeLanguage(lang)] || I18N.translation_unavailable.en;
+}
+
 const I18N = {
 
   bismillah: { uz:'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ', en:'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ', ru:'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ', ar:'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ', tr:'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ', kk:'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ', tg:'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ', ky:'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ', de:'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ', fr:'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ', id:'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ', hi:'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ', ur:'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ', uz_cyr:'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ',
@@ -938,19 +962,22 @@ const I18N = {
 
 /* ── t(): translate dot-notation key ───────────────────── */
 function t(key, lang) {
+  lang = normalizeLanguage(lang);
   const parts = key.split('.');
   let node = I18N;
   for (const part of parts) {
-    if (!node || typeof node !== 'object') return key;
+    if (!node || typeof node !== 'object') return _missingTranslation(key, lang);
     node = node[part];
   }
-  if (node === undefined || node === null) return key;
+  if (node === undefined || node === null) return _missingTranslation(key, lang);
   if (typeof node === 'string') return node;
   if (Array.isArray(node)) return node;
   if (typeof node === 'object') {
-    return node[lang] || node['en'] || Object.values(node)[0] || key;
+    if (node[lang] !== undefined && node[lang] !== null) return node[lang];
+    if (CANONICAL_LANGS.includes(lang)) return _missingTranslation(key, lang);
+    return node.en || _missingTranslation(key, lang);
   }
-  return key;
+  return _missingTranslation(key, lang);
 }
 
 /* ── _resolveT(): full 14-language _T resolver ──────────────── */
@@ -1447,6 +1474,49 @@ const _EXTRA_T = {
   'Search dhikr...': { tr:'Zikir ara...', ar:'ابحث عن ذكر...', kk:'Зікір іздеу...', tg:'Ҷустуҷӯи зикр...', ky:'Зикир издөө...', de:'Dhikr suchen...', fr:'Rechercher un dhikr...', id:'Cari zikir...', hi:'ज़िक्र खोजें...', ur:'ذکر تلاش کریں...', bn:'জিকির খুঁজুন...', fa:'جستجوی ذکر...', ms:'Cari zikir...' },
 };
 
+/* Names of calendar events (not quotations or date calculations). */
+Object.assign(I18N.calendar_islamic_events['1/1'], {id:'Tahun Baru Islam',ur:'اسلامی نیا سال',fr:'Nouvel An hégirien',hi:'इस्लामी नव वर्ष',tr:'Hicri Yılbaşı',de:'Islamisches Neujahr'});
+Object.assign(I18N.calendar_islamic_events['1/10'], {id:'Hari Asyura',ur:'یوم عاشورا',fr:'Jour d’Achoura',hi:'आशूरा का दिन',tr:'Aşure Günü',de:'Aschura-Tag'});
+Object.assign(I18N.calendar_islamic_events['3/12'], {id:'Maulid Nabi ﷺ',ur:'میلاد النبی ﷺ',fr:'Mawlid du Prophète ﷺ',hi:'मीलादुन्नबी ﷺ',tr:'Mevlid Kandili ﷺ',de:'Mawlid an-Nabi ﷺ'});
+Object.assign(I18N.calendar_islamic_events['7/27'], {id:'Isra Mikraj',ur:'اسراء و معراج',fr:'Isra et Mi‘raj',hi:'इस्रा और मेराज',tr:'İsra ve Miraç',de:'Isra und Miradsch'});
+Object.assign(I18N.calendar_islamic_events['8/15'], {id:'Nisfu Syaban',ur:'شب برات',fr:'Nuit de la mi-Chaabane',hi:'शबे बरात',tr:'Berat Kandili',de:'Lailat al-Bara’a'});
+Object.assign(I18N.calendar_islamic_events['9/1'], {id:'Awal Ramadan 🌙',ur:'رمضان کا آغاز 🌙',fr:'Début du Ramadan 🌙',hi:'रमज़ान की शुरुआत 🌙',tr:'Ramazan başlangıcı 🌙',de:'Beginn des Ramadan 🌙'});
+Object.assign(I18N.calendar_islamic_events['9/27'], {id:'Lailatulqadar ✨',ur:'شب قدر ✨',fr:'Nuit du Destin ✨',hi:'शबे क़द्र ✨',tr:'Kadir Gecesi ✨',de:'Nacht der Bestimmung ✨'});
+Object.assign(I18N.calendar_islamic_events['10/1'], {id:'Idulfitri 🎉',ur:'عید الفطر 🎉',fr:'Aïd al-Fitr 🎉',hi:'ईदुल फ़ित्र 🎉',tr:'Ramazan Bayramı 🎉',de:'Fest des Fastenbrechens 🎉'});
+Object.assign(I18N.calendar_islamic_events['12/9'], {id:'Hari Arafah',ur:'یوم عرفہ',fr:'Jour d’Arafat',hi:'अरफ़ा का दिन',tr:'Arefe Günü',de:'Arafat-Tag'});
+Object.assign(I18N.calendar_islamic_events['12/10'], {id:'Iduladha 🐑',ur:'عید الاضحیٰ 🐑',fr:'Aïd al-Adha 🐑',hi:'ईदुल अज़हा 🐑',tr:'Kurban Bayramı 🐑',de:'Opferfest 🐑'});
+
+/* Interface text only. Quran, hadith and devotional translations belong to
+   their named source registries, never to this UI dictionary. */
+Object.assign(I18N, {
+  calendar_gregorian_months: {
+    ar:['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'],
+    en:['January','February','March','April','May','June','July','August','September','October','November','December'],
+    id:['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'],
+    ur:['جنوری','فروری','مارچ','اپریل','مئی','جون','جولائی','اگست','ستمبر','اکتوبر','نومبر','دسمبر'],
+    bn:['জানুয়ারি','ফেব্রুয়ারি','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্টেম্বর','অক্টোবর','নভেম্বর','ডিসেম্বর'],
+    fr:['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'],
+    hi:['जनवरी','फ़रवरी','मार्च','अप्रैल','मई','जून','जुलाई','अगस्त','सितंबर','अक्टूबर','नवंबर','दिसंबर'],
+    fa:['ژانویه','فوریه','مارس','آوریل','مه','ژوئن','ژوئیه','اوت','سپتامبر','اکتبر','نوامبر','دسامبر'],
+    tr:['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'],
+    ru:['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'],
+    uz:['yanvar','fevral','mart','aprel','may','iyun','iyul','avgust','sentabr','oktabr','noyabr','dekabr'],
+    de:['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'],
+    ms:['Januari','Februari','Mac','April','Mei','Jun','Julai','Ogos','September','Oktober','November','Disember'],
+    uz_cyr:['январ','феврал','март','апрел','май','июн','июл','август','сентябр','октябр','ноябр','декабр']
+  },
+  translation_unavailable: {ar:'الترجمة غير متاحة بهذه اللغة',en:'Translation unavailable in this language',id:'Terjemahan belum tersedia dalam bahasa ini',ur:'اس زبان میں ترجمہ دستیاب نہیں',bn:'এই ভাষায় অনুবাদ উপলব্ধ নেই',fr:'Traduction indisponible dans cette langue',hi:'इस भाषा में अनुवाद उपलब्ध नहीं है',fa:'ترجمه به این زبان در دسترس نیست',tr:'Bu dilde çeviri mevcut değil',ru:'Перевод на этот язык недоступен',uz:'Bu tilda tarjima mavjud emas',de:'Übersetzung in dieser Sprache nicht verfügbar',ms:'Terjemahan tidak tersedia dalam bahasa ini'},
+  theme_auto: {ar:'تلقائي',en:'Automatic',id:'Otomatis',ur:'خودکار',bn:'স্বয়ংক্রিয়',fr:'Automatique',hi:'स्वचालित',fa:'خودکار',tr:'Otomatik',ru:'Автоматически',uz:'Avtomatik',de:'Automatisch',ms:'Automatik'},
+  theme_day: {ar:'نهاري',en:'Day',id:'Siang',ur:'دن',bn:'দিন',fr:'Jour',hi:'दिन',fa:'روز',tr:'Gündüz',ru:'День',uz:'Kunduz',de:'Tag',ms:'Siang'},
+  theme_night: {ar:'ليلي',en:'Night',id:'Malam',ur:'رات',bn:'রাত',fr:'Nuit',hi:'रात',fa:'شب',tr:'Gece',ru:'Ночь',uz:'Tun',de:'Nacht',ms:'Malam'},
+  theme_auto_desc: {ar:'يتبع شروق الشمس وغروبها في موقعك',en:'Follows local sunrise and sunset',id:'Mengikuti waktu matahari terbit dan terbenam setempat',ur:'مقامی طلوع اور غروبِ آفتاب کے مطابق',bn:'স্থানীয় সূর্যোদয় ও সূর্যাস্ত অনুসরণ করে',fr:'Suit le lever et le coucher du soleil locaux',hi:'स्थानीय सूर्योदय और सूर्यास्त के अनुसार',fa:'مطابق طلوع و غروب محلی خورشید',tr:'Yerel gün doğumu ve gün batımını izler',ru:'По местному восходу и закату',uz:'Mahalliy quyosh chiqishi va botishiga moslashadi',de:'Folgt dem örtlichen Sonnenauf- und -untergang',ms:'Mengikut waktu matahari terbit dan terbenam setempat'},
+  theme_day_desc: {ar:'الأبيض والنعناعي والزمردي',en:'White, mint and emerald',id:'Putih, mint, dan zamrud',ur:'سفید، ہلکا سبز اور زمردی',bn:'সাদা, হালকা সবুজ ও পান্না',fr:'Blanc, menthe et émeraude',hi:'सफ़ेद, हल्का हरा और पन्ना',fa:'سفید، نعنایی و زمردی',tr:'Beyaz, nane ve zümrüt',ru:'Белый, мятный и изумрудный',uz:'Oq, yalpiz va zumrad',de:'Weiß, Mint und Smaragd',ms:'Putih, pudina dan zamrud'},
+  theme_night_desc: {ar:'أسطح داكنة ونص واضح',en:'Dark surfaces and clear text',id:'Tampilan gelap dan teks yang jelas',ur:'گہرے رنگ اور واضح متن',bn:'গাঢ় পটভূমি ও স্পষ্ট লেখা',fr:'Surfaces sombres et texte lisible',hi:'गहरी पृष्ठभूमि और स्पष्ट पाठ',fa:'سطوح تیره و متن خوانا',tr:'Koyu yüzeyler ve okunaklı metin',ru:'Тёмные поверхности и чёткий текст',uz:'To‘q fon va ravshan matn',de:'Dunkle Flächen und gut lesbarer Text',ms:'Permukaan gelap dan teks yang jelas'},
+  theme_source_location: {ar:'حسب موقعك الحالي',en:'Based on your current location',id:'Berdasarkan lokasi Anda saat ini',ur:'آپ کے موجودہ مقام کے مطابق',bn:'আপনার বর্তমান অবস্থান অনুযায়ী',fr:'Selon votre position actuelle',hi:'आपके वर्तमान स्थान के आधार पर',fa:'بر اساس موقعیت فعلی شما',tr:'Geçerli konumunuza göre',ru:'По вашему текущему местоположению',uz:'Joriy joylashuvingiz asosida',de:'Basierend auf Ihrem aktuellen Standort',ms:'Berdasarkan lokasi semasa anda'},
+  theme_source_cached: {ar:'حسب آخر موقع معروف لك',en:'Based on your last known location',id:'Berdasarkan lokasi terakhir Anda yang diketahui',ur:'آپ کے آخری معلوم مقام کے مطابق',bn:'আপনার সর্বশেষ জানা অবস্থান অনুযায়ী',fr:'Selon votre dernière position connue',hi:'आपके अंतिम ज्ञात स्थान के आधार पर',fa:'بر اساس آخرین موقعیت شناخته‌شده شما',tr:'Bilinen son konumunuza göre',ru:'По последнему известному местоположению',uz:'Oxirgi ma’lum joylashuvingiz asosida',de:'Basierend auf Ihrem letzten bekannten Standort',ms:'Berdasarkan lokasi terakhir anda yang diketahui'},
+  theme_source_system: {ar:'يستخدم سمة جهازك عند تعذر معرفة أوقات الشمس',en:'Uses your device theme when solar times are unavailable',id:'Mengikuti tema perangkat saat waktu matahari tidak tersedia',ur:'شمسی اوقات دستیاب نہ ہوں تو ڈیوائس کی تھیم استعمال ہوتی ہے',bn:'সূর্যোদয় ও সূর্যাস্তের সময় না পাওয়া গেলে ডিভাইসের থিম ব্যবহার করে',fr:'Utilise le thème de l’appareil si les horaires solaires sont indisponibles',hi:'सूर्योदय और सूर्यास्त के समय उपलब्ध न हों तो डिवाइस की थीम का उपयोग करता है',fa:'وقتی زمان‌های خورشیدی در دسترس نیست، از پوسته دستگاه استفاده می‌کند',tr:'Güneş saatleri mevcut değilse cihaz temasını kullanır',ru:'Использует тему устройства, если время восхода и заката недоступно',uz:'Quyosh vaqtlari mavjud bo‘lmasa, qurilma mavzusidan foydalanadi',de:'Verwendet das Gerätedesign, wenn Sonnenzeiten nicht verfügbar sind',ms:'Menggunakan tema peranti apabila waktu matahari tidak tersedia'}
+});
+
 const _I18N_EN_IDX = {};
 (function _idx(node, depth) {
   if (!node || typeof node !== 'object' || Array.isArray(node) || depth > 5) return;
@@ -1489,22 +1559,215 @@ Object.assign(_EXTRA_T, {
   }
 });
 
+/* Copy shared labels instead of maintaining separate translations for casing
+   or context-only variants. These are UI labels, not religious quotations. */
+Object.assign(_EXTRA_T, {
+  'Next prayer': I18N.nextPrayer,
+  'Prayer times': I18N.modules_list.prayer,
+  'Distance to Ka\'bah': I18N.qibla_dist_kaaba,
+  'Monthly Prayer Calendar': _EXTRA_T['Monthly prayer calendar'],
+  'Missed Prayers (Qazo)': _EXTRA_T['Missed prayers'],
+  'White, mint and emerald': I18N.theme_day_desc,
+  'Adhan': {ar:'الأذان',id:'Azan',ur:'اذان',bn:'আজান',fr:'Adhan',hi:'अज़ान',fa:'اذان',tr:'Ezan',de:'Adhan',ms:'Azan'},
+  'Prayer': {ar:'الصلاة',id:'Salat',ur:'نماز',bn:'নামাজ',fr:'Prière',hi:'नमाज़',fa:'نماز',tr:'Namaz',de:'Gebet',ms:'Solat'},
+  'Madinah': {ar:'المدينة المنورة',id:'Madinah',ur:'مدینہ منورہ',bn:'মদিনা',fr:'Médine',hi:'मदीना',fa:'مدینه',tr:'Medine',de:'Medina',ms:'Madinah'},
+  'Witr': {ar:'الوتر',id:'Witir',ur:'وتر',bn:'বিতর',fr:'Witr',hi:'वित्र',fa:'وتر',tr:'Vitir',de:'Witr',ms:'Witir'},
+  'Masjid al-Haram': {ar:'المسجد الحرام',id:'Masjidilharam',ur:'مسجد الحرام',bn:'মসজিদুল হারাম',fr:'Mosquée al-Haram',hi:'मस्जिद अल-हराम',fa:'مسجدالحرام',tr:'Mescid-i Haram',de:'Al-Haram-Moschee',ms:'Masjidilharam'},
+  'Masjid an-Nabawi': {ar:'المسجد النبوي',id:'Masjid Nabawi',ur:'مسجد نبوی',bn:'মসজিদে নববী',fr:'Mosquée du Prophète',hi:'मस्जिद अन-नबवी',fa:'مسجدالنبی',tr:'Mescid-i Nebevi',de:'Prophetenmoschee',ms:'Masjid Nabawi'},
+  'Official source available': {ar:'المصدر الرسمي متاح',id:'Sumber resmi tersedia',ur:'سرکاری ذریعہ دستیاب ہے',bn:'আনুষ্ঠানিক উৎস উপলব্ধ',fr:'Source officielle disponible',hi:'आधिकारिक स्रोत उपलब्ध है',fa:'منبع رسمی در دسترس است',tr:'Resmî kaynak mevcut',de:'Offizielle Quelle verfügbar',ms:'Sumber rasmi tersedia'},
+  'Live status has not been verified.': {ar:'لم يتم التحقق من حالة البث المباشر.',id:'Status siaran langsung belum diverifikasi.',ur:'براہ راست نشریات کی حیثیت کی تصدیق نہیں ہوئی۔',bn:'সরাসরি সম্প্রচারের অবস্থা যাচাই করা হয়নি।',fr:'Le statut du direct n’a pas été vérifié.',hi:'लाइव प्रसारण की स्थिति सत्यापित नहीं है।',fa:'وضعیت پخش زنده تأیید نشده است.',tr:'Canlı yayın durumu doğrulanmadı.',de:'Der Live-Status wurde nicht überprüft.',ms:'Status siaran langsung belum disahkan.'},
+  '{n} km radius': {ar:'نطاق {n} كم',id:'Radius {n} km',ur:'{n} کلومیٹر دائرہ',bn:'{n} কিমি ব্যাসার্ধ',fr:'Rayon de {n} km',hi:'{n} किमी का दायरा',fa:'شعاع {n} کیلومتر',tr:'{n} km yarıçap',de:'{n} km Umkreis',ms:'Jejari {n} km'},
+  'Date': {ar:'التاريخ',id:'Tanggal',ur:'تاریخ',bn:'তারিখ',fr:'Date',hi:'तारीख़',fa:'تاریخ',tr:'Tarih',de:'Datum',ms:'Tarikh'},
+  'Fajr': {ar:'الفجر',id:'Subuh',ur:'فجر',bn:'ফজর',fr:'Fajr',hi:'फ़ज्र',fa:'صبح',tr:'İmsak',de:'Fajr',ms:'Subuh'},
+  'Sunrise': {ar:'الشروق',id:'Terbit',ur:'طلوع آفتاب',bn:'সূর্যোদয়',fr:'Lever du soleil',hi:'सूर्योदय',fa:'طلوع آفتاب',tr:'Güneş',de:'Sonnenaufgang',ms:'Syuruk'},
+  'Dhuhr': {ar:'الظهر',id:'Zuhur',ur:'ظہر',bn:'যোহর',fr:'Dhuhr',hi:'ज़ुहर',fa:'ظهر',tr:'Öğle',de:'Dhuhr',ms:'Zuhur'},
+  'Asr': {ar:'العصر',id:'Asar',ur:'عصر',bn:'আসর',fr:'Asr',hi:'अस्र',fa:'عصر',tr:'İkindi',de:'Asr',ms:'Asar'},
+  'Maghrib': {ar:'المغرب',id:'Magrib',ur:'مغرب',bn:'মাগরিব',fr:'Maghrib',hi:'मग़रिब',fa:'مغرب',tr:'Akşam',de:'Maghrib',ms:'Maghrib'},
+  'Isha': {ar:'العشاء',id:'Isya',ur:'عشاء',bn:'এশা',fr:'Isha',hi:'इशा',fa:'عشاء',tr:'Yatsı',de:'Ischa',ms:'Isyak'},
+  'Houses of Allah': {ar:'بيوت الله',id:'Rumah Allah',ur:'اللہ کے گھر',bn:'আল্লাহর ঘর',fr:'Maisons d’Allah',hi:'अल्लाह के घर',fa:'خانه‌های خدا',tr:'Allah’ın evleri',de:'Häuser Allahs',ms:'Rumah Allah'},
+  'Search radius': {ar:'نطاق البحث',id:'Radius pencarian',ur:'تلاش کا دائرہ',bn:'অনুসন্ধানের ব্যাসার্ধ',fr:'Rayon de recherche',hi:'खोज का दायरा',fa:'شعاع جستجو',tr:'Arama yarıçapı',de:'Suchradius',ms:'Jejari carian'},
+  'Filter': {ar:'تصفية',id:'Filter',ur:'فلٹر',bn:'ফিল্টার',fr:'Filtrer',hi:'फ़िल्टर',fa:'فیلتر',tr:'Filtre',de:'Filter',ms:'Tapis'},
+  'Nearby': {ar:'بالقرب منك',id:'Terdekat',ur:'قریب',bn:'কাছাকাছি',fr:'À proximité',hi:'आस-पास',fa:'نزدیک',tr:'Yakında',de:'In der Nähe',ms:'Berdekatan'},
+  'area': {ar:'المنطقة',id:'wilayah',ur:'علاقہ',bn:'এলাকা',fr:'zone',hi:'क्षेत्र',fa:'منطقه',tr:'bölge',de:'Gebiet',ms:'kawasan'},
+  'Friday prayer': {ar:'صلاة الجمعة',id:'Salat Jumat',ur:'نماز جمعہ',bn:'জুমার নামাজ',fr:'Prière du vendredi',hi:'जुमे की नमाज़',fa:'نماز جمعه',tr:'Cuma namazı',de:'Freitagsgebet',ms:'Solat Jumaat'},
+  'Congregation': {ar:'الجماعة',id:'Jemaah',ur:'جماعت',bn:'জামাত',fr:'Prière en groupe',hi:'जमाअत',fa:'جماعت',tr:'Cemaat',de:'Gemeinschaft',ms:'Jemaah'},
+  'Available': {ar:'متاح',id:'Tersedia',ur:'دستیاب',bn:'উপলব্ধ',fr:'Disponible',hi:'उपलब्ध',fa:'موجود',tr:'Mevcut',de:'Verfügbar',ms:'Tersedia'},
+  'Call': {ar:'اتصال',id:'Telepon',ur:'کال کریں',bn:'কল করুন',fr:'Appeler',hi:'कॉल करें',fa:'تماس',tr:'Ara',de:'Anrufen',ms:'Hubungi'},
+  'Dawn prayer': {ar:'صلاة الفجر',id:'Salat Subuh',ur:'نماز فجر',bn:'ফজরের নামাজ',fr:'Prière de l’aube',hi:'फ़ज्र की नमाज़',fa:'نماز صبح',tr:'Sabah namazı',de:'Morgengebet',ms:'Solat Subuh'},
+  'Sunrise time': {ar:'وقت الشروق',id:'Waktu matahari terbit',ur:'طلوع آفتاب کا وقت',bn:'সূর্যোদয়ের সময়',fr:'Heure du lever du soleil',hi:'सूर्योदय का समय',fa:'زمان طلوع آفتاب',tr:'Güneş doğuş saati',de:'Sonnenaufgangszeit',ms:'Waktu matahari terbit'},
+  'Noon prayer': {ar:'صلاة الظهر',id:'Salat Zuhur',ur:'نماز ظہر',bn:'যোহরের নামাজ',fr:'Prière de midi',hi:'ज़ुहर की नमाज़',fa:'نماز ظهر',tr:'Öğle namazı',de:'Mittagsgebet',ms:'Solat Zuhur'},
+  'Afternoon prayer': {ar:'صلاة العصر',id:'Salat Asar',ur:'نماز عصر',bn:'আসরের নামাজ',fr:'Prière de l’après-midi',hi:'अस्र की नमाज़',fa:'نماز عصر',tr:'İkindi namazı',de:'Nachmittagsgebet',ms:'Solat Asar'},
+  'Sunset prayer': {ar:'صلاة المغرب',id:'Salat Magrib',ur:'نماز مغرب',bn:'মাগরিবের নামাজ',fr:'Prière du coucher du soleil',hi:'मग़रिब की नमाज़',fa:'نماز مغرب',tr:'Akşam namazı',de:'Abendgebet',ms:'Solat Maghrib'},
+  'Night prayer': {ar:'صلاة العشاء',id:'Salat Isya',ur:'نماز عشاء',bn:'এশার নামাজ',fr:'Prière de la nuit',hi:'इशा की नमाज़',fa:'نماز عشاء',tr:'Yatsı namazı',de:'Nachtgebet',ms:'Solat Isyak'},
+  'Location unavailable': {ar:'الموقع غير متاح',id:'Lokasi tidak tersedia',ur:'مقام دستیاب نہیں',bn:'অবস্থান পাওয়া যাচ্ছে না',fr:'Position indisponible',hi:'स्थान उपलब्ध नहीं',fa:'موقعیت در دسترس نیست',tr:'Konum kullanılamıyor',de:'Standort nicht verfügbar',ms:'Lokasi tidak tersedia'},
+  'Makkah, Saudi Arabia': {ar:'مكة المكرمة، السعودية',id:'Makkah, Arab Saudi',ur:'مکہ مکرمہ، سعودی عرب',bn:'মক্কা, সৌদি আরব',fr:'La Mecque, Arabie saoudite',hi:'मक्का, सऊदी अरब',fa:'مکه، عربستان سعودی',tr:'Mekke, Suudi Arabistan',de:'Mekka, Saudi-Arabien',ms:'Makkah, Arab Saudi'},
+  'GPS is unavailable on this device': {ar:'نظام تحديد الموقع غير متاح على هذا الجهاز',id:'GPS tidak tersedia di perangkat ini',ur:'اس ڈیوائس پر GPS دستیاب نہیں',bn:'এই ডিভাইসে GPS উপলব্ধ নেই',fr:'Le GPS est indisponible sur cet appareil',hi:'इस डिवाइस पर GPS उपलब्ध नहीं है',fa:'GPS در این دستگاه در دسترس نیست',tr:'Bu cihazda GPS kullanılamıyor',de:'GPS ist auf diesem Gerät nicht verfügbar',ms:'GPS tidak tersedia pada peranti ini'},
+  'Enable location permission': {ar:'السماح بالوصول إلى الموقع',id:'Aktifkan izin lokasi',ur:'مقام کی اجازت دیں',bn:'অবস্থানের অনুমতি দিন',fr:'Autoriser l’accès à la position',hi:'स्थान की अनुमति दें',fa:'اجازه دسترسی به موقعیت را فعال کنید',tr:'Konum iznini etkinleştirin',de:'Standortzugriff erlauben',ms:'Benarkan akses lokasi'},
+  'Location found': {ar:'تم تحديد الموقع',id:'Lokasi ditemukan',ur:'مقام مل گیا',bn:'অবস্থান পাওয়া গেছে',fr:'Position trouvée',hi:'स्थान मिल गया',fa:'موقعیت پیدا شد',tr:'Konum bulundu',de:'Standort gefunden',ms:'Lokasi ditemui'},
+  'The word of Allah': {ar:'كلام الله',id:'Firman Allah',ur:'کلام اللہ',bn:'আল্লাহর বাণী',fr:'La parole d’Allah',hi:'अल्लाह का कलाम',fa:'کلام خدا',tr:'Allah’ın kelamı',de:'Das Wort Allahs',ms:'Kalam Allah'},
+  'Surah list': {ar:'قائمة السور',id:'Daftar surah',ur:'سورتوں کی فہرست',bn:'সূরার তালিকা',fr:'Liste des sourates',hi:'सूरों की सूची',fa:'فهرست سوره‌ها',tr:'Sure listesi',de:'Surenliste',ms:'Senarai surah'},
+  '114 surahs total': {ar:'١١٤ سورة',id:'Total 114 surah',ur:'کل 114 سورتیں',bn:'মোট ১১৪টি সূরা',fr:'114 sourates au total',hi:'कुल 114 सूरतें',fa:'در مجموع ۱۱۴ سوره',tr:'Toplam 114 sure',de:'Insgesamt 114 Suren',ms:'Jumlah 114 surah'},
+  'Not available yet': {ar:'غير متاح بعد',id:'Belum tersedia',ur:'ابھی دستیاب نہیں',bn:'এখনও উপলব্ধ নয়',fr:'Pas encore disponible',hi:'अभी उपलब्ध नहीं',fa:'هنوز در دسترس نیست',tr:'Henüz mevcut değil',de:'Noch nicht verfügbar',ms:'Belum tersedia'},
+  'Official 24/7 broadcast from Saudi state television.': {ar:'بث رسمي على مدار الساعة من التلفزيون السعودي.',id:'Siaran resmi 24 jam dari televisi pemerintah Arab Saudi.',ur:'سعودی سرکاری ٹیلی ویژن کی چوبیس گھنٹے سرکاری نشریات۔',bn:'সৌদি রাষ্ট্রীয় টেলিভিশনের চব্বিশ ঘণ্টার আনুষ্ঠানিক সম্প্রচার।',fr:'Diffusion officielle en continu de la télévision publique saoudienne.',hi:'सऊदी सरकारी टेलीविज़न का चौबीसों घंटे आधिकारिक प्रसारण।',fa:'پخش رسمی شبانه‌روزی تلویزیون دولتی عربستان.',tr:'Suudi devlet televizyonundan 7/24 resmî yayın.',de:'Offizielle Rund-um-die-Uhr-Übertragung des saudischen Staatsfernsehens.',ms:'Siaran rasmi 24 jam daripada televisyen kerajaan Arab Saudi.'},
+  'Live stream is not connected yet. Watch via the official source.': {ar:'البث المباشر غير متصل بعد. شاهد عبر المصدر الرسمي.',id:'Siaran langsung belum terhubung. Tonton melalui sumber resmi.',ur:'براہ راست نشریات ابھی منسلک نہیں۔ سرکاری ذریعے سے دیکھیں۔',bn:'সরাসরি সম্প্রচার এখনও সংযুক্ত নয়। আনুষ্ঠানিক উৎসে দেখুন।',fr:'Le direct n’est pas encore connecté. Regardez-le via la source officielle.',hi:'लाइव प्रसारण अभी जुड़ा नहीं है। आधिकारिक स्रोत पर देखें।',fa:'پخش زنده هنوز متصل نیست. از منبع رسمی تماشا کنید.',tr:'Canlı yayın henüz bağlı değil. Resmî kaynaktan izleyin.',de:'Der Livestream ist noch nicht verbunden. Sehen Sie ihn über die offizielle Quelle an.',ms:'Siaran langsung belum disambungkan. Tonton melalui sumber rasmi.'},
+  'Open live stream': {ar:'فتح البث المباشر',id:'Buka siaran langsung',ur:'براہ راست نشریات کھولیں',bn:'সরাসরি সম্প্রচার খুলুন',fr:'Ouvrir le direct',hi:'लाइव प्रसारण खोलें',fa:'باز کردن پخش زنده',tr:'Canlı yayını aç',de:'Livestream öffnen',ms:'Buka siaran langsung'},
+  'Open official source': {ar:'فتح المصدر الرسمي',id:'Buka sumber resmi',ur:'سرکاری ذریعہ کھولیں',bn:'আনুষ্ঠানিক উৎস খুলুন',fr:'Ouvrir la source officielle',hi:'आधिकारिक स्रोत खोलें',fa:'باز کردن منبع رسمی',tr:'Resmî kaynağı aç',de:'Offizielle Quelle öffnen',ms:'Buka sumber rasmi'},
+  'Location not found. Set your location on the Prayer Times screen.': {ar:'لم يتم العثور على الموقع. حدده في شاشة أوقات الصلاة.',id:'Lokasi tidak ditemukan. Atur lokasi di layar Waktu Salat.',ur:'مقام نہیں ملا۔ نماز کے اوقات کی اسکرین پر اپنا مقام مقرر کریں۔',bn:'অবস্থান পাওয়া যায়নি। নামাজের সময়ের পর্দায় আপনার অবস্থান ঠিক করুন।',fr:'Position introuvable. Définissez-la sur l’écran des horaires de prière.',hi:'स्थान नहीं मिला। नमाज़ के समय वाले पृष्ठ पर अपना स्थान तय करें।',fa:'موقعیت یافت نشد. موقعیت خود را در صفحه اوقات نماز تنظیم کنید.',tr:'Konum bulunamadı. Namaz Vakitleri ekranından konumunuzu ayarlayın.',de:'Standort nicht gefunden. Legen Sie ihn auf der Seite Gebetszeiten fest.',ms:'Lokasi tidak ditemui. Tetapkan lokasi pada skrin Waktu Solat.'},
+  "Couldn't load. Try again.": {ar:'تعذر التحميل. حاول مجددًا.',id:'Gagal memuat. Coba lagi.',ur:'لوڈ نہیں ہو سکا۔ دوبارہ کوشش کریں۔',bn:'লোড করা যায়নি। আবার চেষ্টা করুন।',fr:'Chargement impossible. Réessayez.',hi:'लोड नहीं हो सका। फिर कोशिश करें।',fa:'بارگذاری نشد. دوباره تلاش کنید.',tr:'Yüklenemedi. Tekrar deneyin.',de:'Laden fehlgeschlagen. Versuchen Sie es erneut.',ms:'Gagal dimuatkan. Cuba lagi.'},
+  'total qazo': {ar:'مجموع الصلوات الفائتة',id:'total salat qada',ur:'کل قضا نمازیں',bn:'মোট কাজা নামাজ',fr:'prières à rattraper au total',hi:'कुल क़ज़ा नमाज़',fa:'مجموع نمازهای قضا',tr:'toplam kaza namazı',de:'Nachholgebete insgesamt',ms:'jumlah solat qada'},
+  'Enter your own qazo count for each prayer. The app never automatically marks a prayer as qazo.': {ar:'أدخل عدد الصلوات الفائتة لكل صلاة بنفسك. لا يسجل التطبيق أي صلاة فائتة تلقائيًا.',id:'Masukkan sendiri jumlah qada untuk setiap salat. Aplikasi tidak pernah menandai salat sebagai qada secara otomatis.',ur:'ہر نماز کی قضا کی تعداد خود درج کریں۔ ایپ کسی نماز کو خودکار طور پر قضا نشان زد نہیں کرتی۔',bn:'প্রতিটি নামাজের কাজার সংখ্যা নিজে লিখুন। অ্যাপ স্বয়ংক্রিয়ভাবে কোনো নামাজকে কাজা হিসেবে চিহ্নিত করে না।',fr:'Saisissez vous-même le nombre de prières à rattraper. L’application ne marque jamais automatiquement une prière comme manquée.',hi:'हर नमाज़ की क़ज़ा संख्या स्वयं दर्ज करें। ऐप किसी नमाज़ को अपने आप क़ज़ा नहीं मानता।',fa:'تعداد قضای هر نماز را خودتان وارد کنید. برنامه هیچ نمازی را خودکار قضا علامت نمی‌زند.',tr:'Her namaz için kaza sayısını kendiniz girin. Uygulama hiçbir namazı otomatik olarak kaza saymaz.',de:'Tragen Sie die Zahl der Nachholgebete selbst ein. Die App markiert kein Gebet automatisch als versäumt.',ms:'Masukkan sendiri jumlah qada bagi setiap solat. Aplikasi tidak menandakan solat sebagai qada secara automatik.'},
+  'No independently verified guidance for this madhhab has been added yet. For a specific ruling, consult a reliable source for your own madhhab.': {ar:'لم تُضف بعد إرشادات موثقة بشكل مستقل لهذا المذهب. للحصول على حكم محدد، ارجع إلى مصدر موثوق في مذهبك.',id:'Panduan yang diverifikasi secara independen untuk mazhab ini belum ditambahkan. Untuk hukum tertentu, rujuk sumber tepercaya dalam mazhab Anda.',ur:'اس مسلک کے لیے آزادانہ طور پر تصدیق شدہ رہنمائی ابھی شامل نہیں کی گئی۔ کسی خاص حکم کے لیے اپنے مسلک کے معتبر ماخذ سے رجوع کریں۔',bn:'এই মাজহাবের স্বাধীনভাবে যাচাইকৃত নির্দেশনা এখনও যোগ করা হয়নি। নির্দিষ্ট বিধানের জন্য আপনার মাজহাবের নির্ভরযোগ্য উৎস দেখুন।',fr:'Aucun guide vérifié indépendamment pour cette école n’a encore été ajouté. Pour une règle précise, consultez une source fiable de votre école.',hi:'इस मज़हब का स्वतंत्र रूप से सत्यापित मार्गदर्शन अभी नहीं जोड़ा गया है। किसी विशेष हुक्म के लिए अपने मज़हब के विश्वसनीय स्रोत से सलाह लें।',fa:'هنوز راهنمای مستقلاً تأییدشده‌ای برای این مذهب اضافه نشده است. برای حکم مشخص، به منبع معتبر مذهب خود مراجعه کنید.',tr:'Bu mezhep için bağımsız olarak doğrulanmış rehberlik henüz eklenmedi. Belirli bir hüküm için kendi mezhebinizin güvenilir bir kaynağına başvurun.',de:'Für diese Rechtsschule wurde noch keine unabhängig geprüfte Anleitung ergänzt. Wenden Sie sich für eine konkrete Regel an eine verlässliche Quelle Ihrer Rechtsschule.',ms:'Panduan yang disahkan secara bebas untuk mazhab ini belum ditambah. Bagi hukum tertentu, rujuk sumber yang dipercayai dalam mazhab anda.'},
+  'Could not load guidance.': {ar:'تعذر تحميل الإرشادات.',id:'Panduan tidak dapat dimuat.',ur:'رہنمائی لوڈ نہیں ہو سکی۔',bn:'নির্দেশনা লোড করা যায়নি।',fr:'Impossible de charger le guide.',hi:'मार्गदर्शन लोड नहीं हो सका।',fa:'راهنما بارگذاری نشد.',tr:'Rehber yüklenemedi.',de:'Anleitung konnte nicht geladen werden.',ms:'Panduan tidak dapat dimuatkan.'},
+  'Shahodat (Declaration of Faith)': {ar:'الشهادة',id:'Syahadat (Pernyataan Iman)',ur:'شہادت (اقرار ایمان)',bn:'শাহাদাত (ঈমানের ঘোষণা)',fr:'Shahada (Profession de foi)',hi:'शहादत (ईमान की गवाही)',fa:'شهادت (گواهی ایمان)',tr:'Şehadet (İman beyanı)',de:'Schahada (Glaubensbekenntnis)',ms:'Syahadah (Pengakuan Iman)'},
+  'Mark as memorized': {ar:'وضع علامة كمحفوظ',id:'Tandai sudah dihafal',ur:'یاد شدہ نشان زد کریں',bn:'মুখস্থ হিসেবে চিহ্নিত করুন',fr:'Marquer comme mémorisé',hi:'याद किया हुआ चिह्नित करें',fa:'علامت‌گذاری به‌عنوان حفظ‌شده',tr:'Ezberlendi olarak işaretle',de:'Als auswendig gelernt markieren',ms:'Tandakan sebagai dihafal'},
+  'Kalimas': {ar:'الكلمات',id:'Kalimah',ur:'کلمات',bn:'কালিমা',fr:'Kalimas',hi:'कलिमा',fa:'کلمات',tr:'Kelimeler',de:'Kalimas',ms:'Kalimah'},
+  '"6 Kalimas" is not a universal Islamic standard': {ar:'«الكلمات الست» ليست معيارًا إسلاميًا عامًا',id:'“6 Kalimah” bukan standar Islam yang universal',ur:'”چھ کلمے“ کوئی عالمی اسلامی معیار نہیں ہیں',bn:'“৬ কালিমা” সর্বজনীন ইসলামী মানদণ্ড নয়',fr:'Les « 6 Kalimas » ne sont pas une norme islamique universelle',hi:'“6 कलिमे” सार्वभौमिक इस्लामी मानक नहीं हैं',fa:'«۶ کلمه» یک معیار همگانی اسلامی نیست',tr:'“6 Kelime” evrensel bir İslami standart değildir',de:'Die „6 Kalimas“ sind kein allgemeiner islamischer Standard',ms:'“6 Kalimah” bukan piawaian Islam sejagat'},
+  'This classification is widely known mainly within the South Asian tradition, but is not a single standard across the whole Muslim world. To avoid presenting specific wording without a verified source, it has not been added yet.': {ar:'هذا التصنيف معروف أساسًا في تقاليد جنوب آسيا، لكنه ليس معيارًا موحدًا في العالم الإسلامي. لم تتم إضافته بعد لتجنب عرض صياغة محددة دون مصدر موثق.',id:'Pengelompokan ini terutama dikenal dalam tradisi Asia Selatan, tetapi bukan standar tunggal di seluruh dunia Muslim. Teksnya belum ditambahkan agar tidak menyajikan redaksi tertentu tanpa sumber terverifikasi.',ur:'یہ تقسیم بنیادی طور پر جنوبی ایشیائی روایت میں معروف ہے، لیکن پوری مسلم دنیا میں یکساں معیار نہیں۔ تصدیق شدہ ماخذ کے بغیر مخصوص الفاظ پیش کرنے سے بچنے کے لیے اسے ابھی شامل نہیں کیا گیا۔',bn:'এই শ্রেণিবিন্যাস মূলত দক্ষিণ এশীয় ঐতিহ্যে পরিচিত, তবে সমগ্র মুসলিম বিশ্বে একক মানদণ্ড নয়। যাচাইকৃত উৎস ছাড়া নির্দিষ্ট পাঠ উপস্থাপন এড়াতে এটি এখনও যোগ করা হয়নি।',fr:'Cette classification est surtout connue dans la tradition sud-asiatique, sans constituer une norme unique dans tout le monde musulman. Elle n’a pas encore été ajoutée afin de ne pas présenter de formulation précise sans source vérifiée.',hi:'यह वर्गीकरण मुख्य रूप से दक्षिण एशियाई परंपरा में प्रचलित है, लेकिन पूरे मुस्लिम जगत में एक समान मानक नहीं है। सत्यापित स्रोत के बिना विशिष्ट शब्द प्रस्तुत करने से बचने के लिए इसे अभी नहीं जोड़ा गया है।',fa:'این دسته‌بندی بیشتر در سنت جنوب آسیا شناخته شده است، اما معیار یکسانی در سراسر جهان اسلام نیست. برای پرهیز از ارائه عبارت مشخص بدون منبع تأییدشده، هنوز اضافه نشده است.',tr:'Bu sınıflandırma çoğunlukla Güney Asya geleneğinde bilinir; bütün İslam dünyasında tek bir standart değildir. Doğrulanmış kaynak olmadan belirli bir metin sunmamak için henüz eklenmemiştir.',de:'Diese Einteilung ist vor allem in der südasiatischen Tradition bekannt, bildet jedoch keinen einheitlichen Standard in der gesamten muslimischen Welt. Sie wurde noch nicht ergänzt, um keinen bestimmten Wortlaut ohne geprüfte Quelle anzugeben.',ms:'Pengelasan ini terutama dikenali dalam tradisi Asia Selatan, tetapi bukan piawaian tunggal di seluruh dunia Islam. Ia belum ditambah bagi mengelakkan penyampaian lafaz tertentu tanpa sumber yang disahkan.'}
+});
+
 function _resolveT(lat, cyr, ru, en, lang) {
+  lang = normalizeLanguage(lang);
   if (lang === 'uz_cyr') return cyr !== undefined ? cyr : lat;
-  if (lang === 'ru')     return ru  !== undefined ? ru  : lat;
-  if (lang === 'en')     return en  !== undefined ? en  : lat;
+  if (lang === 'ru')     return ru !== undefined ? ru : _missingTranslation(en || lat, lang);
+  if (lang === 'en')     return en !== undefined ? en : _missingTranslation(lat, lang);
   if (lang === 'uz')     return lat;
+  if (en === '') return ''; // Optional count suffix absent in this locale.
   const node = _I18N_EN_IDX[en];
   if (node && node[lang]) return node[lang];
   const extra = _EXTRA_T[en];
   if (extra && extra[lang]) return extra[lang];
-  return lat;
+  if ([lat, cyr, ru, en].every(value => value === lat)) return lat;
+  if (CANONICAL_LANGS.includes(lang)) return _missingTranslation(en, lang);
+  return en !== undefined ? en : lat;
+}
+
+/* Supplements for older screen-local UI tables. The existing translations in
+   those tables remain authoritative; these complete the three added locales.
+   The i18n gate tests the merged result for every canonical language. */
+const _UI_TEXT_SUPPLEMENTS = {
+  'NEXT PRAYER': I18N.nextPrayer,
+  'Services': {bn:'সেবাসমূহ',fa:'خدمات',ms:'Perkhidmatan'},
+  'Time is up! 🕌': {bn:'সময় হয়েছে! 🕌',fa:'وقت رسید! 🕌',ms:'Masanya tiba! 🕌'},
+  'h': {bn:'ঘণ্টা',fa:'ساعت',ms:'j'},
+  's': {bn:'সে',fa:'ثانیه',ms:'s'},
+  'Sunset': {bn:'সূর্যাস্ত',fa:'غروب',ms:'Matahari terbenam'},
+  'Loading prayer times…': {bn:'নামাজের সময় লোড হচ্ছে…',fa:'در حال بارگذاری اوقات نماز…',ms:'Memuatkan waktu solat…'},
+  'Location access denied or an error occurred.': {bn:'অবস্থানের অনুমতি দেওয়া হয়নি অথবা একটি ত্রুটি ঘটেছে।',fa:'دسترسی به موقعیت رد شد یا خطایی رخ داد.',ms:'Akses lokasi ditolak atau ralat berlaku.'},
+  'Try Again': I18N.retry,
+  'Weather': {bn:'আবহাওয়া',fa:'آب‌وهوا',ms:'Cuaca'},
+  'Air Quality': {bn:'বায়ুর মান',fa:'کیفیت هوا',ms:'Kualiti udara'},
+  'Daily Ayah': {bn:'দিনের আয়াত',fa:'آیه روز',ms:'Ayat harian'},
+  'Daily Hadith': _EXTRA_T['Hadith of the day'],
+  '📿 Missed Prayers (Qazo)': _EXTRA_T['Missed prayers'],
+  '📅 Monthly Prayer Calendar': _EXTRA_T['Monthly prayer calendar'],
+  'Feels': {bn:'অনুভূত',fa:'احساس دما',ms:'Terasa'},
+  'Times': {bn:'সময়সূচি',fa:'اوقات',ms:'Waktu'},
+  'AQI': {bn:'বায়ুমান সূচক',fa:'شاخص کیفیت هوا',ms:'IPU'},
+  'SUN MOVEMENT': {bn:'সূর্যের গতিপথ',fa:'حرکت خورشید',ms:'PERGERAKAN MATAHARI'},
+  'Rise': _EXTRA_T.Sunrise,
+  'Set': {bn:'অস্ত',fa:'غروب',ms:'Terbenam'},
+  'Day length': {bn:'দিনের দৈর্ঘ্য',fa:'طول روز',ms:'Tempoh siang'},
+  'Now': {bn:'এখন',fa:'اکنون',ms:'Sekarang'},
+  '← Menu': _EXTRA_T.Menu,
+  'Al-Quran': I18N.modules_list.quran,
+  'القرآن الكريم · 114 Surahs · 6,236 Verses': {bn:'আল-কুরআন · ১১৪ সূরা · ৬,২৩৬ আয়াত',fa:'قرآن کریم · ۱۱۴ سوره · ۶٬۲۳۶ آیه',ms:'Al-Quran · 114 surah · 6,236 ayat'},
+  '📖 Surahs': {bn:'সূরাসমূহ',fa:'سوره‌ها',ms:'Surah'},
+  '🎙 Reciter': {bn:'কারি',fa:'قاری',ms:'Qari'},
+  '🔖 Saved': {bn:'সংরক্ষিত',fa:'ذخیره‌شده',ms:'Disimpan'},
+  'verse': I18N.quran_ayah,
+  '🕋 Meccan': I18N.quran_filter_makka,
+  '🕌 Medinan': I18N.quran_filter_madina,
+  'Surah name or number...': {bn:'সূরার নাম বা নম্বর...',fa:'نام یا شماره سوره...',ms:'Nama atau nombor surah...'},
+  'CHOOSE RECITER': I18N.quran_choose_reciter,
+  'More reciters in next version.': {bn:'পরবর্তী সংস্করণে আরও কারি।',fa:'قاریان بیشتر در نسخه بعدی.',ms:'Lebih banyak qari dalam versi seterusnya.'},
+  '🔖 Nothing saved yet': {bn:'এখনও কিছু সংরক্ষিত নেই',fa:'هنوز چیزی ذخیره نشده',ms:'Belum ada yang disimpan'},
+  'verses saved': {bn:'আয়াত সংরক্ষিত',fa:'آیه ذخیره‌شده',ms:'ayat disimpan'},
+  'Loading...': I18N.loading,
+  'Failed to load.': {bn:'লোড করা যায়নি।',fa:'بارگذاری ناموفق بود.',ms:'Gagal dimuatkan.'},
+  'Tafsir loading...': {bn:'তাফসীর লোড হচ্ছে...',fa:'در حال بارگذاری تفسیر...',ms:'Memuatkan tafsir...'},
+  'To determine accurate prayer times': {bn:'সঠিক নামাজের সময় নির্ধারণের জন্য',fa:'برای تعیین دقیق اوقات نماز',ms:'Untuk menentukan waktu solat yang tepat'},
+  'Allow location access': {bn:'অবস্থানের অনুমতি দিন',fa:'اجازه دسترسی به موقعیت',ms:'Benarkan akses lokasi'},
+  'GPS is needed for accurate prayer times, qibla direction and nearby mosques': {bn:'সঠিক নামাজের সময়, কিবলার দিক ও কাছের মসজিদের জন্য GPS প্রয়োজন',fa:'برای اوقات دقیق نماز، جهت قبله و مساجد نزدیک به GPS نیاز است',ms:'GPS diperlukan untuk waktu solat yang tepat, arah kiblat dan masjid berhampiran'},
+  'Prayer times': I18N.modules_list.prayer,
+  '📍 Allow GPS': {bn:'📍 GPS-এর অনুমতি দিন',fa:'📍 اجازه GPS',ms:'📍 Benarkan GPS'},
+  'Skip →': {bn:'এড়িয়ে যান →',fa:'رد شدن ←',ms:'Langkau →'},
+  '⏳ Detecting...': {bn:'⏳ শনাক্ত করা হচ্ছে...',fa:'⏳ در حال شناسایی...',ms:'⏳ Mengesan...'},
+  '❌ GPS permission denied. Go to Settings → Apps → IslamTimeWorld → Permissions → Location': {bn:'❌ GPS-এর অনুমতি দেওয়া হয়নি। সেটিংস → অ্যাপস → IslamTimeWorld → অনুমতি → অবস্থান-এ যান',fa:'❌ اجازه GPS رد شد. به تنظیمات ← برنامه‌ها ← IslamTimeWorld ← مجوزها ← موقعیت بروید',ms:'❌ Kebenaran GPS ditolak. Pergi ke Tetapan → Aplikasi → IslamTimeWorld → Kebenaran → Lokasi'},
+  '⚠️ GPS signal not found. Try outdoors or near a window': {bn:'⚠️ GPS সংকেত পাওয়া যায়নি। বাইরে বা জানালার কাছে চেষ্টা করুন',fa:'⚠️ سیگنال GPS یافت نشد. در فضای باز یا کنار پنجره امتحان کنید',ms:'⚠️ Isyarat GPS tidak ditemui. Cuba di luar atau berhampiran tingkap'},
+  '⏱ GPS timed out. Please try again': {bn:'⏱ GPS-এর সময়সীমা শেষ হয়েছে। আবার চেষ্টা করুন',fa:'⏱ مهلت GPS تمام شد. دوباره تلاش کنید',ms:'⏱ GPS tamat masa. Sila cuba lagi'},
+  'Choose Madhab': {bn:'মাজহাব নির্বাচন করুন',fa:'مذهب را انتخاب کنید',ms:'Pilih mazhab'},
+  'Prayer times are calculated based on this': {bn:'এর ভিত্তিতে নামাজের সময় গণনা করা হয়',fa:'اوقات نماز بر این اساس محاسبه می‌شود',ms:'Waktu solat dikira berdasarkan pilihan ini'},
+  'Central Asia · Turkey · India · Pakistan': {bn:'মধ্য এশিয়া · তুরস্ক · ভারত · পাকিস্তান',fa:'آسیای میانه · ترکیه · هند · پاکستان',ms:'Asia Tengah · Turki · India · Pakistan'},
+  'North & West Africa · Andalusia': {bn:'উত্তর ও পশ্চিম আফ্রিকা · আন্দালুসিয়া',fa:'شمال و غرب آفریقا · اندلس',ms:'Afrika Utara dan Barat · Andalusia'},
+  'Southeast Asia · Egypt · East Africa': {bn:'দক্ষিণ-পূর্ব এশিয়া · মিসর · পূর্ব আফ্রিকা',fa:'جنوب شرق آسیا · مصر · شرق آفریقا',ms:'Asia Tenggara · Mesir · Afrika Timur'},
+  'Saudi Arabia · Persian Gulf': {bn:'সৌদি আরব · পারস্য উপসাগর',fa:'عربستان سعودی · خلیج فارس',ms:'Arab Saudi · Teluk Parsi'},
+  'Morning Dua': I18N.duas_morning,
+  'Evening Dua': I18N.duas_evening,
+  'Food': I18N.duas_food,
+  'Travel': I18N.duas_travel,
+  'Sleep': I18N.duas_sleep,
+  'Mosque': I18N.duas_mosque,
+  'Your Islamic Companion': {bn:'আপনার ইসলামী সঙ্গী',ms:'Teman Islam anda'},
+  'Good': {bn:'ভালো',fa:'خوب',ms:'Baik'},
+  'Sensitive Groups': {bn:'সংবেদনশীল গোষ্ঠী',fa:'گروه‌های حساس',ms:'Kumpulan sensitif'},
+  'Unhealthy': {bn:'অস্বাস্থ্যকর',fa:'ناسالم',ms:'Tidak sihat'},
+  'Very Unhealthy': {bn:'অত্যন্ত অস্বাস্থ্যকর',fa:'بسیار ناسالم',ms:'Sangat tidak sihat'},
+  'Hazardous': {bn:'বিপজ্জনক',fa:'خطرناک',ms:'Berbahaya'}
+};
+
+/* Explicit labels keep dates localized even in WebViews with incomplete ICU
+   locale data (which can otherwise display placeholders such as “M09”). */
+function formatLocalizedDate(value, lang, options = {}) {
+  lang = normalizeLanguage(lang);
+  const islamic = options.calendar === 'islamic';
+  let year, month, day, weekday;
+  if (value instanceof Date) {
+    if (!Number.isFinite(value.getTime())) return t('noData', lang);
+    weekday = value.getDay();
+    if (islamic) {
+      const calculator = typeof window !== 'undefined' ? window.HijriCalc : null;
+      if (calculator?.toHijriFromDate) {
+        ({year, month, day} = calculator.toHijriFromDate(value));
+      } else {
+        const fields = new Intl.DateTimeFormat('en', {
+          calendar:'islamic', year:'numeric', month:'numeric', day:'numeric'
+        }).formatToParts(value);
+        const number = type => Number(fields.find(part => part.type === type)?.value);
+        year = number('year'); month = number('month'); day = number('day');
+      }
+    } else {
+      year = value.getFullYear(); month = value.getMonth() + 1; day = value.getDate();
+    }
+  } else {
+    year = Number(value?.year); month = Number(value?.month?.number ?? value?.month_num ?? value?.month); day = Number(value?.day);
+    if (!islamic) weekday = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+  }
+  if (![year, month, day].every(Number.isFinite) || month < 1 || month > 12 || day < 1 || day > 31) {
+    return t('noData', lang);
+  }
+  let monthName = t(islamic ? 'calendar_hijri_months' : 'calendar_gregorian_months', lang)[month - 1];
+  if (!islamic && lang === 'ru') {
+    monthName = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'][month - 1];
+  }
+  const date = `${day} ${monthName} ${year}`;
+  return options.weekday && Number.isInteger(weekday)
+    ? `${date} · ${t('calendar_week_days', lang)[weekday]}` : date;
+}
+
+function localizeRecord(record, lang) {
+  lang = normalizeLanguage(lang);
+  if (!record) return _missingTranslation('record', lang);
+  if (record[lang] !== undefined && record[lang] !== null) return record[lang];
+  const supplement = _UI_TEXT_SUPPLEMENTS[record.en];
+  if (supplement?.[lang]) return supplement[lang];
+  return _resolveT(record.uz, record.uz_cyr ?? record.cyr, record.ru, record.en, lang);
 }
 
 function applyLangDir(lang) {
+  lang = normalizeLanguage(lang);
   const dir = RTL_LANGS.has(lang) ? 'rtl' : 'ltr';
   document.documentElement.setAttribute('dir', dir);
-  document.documentElement.setAttribute('lang', lang);
+  document.documentElement.setAttribute('lang', lang === 'uz_cyr' ? 'uz-Cyrl' : lang);
 }
 
 function getLangFlag(lang) {
@@ -1516,3 +1779,40 @@ function getLangName(lang) {
   const m = LANG_META.find(x => x.code === lang);
   return m ? m.name : lang;
 }
+
+// Mosque discovery states use the selected canonical language.
+Object.assign(I18N, {
+  "mosques_loading": {
+    "ar": "جارٍ البحث عن المساجد القريبة…",
+    "en": "Finding nearby mosques…",
+    "id": "Mencari masjid terdekat…",
+    "ur": "قریبی مساجد تلاش کی جا رہی ہیں…",
+    "bn": "কাছাকাছি মসজিদ খোঁজা হচ্ছে…",
+    "fr": "Recherche des mosquées à proximité…",
+    "hi": "आस-पास की मस्जिदें खोजी जा रही हैं…",
+    "fa": "در حال یافتن مسجدهای نزدیک…",
+    "tr": "Yakındaki camiler aranıyor…",
+    "ru": "Поиск ближайших мечетей…",
+    "uz": "Yaqin masjidlar qidirilmoqda…",
+    "de": "Moscheen in der Nähe werden gesucht…",
+    "ms": "Mencari masjid berdekatan…",
+    "uz_cyr": "Яқин масжидлар қидирилмоқда…"
+  },
+  "mosques_load_error": {
+    "ar": "معلومات المساجد غير متاحة مؤقتًا. يرجى المحاولة مجددًا.",
+    "en": "Mosque information is temporarily unavailable. Please retry.",
+    "id": "Informasi masjid untuk sementara tidak tersedia. Silakan coba lagi.",
+    "ur": "مساجد کی معلومات عارضی طور پر دستیاب نہیں ہیں۔ براہ کرم دوبارہ کوشش کریں۔",
+    "bn": "মসজিদের তথ্য সাময়িকভাবে পাওয়া যাচ্ছে না। আবার চেষ্টা করুন।",
+    "fr": "Les informations sur les mosquées sont temporairement indisponibles. Réessayez.",
+    "hi": "मस्जिदों की जानकारी अभी उपलब्ध नहीं है। कृपया फिर से प्रयास करें।",
+    "fa": "اطلاعات مسجدها موقتاً در دسترس نیست. دوباره تلاش کنید.",
+    "tr": "Cami bilgileri geçici olarak kullanılamıyor. Lütfen tekrar deneyin.",
+    "ru": "Информация о мечетях временно недоступна. Попробуйте ещё раз.",
+    "uz": "Masjidlar haqida ma’lumot vaqtincha mavjud emas. Qayta urinib ko‘ring.",
+    "de": "Moscheeinformationen sind vorübergehend nicht verfügbar. Bitte versuchen Sie es erneut.",
+    "ms": "Maklumat masjid tidak tersedia buat sementara waktu. Sila cuba lagi.",
+    "uz_cyr": "Масжидлар ҳақида маълумот вақтинча мавжуд эмас. Қайта уриниб кўринг."
+  }
+});
+I18N.mosques_retry = I18N.retry;

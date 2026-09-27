@@ -15,20 +15,17 @@ const DhikrScreen = (function () {
   const PURPLE = '#c084fc';
 
   const ZIKIRLAR = [
-    { id:'k5', ar:'أَسْتَغْفِرُ اللّٰهُ',            tr:'Astaghfirullah',           uz:"Allohdan mag'firat so'rayman",      uz_cyr:'Аллоҳдан мағфират сўрайман',       ru:'Прошу прощения у Аллаха',          en:"I seek forgiveness from Allah",     kk:'Аллаhdан жарылқауын тілеймін',  tg:'Аз Аллоҳ омурзиш мехоҳам',          ky:'Аллахтан кечирим сурайм',           de:'Ich suche Vergebung bei Allah',       fr:'Je demande pardon à Allah',           id:'Aku memohon ampun kepada Allah',  hi:'मैं अल्लाह से माफ़ी माँगता हूँ', ur:'میں اللہ سے مغفرت مانگتا ہوں',    t:100, c:RED,    ms:[33,66,100], ref:'Bukhari 6307' },
-    { id:'k7', ar:'سُبْحَانَ اللّٰهِ وَبِحَمْدِهِ',  tr:'Subhanallah wa bihamdihi', uz:'Alloh pokdir va hamd Uniki',         uz_cyr:'Аллоҳ покдир ва ҳамд Уники',        ru:'Аллах пречист, и Ему вся хвала',   en:'Allah is pure and all praise is His', kk:'Алла пәк және Оған мадақ',      tg:'Аллоҳ пок аст ва ҳамд Уро',         ky:'Алла таза жана Ага мактоо',         de:'Allah ist rein, aller Lobpreis Ihm',  fr:'Allah est pur, toute louange Lui',    id:'Allah Maha Suci, segala puji-Nya', hi:'अल्लाह पवित्र, सारी प्रशंसा उसकी', ur:'اللہ پاک ہے، تمام تعریف اسی کی',  t:100, c:GREEN,  ms:[33,66,100], ref:'Bukhari 6405' },
-    { id:'k2', ar:'الْحَمْدُ لِلّٰهِ',               tr:'Alhamdulillah',            uz:'Barcha hamdlar Allohga xos',         uz_cyr:'Барча ҳамдлар Аллоҳга хос',        ru:'Вся хвала принадлежит Аллаху',     en:'All praise belongs to Allah',       kk:'Барлық мадақ Аллаhқа тиесілі',  tg:'Ҳамду Ситоиш Аллоҳро',              ky:'Бардык мактоо Аллахка тиешелүү',    de:'Aller Lobpreis gehört Allah',         fr:'Toute louange appartient à Allah',    id:'Segala puji milik Allah',         hi:'सारी प्रशंसा अल्लाह के लिए',     ur:'تمام تعریف اللہ کے لیے',          t:33,  c:BLUE,   ms:[11,22,33],  ref:'Muslim 2137' },
-    { id:'k3', ar:'اللّٰهُ أَكْبَرُ',                tr:'Allahu Akbar',             uz:"Alloh eng Ulug'dir",                 uz_cyr:"Аллоҳ энг Улуғдир",               ru:'Аллах Велик',                      en:'Allah is the Greatest',             kk:'Алла ең Ұлы',                   tg:'Аллоҳ бузургтарин аст',              ky:'Аллах эң Улуу',                     de:'Allah ist am Größten',                fr:'Allah est le Plus Grand',             id:'Allah Maha Besar',                hi:'अल्लाह सबसे महान है',             ur:'اللہ سب سے بڑا ہے',               t:34,  c:GOLD,   ms:[17,34],     ref:'Bukhari 6406' },
-    { id:'k4', ar:'لَا إِلٰهَ إِلَّا اللّٰهُ',       tr:'La ilaha illallah',        uz:"Allohdan boshqa haqiqiy iloh yo'q", uz_cyr:"Аллоҳдан бошқа ҳақиқий илоҳ йўқ", ru:'Нет божества, кроме Аллаха',       en:'There is no true god but Allah',    kk:'Аллаhтан басқа шын Құдай жоқ',  tg:'Худое ҷуз Аллоҳ нест',               ky:'Аллахтан башка чыныгы кудай жок',   de:'Keine wahre Gottheit außer Allah',    fr:"Il n'y a pas de vraie divinité sauf Allah", id:'Tidak ada tuhan sejati selain Allah', hi:'अल्लाह के अलावा कोई सच्चा ईश्वर नहीं', ur:'اللہ کے سوا کوئی سچا معبود نہیں', t:100, c:PURPLE, ms:[33,66,100], ref:'Muslim 2693' },
+    { id:'k5', ar:'أَسْتَغْفِرُ اللّٰهُ',            tr:'Astaghfirullah',           uz:"Allohdan mag'firat so'rayman",      uz_cyr:'Аллоҳдан мағфират сўрайман',       ru:'Прошу прощения у Аллаха',          en:"I seek forgiveness from Allah",     kk:'Аллаhdан жарылқауын тілеймін',  tg:'Аз Аллоҳ омурзиш мехоҳам',          ky:'Аллахтан кечирим сурайм',           de:'Ich suche Vergebung bei Allah',       fr:'Je demande pardon à Allah',           idMeaning:'Aku memohon ampun kepada Allah',  hi:'मैं अल्लाह से माफ़ी माँगता हूँ', ur:'میں اللہ سے مغفرت مانگتا ہوں',    t:100, c:RED,    ms:[33,66,100], ref:'Bukhari 6307' },
+    { id:'k7', ar:'سُبْحَانَ اللّٰهِ وَبِحَمْدِهِ',  tr:'Subhanallah wa bihamdihi', uz:'Alloh pokdir va hamd Uniki',         uz_cyr:'Аллоҳ покдир ва ҳамд Уники',        ru:'Аллах пречист, и Ему вся хвала',   en:'Allah is pure and all praise is His', kk:'Алла пәк және Оған мадақ',      tg:'Аллоҳ пок аст ва ҳамд Уро',         ky:'Алла таза жана Ага мактоо',         de:'Allah ist rein, aller Lobpreis Ihm',  fr:'Allah est pur, toute louange Lui',    idMeaning:'Allah Maha Suci, segala puji-Nya', hi:'अल्लाह पवित्र, सारी प्रशंसा उसकी', ur:'اللہ پاک ہے، تمام تعریف اسی کی',  t:100, c:GREEN,  ms:[33,66,100], ref:'Bukhari 6405' },
+    { id:'k2', ar:'الْحَمْدُ لِلّٰهِ',               tr:'Alhamdulillah',            uz:'Barcha hamdlar Allohga xos',         uz_cyr:'Барча ҳамдлар Аллоҳга хос',        ru:'Вся хвала принадлежит Аллаху',     en:'All praise belongs to Allah',       kk:'Барлық мадақ Аллаhқа тиесілі',  tg:'Ҳамду Ситоиш Аллоҳро',              ky:'Бардык мактоо Аллахка тиешелүү',    de:'Aller Lobpreis gehört Allah',         fr:'Toute louange appartient à Allah',    idMeaning:'Segala puji milik Allah',         hi:'सारी प्रशंसा अल्लाह के लिए',     ur:'تمام تعریف اللہ کے لیے',          t:33,  c:BLUE,   ms:[11,22,33],  ref:'Muslim 2137' },
+    { id:'k3', ar:'اللّٰهُ أَكْبَرُ',                tr:'Allahu Akbar',             uz:"Alloh eng Ulug'dir",                 uz_cyr:"Аллоҳ энг Улуғдир",               ru:'Аллах Велик',                      en:'Allah is the Greatest',             kk:'Алла ең Ұлы',                   tg:'Аллоҳ бузургтарин аст',              ky:'Аллах эң Улуу',                     de:'Allah ist am Größten',                fr:'Allah est le Plus Grand',             idMeaning:'Allah Maha Besar',                hi:'अल्लाह सबसे महान है',             ur:'اللہ سب سے بڑا ہے',               t:34,  c:GOLD,   ms:[17,34],     ref:'Bukhari 6406' },
+    { id:'k4', ar:'لَا إِلٰهَ إِلَّا اللّٰهُ',       tr:'La ilaha illallah',        uz:"Allohdan boshqa haqiqiy iloh yo'q", uz_cyr:"Аллоҳдан бошқа ҳақиқий илоҳ йўқ", ru:'Нет божества, кроме Аллаха',       en:'There is no true god but Allah',    kk:'Аллаhтан басқа шын Құдай жоқ',  tg:'Худое ҷуз Аллоҳ нест',               ky:'Аллахтан башка чыныгы кудай жок',   de:'Keine wahre Gottheit außer Allah',    fr:"Il n'y a pas de vraie divinité sauf Allah", idMeaning:'Tidak ada tuhan sejati selain Allah', hi:'अल्लाह के अलावा कोई सच्चा ईश्वर नहीं', ur:'اللہ کے سوا کوئی سچا معبود نہیں', t:100, c:PURPLE, ms:[33,66,100], ref:'Muslim 2693' },
   ];
 
   function _T(lat, cyr, ru, en) { return _resolveT(lat, cyr, ru, en, _lang); }
   function _zUz(z) {
-    if (_lang === 'uz')     return z.uz     || z.tr;
-    if (_lang === 'uz_cyr') return z.uz_cyr || z.uz || z.tr;
-    if (_lang === 'ru')     return z.ru     || z.tr;
-    if (_lang === 'en')     return z.en     || z.tr;
-    return z[_lang] || z.tr || z.en || z.uz;
+    const value = _lang === 'id' ? z.idMeaning : z[_lang];
+    return typeof value === 'string' && _lang !== 'tr' ? value : t('translation_unavailable', _lang);
   }
 
   const LS      = 'dhikr_counts_v3';
@@ -46,7 +43,27 @@ const DhikrScreen = (function () {
   let _search = '';
 
   /* ── localStorage ─────────────────────────────────────────────────────── */
-  function _counts()   { try { return JSON.parse(localStorage.getItem(LS)||'{}'); } catch { return {}; } }
+  function _counts() {
+    try {
+      const counts = JSON.parse(localStorage.getItem(LS) || '{}');
+      if (!counts || typeof counts !== 'object' || Array.isArray(counts)) return {};
+      let changed = false;
+      for (const zikr of ZIKIRLAR) {
+        // Older records reused `id` for the Indonesian meaning. Keep those
+        // saved entries and copy their value only when no canonical count exists.
+        const legacy = counts[zikr.idMeaning];
+        if (!Object.prototype.hasOwnProperty.call(counts, zikr.id) &&
+            Number.isFinite(legacy) && legacy >= 0) {
+          counts[zikr.id] = legacy;
+          changed = true;
+        }
+      }
+      if (changed) {
+        try { localStorage.setItem(LS, JSON.stringify(counts)); } catch {}
+      }
+      return counts;
+    } catch { return {}; }
+  }
   function _addCnt(id) { const c=_counts(); c[id]=(c[id]||0)+1; try{localStorage.setItem(LS,JSON.stringify(c));}catch{} }
 
   function _loadPrefs() {
@@ -132,7 +149,8 @@ const DhikrScreen = (function () {
   /* ── List view ─────────────────────────────────────────────────────────── */
   function _listHTML() {
     const counts = _counts();
-    const total  = Object.values(counts).reduce((a, b) => a + b, 0);
+    // Legacy entries remain in storage but must not duplicate the visible total.
+    const total  = ZIKIRLAR.reduce((sum, zikr) => sum + (counts[zikr.id] || 0), 0);
     const circ   = 2 * Math.PI * 17;
 
     const visible = ZIKIRLAR.filter(z => {

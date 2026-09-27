@@ -387,29 +387,41 @@ const CalendarScreen = (function () {
       .replace(/Z/g,'З').replace(/z/g,'з');
   }
   function _evName(ev) {
-    if (_lang === 'ar') return ev.arNomi || ev.nomi_en || ev.nomi;
+    const shared = I18N.calendar_islamic_events[`${ev.hMonth}/${ev.hDay}`];
+    if (shared?.[_lang]) return shared[_lang];
+    if (_lang === 'uz') return ev.nomi;
+    if (_lang === 'uz_cyr') return ev.nomi_cyr || _cy(ev.nomi);
+    if (_lang === 'ar') return ev.arNomi || t('translation_unavailable', _lang);
     const k = 'nomi_' + _lang;
     if (ev[k]) return ev[k];
-    return ev.nomi_en || ev.nomi;
+    return t('translation_unavailable', _lang);
   }
   function _spName(sp) {
+    const shared = I18N.calendar_islamic_events[`${sp.m}/${sp.d}`];
+    if (shared?.[_lang]) return shared[_lang];
     if (_lang === 'uz_cyr') return sp.cyr || sp.uz;
     const k = _lang === 'ar' ? 'ar' : _lang;
-    return sp[k] || sp.en || sp.uz;
+    return sp[k] || t('translation_unavailable', _lang);
   }
   function _spDesc(sp) {
+    if (_lang === 'uz') return sp.desc || '';
     const k = 'desc_' + (_lang === 'uz_cyr' ? 'cyr' : _lang);
-    return sp[k] || sp.desc_en || sp.desc;
+    return sp[k] || t('translation_unavailable', _lang);
   }
   function _evTxt(obj, field) {
     if (!obj) return '';
-    if (_lang === 'uz_cyr' && obj[field + '_cyr']) return obj[field + '_cyr'];
-    if (_lang === 'en' && obj[field + '_en']) return obj[field + '_en'];
-    const v = obj[field] || '';
-    return _lang === 'uz_cyr' ? _cy(v) : v;
+    if (_lang === 'uz') return obj[field] || '';
+    if (_lang === 'uz_cyr') return obj[field + '_cyr'] || _cy(obj[field] || '');
+    // In legacy devotional data `tr` means transliteration, not Turkish.
+    const localized = field === 'uz'
+      ? (obj.translation?.[_lang] || obj[field + '_' + _lang])
+      : obj[field + '_' + _lang];
+    return localized || t('translation_unavailable', _lang);
   }
-  function _gMonth(idx) { return (_GREG_MAP[_lang]  || MONTHS_EN)[idx] || ''; }
-  function _hMonth(idx) { return (_HIJRI_MAP[_lang] || OYLAR_EN)[idx]  || ''; }
+  function _gMonth(idx) {
+    return t('calendar_gregorian_months', _lang)[idx] || '';
+  }
+  function _hMonth(idx) { return t('calendar_hijri_months', _lang)[idx] || ''; }
 
   /* ══════════════════════════════════════════════
      Math functions (unchanged from v1)
@@ -574,7 +586,8 @@ const CalendarScreen = (function () {
 
   /* ── Tab 1: Taqvim ── */
   function _buildTaqvimTab() {
-    const WD = _WD_MAP[_lang] || _WD_MAP.uz;
+    const weekdays = t('calendar_week_days', _lang);
+    const WD = [...weekdays.slice(1), weekdays[0]];
     const dim = _hijriDaysInMonth(_viewYear, _viewMonth);
     const fJdn = _hijriToJdn(_viewYear, _viewMonth, 1);
     const startWday = fJdn % 7;
@@ -805,33 +818,41 @@ const CalendarScreen = (function () {
 
   /* ── Detail: Amallar ── */
   function _buildAmallar(ev) {
+    let actions = _lang === 'uz' ? ev.amallar : ev['amallar_' + _lang];
+    if (_lang === 'uz_cyr') actions = ev.amallar_cyr || ev.amallar?.map(_cy);
+    if (!actions?.length) return `<div class="hc-det-content"><div class="hc-info-card">${t('translation_unavailable', _lang)}</div></div>`;
     return `
 <div class="hc-det-content">
   <div class="hc-slbl">${_T('TAVSIYA ETILGAN AMALLAR','ТАВСИЯ ЭТИЛГАН АМАЛЛАР','РЕКОМЕНДУЕМЫЕ ДЕЙСТВИЯ','RECOMMENDED ACTIONS')}</div>
-  ${(ev.amallar_cyr && _lang==='uz_cyr' ? ev.amallar_cyr : ev.amallar).map((a, i) => `
+  ${actions.map((a, i) => `
     <div class="hc-amal-row">
       <div class="hc-amal-num" style="background:${ev.color}18;border:1px solid ${ev.color}35;color:${ev.color}">${i+1}</div>
-      <span style="font-family:'Inter',system-ui,sans-serif;font-size:12px;color:#16212B;line-height:1.4;font-weight:500">${_lang==='uz_cyr'&&!ev.amallar_cyr?_cy(a):a}</span>
+      <span style="font-family:'Inter',system-ui,sans-serif;font-size:12px;color:#16212B;line-height:1.4;font-weight:500">${a}</span>
     </div>`).join('')}
 </div>`;
   }
 
   /* ── Detail: Qur'on ── */
+  // Each contextual passage uses the same named source editions as the reader.
+  // Ranges stay separate verses so no excerpt boundaries or words are invented.
+  const CALENDAR_QURAN_REFS = {
+    arafa: ['5:3'], qurbon: ['108:2'], yangi_yil: ['9:36'], ashura: ['2:50'],
+    isro_meraj: ['17:1'], ramazon: ['2:185'], qadr: ['97:3', '97:4'], iyd_fitr: ['2:185'],
+  };
   function _buildQuran(ev) {
-    if (!ev.quran) return `<div class="hc-det-content"><div class="hc-slbl">${_T("Bu voqea uchun maxsus oyat yo'q","Бу воқеа учун махсус оят йўқ","Нет специального аята для этого события",'No specific verse for this event')}</div></div>`;
+    const references = CALENDAR_QURAN_REFS[ev.id];
+    if (!references) return `<div class="hc-det-content"><div class="hc-slbl">${_T("Bu voqea uchun maxsus oyat yo'q","Бу воқеа учун махсус оят йўқ","Нет специального аята для этого события",'No specific verse for this event')}</div></div>`;
     return `
 <div class="hc-det-content">
   <div class="hc-slbl">${_T("QUR'ON OYATI","ҚУРЪОН ОЯТИ","АЯТ КОРАНА",'QURAN VERSE')}</div>
+  ${references.map(reference => `
   <div class="hc-verse-card">
     <div class="hc-verse-topline"></div>
-    <div class="hc-ar-text" style="font-size:18px;padding:12px 14px;background:rgba(255,255,255,.03);border-radius:12px;margin-bottom:12px">${ev.quran.ar}</div>
-    <div style="height:1px;background:rgba(22,121,74,.1);margin-bottom:12px"></div>
-    <div style="font-family:'Inter',system-ui,sans-serif;font-style:italic;font-size:12px;color:rgba(22,33,43,.55);line-height:1.85;margin-bottom:12px">"${_evTxt(ev.quran,'uz')}"</div>
-    <div class="hc-manba-row">
-      <span>${_T('Manba','Манба','Источник','Source')}</span>
-      <span style="color:#16794A">${ev.quran.manba}</span>
-    </div>
-  </div>
+    <div class="hc-ar-text" lang="ar" dir="rtl" style="font-size:18px;line-height:2;padding:12px 14px;margin-bottom:12px"
+      data-quran-verse="${reference}" data-quran-language="ar" data-verse-feedback="true"></div>
+    ${_lang === 'ar' ? '' : `<div class="hc-verse-translation" dir="auto" style="font-size:14px;line-height:1.85;margin-bottom:12px"
+      data-quran-verse="${reference}" data-verse-feedback="true"></div>`}
+  </div>`).join('')}
 </div>`;
   }
 

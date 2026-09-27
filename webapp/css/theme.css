@@ -1,0 +1,250 @@
+/* Three-mode appearance. The approved day palette remains in the reference
+   stylesheets. Night changes only color, borders and shadows, never geometry. */
+:root { color-scheme:light; }
+
+/* Accessible appearance selector, shared by both palettes. */
+#screen-settings .st-theme-options .st-tema-row {
+  width:100%; min-height:78px; text-align:start; color:var(--text);
+  border:0; border-bottom:1px solid var(--border); border-radius:0;
+}
+#screen-settings .st-theme-options .st-tema-row:last-child { border-bottom:0; }
+#screen-settings .st-theme-options .st-tema-row[aria-checked="true"] { background:var(--primary-tint); }
+#screen-settings .st-theme-options .st-tema-row:focus-visible { outline:2px solid var(--primary); outline-offset:-3px; }
+#screen-settings .st-theme-options .st-rb { min-width:0; flex:1; }
+#screen-settings .st-theme-options .st-rl,#screen-settings .st-theme-options .st-rs { display:block; }
+#screen-settings .st-theme-options .st-rs { color:var(--text-2); font-size:11px; line-height:1.45; }
+#screen-settings .st-tema-ic img { display:block; }
+.st-theme-indicator { display:grid; place-items:center; flex:0 0 24px; width:24px; height:24px; border:1px solid var(--border-gold); border-radius:50%; color:var(--primary); }
+.st-theme-source { margin:12px 4px 0; color:var(--text-2); font-size:11px; line-height:1.6; }
+.st-theme-source:empty { display:none; }
+
+html[data-theme="dark"] {
+  color-scheme:dark;
+  --bg:#091714; --bg-2:#0c1d19;
+  --surface:#10251f; --surface-2:#152e27; --surface-3:#1c3a30; --surface-hover:#224737;
+  --text:#eef8f4; --text-2:#b4cbc1; --text-3:#91afa1;
+  --gold:#67dcb0; --gold-light:#92e6c6; --gold-dark:#4dca9d;
+  --gold-dim:rgba(103,220,176,.12); --gold-border:rgba(103,220,176,.30);
+  --gold-active:rgba(103,220,176,.48); --gold-glow:rgba(55,181,130,.15);
+  --green:#67dcb0; --green-light:#92e6c6;
+  --primary:#67dcb0; --primary-light:#92e6c6; --primary-dark:#4dca9d; --primary-tint:#183c2e;
+  --text-gold:#8be6c3; --border:#294338; --border-gold:#39765b;
+  --shadow-sm:0 2px 8px rgba(0,0,0,.13); --shadow-md:0 4px 20px rgba(0,0,0,.18);
+  --shadow-lg:0 8px 40px rgba(0,0,0,.25); --shadow-gold:0 4px 24px rgba(0,0,0,.20);
+  --ref-green:#67dcb0; --ref-green-dark:#92e6c6; --ref-green-soft:#183c2e;
+  --ref-ink:#eef8f4; --ref-muted:#b4cbc1; --ref-line:#294338; --ref-shadow:var(--shadow-md);
+  --rp-green:#67dcb0; --rp-dark:#eef8f4; --rp-muted:#b4cbc1; --rp-line:#294338;
+  --rp-bg:#091714; --rp-shadow:var(--shadow-md);
+  --theme-action:#087450; --theme-action-hover:#096344;
+}
+
+html[data-theme="dark"],html[data-theme="dark"] body,
+html[data-theme="dark"] #app,html[data-theme="dark"] #app .screen,
+html[data-theme="dark"] #app :is(.db-hdr,.db-body,.pm-content,.hd-body,.q-body,.q-content,.zk-body) {
+  background:var(--bg)!important; color:var(--text);
+}
+
+/* Shared surfaces: cards, navigation, readers, form controls and sheets. */
+html[data-theme="dark"] #app :is(
+  .db-prayer-strip,.db-cell,.db-daily-card,.q-sura-row,.q-qori-card,.q-bm-card,.q-continue-banner,
+  .q-audio-card,.q-sura-title-card,.q-daily-card,.quran-daily-ayah-card,.quran-tafsir-wrap,
+  .q-ayah-card,.q-verse-card,.pm-row,.pm-card,.pm-daily-tabs,.pm-info-block,.pm-weather-stat,
+  .pm-sun-box,.pm-hr-item,.pm-detail-item,.pm-aqi-mini,.pm-aqi-trend-box,.pm-w-impact,.pm-aqi-pollutant,
+  .qb-icell,.qb-masjid-card,.qb-minfo-card,.qb-about-card,.qb-verse-card,.qb-coord-gold,.qb-coord-green,.qb-dist-card,
+  .ms-card,.ms-detail-card,.ms-route-row,.ms-jadval-card,.ms-map-row,.ms-found-bar,.ms-prayer-mini span,
+  .du-cat-card,.du-card,.du-detail-card,.hd-card,.hd-detail-card,.hd-book-btn,.zk-row,
+  .nm-card,.nm-det-card,.nm-taf-card,.nm-zkr-card,.st-sect,.st-main-card,.st-cat-card,.st-fb-card,
+  .ab-hero,.ab-stat,.ab-card,.hc-sel-card,.hc-selected-card,.hc-info-card,.hc-ev-card,.hc-event-card,
+  .hc-conv-card,.hc-date-gold,.hc-date-blue,.hc-verse-card,.hc-hadis-card,.hc-eslatma,.hc-month-nav,
+  .qz-row,.qz-total-card,.qz-fiqh-note,.sh-card,.sh-pending-card,.ot-row,.hl-card,.mc-table-wrap,.mc-month-nav,
+  .q-search-box,.q-search-wrap,.du-search-wrap,.hd-search-wrap,.nm-search-box,.zk-list-search,
+  .q-tabs-row,.q-tabs,.qb-tabs,.ms-tabs,.du-tabs,.hd-tabs,.hc-tabs,.zk-list-tabs,.st-select,.st-select option,
+  .q-reader,.quran-reader,.quran-reciter-sheet,.hc-modal,.zk-modal,.name-modal,
+  [class*="modal-box"],[class*="sheet-box"],[class*="modal-card"]
+) {
+  background:var(--surface)!important; border-color:var(--border)!important;
+  color:var(--text); box-shadow:var(--shadow-sm)!important;
+}
+html[data-theme="dark"] #app :is(input,textarea,select) {
+  color:var(--text)!important; border-color:var(--border)!important; caret-color:var(--primary);
+}
+html[data-theme="dark"] #app :is(input,textarea)::placeholder { color:var(--text-3)!important; opacity:1; }
+html[data-theme="dark"] #app :is(.st-fb-input,.st-fb-ta,.hc-conv-input,.qz-count-input,.hc-rem-opt) { background:var(--surface-2)!important; }
+html[data-theme="dark"] #app :is(.st-div,.nm-hdiv,.q-divider,.hc-divider,.db-divider,.q-sura-sep) { background:var(--border)!important; }
+html[data-theme="dark"] #app :is(.q-sura-row,.nm-card,.ms-card,.ot-row,.st-cat-card):hover { background:var(--surface-hover)!important; }
+
+/* Typography uses the same hierarchy with brighter body and secondary ink. */
+html[data-theme="dark"] #app :is(
+  .db-city-name,.db-cell-title,.db-haramayn-label,.db-haramayn-label button,.db-section-lbl,.db-hadith-quote,
+  .q-title-main,.q-sura-name,.q-sura-ar,.q-qori-name,.q-bm-name,.q-banner-title,.q-sura-title-uz,
+  .q-audio-name,.q-list-heading strong,.q-settings-value,.q-daily-tr,.quran-ayah-text,.q-ayah-ar,.q-verse-ar,
+  .pm-row-name,.pm-row-time,.pm-hadith-text,.pm-ayah-tr,.pm-toggle-label,.pm-timing-name,.pm-info-val,
+  .pm-banner-name,.pm-banner-bigtime,.pm-weather-stat-val,.pm-detail-val,.pm-w-bigtemp,.pm-fc-max,
+  .qb-title,.qb-icell-val,.qb-masjid-card,.qb-minfo-name,.qb-mrow-val,.qb-about-txt,.qb-verse-tr,.qb-coord-city,
+  .ms-title,.ms-card-name,.ms-detail-name,.ms-detail-val,.ms-route-name,.ms-map-name,.ms-jadval-name,.ms-jadval-val,.ms-prayer-mini strong,
+  .du-title,.du-cat-name,.du-card-title,.du-detail-title,.du-detail-meaning,.hd-title,.hd-card-text,.hd-text,.hd-detail-text,
+  .zk-h-title,.zk-row-title,.zk-title,.zk-modal-title,.zk-modal-dua,.nm-title,.nm-card-tr,.nm-det-tr,.nm-taf-txt,
+  .st-title,.st-rl,.st-cat-title,.st-lang-name,.st-fb-title,.ab-hero-name,.ab-stat-num,
+  .hc-title,.hc-nav-label,.hc-day-num,.hc-sel-greg,.hc-ev-name,.hc-det-name,.hc-modal-title,.hc-conv-result,
+  .qz-title,.qz-row-name,.qz-count-input,.sh-title,.sh-meaning,.sh-pending-title,.ot-title,.ot-row-label,
+  .hl-title,.hl-card-name,.mc-title,.mc-month-label,.mc-table td
+) { color:var(--text)!important; }
+html[data-theme="dark"] #app :is(
+  .db-location-date,.db-date-ar,.db-cell-sub,.db-footer-credit,.db-hadith-copy small,.db-haramayn-mini-status,
+  .q-title-sub,.q-sura-meta,.q-qori-style,.q-bm-sub,.q-banner-sub,.q-list-heading span,.q-qori-note,.q-empty,.q-audio-time-row,
+  .q-section-label,.q-daily-label,.q-daily-ref,.q-audio-quality,.q-translation,.q-ayah-translation,
+  .pm-hdr-greg,.pm-hdr-hijri,.pm-hdr-city,.pm-row-info small,.pm-banner-label,.pm-banner-foot,.pm-ayah-translit,
+  .pm-hadith-narrator,.pm-hadith-source,.pm-ayah-ref,.pm-toggle-sub,.pm-loader-text,.pm-empty,
+  .pm-weather-stat-lbl,.pm-detail-sub,.pm-detail-lbl,.pm-w-desc,.pm-w-loc,.pm-w-feels,.pm-w-mstat-lbl,
+  .qb-artitle,.qb-icell-lbl,.qb-calibrate-copy,.qb-masjid-card small,.qb-minfo-city,.qb-mrow-lbl,.qb-coord-vals,.qb-dist-sub,.qb-verse-ref,
+  .ms-loc,.ms-card-addr,.ms-card-walk,.ms-card-hours,.ms-detail-lbl,.ms-route-dist,.ms-jadval-lbl,.ms-prayer-mini small,.ms-osm-attr,
+  .du-sec-lbl,.du-cat-sub,.du-card-sub,.du-source,.hd-card-meta,.hd-meta,.hd-source,.hd-book-desc,
+  .zk-sub,.zk-row-meaning,.zk-row-source,.zk-modal-sub,.nm-cnt-lbl,.nm-card-mn,.nm-card-n,.nm-det-mn,.nm-zkr-sub,
+  .st-subtitle,.st-rs,.st-cat-sub,.st-sec-lbl,.st-arr,.st-ver-badge span,.ab-hero-tag,.ab-stat-label,.ab-meta,
+  .hc-slbl,.hc-wd,.hc-sel-lbl,.hc-sel-ev-desc,.hc-conv-lbl,.hc-conv-fl,.hc-date-lbl,.hc-modal-sub,
+  .qz-total-label,.qz-hint,.qz-fiqh-source,.sh-section-label,.sh-translit,.sh-ref,.sh-pending-body,.ot-row-chev,
+  .hl-card-mosque,.hl-card-note,.hl-card-authority,.hl-error,.hl-loading,.mc-loc,.mc-cell-hijri,.mc-loading,.mc-error
+) { color:var(--text-2)!important; }
+
+/* Arabic is especially clear in the Quran reader and religious detail cards. */
+html[data-theme="dark"] #app :is(.q-daily-ar,.q-sura-title-ar,.quran-arabic,.quran-verse-ar,.q-ayah-ar,.q-verse-ar,
+  .pm-ayah-ar,.qb-verse-ar,.du-ar,.du-arabic,.du-detail-ar,.hd-ar,.hd-arabic,.zk-ar,.zk-arabic,.zk-row-ar,
+  .nm-card-ar,.nm-det-ar,.hc-ar-text,.sh-ar) { color:#edfff6!important; text-shadow:none!important; }
+
+/* Keep the source photographs intact; apply a designed dark scrim. */
+html[data-theme="dark"] #app .q-header::after,
+html[data-theme="dark"] #app :is(.qb-hdr .nm-tile-ov,.ms-hdr .nm-tile-ov,
+  .hd-hdr--photo .nm-tile-ov,.zk-hdr-ov,.du-hdr .nm-tile-ov,.nm-header .nm-tile-ov,
+  .st-header .nm-tile-ov,.hc-hdr .nm-tile-ov) {
+  background:linear-gradient(90deg,rgba(9,23,20,.97),rgba(9,23,20,.79) 59%,rgba(9,23,20,.18))!important;
+}
+html[data-theme="dark"][dir="rtl"] #app .q-header::after,
+html[data-theme="dark"][dir="rtl"] #app .zk-hdr-ov,
+html[data-theme="dark"][dir="rtl"] #app .ms-hdr .nm-tile-ov,
+html[data-theme="dark"][dir="rtl"] #app .hd-hdr--photo .nm-tile-ov { transform:scaleX(-1); }
+html[data-theme="dark"] #app :is(.ot-header,.sh-header,.hl-header,.qz-header,.mc-header) {
+  background:linear-gradient(90deg,rgba(9,23,20,.97),rgba(9,23,20,.72)),url('../assets/reference-ui/mosque-hero.png') center 48%/cover no-repeat!important;
+}
+html[data-theme="dark"] #app :is(.qb-verse-intro,.ms-verse,.q-hero-verse,.q-hero-reference,.pm-hero-verse) { color:var(--text)!important; }
+html[data-theme="dark"] #app :is(.qb-verse-intro span,.ms-verse span,.q-hero-verse span,.pm-hero-verse span) { color:var(--text-2)!important; }
+
+/* Emerald identity remains visible while filled controls retain white contrast. */
+html[data-theme="dark"] #app :is(.q-tab-btn,.q-tab,.qb-tab,.ms-tab,.du-tab,.hd-tab,.hc-tab,.hc-det-tab,.zk-list-tab,
+  .q-back-btn,.qb-back,.ms-back,.nm-back-btn,.hc-back-btn,.ot-back,.sh-back,.hl-back,.qz-back,.mc-back,
+  .q-filter-btn,.ms-radius-btn,.st-ic-btn,.q-audio-btn,.q-settings-btn,.qb-settings-btn,.ms-settings-btn,.ms-card-secondary,
+  .db-lang-btn,.db-notify-btn,.q-translit-toggle,.nm-nav-b,.hc-nav-btn,.mc-nav-btn,.qz-btn) {
+  color:var(--text-2)!important; border-color:var(--border)!important;
+}
+html[data-theme="dark"] #app :is(.q-filter-btn,.ms-radius-btn,.st-ic-btn,.q-settings-btn,.qb-settings-btn,.ms-settings-btn,.ms-card-secondary,
+  .q-qori-badge,.ms-change-loc,.qb-ios-permission-badge,.qb-ios-denied-badge,.q-translit-toggle,.nm-nav-b,.hc-nav-btn,.mc-nav-btn,.qz-btn) {
+  background:var(--surface-2)!important; color:var(--text)!important;
+}
+html[data-theme="dark"] #app #qb-gps-badge { background:var(--surface-2)!important; color:var(--text)!important; }
+html[data-theme="dark"] #app :is(.q-sura-num,.qb-icell-icon,.ot-row-icon,.ms-facility,.qz-btn--plus,
+  .qb-found-badge,.qb-load-badge,.qb-calibrate-tip,.qb-calibrate-badge,.q-bm-num,.name-dhikr-badge) {
+  background:var(--primary-tint)!important; color:var(--primary)!important; border-color:var(--border-gold)!important;
+}
+html[data-theme="dark"] #app :is(.db-prayer-chip.active,.q-tab-btn.active,.q-tab.active,.qb-tab.active,.ms-tab.active,
+  .du-tab.active,.hd-tab.active,.hc-tab.active,.hc-det-tab.active,.zk-list-tab.active,.q-filter-btn.active,.ms-radius-btn.active,
+  .pm-daily-tabs span.active,.q-audio-play,.ms-card-route,.hl-card-btn,.st-check,.hc-rem-save,.zk-modal-btn,
+  .hc-conv-btn-gold,.hc-conv-btn-blue,.st-fb-send,.pm-action-btn,.pm-retry-btn,.q-translit-toggle.active) {
+  color:#fff!important; background:var(--theme-action)!important; border-color:var(--theme-action)!important;
+}
+html[data-theme="dark"] #app :is(.pm-row--next,.mc-row-today td,.q-qori-card.active,.hc-rem-opt--active) {
+  background:var(--primary-tint)!important; border-color:var(--border-gold)!important;
+}
+html[data-theme="dark"] #app :is(.pm-banner,.pm-card--gold,.pm-card--green,.qz-total-card) {
+  background:linear-gradient(135deg,#153a2b,#10251f)!important; border-color:var(--border-gold)!important;
+}
+html[data-theme="dark"] #app .db-hadith-card { background:linear-gradient(135deg,#2b291a,#20251b)!important; border-color:#71613a!important; }
+html[data-theme="dark"] #app .db-hadith-arrow { color:var(--text)!important; }
+html[data-theme="dark"] #app .db-prayer-chip { color:var(--text)!important; }
+html[data-theme="dark"] #app .db-prayer-chip.active { color:#fff!important; }
+html[data-theme="dark"] #app .pm-daily-tabs span { color:var(--text-2); }
+html[data-theme="dark"] #app .mc-table th { background:var(--surface-2)!important; color:var(--text-2)!important; }
+html[data-theme="dark"] #app .mc-table td { border-color:var(--border)!important; }
+html[data-theme="dark"] #app .qb-compass-stack { background:rgba(14,39,30,.9)!important; border-color:var(--border-gold)!important; }
+html[data-theme="dark"] #app .qb-calibrate-tip img { mix-blend-mode:normal; border-radius:8px; }
+
+/* Only monochrome interface symbols are recolored. Photography, map tiles,
+   Quran artwork and the Three.js Earth are never inverted or filtered. */
+html[data-theme="dark"] #app img[src*="assets/icons/tabler/"] { filter:brightness(0) saturate(100%) invert(84%) sepia(12%) saturate(428%) hue-rotate(97deg)!important; }
+html[data-theme="dark"] #app :is(.db-prayer-chip.active,.q-tab-btn.active,.q-tab.active,.qb-tab.active,.ms-tab.active,
+  .du-tab.active,.hd-tab.active,.hc-tab.active,.zk-list-tab.active,.ms-card-route,.db-hadith-icon,.db-next-time-line) img[src*="assets/icons/tabler/"] { filter:brightness(0) invert(1)!important; }
+html[data-theme="dark"] .app-bottom-nav {
+  background:rgba(12,29,24,.97)!important; border-color:var(--border)!important; box-shadow:0 -8px 24px rgba(0,0,0,.18)!important;
+}
+html[data-theme="dark"] .app-nav-item { color:var(--text-2)!important; }
+html[data-theme="dark"] .app-nav-item.active { color:var(--primary)!important; }
+html[data-theme="dark"] .app-nav-item.active .app-nav-icon img { filter:brightness(0) saturate(100%) invert(85%) sepia(43%) saturate(464%) hue-rotate(86deg)!important; }
+html[data-theme="dark"] :is(.st-toast,.ls-wip-toast) { background:var(--surface-3)!important; color:var(--text)!important; border-color:var(--border)!important; }
+html[data-theme="dark"] :is(.hc-modal-overlay,.name-modal-overlay,.quran-overlay,.zk-modal-overlay) { background:rgba(0,10,6,.78)!important; }
+
+/* Onboarding, tasbih and detail screens share the same palette. */
+html[data-theme="dark"] #app :is(.ls-header,.mz-header,.lc-header,.ls-footer,.mz-footer,.lc-footer,.zk-screen) { background:var(--bg)!important; }
+html[data-theme="dark"] #app :is(.ls-card,.mz-card,.lc-feat,.zk-modal-box,.zk-goal-badge,.zk-today-badge,.zk-reset) {
+  background:var(--surface)!important; color:var(--text)!important; border-color:var(--border)!important;
+}
+html[data-theme="dark"] #app :is(.ls-card--on,.mz-card--on,.zk-row-done) { background:var(--primary-tint)!important; border-color:var(--border-gold)!important; }
+html[data-theme="dark"] #app :is(.ls-name,.ls-botname,.mz-name,.mz-title,.lc-title,.lc-heading,.zk-ar-row,.zk-ar-big,.zk-big-num) { color:var(--text)!important; }
+html[data-theme="dark"] #app :is(.ls-sub,.ls-sg,.ls-sc,.ls-sa,.mz-subtitle,.mz-mintaqa,.lc-subtitle,.lc-desc,.lc-feat-txt,.lc-btn-skip,.zk-list-hint,.zk-uz-small,.zk-today-lbl,.zk-h-ar) { color:var(--text-2)!important; }
+html[data-theme="dark"] #app :is(.ls-ov,.mz-ov,.lc-ov) { background:linear-gradient(180deg,rgba(9,23,20,.30),var(--bg))!important; }
+html[data-theme="dark"] #app :is(.ls-btn,.mz-btn,.lc-btn-main,.btn-primary,.zk-tap,.zk-toggle.zk-on,.nm-zkr-plus) { color:#fff!important; background:var(--theme-action)!important; }
+html[data-theme="dark"] #app :is(.ls-btn-lbl,.mz-btn-lbl,.zk-tap .zk-ar-big) { color:#fff!important; }
+html[data-theme="dark"] #app :is(.ls-divider,.mz-divider,.lc-divider) { background:var(--border)!important; }
+html[data-theme="dark"] #app :is(.mz-ar-circle,.lc-ring-inner) { background:var(--primary-tint)!important; border-color:var(--border-gold)!important; }
+
+/* Detail and provenance views, including the older inline content templates. */
+html[data-theme="dark"] #app :is(.du-detail-box,.du-detail-manba,.hd-detail-box,.hd-detail-rowi,.hd-book-info,
+  .hd-kat-card,.hd-kat-ch-card,.ab-hadith-card,.ab-stat-box,.ab-feat-card,.ab-dev-card,.ab-sources-card) {
+  background:var(--surface)!important; border-color:var(--border)!important;
+}
+html[data-theme="dark"] #app :is(.db-brand strong,.quran-source-note,.du-card-ar,.hd-card-ar,.hd-detail-ar,
+  .hd-book-name,.hd-detail-rowi-val,.hd-book-info-name,.hd-kat-card-name,.hd-kat-ch-name,.ab-hadith-quote,
+  .ab-feat-text,.ab-dev-name,.hc-rem-opt span,.hc-amal-row span) { color:var(--text)!important; }
+html[data-theme="dark"] #app :is(.db-brand span,.du-card-uz,.du-detail-uz,.du-cat-cnt,.du-detail-manba-lbl,
+  .du-empty,.du-detail-back,.du-back,.hd-back,.hd-detail-back,.hd-card-uz,.hd-detail-uz,.hd-card-narrator,
+  .hd-sec-lbl,.hd-book-cnt,.hd-empty,.hd-pag-info,.hd-nav-pos,.hd-detail-rowi-lbl,.hd-book-info-imam,
+  .hd-kat-card-sub,.hd-kat-ch-cnt,.ms-empty,.ms-load-txt,.ms-sec-lbl,.ab-hero-meta,.ab-hadith-lbl,
+  .ab-stat-lbl,.ab-feat-lbl,.ab-feat-desc,.ab-dev-lbl,.ab-sources-lbl,.ab-sources-list,.ab-footer,
+  .hc-ev-arname,.zk-done-text,.zk-ref,.zk-tog-lbl) { color:var(--text-2)!important; }
+html[data-theme="dark"] #app :is(.du-card-src,.du-card-translit,.du-detail-translit,.du-detail-manba-val,
+  .du-detail-oqilishi-lbl,.hd-card-ref,.hd-detail-ref,.hd-chapter-hdr,.hd-book-info-count,.hd-kat-ch-jild,
+  .hd-kat-lbl,.ab-hadith-ref,.ab-hadith-ref a,.ab-dev-handle,.zk-tr-row,.zk-mini-num,.hc-sel-hijri,
+  .hc-sel-ev-name,.hc-ev-date,.hc-ev-badge) { color:var(--primary)!important; }
+html[data-theme="dark"] #app :is(.hd-pag-btn,.hd-nav-btn,.hd-retry-btn,.du-save-btn.saved) {
+  color:var(--primary)!important; background:var(--primary-tint)!important; border-color:var(--border-gold)!important;
+}
+html[data-theme="dark"] #app .du-save-btn:not(.saved) { background:var(--theme-action)!important; color:#fff!important; }
+html[data-theme="dark"] #app :is(.du-detail-ar,.hd-detail-ar,.du-detail-translit,.du-card-translit) { background:var(--surface-2)!important; }
+/* These exact legacy ink declarations appear in calendar event details and
+   weather cells. Rebind their ink, without altering status colors or content. */
+html[data-theme="dark"] #app [style*="color:#16212B" i] { color:var(--text)!important; }
+html[data-theme="dark"] #app [style*="color:rgba(22,33,43" i] { color:var(--text-2)!important; }
+html[data-theme="dark"] #app [style*="color:#16794A" i] { color:var(--primary)!important; }
+html[data-theme="dark"] #app .qb-compass-stack svg text { fill:var(--text-2)!important; }
+html[data-theme="dark"] #app .qb-compass-stack svg text[fill="#16794A"] { fill:var(--primary)!important; }
+html[data-theme="dark"] #app #qb-bg stop { stop-color:#18372c; }
+html[data-theme="dark"] #app .qb-compass-stack svg circle[fill="#F6FAF8"] { fill:var(--surface-2); }
+
+/* Screenshot QA: remove remaining light shells and give photo captions and
+   utility controls the same contrast as the main night cards. */
+html[data-theme="dark"] #app .screen-inner { background:var(--bg)!important; }
+html[data-theme="dark"] #app :is(.q-header,.qb-hdr,.ms-hdr,.du-hdr,.hd-hdr,.nm-header,.st-header,.hc-hdr,.zk-hdr) {
+  background-color:var(--bg)!important;
+}
+html[data-theme="dark"] #app :is(.q-header-action,.q-filter-toggle,.pm-location-pill,.pm-tools-btn,
+  .du-lang-badge,.hd-lang-badge,.nm-zikr-badge) {
+  background:var(--surface-2)!important; color:var(--text)!important; border-color:var(--border)!important;
+}
+html[data-theme="dark"] #app :is(.q-title-quote,.pm-hdr-quote,[data-quran-verse],.verified-verse-copy),
+html[data-theme="dark"] #app :is(.q-title-quote,.pm-hdr-quote) :is(span,em) { color:var(--text)!important; }
+html[data-theme="dark"] #app [data-quran-verse] small { color:var(--text-2)!important; opacity:1; }
+html[data-theme="dark"] #app :is(.du-ar-sub,.hd-ar-sub,.nm-title-ar,.nm-zikr-tot,.qb-badge-deg) { color:var(--primary)!important; }
+html[data-theme="dark"] #app :is(.nm-zikr-lbl,.qb-badge-dir,.pm-hdr-date,.pm-hdr-meta) { color:var(--text-2)!important; }
+html[data-theme="dark"] #app .db-hadith-icon { background:var(--theme-action)!important; }
+html[data-theme="dark"] #app .hd-chapter-hdr { opacity:1; }
+html[data-theme="dark"] #app .hc-sel-num { color:rgba(103,220,176,.3)!important; }
+html[data-theme="dark"] .app-nav-item:not(.active) .app-nav-icon img {
+  filter:brightness(0) saturate(100%) invert(84%) sepia(12%) saturate(428%) hue-rotate(97deg)!important;
+}

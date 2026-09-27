@@ -43,10 +43,10 @@ const MazhabScreen = (function () {
 
   function _mzStr(key, lang) {
     const n = MZ_STRINGS[key];
-    return n ? (n[lang] || n.en || '') : '';
+    return n ? localizeRecord(n, lang) : '';
   }
-  function _name(m, lang)    { return m.name[lang]    || m.name.en    || ''; }
-  function _mintaqa(m, lang) { return m.mintaqa[lang] || m.mintaqa.en || ''; }
+  function _name(m, lang)    { return localizeRecord(m.name, lang); }
+  function _mintaqa(m, lang) { return localizeRecord(m.mintaqa, lang); }
 
   /* ── Entry points ─────────────────────────────────────────── */
   function render() {
@@ -63,7 +63,7 @@ const MazhabScreen = (function () {
     const langMeta = (typeof LANG_META !== 'undefined')
       ? (LANG_META.find(l => l.code === lang) || LANG_META[0])
       : { name: lang, sub: '' };
-    const backLbl  = '← ' + langMeta.name + (langMeta.sub ? ' (' + langMeta.sub + ')' : '');
+    const backLbl  = '← ' + langMeta.name;
     const sel      = MAZHABLAR.find(m => m.k === _selected) || MAZHABLAR[0];
 
     return `

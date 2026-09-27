@@ -197,10 +197,11 @@ const QuranScreen = (function () {
     retry:        { uz:'Qayta urinish',uz_cyr:'Қайта уриниш',ru:'Повторить',       en:'Retry',          tr:'Tekrar dene',    ar:'إعادة المحاولة', kk:'Қайталап көру',  tg:'Аз нав кӯшиш',    ky:'Кайра аракет',  de:'Erneut versuchen',         fr:'Réessayer',           id:'Coba lagi',       hi:'पुनः प्रयास',    ur:'دوبارہ کوشش'      },
     tafsirLoad:   { uz:'Tafsir yuklanmoqda...', uz_cyr:'Тафсир юкланмоқда...', ru:'Тафсир загружается...', en:'Tafsir loading...', tr:'Tefsir yükleniyor...', ar:'جاري تحميل التفسير...', kk:'Тафсир жүктелуде...', tg:'Тафсир бор карда мешавад...', ky:'Тафсир жүктөлүүдө...', de:'Tafsir wird geladen...', fr:'Tafsir en chargement...', id:'Tafsir memuat...', hi:'तफ़सीर लोड हो रही है...', ur:'تفسیر لوڈ ہو رہی ہے...' },
   };
-  function _qt(k) { const n = QT[k]; return n ? (n[_lang] || n.en || '') : ''; }
+  function _qt(k) { const n = QT[k]; return n ? localizeRecord(n, _lang) : ''; }
   function _T(lat, cyr, ru, en) { return _resolveT(lat, cyr, ru, en, _lang); }
   let _view         = 'list';
   let _surahIdx     = 0;
+  let _readerRequest = 0;
   let _filter       = 'all';
   let _showTranslit = true;
   let _showTafsir   = {};
@@ -247,22 +248,22 @@ const QuranScreen = (function () {
         <div class="q-header">
           <img class="q-header-photo" src="assets/landing/hero-bg.webp" alt="Makkah" loading="eager">
           <div class="q-nav-row">
-            <button id="quran-back" class="q-back-btn">${_qt('back')}</button>
-            <div class="q-qori-badge">
-              <span>${_getReciter().flag}</span>
-              <span>${_getReciter().name.split(' ')[0]}</span>
+            <span></span>
+            <div class="q-header-actions">
+              <button id="quran-header-search" class="q-header-action" type="button" aria-label="Search"><img src="assets/icons/tabler/search.svg" alt="" aria-hidden="true"></button>
+              <button id="quran-header-settings" class="q-header-action" type="button" aria-label="Settings"><img src="assets/icons/tabler/settings.svg" alt="" aria-hidden="true"></button>
             </div>
           </div>
           <div class="q-title-block">
             <div class="q-title-main">${_qt('title')}</div>
-            <div class="q-title-sub">${_qt('subtitle')}</div>
+            <div class="q-title-sub">${_T('Allohning kalomi','Аллоҳнинг каломи','Слово Аллаха','The word of Allah')}</div>
+            <div class="q-title-quote" data-quran-verse="2:2"></div>
           </div>
           <div class="q-divider"></div>
           <div class="q-tabs-row">
-            <button class="q-tab-btn${_tab==='suralar'?' active':''}" data-tab="suralar">${_qt('tabSura')}</button>
-            <button class="q-tab-btn${_tab==='qori'?' active':''}" data-tab="qori">${_qt('tabQori')}</button>
-            <button class="q-tab-btn${_tab==='saqlangan'?' active':''}" data-tab="saqlangan">${_qt('tabSaved')}</button>
-            <button class="q-tab-btn${_tab==='sozlama'?' active':''}" data-tab="sozlama">⚙️</button>
+            <button class="q-tab-btn${_tab==='suralar'?' active':''}" data-tab="suralar"><img src="assets/icons/tabler/book-2.svg" alt="" aria-hidden="true"><span>${_qt('tabSura').replace(/^[\p{Extended_Pictographic}\uFE0F]+\s*/u, '')}</span></button>
+            <button class="q-tab-btn${_tab==='qori'?' active':''}" data-tab="qori"><img src="assets/icons/tabler/microphone.svg" alt="" aria-hidden="true"><span>${_qt('tabQori').replace(/^[\p{Extended_Pictographic}\uFE0F]+\s*/u, '')}</span></button>
+            <button class="q-tab-btn${_tab==='saqlangan'?' active':''}" data-tab="saqlangan"><img src="assets/icons/tabler/bookmark.svg" alt="" aria-hidden="true"><span>${_qt('tabSaved').replace(/^[\p{Extended_Pictographic}\uFE0F]+\s*/u, '')}</span></button>
           </div>
         </div>
         <div class="q-content" id="q-content">${_tabContent()}</div>
@@ -363,7 +364,7 @@ const QuranScreen = (function () {
   function _clearAyahCache() {
     try {
       Object.keys(localStorage)
-        .filter(k => k.startsWith('quran_') && k.includes('_v6'))
+        .filter(k => k.startsWith('quran_') && k.includes('_v7'))
         .forEach(k => localStorage.removeItem(k));
     } catch {}
   }
@@ -380,9 +381,9 @@ const QuranScreen = (function () {
           <span>📖</span>
           <div style="flex:1">
             <div class="q-banner-title">${_qt('continue')}</div>
-            <div class="q-banner-sub">${_uz(s)} · ${s[0]}-sura</div>
+            <div class="q-banner-sub">${_uz(s)} · ${t('quran_surah', _lang)} ${s[0]}</div>
           </div>
-          <span class="q-banner-arrow">›</span>
+          <span class="q-banner-arrow"><img src="assets/icons/tabler/player-play.svg" alt="" aria-hidden="true"></span>
         </div>` : '';
     })() : '';
 
@@ -397,27 +398,31 @@ const QuranScreen = (function () {
           <div class="q-sura-num">${num}</div>
           <div class="q-sura-info">
             <div class="q-sura-name">${_uz(s)}</div>
-            <div class="q-sura-meta">${verses} ${_qt('verses')} · ${_qt('juz')} ${juz} · ${type==='M'?_qt('makka'):_qt('madina')}</div>
+            <div class="q-sura-meta">${verses} ${_qt('verses')} · ${_qt('juz')} ${juz} · ${(type==='M'?_qt('makka'):_qt('madina')).replace(/^[\p{Extended_Pictographic}\uFE0F]+\s*/u, '')}</div>
           </div>
           <div class="q-sura-ar">${ar}</div>
-          <button class="q-bm-btn${hasBm?' bm-on':''}" data-bm="${num}" aria-label="Bookmark">☆</button>
+          <span class="q-row-chevron"><img src="assets/icons/tabler/chevron-right.svg" alt="" aria-hidden="true"></span>
         </div>
         <div class="q-sura-sep"></div>`;
     }).join('');
 
     return `
-      <div class="q-search-box">
-        <span class="q-search-icon">🔍</span>
-        <input id="quran-search" class="q-search-input" type="text"
-               placeholder="${_qt('searchPh')}" autocomplete="off"/>
-        <button id="q-search-clear" class="q-search-clear" style="display:none">✕</button>
+      <div class="q-search-row">
+        <div class="q-search-box">
+          <span class="q-search-icon"><img src="assets/icons/tabler/search.svg" alt="" aria-hidden="true"></span>
+          <input id="quran-search" class="q-search-input" type="text"
+                 placeholder="${_qt('searchPh')}" autocomplete="off"/>
+          <button id="q-search-clear" class="q-search-clear" style="display:none">×</button>
+        </div>
+        <button class="q-filter-toggle" type="button" aria-label="Filter"><img src="assets/icons/tabler/adjustments-horizontal.svg" alt="" aria-hidden="true"></button>
       </div>
       <div class="q-filters-row">
-        ${[['all',_qt('all')],['makka',_qt('makka')],['madina',_qt('madina')],['juz30',`${_qt('juz')} 30`]].map(
+        ${[['all',_qt('all')],['makka',_qt('makka').replace(/^[\p{Extended_Pictographic}\uFE0F]+\s*/u, '')],['madina',_qt('madina').replace(/^[\p{Extended_Pictographic}\uFE0F]+\s*/u, '')],['juz30',`${_qt('juz')} 30`]].map(
           ([k,l]) => `<button class="q-filter-btn${_filter===k?' active':''}" data-filter="${k}">${l}</button>`
         ).join('')}
       </div>
       ${continueBanner}
+      <div class="q-list-heading"><strong>${_T("Sura ro‘yxati",'Сура рўйхати','Список сур','Surah list')}</strong><span>${_T('Jami 114 sura','Жами 114 сура','Всего 114 сур','114 surahs total')}</span></div>
       <div id="quran-list">${rows}</div>`;
   }
 
@@ -489,6 +494,21 @@ const QuranScreen = (function () {
       _stopAudio();
       window.App.navigate('screen-dashboard');
     });
+    el.querySelector('#quran-header-search')?.addEventListener('click', () => {
+      if (_tab !== 'suralar') {
+        _tab = 'suralar';
+        const c = el.querySelector('#q-content');
+        if (c) { c.innerHTML = _tabContent(); _bindTabContent(el); }
+        el.querySelectorAll('.q-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === 'suralar'));
+      }
+      requestAnimationFrame(() => el.querySelector('#quran-search')?.focus());
+    });
+    el.querySelector('#quran-header-settings')?.addEventListener('click', () => {
+      _tab = 'sozlama';
+      el.querySelectorAll('.q-tab-btn').forEach(b => b.classList.remove('active'));
+      const c = el.querySelector('#q-content');
+      if (c) { c.innerHTML = _tabContent(); _bindTabContent(el); }
+    });
 
     el.querySelectorAll('.q-tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -515,6 +535,11 @@ const QuranScreen = (function () {
   }
 
   function _bindSuralar(el) {
+    el.querySelector('.q-filter-toggle')?.addEventListener('click', () => {
+      const filters = el.querySelector('.q-filters-row');
+      if (filters) { filters.hidden = !filters.hidden; el.querySelector('.q-filter-toggle').setAttribute('aria-expanded', String(!filters.hidden)); }
+    });
+
     const inp = el.querySelector('#quran-search');
     const clr = el.querySelector('#q-search-clear');
 
@@ -608,6 +633,9 @@ const QuranScreen = (function () {
   async function _openSurah(el) {
     const s = SURAHS[_surahIdx];
     if (!s) return;
+    const request = ++_readerRequest;
+    const language = _lang;
+    const isCurrent = () => request === _readerRequest && language === _lang && _view === 'reader' && SURAHS[_surahIdx] === s;
     _view = 'reader';
     _showTafsir = {};
     _saveLast(s[0]);
@@ -617,12 +645,13 @@ const QuranScreen = (function () {
     _initAudio(el, s[0]);
 
     const scriptStyle = _getScript();
-    const cacheKey = `quran_${s[0]}_${_lang}_${scriptStyle}_v6`;
+    const cacheKey = `quran_${s[0]}_${_lang}_${scriptStyle}_v7`;
     const cached   = localStorage.getItem(cacheKey);
     if (cached) {
       try {
         const d = JSON.parse(cached);
-        _renderAyahs(el, s, d.arabic, d.translation, d.translit);
+        if (!Array.isArray(d.arabic) || d.arabic.length !== s[3] || !d.arabic.every(x => typeof x === 'string' && x.length > 0) || !Array.isArray(d.translation) || d.translation.length !== s[3]) throw new Error('Incomplete cached Quran');
+        _renderAyahs(el, s, d.arabic, d.translation, d.translit || []);
         return;
       } catch {}
     }
@@ -635,13 +664,15 @@ const QuranScreen = (function () {
         provider.getAyahs(s[0], { lang:providerLang, translation:true, withArabic:true, reciter:_getReciter().id }),
         fetch('https://api.alquran.cloud/v1/surah/' + s[0] + '/en.transliteration').then(r => r.json()).catch(() => null),
       ]);
+      if (!isCurrent()) return;
       const arabic = ayahs.map(a => a.arabic);
       const rawTransl = ayahs.map(a => a.translation || '');
-      const transl = (_lang === 'uz') ? rawTransl.map(_cyrToLat) : rawTransl;
+      const transl = rawTransl;
       const translit = txData?.code === 200 ? txData.data.ayahs.map(a => a.text) : [];
       try { localStorage.setItem(cacheKey, JSON.stringify({arabic, translation:transl, translit})); } catch {}
       _renderAyahs(el, s, arabic, transl, translit);
     } catch {
+      if (!isCurrent()) return;
       const body = el.querySelector('#quran-reader-body');
       if (body) body.innerHTML = `
         <div class="quran-loading">❌ ${_qt('loadErr')}
@@ -783,7 +814,7 @@ const QuranScreen = (function () {
               <button class="quran-ayah-icon-btn" data-action="share"  data-n="${n}" data-sn="${num}">📤</button>
             </div>
           </div>
-          <div class="quran-ayah-ar" style="${arStyle}">${arText}</div>
+          <div class="quran-ayah-ar" style="${arStyle}">${_esc(arText)}</div>
           ${translit[i] ? `
             <div class="quran-ayah-translit"${(_showTranslit || _lang === 'uz') ? '' : ' style="display:none"'}>
               ${_esc(translit[i])}
@@ -798,7 +829,9 @@ const QuranScreen = (function () {
         </div>`;
     }).join('');
 
-    body.innerHTML = `${basmala}<div class="quran-ayahs-list">${ayahsHTML}</div>`;
+    const source = window.QuranProvider?.getSourceMeta(_lang === 'uz_cyr' ? 'uz' : _lang);
+    const attribution = source ? `<div class="quran-source-note">${_esc(source.translator || source.edition || 'quran-uthmani')} · Al-Quran Cloud</div>` : '';
+    body.innerHTML = `${attribution}${basmala}<div class="quran-ayahs-list">${ayahsHTML}</div>`;
 
     body.querySelectorAll('[data-action="bm"]').forEach(btn => {
       btn.addEventListener('click', () => {

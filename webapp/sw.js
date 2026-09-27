@@ -1,13 +1,12 @@
 /* ================================================================
    IslamTime World — Service Worker
    Strategy:
-     - Static assets (JS/CSS/fonts/SVG) : cache-first + background refresh
-     - App shell (/app)                  : stale-while-revalidate
+     - Static assets and app shell     : network-first, current-build offline cache
      - API calls (/api/*)               : network-only
      - External (CDN, Telegram SDK)     : network-only
    ================================================================ */
 
-const CACHE = 'islamtime-v16';
+const CACHE = 'islamtime-v28';
 
 const PRECACHE = [
   '/app',
@@ -15,6 +14,10 @@ const PRECACHE = [
   '/css/styles.css',
   '/css/reference-ui.css',
   '/css/reference-pages.css',
+  '/css/theme.css',
+  '/js/theme.js',
+  '/js/prayer-preferences.js',
+  '/js/verified-content.js',
   '/js/i18n.js',
   '/js/hijri.js',
   '/js/app.js',
@@ -64,11 +67,42 @@ const PRECACHE = [
   '/assets/reference-ui/kaaba-icon.png',
 ];
 
+const PRECACHE_PATHS = new Set(PRECACHE);
+
+async function offlineResponse(cache, request) {
+  const exact = await cache.match(request);
+  if (exact) return exact;
+
+  const url = new URL(request.url);
+  // The shell uses ?v= URLs, while install stores canonical asset URLs.
+  // Only use this build's explicit precache entry; never ignore arbitrary
+  // query parameters or borrow a different version from an older cache.
+  const versionOnly = url.searchParams.has('v') &&
+    Array.from(url.searchParams.keys()).every(key => key === 'v');
+  if (versionOnly && PRECACHE_PATHS.has(url.pathname)) {
+    const canonical = await cache.match(url.origin + url.pathname);
+    if (canonical) return canonical;
+  }
+  return new Response('', { status: 408, statusText: 'Offline' });
+}
+
 /* ── Install: precache static shell ── */
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE)
-      .then(c => c.addAll(PRECACHE.map(url => new Request(url, { cache: 'reload' }))))
+      .then(async cache => {
+        // addAll is atomic: one unavailable image used to discard the whole
+        // app shell. Keep every successful entry when an individual URL fails.
+        const results = await Promise.allSettled(PRECACHE.map(async url => {
+          const request = new Request(url, { cache: 'reload' });
+          const response = await fetch(request);
+          if (!response.ok) throw new Error(url + ': HTTP ' + response.status);
+          await cache.put(request, response);
+        }));
+        const failed = results.flatMap((result, index) =>
+          result.status === 'rejected' ? [PRECACHE[index]] : []);
+        if (failed.length) console.warn('[SW] precache unavailable:', failed);
+      })
       .then(() => self.skipWaiting())
       .catch(err => console.warn('[SW] precache partial fail:', err))
   );
@@ -79,7 +113,7 @@ self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
       .then(keys => Promise.all(
-        keys.filter(k => k !== CACHE).map(k => caches.delete(k))
+        keys.filter(k => k.startsWith('islamtime-') && k !== CACHE).map(k => caches.delete(k))
       ))
       .then(() => self.clients.claim())
   );
@@ -93,23 +127,22 @@ self.addEventListener('fetch', e => {
   /* Skip: non-GET, API calls, external (Telegram SDK, Google Fonts, CDN) */
   if (request.method !== 'GET') return;
   if (url.pathname.startsWith('/api/')) return;
-  if (url.hostname !== self.location.hostname) return;
+  if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith('/webhook/')) return;
 
   e.respondWith(
     caches.open(CACHE).then(async cache => {
-      /* Network-first: always try network so updated files load immediately.
-         Cache used only as offline fallback. ignoreSearch removed so ?v= params
-         are respected — each versioned URL is cached independently. */
+      /* Network-first: preserve exact versioned responses. Canonical precache
+         entries are an offline fallback within this build only. */
       try {
         const response = await fetch(request);
         if (response && response.status === 200) {
-          cache.put(request, response.clone());
+          try { await cache.put(request, response.clone()); }
+          catch (err) { console.warn('[SW] cache write failed:', err); }
         }
         return response;
       } catch (_) {
-        const cached = await cache.match(request);
-        return cached || new Response('', { status: 408, statusText: 'Offline' });
+        return offlineResponse(cache, request);
       }
     })
   );

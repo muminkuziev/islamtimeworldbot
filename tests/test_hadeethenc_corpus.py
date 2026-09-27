@@ -14,15 +14,10 @@ import pytest
 DB_PATH = Path(__file__).resolve().parent.parent / "data" / "hadeethenc_verified.db"
 CANONICAL_LANGS = ["ar", "en", "id", "ur", "bn", "fr", "hi", "fa", "tr", "ru", "uz", "de", "ms"]
 
-pytestmark = pytest.mark.skipif(
-    not DB_PATH.exists(),
-    reason="data/hadeethenc_verified.db not built yet — run scripts/build_hadeethenc_verified_db.py",
-)
-
-
 @pytest.fixture(scope="module")
 def con():
-    c = sqlite3.connect(str(DB_PATH))
+    assert DB_PATH.exists(), "The release requires the verified corpus; missing data is not a skip."
+    c = sqlite3.connect(DB_PATH.as_uri() + "?mode=ro", uri=True)
     c.row_factory = sqlite3.Row
     yield c
     c.close()
@@ -82,18 +77,19 @@ def test_build_meta_records_gate_pass(con):
 def test_get_daily_hadith_returns_real_verified_content():
     from domain.prayer.extras import get_daily_hadith
 
-    for lang in ["en", "ar", "bn", "fa", "ms", "uz", "hi"]:
+    for lang in CANONICAL_LANGS:
         h = get_daily_hadith(lang)
         assert h, f"no daily hadith returned for lang={lang}"
         assert h["text"].strip(), f"empty hadith text for lang={lang}"
         assert h["source"] == "hadeethenc.com"
+        assert h["language"] == lang
 
 
 def test_get_daily_hadith_same_id_across_languages():
     """Same calendar day must show the same underlying hadith to every language."""
     from domain.prayer.extras import get_daily_hadith
 
-    ids = {get_daily_hadith(lang)["id"] for lang in ["en", "ar", "bn", "fa", "ms"]}
+    ids = {get_daily_hadith(lang)["id"] for lang in CANONICAL_LANGS}
     assert len(ids) == 1
 
 
@@ -104,3 +100,25 @@ def test_get_daily_hadith_legacy_lang_fallback():
     for lang in ["uz_cyr", "kk", "tg", "ky", "totally_unknown_code"]:
         h = get_daily_hadith(lang)
         assert h and h["text"].strip()
+
+
+def test_every_record_has_exact_official_source_url(con):
+    for row in con.execute("SELECT id, language, source, source_api FROM hadeeth_verified"):
+        assert row["source"] == "hadeethenc.com"
+        assert row["source_api"] == (
+            f"https://hadeethenc.com/api/v1/hadeeths/one/?language={row['language']}&id={row['id']}"
+        )
+
+
+def test_daily_content_preserves_source_text_grade_and_attribution(con):
+    from domain.prayer.extras import get_daily_hadith
+
+    for language in CANONICAL_LANGS:
+        daily = get_daily_hadith(language)
+        row = con.execute(
+            "SELECT hadeeth_text, grade, attribution FROM hadeeth_verified WHERE id=? AND language=?",
+            (daily["id"], language),
+        ).fetchone()
+        assert daily["text"] == row["hadeeth_text"]
+        assert daily["grade"] == row["grade"]
+        assert daily["attribution"] == row["attribution"]

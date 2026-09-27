@@ -11,13 +11,13 @@ tagged with a verification status:
                            sufficient confirmation for religious content)
   UNAVAILABLE            — no source identified at all
 
-As of this build, every entry is LICENSE_REVIEW_REQUIRED: an automated check
-of https://alquran.cloud/terms-and-conditions suggested permissive terms
-(commercial use permitted, attribution required for translations), but that
-was read through an AI summarization pass, not confirmed directly by a
-person — not sufficient to greenlight religious content for production.
-webapp/js/screens/quran.js's `TRANSLATIONS` map stays fully disabled (all
-null) until a human confirms the terms and flips specific languages here.
+Source availability and license review are separate facts. All twelve named
+translations are provider-published and enabled in the WebApp's provider.
+The official edition catalog and terms were checked on 2026-09-27. The terms
+attribute translations to rights-holder contributions or public-domain
+editions and request translator attribution. This is provider evidence,
+not independent legal clearance; the historical human-review status remains
+LICENSE_REVIEW_REQUIRED. No source-specific withdrawal is recorded here.
 """
 from dataclasses import dataclass, asdict
 
@@ -37,12 +37,17 @@ class TranslationSource:
     status: str
     terms_url: str | None
     note: str
+    availability: str = "provider_published"
+    legal_clearance: bool = False
+    translator_verification: str = "provider_metadata"
+    project_attribution: str | None = None
 
 
 _TERMS_URL = "https://alquran.cloud/terms-and-conditions"
 _PENDING_NOTE = (
-    "Source identified; usage terms reportedly permissive per an automated "
-    "check, but not yet confirmed by a human reviewer. Not activated."
+    "Edition listed in the official Al-Quran Cloud catalog (checked 2026-09-27). "
+    "Provider terms request named translator attribution; served with edition "
+    "and source metadata. Independent legal clearance is not claimed."
 )
 
 REGISTRY: dict[str, TranslationSource] = {
@@ -61,7 +66,10 @@ REGISTRY: dict[str, TranslationSource] = {
     "de": TranslationSource("de", "Al-Quran Cloud (api.alquran.cloud)", "de.bubenheim", "Bubenheim & Elyas",
                              LICENSE_REVIEW_REQUIRED, _TERMS_URL, _PENDING_NOTE),
     "id": TranslationSource("id", "Al-Quran Cloud (api.alquran.cloud)", "id.indonesian",
-                             "Kementerian Agama Republik Indonesia", LICENSE_REVIEW_REQUIRED, _TERMS_URL, _PENDING_NOTE),
+                             None, LICENSE_REVIEW_REQUIRED, _TERMS_URL,
+                             _PENDING_NOTE + " The provider catalog names the translator Unknown; the existing project attribution is unconfirmed.",
+                             translator_verification="unconfirmed_project_attribution",
+                             project_attribution="Kementerian Agama Republik Indonesia"),
     "ur": TranslationSource("ur", "Al-Quran Cloud (api.alquran.cloud)", "ur.jalandhry", "Fateh Muhammad Jalandhry",
                              LICENSE_REVIEW_REQUIRED, _TERMS_URL, _PENDING_NOTE),
     "hi": TranslationSource("hi", "Al-Quran Cloud (api.alquran.cloud)", "hi.hindi",
@@ -77,7 +85,8 @@ REGISTRY: dict[str, TranslationSource] = {
 
 def get_translation_source(language: str) -> TranslationSource:
     return REGISTRY.get(language) or TranslationSource(
-        language, "none", None, None, UNAVAILABLE, None, "No source identified for this language."
+        language, "none", None, None, UNAVAILABLE, None, "No source identified for this language.",
+        availability="unavailable",
     )
 
 

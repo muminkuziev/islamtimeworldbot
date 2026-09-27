@@ -9,12 +9,12 @@ const SettingsScreen = (function () {
   const PRAYER_METHODS = [
     { id:3,  n:'Muslim World League'        },
     { id:4,  n:'Umm al-Qura, Makkah'        },
-    { id:1,  n:'Karachi University (UISK)'  },
-    { id:2,  n:'ISNA (Shimoliy Amerika)'    },
-    { id:13, n:'Diyanet (Turkiya)'          },
-    { id:14, n:'UOIF (Fransiya)'            },
-    { id:12, n:'JAKIM (Malayziya)'          },
-    { id:11, n:'Majlis Ugama (Singapur)'    },
+    { id:1,  n:"Karachi University"  },
+    { id:2,  n:"ISNA"    },
+    { id:13, n:"Diyanet"          },
+    { id:14, n:"UOIF"            },
+    { id:12, n:"JAKIM"          },
+    { id:11, n:"Majlis Ugama"    },
     { id:5,  n:'Egyptian General Authority' },
   ];
 
@@ -49,7 +49,7 @@ const SettingsScreen = (function () {
       lang:              localStorage.getItem('islamtime_lang')                  || 'uz',
       mazhab:            localStorage.getItem('islamtime_madhab')                || 'hanafi',
       method:            parseInt(localStorage.getItem('islamtime_method')        || '3'),
-      theme:             'light',
+      theme:             window.ThemeEngine?.getMode() || 'auto',
       gps:               (localStorage.getItem('islamtime_gps')                  ?? 'true')  === 'true',
       push:              (localStorage.getItem('islamtime_push')                 ?? 'true')  === 'true',
       ayah:              (localStorage.getItem('islamtime_notif_ayah')           ?? 'true')  === 'true',
@@ -176,12 +176,12 @@ const SettingsScreen = (function () {
       { v:'location',      t:_T('Joylashuv',              'Жойлашув',              'Местоположение',             'Location'),              s: locSub },
       { v:'prayer',        t:_T('Namoz hisoblash usuli',  'Намоз ҳисоблаш усули',  'Метод расчёта намаза',       'Prayer Calculation Method'), s: methN  },
       { v:'langmazhab',    t:_T('Til va Mazhab',          'Тил ва Мазҳаб',          'Язык и Мазхаб',             'Language and Madhab'),   s: `${lm ? lm.flag+' '+lm.name : ''} · ${_mzLabel(mz)}` },
-      { v:'interface',     t:_T('Interfeys',              'Интерфейс',              'Интерфейс',                 'Interface'),             s: _T('Yorug‘ rejim','Ёруғ режим','Светлый режим','Light mode') },
+      { v:'interface',     t:_T('Interfeys',              'Интерфейс',              'Интерфейс',                 'Interface'),             s: t('theme_' + _s.theme, _lang) },
       { v:'notifications', t:_T('Bildirishnomalar',       'Билдиришномалар',        'Уведомления',               'Notifications'),         s: `${notifN} ${_T('ta yoqilgan','та ёқилган','вкл.','enabled')}` },
       { v:'briefing',      t:_T('Kunlik briefing',       'Кунлик брифинг',         'Ежедневная сводка',         'Daily Briefing'),        s: _s.daily_briefing ? `${_T("Yoqilgan","Ёқилган","Включено","Enabled")} · ${_s.briefing_time}` : _T("O'chirilgan","Ўчирилган","Отключено","Disabled") },
       { v:'cloudsync',     t:_T('Bulut sinxronizatsiyasi','Булут синхронизацияси',  'Синхронизация с облаком',   'Cloud Sync'),            s: online ? _T("Bog'langan","Боғланган","Подключён",'Connected') : _T('Offline rejim','Офлайн режим','Режим офлайн','Offline mode') },
       { v:'contact',       t:_T('Aloqa va yordam',        'Алоқа ва ёрдам',        'Контакты и помощь',          'Contact & Support'),     s: _T('Xato, fikr, yordam','Хато, фикр, ёрдам','Ошибки, отзывы, помощь','Bugs, feedback, help') },
-      { v:'about',         t:_T('Ilova haqida',           'Илова ҳақида',           'О приложении',              'About'),                 s: 'v1.0 beta · 14 lang · 10 mod' },
+      { v:'about',         t:_T('Ilova haqida',           'Илова ҳақида',           'О приложении',              'About'),                 s: `v1.0 · ${CANONICAL_LANGS.length} ${_T('til','тил','языков','languages')}` },
     ];
 
     return `
@@ -262,17 +262,30 @@ const SettingsScreen = (function () {
   }
 
   function _htmlInterface() {
+    const options = [
+      { mode: 'auto', icon: 'sunrise' },
+      { mode: 'day', icon: 'sun' },
+      { mode: 'night', icon: 'moon' },
+    ];
     return `
-      <div class="st-sect">
-        <div class="st-tema-row">
-          <span class="st-tema-ic">☀️</span>
-          <div class="st-rb">
-            <div class="st-rl">${_T('Yorug‘ rejim','Ёруғ режим','Светлый режим','Light mode')}</div>
-            <div class="st-rs">${_T('Oq, yalpiz va zumrad','Оқ, ялпиз ва зумрад','Белый, мятный и изумрудный','White, mint and emerald')}</div>
-          </div>
-          <div class="st-check">✓</div>
-        </div>
-      </div>`;
+      <div class="st-sect st-theme-options" role="radiogroup" aria-label="${_T('Interfeys','Интерфейс','Интерфейс','Interface')}">
+        ${options.map(option => `
+          <button type="button" class="st-tema-row" data-theme="${option.mode}" role="radio" aria-checked="${_s.theme === option.mode}" tabindex="${_s.theme === option.mode ? '0' : '-1'}">
+            <span class="st-tema-ic"><img src="assets/icons/tabler/${option.icon}.svg" alt="" width="24" height="24"></span>
+            <span class="st-rb">
+              <span class="st-rl">${t('theme_' + option.mode, _lang)}</span>
+              <span class="st-rs">${t('theme_' + option.mode + '_desc', _lang)}</span>
+            </span>
+            <span class="st-theme-indicator" aria-hidden="true">${_s.theme === option.mode ? '✓' : ''}</span>
+          </button>`).join('')}
+      </div>
+      <p class="st-theme-source" id="st-theme-source" role="status">${_themeSource()}</p>`;
+  }
+
+  function _themeSource() {
+    const state = window.ThemeEngine?.getState();
+    if (!state || state.mode !== 'auto') return '';
+    return t('theme_source_' + (state.source === 'location' ? 'location' : state.source === 'cached' ? 'cached' : 'system'), _lang);
   }
 
   function _htmlNotifications() {
@@ -386,7 +399,7 @@ const SettingsScreen = (function () {
 
   function _htmlCloudSync() {
     const online    = !!window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
-    const statusTxt = online ? _T("Bog'langan","Боғланган","Подключён",'Connected') + ' · ' + new Date().toLocaleDateString(_lang === 'ru' ? 'ru' : _lang === 'en' ? 'en' : 'uz') : _T('Offline rejim','Офлайн режим','Режим офлайн','Offline mode');
+    const statusTxt = online ? _T("Bog'langan","Боғланган","Подключён",'Connected') + ' · ' + new Date().toLocaleDateString(_lang === 'uz_cyr' ? 'uz-Cyrl' : _lang) : _T('Offline rejim','Офлайн режим','Режим офлайн','Offline mode');
     const dotClr    = online ? '#4fcfa0' : '#e8c15a';
     return `
       <div class="st-sect">
@@ -473,8 +486,8 @@ const SettingsScreen = (function () {
         )}</div>
         <div class="ab-hero-divider"></div>
         <div class="ab-hero-meta">
-          🌍 14 ${_T('til','тил','языков','languages')} &nbsp;·&nbsp;
-          📦 10 ${_T('modul','модул','модулей','modules')} &nbsp;·&nbsp;
+          🌍 ${CANONICAL_LANGS.length} ${_T('til','тил','языков','languages')} &nbsp;·&nbsp;
+          📦 ${features.length} ${_T('modul','модул','модулей','modules')} &nbsp;·&nbsp;
           v1.0 Beta
         </div>
       </div>
@@ -488,17 +501,17 @@ const SettingsScreen = (function () {
           "Тот, кто указал на благое, получит такую же награду.",
           "Whoever guides to goodness will have a reward like the one who does it."
         )}"</div>
-        <div class="ab-hadith-ref">— ${_T('Muslim, 2671','Муслим, 2671','Муслим, 2671','Muslim, 2671')}</div>
+        <div class="ab-hadith-ref">— <a href="https://hadeethenc.com/en/browse/hadith/5354" target="_blank" rel="noopener noreferrer">Sahih Muslim · 1893</a></div>
       </div>
 
       <!-- Stats grid ─────────────────────────── -->
       <div class="ab-stats-grid">
         <div class="ab-stat-box">
-          <div class="ab-stat-num">14</div>
+          <div class="ab-stat-num">${CANONICAL_LANGS.length}</div>
           <div class="ab-stat-lbl">${_T('Tillar','Тиллар','Языков','Languages')}</div>
         </div>
         <div class="ab-stat-box">
-          <div class="ab-stat-num">10</div>
+          <div class="ab-stat-num">${features.length}</div>
           <div class="ab-stat-lbl">${_T('Modullar','Модуллар','Модулей','Modules')}</div>
         </div>
         <div class="ab-stat-box ab-stat-box--blue">
@@ -721,9 +734,10 @@ const SettingsScreen = (function () {
       const tg = window.Telegram?.WebApp;
       if (tg?.LocationManager) {
         tg.LocationManager.getLocation(res => {
-          if (res?.latitude) {
+          if (Number.isFinite(res?.latitude) && Number.isFinite(res?.longitude)) {
             localStorage.setItem('islamtime_last_lat', res.latitude);
             localStorage.setItem('islamtime_last_lon', res.longitude);
+            window.ThemeEngine?.setLocation(res.latitude, res.longitude);
             if (txt) txt.textContent = `${res.latitude.toFixed(4)}, ${res.longitude.toFixed(4)}`;
           } else { if (txt) txt.textContent = _T("Aniqlab bo'lmadi","Аниқлаб бўлмади","Не удалось определить",'Could not detect'); }
         });
@@ -731,6 +745,7 @@ const SettingsScreen = (function () {
         navigator.geolocation.getCurrentPosition(pos => {
           localStorage.setItem('islamtime_last_lat', pos.coords.latitude);
           localStorage.setItem('islamtime_last_lon', pos.coords.longitude);
+          window.ThemeEngine?.setLocation(pos.coords.latitude, pos.coords.longitude);
           if (txt) txt.textContent = `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
         }, () => { if (txt) txt.textContent = _T('Ruxsat berilmagan','Рухсат берилмаган','Доступ запрещён','Permission denied'); });
       }
@@ -768,17 +783,30 @@ const SettingsScreen = (function () {
   function _bindInterface(el) {
     el.querySelectorAll('.st-tema-row').forEach(row => {
       row.addEventListener('click', () => {
-        if (row.dataset.theme === 'light') return;
         const key = row.dataset.theme;
-        _persist('theme', key);
-        document.documentElement.setAttribute('data-theme', key);
+        window.ThemeEngine?.setMode(key);
+        _s.theme = key;
         el.querySelectorAll('.st-tema-row').forEach(r => {
-          const on  = r.dataset.theme === key;
-          const chk = r.querySelector('.st-check');
-          if (on && !chk) { const c = document.createElement('div'); c.className = 'st-check'; c.textContent = '✓'; r.appendChild(c); }
-          else if (!on && chk) chk.remove();
+          const on = r.dataset.theme === key;
+          r.setAttribute('aria-checked', String(on));
+          r.tabIndex = on ? 0 : -1;
+          r.querySelector('.st-theme-indicator').textContent = on ? '✓' : '';
         });
+        const source = el.querySelector('#st-theme-source');
+        if (source) source.textContent = _themeSource();
         window.Telegram?.WebApp?.HapticFeedback?.selectionChanged();
+      });
+      row.addEventListener('keydown', event => {
+        const keys = ['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Home', 'End'];
+        if (!keys.includes(event.key)) return;
+        event.preventDefault();
+        const rows = Array.from(el.querySelectorAll('.st-tema-row'));
+        const current = rows.indexOf(row);
+        const rtl = document.documentElement.dir === 'rtl';
+        const backwards = event.key === 'ArrowUp' || event.key === (rtl ? 'ArrowRight' : 'ArrowLeft');
+        const next = event.key === 'Home' ? 0 : event.key === 'End' ? rows.length - 1 : (current + (backwards ? -1 : 1) + rows.length) % rows.length;
+        rows[next].click();
+        rows[next].focus();
       });
     });
   }
@@ -940,9 +968,10 @@ const SettingsScreen = (function () {
     });
   }
 
-  /* Apply saved theme on module load */
-  localStorage.setItem('islamtime_theme', 'light');
-  document.documentElement.setAttribute('data-theme', 'light');
+  document.addEventListener('islamtime:themechange', () => {
+    const source = document.getElementById('st-theme-source');
+    if (source) source.textContent = _themeSource();
+  });
 
   return { render, load };
 })();

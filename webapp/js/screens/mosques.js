@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════
    Masjidlar Screen — Navy+Gold UI
-   Flow: cache → coords(instant) → geo(3s timeout) → fallback(3s)
-   API runs in background; UI never stays blank/spinning > 3s
+   Cached coordinates or GPS → bounded public OpenStreetMap request.
+   Display each successful radius immediately; users may widen it explicitly.
    ═══════════════════════════════════════════════════════════════ */
 
 const MosquesScreen = (function () {
@@ -9,8 +9,6 @@ const MosquesScreen = (function () {
   const OVERPASS_URL   = 'https://overpass-api.de/api/interpreter';
   const NOMINATIM_URL  = 'https://nominatim.openstreetmap.org/reverse';
   const RADIUS_DEFAULT = 10000;
-  const RADIUS_EXPAND  = 20000;
-  const RADIUS_MAX     = 50000;
   const GEO_TIMEOUT    = 8000;    /* ms to wait for geolocation (fallback to error UI) */
 
   /* Cache key is per-language so city names are always in the right script */
@@ -28,7 +26,11 @@ const MosquesScreen = (function () {
   let _radius     = RADIUS_DEFAULT;
   let _loading    = false;
   let _noLocation = false;  /* true when no coords could be obtained */
-  let _notFound   = false;  /* true when 50km search returns 0 results */
+  let _notFound   = false;
+  let _loadError  = false;
+  let _generation = 0;
+  let _requestId  = 0;
+  let _controller = null;
   let _selIdx     = null;
   let _el         = null;
   let _loadTimer  = null;
@@ -43,7 +45,7 @@ const MosquesScreen = (function () {
     if (!_el) return;
     _el.innerHTML = _buildHTML();
     _bind();
-    _start();
+    if (_el.classList.contains('active')) _start();
   }
 
   function load(lang) {
@@ -57,12 +59,19 @@ const MosquesScreen = (function () {
   }
 
   function _reset() {
+    _generation++;
+    _requestId++;
+    _controller?.abort();
+    _controller = null;
     clearTimeout(_loadTimer);
     _loadTimer  = null;
     _tab        = 'royxat';
     _selIdx     = null;
     _noLocation = false;
     _notFound   = false;
+    _loadError  = false;
+    _loading    = false;
+    _lat = null; _lon = null; _city = ''; _mosques = [];
     _radius     = RADIUS_DEFAULT;
     _userId     = window.App?.state?.user?.id || null;
   }
@@ -71,6 +80,7 @@ const MosquesScreen = (function () {
      Boot sequence
   ══════════════════════════════════════════════ */
   async function _start() {
+    const generation = _generation;
     /* 1. Cached mosque list for this user's location */
     if (_loadFromCache()) {
       _refreshBody();
@@ -85,7 +95,7 @@ const MosquesScreen = (function () {
     /* 2. localStorage coords (set by Location screen or previous geolocation) */
     const sLat = parseFloat(localStorage.getItem('islamtime_last_lat') || '');
     const sLon = parseFloat(localStorage.getItem('islamtime_last_lon') || '');
-    if (sLat && sLon) {
+    if (_validCoords(sLat, sLon)) {
       _lat = sLat; _lon = sLon;
       await _fetchMosques(false);
       return;
@@ -94,11 +104,13 @@ const MosquesScreen = (function () {
     /* 3. Server-stored location for this Telegram user */
     if (_userId) {
       const srv = await _loadLocationFromServer();
+      if (generation !== _generation) return;
       if (srv) {
         _lat = srv.lat; _lon = srv.lon;
         if (srv.city) _city = srv.city;
         localStorage.setItem('islamtime_last_lat', _lat);
         localStorage.setItem('islamtime_last_lon', _lon);
+        window.ThemeEngine?.refresh();
         await _fetchMosques(false);
         return;
       }
@@ -107,6 +119,7 @@ const MosquesScreen = (function () {
     /* 4. Geolocation — Capacitor (Android native) or browser fallback */
     console.log('[GPS] mosques: request started');
     _loadTimer = setTimeout(() => {
+      if (generation !== _generation) return;
       console.log('[GPS] mosques: timeout after', GEO_TIMEOUT, 'ms');
       _showNoLocation();
     }, GEO_TIMEOUT);
@@ -120,6 +133,7 @@ const MosquesScreen = (function () {
 
     navigator.geolocation.getCurrentPosition(
       pos => {
+        if (generation !== _generation) return;
         clearTimeout(_loadTimer);
         if (_mosques.length) return;
         console.log('[GPS] success lat=' + pos.coords.latitude.toFixed(5) + ' lon=' + pos.coords.longitude.toFixed(5));
@@ -127,10 +141,12 @@ const MosquesScreen = (function () {
         _lon = pos.coords.longitude;
         localStorage.setItem('islamtime_last_lat', _lat);
         localStorage.setItem('islamtime_last_lon', _lon);
+        window.ThemeEngine?.setLocation(_lat, _lon);
         _saveLocationToServer(_lat, _lon, '');
         _fetchMosques(false);
       },
       err => {
+        if (generation !== _generation) return;
         clearTimeout(_loadTimer);
         console.log('[GPS] error code=' + err.code + ' msg=' + err.message);
         _showNoLocation();
@@ -150,9 +166,9 @@ const MosquesScreen = (function () {
 
   /* Background refresh when we already have data to show */
   async function _bgRefresh() {
-    const sLat = parseFloat(localStorage.getItem('islamtime_last_lat') || '') || _lat;
-    const sLon = parseFloat(localStorage.getItem('islamtime_last_lon') || '') || _lon;
-    if (!sLat || !sLon) return;
+    const sLat = parseFloat(localStorage.getItem('islamtime_last_lat') || '');
+    const sLon = parseFloat(localStorage.getItem('islamtime_last_lon') || '');
+    if (!_validCoords(sLat, sLon)) return;
     _lat = sLat; _lon = sLon;
     await _fetchMosques(true);
   }
@@ -166,7 +182,7 @@ const MosquesScreen = (function () {
       const r = await fetch(`/api/user/location?user_id=${_userId}`,
         { signal: AbortSignal.timeout(5000) });
       const d = await r.json();
-      if (d.lat) return d;
+      if (_validCoords(d.lat, d.lon)) return d;
     } catch (_e) {}
     return null;
   }
@@ -174,7 +190,7 @@ const MosquesScreen = (function () {
   async function _saveLocationToServer(lat, lon, city) {
     if (!_userId) return;
     try {
-      fetch('/api/user/location', {
+      await fetch('/api/user/location', {
         method : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body   : JSON.stringify({ user_id: _userId, lat, lon, city }),
@@ -185,6 +201,8 @@ const MosquesScreen = (function () {
 
   /* "Lokatsiyani o'zgartirish" — clears all cached coords and re-requests */
   function _changeLocation() {
+    _reset();
+    const generation = _generation;
     localStorage.removeItem('islamtime_last_lat');
     localStorage.removeItem('islamtime_last_lon');
     ['ar','en','id','ur','bn','fr','hi','fa','tr','ru','uz','de','ms','uz_cyr','kk','tg','ky'].forEach(l =>
@@ -196,22 +214,24 @@ const MosquesScreen = (function () {
     _refreshBody();
 
     console.log('[GPS] mosques: change location request');
-    _loadTimer = setTimeout(() => { console.log('[GPS] timeout'); _showNoLocation(); }, GEO_TIMEOUT);
+    _loadTimer = setTimeout(() => { if (generation === _generation) _showNoLocation(); }, GEO_TIMEOUT);
 
     if (!navigator.geolocation) { clearTimeout(_loadTimer); _showNoLocation(); return; }
     navigator.geolocation.getCurrentPosition(
       pos => {
+        if (generation !== _generation) return;
         clearTimeout(_loadTimer);
         console.log('[GPS] success lat=' + pos.coords.latitude.toFixed(5));
         _lat = pos.coords.latitude;
         _lon = pos.coords.longitude;
         localStorage.setItem('islamtime_last_lat', _lat);
         localStorage.setItem('islamtime_last_lon', _lon);
+        window.ThemeEngine?.setLocation(_lat, _lon);
         _saveLocationToServer(_lat, _lon, '');
         _city = '';
         _fetchMosques(false);
       },
-      err => { clearTimeout(_loadTimer); console.log('[GPS] error', err?.code); _showNoLocation(); },
+      err => { if (generation !== _generation) return; clearTimeout(_loadTimer); console.log('[GPS] error', err?.code); _showNoLocation(); },
       { timeout: GEO_TIMEOUT - 500, enableHighAccuracy: true }
     );
     window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('medium');
@@ -221,8 +241,21 @@ const MosquesScreen = (function () {
      Overpass API fetch
   ══════════════════════════════════════════════ */
   async function _fetchMosques(background, radius) {
+    if (!_validCoords(_lat, _lon)) return;
     if (radius === undefined) radius = _radius;
+    const changedRadius = radius !== _radius;
     _radius = radius;
+    _controller?.abort();
+    const controller = new AbortController();
+    _controller = controller;
+    const requestId = ++_requestId;
+    const timeout = setTimeout(() => controller.abort(), 25000);
+    _loadError = false;
+    _notFound = false;
+    _noLocation = false;
+    if (changedRadius) _mosques = [];
+    _loading = !background;
+    _refreshBody();
 
     /* Cast a wide net: mosque/prayer_hall/musalla/community_centre/ahmadiyya */
     const R = radius, LA = _lat, LO = _lon;
@@ -250,15 +283,17 @@ out center tags;`.trim();
         method : 'POST',
         body   : 'data=' + encodeURIComponent(query),
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        signal : AbortSignal.timeout(25000),
+        signal : controller.signal,
       });
       if (!resp.ok) throw new Error('http');
       const data = await resp.json();
+      if (requestId !== _requestId) return;
+      if (!Array.isArray(data.elements) || data.remark) throw new Error('incomplete Overpass response');
 
       const mapped = (data.elements || []).map(e => {
         const lat = e.lat ?? e.center?.lat;
         const lon = e.lon ?? e.center?.lon;
-        if (lat == null || lon == null) return null;
+        if (!_validCoords(lat, lon)) return null;
         const t = e.tags || {};
         return {
           lat, lon,
@@ -272,7 +307,7 @@ out center tags;`.trim();
           website: /^https?:\/\//i.test(t.website || t['contact:website'] || '') ? (t.website || t['contact:website']) : '',
           wheelchair: t.wheelchair === 'yes',
           toilets: t.toilets === 'yes',
-          distance: _haversine(_lat, _lon, lat, lon),
+          distance: _haversine(LA, LO, lat, lon),
         };
       }).filter(Boolean).sort((a, b) => a.distance - b.distance);
 
@@ -287,42 +322,34 @@ out center tags;`.trim();
         }
       }
 
-      /* Auto-expand: 10km → 20km → 50km when fewer than 5 results */
-      if (fresh.length < 5 && radius < RADIUS_MAX && !background) {
-        const next = radius === RADIUS_DEFAULT ? RADIUS_EXPAND : RADIUS_MAX;
-        await _fetchMosques(background, next);
-        return;
+      _mosques = fresh.slice(0, 20);
+      _notFound = !fresh.length;
+      _saveCache();
+      if (!_city) _fetchCity();
+    } catch (_e) {
+      if (requestId === _requestId) _loadError = true;
+    } finally {
+      clearTimeout(timeout);
+      if (requestId === _requestId) {
+        _controller = null;
+        _loading = false;
+        _refreshBody();
+        _updateHeader();
       }
-
-      /* All radii exhausted with 0 results */
-      if (fresh.length === 0 && radius >= RADIUS_MAX) {
-        _notFound = true;
-      }
-
-      if (fresh.length) {
-        _mosques = fresh.slice(0, 20);
-        _saveCache();
-        if (!_city) _fetchCity();
-      }
-
-    } catch (_e) { /* keep whatever is showing */ }
-
-    if (!background || _loading) {
-      _loading = false;
-      _refreshBody();
-      _updateHeader();
     }
   }
 
   /* Reverse geocode for city name */
   async function _fetchCity() {
-    const acceptLang = (_lang === 'ru' || _lang === 'uz_cyr') ? 'ru,en' : _lang === 'en' ? 'en' : 'uz,ru,en';
+    const generation = _generation, lat = _lat, lon = _lon;
+    const acceptLang = _lang === 'uz_cyr' ? 'uz-Cyrl,uz' : normalizeLanguage(_lang);
     try {
       const r = await fetch(
-        `${NOMINATIM_URL}?lat=${_lat}&lon=${_lon}&format=json&zoom=10`,
+        `${NOMINATIM_URL}?lat=${lat}&lon=${lon}&format=json&zoom=10`,
         { headers: { 'Accept-Language': acceptLang }, signal: AbortSignal.timeout(5000) }
       );
       const d = await r.json();
+      if (generation !== _generation || lat !== _lat || lon !== _lon) return;
       const a = d.address || {};
       _city = a.city || a.town || a.suburb || a.county || '';
       _saveCache();
@@ -342,17 +369,19 @@ out center tags;`.trim();
   <div class="nm-tile-ov"></div>
   <div class="ms-hdr-inner">
     <div class="ms-nav-row">
-      <button class="ms-back" id="ms-back">← ${_T('Menyu','Меню','Меню','Menu')}</button>
-      <button class="ms-change-loc" id="ms-change-loc"><span class="material-symbols-rounded" data-icon="location_on" aria-hidden="true">location_on</span> ${_T("O'zgartirish","Ўзгартириш","Изменить","Change")}</button>
-      <div id="ms-status"></div>
+      <button class="ms-back" id="ms-back"><img src="assets/icons/tabler/chevron-right.svg" alt="" aria-hidden="true"><span>${_T('Menyu','Меню','Меню','Menu')}</span></button>
+      <div class="ms-nav-actions">
+        <button class="ms-change-loc" id="ms-change-loc"><img src="assets/icons/tabler/map-pin.svg" alt="" aria-hidden="true"><span id="ms-nav-city">${_T('Joylashuv','Жойлашув','Место','Location')}</span><img class="ms-location-chevron" src="assets/icons/tabler/chevron-right.svg" alt="" aria-hidden="true"></button>
+        <button class="ms-settings-btn" id="ms-settings" type="button" aria-label="Settings"><img src="assets/icons/tabler/settings.svg" alt="" aria-hidden="true"></button>
+      </div>
     </div>
     <div class="ms-title">${_T('Yaqin masjidlar','Яқин масжидлар','Ближайшие мечети','Nearby Mosques')}</div>
-    <div class="ms-loc" id="ms-loc">${_locLine()}</div>
+    <div class="ms-loc">${_T('Allohning uylari','Аллоҳнинг уйлари','Дома Аллаха','Houses of Allah')}</div>
+    <div class="ms-verse" data-quran-verse="9:18"></div>
     <div class="ms-divider"></div>
     <div class="ms-tabs">
-      <button class="ms-tab${_tab === 'royxat' ? ' active' : ''}" data-tab="royxat"><span class="material-symbols-rounded" data-icon="view_list" aria-hidden="true">view_list</span> ${_T("Ro'yxat","Рўйхат","Список","List")}</button>
-      <button class="ms-tab${_tab === 'xarita' ? ' active' : ''}" data-tab="xarita"><span class="material-symbols-rounded" data-icon="map" aria-hidden="true">map</span> ${_T('Xarita','Харита','Карта','Map')}</button>
-      <button class="ms-tab${_tab === 'jadval' ? ' active' : ''}" data-tab="jadval"><span class="material-symbols-rounded" data-icon="calendar_month" aria-hidden="true">calendar_month</span> ${_T('Jadval','Жадвал','Расписание','Schedule')}</button>
+      <button class="ms-tab${_tab === 'royxat' ? ' active' : ''}" data-tab="royxat"><img src="assets/icons/tabler/list.svg" alt="" aria-hidden="true"> ${_T("Ro'yxat","Рўйхат","Список","List")}</button>
+      <button class="ms-tab${_tab === 'xarita' ? ' active' : ''}" data-tab="xarita"><img src="assets/icons/tabler/map.svg" alt="" aria-hidden="true"> ${_T('Xarita','Харита','Карта','Map')}</button>
     </div>
   </div>
 </div>
@@ -361,7 +390,7 @@ out center tags;`.trim();
 
   function _buildContent() {
     if (_loading && !_mosques.length) {
-      return `<div class="ms-loading"><span class="ms-spinner"></span><div class="ms-load-txt">${_T('Joylashuv aniqlanmoqda...','Жойлашув аниқланмоқда...','Определение местоположения...','Detecting location...')}</div></div>`;
+      return `<div class="ms-loading" role="status"><span class="ms-spinner"></span><div class="ms-load-txt">${_validCoords(_lat, _lon) ? t('mosques_loading', _lang) : _T('Joylashuv aniqlanmoqda...','Жойлашув аниқланмоқда...','Определение местоположения...','Detecting location...')}</div></div>`;
     }
     if (_noLocation) {
       return `<div class="ms-noloc">
@@ -384,8 +413,13 @@ out center tags;`.trim();
         </button>
       </div>`;
     }
-    if (_notFound) {
-      return `<div class="ms-noloc">
+    const errorNotice = _loadError ? `<div class="ms-noloc" role="status"><div class="ms-noloc-text">${t('mosques_load_error', _lang)}</div><button type="button" class="ms-noloc-btn" id="ms-retry">${t('mosques_retry', _lang)}</button></div>` : '';
+    if (_loadError && !_mosques.length) return errorNotice;
+    const radiusBar = `<div class="ms-radius-bar" aria-label="${_T('Qidiruv radiusi','Қидирув радиуси','Радиус поиска','Search radius')}">
+      ${[10,2,5,25,50].map(km => `<button type="button" class="ms-radius-btn${_radius === km * 1000 ? ' active' : ''}" data-radius="${km * 1000}">${km} km</button>`).join('')}
+    </div>`;
+    if (_notFound || !_mosques.length) {
+      return radiusBar + `<div class="ms-noloc">
         <div class="ms-noloc-icon">🕌</div>
         <div class="ms-noloc-title">${_T(
           "Bu hududda masjid topilmadi",
@@ -393,36 +427,16 @@ out center tags;`.trim();
           "В этом районе мечетей нет",
           "No mosques found in this area"
         )}</div>
-        <div class="ms-noloc-text">${_T(
-          "50 km radiusda birorta ham masjid topilmadi. Iltimos, boshqa lokatsiya yuboring.",
-          "50 км радиусда ҳеч қандай масжид топилмади. Илтимос, бошқа локация юборинг.",
-          "В радиусе 50 км мечетей не найдено. Попробуйте другое место.",
-          "No mosques found within 50 km. Please share a different location."
-        )}</div>
+        <div class="ms-noloc-text">${_T('{n} km radius','{n} км радиус','{n} км радиус','{n} km radius').replace('{n}', _radius / 1000)}</div>
         <button class="ms-noloc-btn" id="ms-request-loc">
           📍 ${_T("Boshqa lokatsiya yuborish","Бошқа локация юбориш","Другое место","Change Location")}
         </button>
       </div>`;
     }
-    if (!_mosques.length) {
-      return `<div class="ms-empty">🕌 ${_T('Yaqin atrofda masjid topilmadi','Яқин атрофда масжид топилмади','Мечети не найдены','No mosques found nearby')}</div>`;
-    }
-    const rKm = _radius / 1000;
-    const expandNotice = (_radius > RADIUS_DEFAULT)
-      ? `<div class="ms-expand-notice">📍 ${_T(
-          `Yaqin atrofda kam masjid topildi. Qidiruv radiusi {n} km ga kengaytirildi.`.replace('{n}', rKm),
-          `Яқин атрофда кам масжид топилди. Қидирув радиуси {n} км га кенгайтирилди.`.replace('{n}', rKm),
-          `В этом районе мало мечетей. Радиус расширен до {n} км.`.replace('{n}', rKm),
-          'Few mosques nearby. Search radius expanded to {n} km.'
-        ).replace('{n}', rKm)}</div>`
-      : '';
-    const notice = expandNotice;
-    const radiusBar = `<div class="ms-radius-bar" aria-label="${_T('Qidiruv radiusi','Қидирув радиуси','Радиус поиска','Search radius')}">
-      ${[2,5,10,25].map(km => `<button type="button" class="ms-radius-btn${_radius === km * 1000 ? ' active' : ''}" data-radius="${km * 1000}">${km} km</button>`).join('')}
-      <span class="ms-radius-filter">☰ ${_T('Filtr','Филтр','Фильтр','Filter')}</span>
-    </div>`;
-    if (_tab === 'royxat') return radiusBar + notice + (_selIdx !== null ? _buildDetail() : _buildList());
-    if (_tab === 'xarita') return radiusBar + notice + _buildMap();
+    const notice = errorNotice;
+    const foundBar = `<div class="ms-found-bar"><img src="assets/icons/tabler/map-pin.svg" alt="" aria-hidden="true"><span>${_esc(_city) || _T('Yaqin atrof','Яқин атроф','Рядом','Nearby')} ${_T('atrofida','атрофида','—','area') } <strong>${_mosques.length} ${_T('ta','та','','')}</strong> ${_T('masjid topildi','масжид топилди','мечетей найдено','mosques found')}</span><img class="ms-found-info" src="assets/icons/tabler/info-circle.svg" alt="" aria-hidden="true"></div>`;
+    if (_tab === 'royxat') return radiusBar + foundBar + notice + (_selIdx !== null ? _buildDetail() : _buildList());
+    if (_tab === 'xarita') return radiusBar + foundBar + notice + _buildMap();
     if (_tab === 'jadval') return radiusBar + notice + _buildJadval();
     return '';
   }
@@ -436,25 +450,30 @@ out center tags;`.trim();
       const dot    = isOpen === true ? '#4fcfa0' : isOpen === false ? '#e05555' : 'rgba(22,33,43,.28)';
       const txt    = isOpen === true ? `${_T('Ochiq','Очиқ','Открыто','Open')} · ${m.closes || ''}`.trimEnd().replace(/·\s*$/, '') : isOpen === false ? _T('Yopiq','Ёпиқ','Закрыто','Closed') : '';
       const routeUrl = `https://www.google.com/maps/dir/?api=1&destination=${m.lat},${m.lon}`;
-      const facility = [m.wheelchair ? _T('Nogironlar uchun','Ногиронлар учун','Доступная среда','Wheelchair access') : '', m.toilets ? _T('Tahoratxona','Таҳоратхона','Удобства','Facilities') : ''].filter(Boolean);
+      const facility = [m.wheelchair ? _T('Nogironlar uchun','Ногиронлар учун','Доступная среда','Wheelchair access') : '', m.toilets ? _T('Qulayliklar','Қулайликлар','Удобства','Facilities') : ''].filter(Boolean);
       return `<div class="ms-card" data-idx="${i}">
-  <img class="ms-card-photo" src="${m.photo ? _esc(m.photo) : 'assets/reference-ui/mosque-hero.png'}" alt="${_esc(m.name || 'Masjid')}" loading="lazy" referrerpolicy="no-referrer">
+  ${m.photo ? `<img class="ms-card-photo" src="${_esc(m.photo)}" alt="${_esc(m.name)}" loading="lazy" referrerpolicy="no-referrer">` : '<div class="ms-card-photo ms-photo-placeholder" aria-hidden="true"><img src="assets/icons/tabler/mosque.svg" alt=""></div>'}
   <div class="ms-card-top">
     <div class="ms-card-left">
       <div class="ms-card-name">${_esc(m.name || 'Masjid')}</div>
       ${m.ar ? `<div class="ms-card-ar">${_esc(m.ar)}</div>` : ''}
-      ${m.addr ? `<div class="ms-card-addr">📍 ${_esc(m.addr)}</div>` : ''}
+      ${m.addr ? `<div class="ms-card-addr"><img src="assets/icons/tabler/map-pin.svg" alt="" aria-hidden="true">${_esc(m.addr)}</div>` : ''}
     </div>
     <div class="ms-card-right">
       <div class="ms-card-dist">${dist}</div>
-      <div class="ms-card-walk">${walk} ${_T('daqiqa yurish','дақиқа юриш','мин. ходьбы','min walk')}</div>
+      <div class="ms-card-walk">~${walk} ${_T('daqiqa yurish','дақиқа юриш','мин. ходьбы','min walk')}</div>
     </div>
   </div>
   <div class="ms-card-foot">
-    ${txt ? `<div class="ms-open-dot" style="background:${dot}"></div><span class="ms-open-txt" style="color:${dot}">${_esc(txt)}</span>` : ''}
+    <div class="ms-open-line">${txt ? `<div class="ms-open-dot" style="background:${dot}"></div><span class="ms-open-txt" style="color:${dot}">${_esc(txt)}</span>` : ''}</div>
     ${m.opening_hours && !txt ? `<span class="ms-card-hours">${_esc(m.opening_hours.substring(0, 28))}</span>` : ''}
-    ${facility.map(x => `<span class="ms-facility">${_esc(x)}</span>`).join('')}
-    <a class="ms-card-route" href="${routeUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${_T("Yo'nalish","Йўналиш","Маршрут","Directions")} ↗</a>
+    ${m.juma ? `<div class="ms-prayer-mini"><span><img src="assets/icons/tabler/clock.svg" alt="" aria-hidden="true"><small>${_T('Juma namozi','Жума намози','Джума-намаз','Friday prayer')}</small><strong>${_esc(m.juma)}</strong></span></div>` : ''}
+    <div class="ms-facilities">${facility.map(x => `<span class="ms-facility">${_esc(x)}</span>`).join('')}</div>
+  </div>
+  <div class="ms-card-actions">
+    <a class="ms-card-route" href="${routeUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()"><img src="assets/icons/tabler/route.svg" alt="" aria-hidden="true">${_T("Yo'nalish","Йўналиш","Маршрут","Directions")}</a>
+    ${m.phone ? `<a class="ms-card-secondary" href="tel:${_esc(m.phone)}" onclick="event.stopPropagation()"><img src="assets/icons/tabler/phone.svg" alt="" aria-hidden="true">${_T("Qo'ng'iroq","Қўнғироқ","Позвонить","Call")}</a>` : ''}
+    <button class="ms-card-secondary ms-save-btn" data-save-idx="${i}" type="button" aria-pressed="${_isSaved(m)}"><img src="assets/icons/tabler/bookmark.svg" alt="" aria-hidden="true">${_isSaved(m) ? '✓ ' : ''}${_T('Saqlash','Сақлаш','Сохранить','Save')}</button>
   </div>
 </div>`;
     }).join('')}</div>
@@ -475,7 +494,7 @@ out center tags;`.trim();
     const routeUrl = `https://www.google.com/maps/dir/?api=1&destination=${m.lat},${m.lon}`;
     const rows = [
       { l:_T('Manzil','Манзил','Адрес','Address'),    v: m.addr || '—' },
-      { l:_T('Masofa','Масофа','Расстояние','Distance'),    v: `${dist} · ${walk} ${_T('daqiqa yurish','дақиқа юриш','мин. ходьбы','min walk')}` },
+      { l:_T('Masofa','Масофа','Расстояние','Distance'),    v: `${dist} · ~${walk} ${_T('daqiqa yurish','дақиқа юриш','мин. ходьбы','min walk')}` },
       { l:_T('Holat','Ҳолат','Статус','Status'),      v: openTxt, c: openC },
       m.opening_hours ? { l:_T('Ish vaqti','Иш вақти','Часы работы','Opening hours'), v: m.opening_hours } : null,
       m.phone ? { l:_T('Telefon','Телефон','Телефон','Phone'), v: m.phone } : null,
@@ -495,7 +514,7 @@ out center tags;`.trim();
 </div>
 <div class="ms-sec-lbl">${_T("YO'NALISH","ЙЎНАЛИШ","МАРШРУТ","DIRECTIONS")}</div>
 ${[
-  { ic:'🚶', l:_T('Piyoda','Пиёда','Пешком','Walking'),   t:`${walk} ${_T('daqiqa','дақиқа','мин.','min')}`,  c:'#4fcfa0' },
+  { ic:'🚶', l:_T('Piyoda','Пиёда','Пешком','Walking'),   t:`~${walk} ${_T('daqiqa','дақиқа','мин.','min')}`,  c:'#4fcfa0' },
   { ic:'🚌', l:_T('Avtobus','Автобус','Автобус','Bus'),    t:`${bus} ${_T('daqiqa','дақиқа','мин.','min')}`,  c:'#5b9bd5' },
   { ic:'🚗', l:_T('Mashina','Машина','Машина','Car'),      t:`${drive} ${_T('daqiqa','дақиқа','мин.','min')}`, c:'#16794A' },
 ].map(r => `
@@ -580,7 +599,7 @@ ${_mosques.slice(0, 8).map(m => {
   <div class="ms-jadval-grid">
     <div class="ms-jadval-cell"><div class="ms-jadval-lbl">${_T('Juma','Жума','Джума','Jumu\'ah')}</div><div class="ms-jadval-val">${m.juma ? _esc(m.juma) : '—'}</div></div>
     <div class="ms-jadval-cell"><div class="ms-jadval-lbl">${_T('Ish vaqti','Иш вақти','Часы работы','Opening hours')}</div><div class="ms-jadval-val">${m.opening_hours ? _esc(m.opening_hours.substring(0,10)) : '—'}</div></div>
-    <div class="ms-jadval-cell"><div class="ms-jadval-lbl">${_T('Yurish','Юриш','Ходьба','Walk')}</div><div class="ms-jadval-val">${walk} min</div></div>
+    <div class="ms-jadval-cell"><div class="ms-jadval-lbl">${_T('Yurish','Юриш','Ходьба','Walk')}</div><div class="ms-jadval-val">~${walk} min</div></div>
   </div>
 </div>`;
 }).join('')}`;
@@ -594,6 +613,7 @@ ${_mosques.slice(0, 8).map(m => {
       window.App.navigate('screen-dashboard');
     });
     _el.querySelector('#ms-change-loc')?.addEventListener('click', _changeLocation);
+    _el.querySelector('#ms-settings')?.addEventListener('click', () => { SettingsScreen.load(_lang); window.App.navigate('screen-settings'); });
     _el.querySelectorAll('.ms-tab').forEach(btn => {
       btn.addEventListener('click', () => {
         _tab = btn.dataset.tab;
@@ -604,6 +624,17 @@ ${_mosques.slice(0, 8).map(m => {
       });
     });
     _el.querySelector('#ms-body')?.addEventListener('click', e => {
+      if (e.target.closest('#ms-retry')) { _fetchMosques(false); return; }
+      const saveButton = e.target.closest('.ms-save-btn');
+      if (saveButton) {
+        const mosque = _mosques[Number(saveButton.dataset.saveIdx)];
+        if (mosque) {
+          const saved = _savedMosques(), key = `${mosque.lat},${mosque.lon}`;
+          try { localStorage.setItem('islamtime_saved_mosques', JSON.stringify(saved.includes(key) ? saved.filter(id => id !== key) : [...saved, key])); } catch (_e) {}
+          _refreshBody();
+        }
+        return;
+      }
       const radiusBtn = e.target.closest('.ms-radius-btn');
       if (radiusBtn) {
         _selIdx = null;
@@ -636,19 +667,13 @@ ${_mosques.slice(0, 8).map(m => {
   }
 
   function _updateHeader() {
-    const loc = _el?.querySelector('#ms-loc');
-    if (loc) loc.textContent = _locLine();
-    const st = _el?.querySelector('#ms-status');
-    if (st) {
-      st.innerHTML = _mosques.length
-        ? `<div class="ms-status-badge">${_mosques.length} ${_T('ta topildi','та топилди','найдено','found')}</div>`
-        : '';
-    }
+    const navCity = _el?.querySelector('#ms-nav-city');
+    if (navCity) navCity.textContent = _city || _T('Joylashuv','Жойлашув','Место','Location');
   }
 
   function _locLine() {
     const rKm    = _radius / 1000;
-    const rLabel = _T(`${rKm} km radius`, `${rKm} км радиус`, `${rKm} км радиус`, `${rKm} km radius`);
+    const rLabel = _T('{n} km radius','{n} км радиус','{n} км радиус','{n} km radius').replace('{n}', rKm);
     return _city ? `📍 ${_city} · ${rLabel}` : `📍 ${rLabel}`;
   }
 
@@ -658,9 +683,16 @@ ${_mosques.slice(0, 8).map(m => {
   function _loadFromCache() {
     try {
       const c = JSON.parse(localStorage.getItem(_cacheKey()) || 'null');
-      if (c && Array.isArray(c.mosques) && c.mosques.length > 0) {
-        _lat = c.lat; _lon = c.lon; _mosques = c.mosques; _city = c.city || '';
-        return true;
+      const lat = parseFloat(localStorage.getItem('islamtime_last_lat') || '');
+      const lon = parseFloat(localStorage.getItem('islamtime_last_lon') || '');
+      if (c && _validCoords(lat, lon) && _validCoords(c.lat, c.lon)
+          && _haversine(lat, lon, c.lat, c.lon) < 1000
+          && c.savedAt > Date.now() - 86400000 && c.savedAt <= Date.now()
+          && Array.isArray(c.mosques) && c.mosques.length > 0) {
+        _lat = lat; _lon = lon; _radius = c.radius || RADIUS_DEFAULT;
+        _mosques = c.mosques.filter(m => _validCoords(m.lat, m.lon)).map(m => ({...m, distance: _haversine(lat, lon, m.lat, m.lon)}));
+        _city = c.city || '';
+        return _mosques.length > 0;
       }
     } catch (_e) {}
     return false;
@@ -669,7 +701,7 @@ ${_mosques.slice(0, 8).map(m => {
   function _saveCache() {
     try {
       localStorage.setItem(_cacheKey(), JSON.stringify({
-        lat: _lat, lon: _lon, mosques: _mosques, city: _city,
+        lat: _lat, lon: _lon, mosques: _mosques, city: _city, radius: _radius, savedAt: Date.now(),
       }));
     } catch (_e) {}
   }
@@ -679,6 +711,18 @@ ${_mosques.slice(0, 8).map(m => {
   ══════════════════════════════════════════════ */
   function _fmtDist(d) {
     return d < 1000 ? `${Math.round(d)} m` : `${(d / 1000).toFixed(1)} km`;
+  }
+
+  function _validCoords(lat, lon) {
+    return Number.isFinite(lat) && Number.isFinite(lon) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180;
+  }
+
+  function _savedMosques() {
+    try { const saved = JSON.parse(localStorage.getItem('islamtime_saved_mosques') || '[]'); return Array.isArray(saved) ? saved : []; } catch (_e) { return []; }
+  }
+
+  function _isSaved(mosque) {
+    return _savedMosques().includes(`${mosque.lat},${mosque.lon}`);
   }
 
   function _isOpen(hours) {
@@ -696,7 +740,7 @@ ${_mosques.slice(0, 8).map(m => {
   }
 
   function _esc(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
 
   return { render, load };

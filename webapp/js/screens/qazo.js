@@ -36,7 +36,7 @@ const QazoScreen = (function () {
   }
   function _madhhabName(id) {
     const m = MADHHAB_NAMES[id] || MADHHAB_NAMES.hanafi;
-    return m[_lang] || m.en;
+    return localizeRecord(m, _lang);
   }
 
   const LABELS = {

@@ -24,8 +24,8 @@ const HaramaynScreen = (function () {
     madinah: { uz:'Madina', uz_cyr:'Мадина', ru:'Медина', en:'Madinah' },
   };
   const FALLBACK_SITES = [
-    { site_id:'makkah', name_en:'Makkah', mosque_en:'Masjid al-Haram', status:'LIVE_EXTERNAL_ACTIVE', embed_url:null, official_external_url:'https://www.youtube.com/@SaudiQuranTv/live', official_authority:'Saudi Broadcasting Authority · Saudi Quran TV' },
-    { site_id:'madinah', name_en:'Madinah', mosque_en:'Masjid an-Nabawi', status:'LIVE_EXTERNAL_ACTIVE', embed_url:null, official_external_url:'https://www.youtube.com/@SaudiSunnahTv/live', official_authority:'Saudi Broadcasting Authority · Saudi Sunnah TV' },
+    { site_id:'makkah', name_en:'Makkah', mosque_en:'Masjid al-Haram', status:'OFFICIAL_SOURCE_AVAILABLE', embed_url:null, official_external_url:'https://www.youtube.com/@SaudiQuranTv/live', official_authority:'Saudi Broadcasting Authority · Saudi Quran TV' },
+    { site_id:'madinah', name_en:'Madinah', mosque_en:'Masjid an-Nabawi', status:'OFFICIAL_SOURCE_AVAILABLE', embed_url:null, official_external_url:'https://www.youtube.com/@SaudiSunnahTv/live', official_authority:'Saudi Broadcasting Authority · Saudi Sunnah TV' },
   ];
   const MOSQUES = {
     makkah:  { uz:'Masjid al-Haram', uz_cyr:'Масжид ал-Ҳаром', ru:'Masjid al-Haram', en:'Masjid al-Haram' },
@@ -69,7 +69,9 @@ const HaramaynScreen = (function () {
       const r = await fetch('/api/haramayn/status', { signal: AbortSignal.timeout(5000) });
       if (!r.ok) throw new Error('status unavailable');
       const d = await r.json();
-      _sites = d.sites || [];
+      if (!Array.isArray(d.sites) || d.sites.length !== 2 ||
+          d.sites.some(site => !IMAGES[site.site_id])) throw new Error('source registry unavailable');
+      _sites = d.sites;
       body.innerHTML = _sites.map(s => _cardHTML(s)).join('');
       _bindCards(el);
     } catch {
@@ -81,34 +83,30 @@ const HaramaynScreen = (function () {
 
   function _cardHTML(s) {
     const img = IMAGES[s.site_id];
-    const name = NAMES[s.site_id]?.[_lang] || NAMES[s.site_id]?.en || s.name_en;
-    const mosque = MOSQUES[s.site_id]?.[_lang] || MOSQUES[s.site_id]?.en || s.mosque_en;
-    const isLive = (s.status === 'LIVE_EXTERNAL_ACTIVE' && s.official_external_url) || (s.status === 'LIVE_EMBED_ACTIVE' && s.embed_url);
+    const name = localizeRecord(NAMES[s.site_id], _lang);
+    const mosque = localizeRecord(MOSQUES[s.site_id], _lang);
+    // A channel link (including a legacy LIVE status) cannot prove live playback.
+    const hasSource = !!s.official_external_url;
 
     return `
       <div class="hl-card">
         <div class="hl-card-img-wrap">
           <img class="hl-card-img" src="${img}" alt="${mosque}" loading="lazy">
-          <div class="hl-card-badge${isLive ? ' hl-card-badge--live' : ' hl-card-badge--offline'}">
-            ${isLive ? '🔴 LIVE' : _T('Hozircha mavjud emas','Ҳозирча мавжуд эмас','Пока недоступно','Not available yet')}
+          <div class="hl-card-badge hl-card-badge--offline">
+            ${hasSource ? _T('Rasmiy manba mavjud','Расмий манба мавжуд','Официальный источник доступен','Official source available') : _T('Hozircha mavjud emas','Ҳозирча мавжуд эмас','Пока недоступно','Not available yet')}
           </div>
         </div>
         <div class="hl-card-body">
           <div class="hl-card-name">${name}</div>
           <div class="hl-card-mosque">${mosque}</div>
-          <div class="hl-card-note">${isLive ? _T(
-            "Saudiya rasmiy kanalining 24/7 jonli efiri.",
-            "Саудия расмий каналининг 24/7 жонли эфири.",
-            'Официальная круглосуточная трансляция саудовского телеканала.',
-            'Official 24/7 broadcast from Saudi state television.'
-          ) : _T(
-            "Jonli efir hozircha ulanmagan. Rasmiy manba orqali tomosha qiling.",
-            "Жонли эфир ҳозирча уланмаган. Расмий манба орқали томоша қилинг.",
-            'Прямой эфир пока не подключён. Смотрите через официальный источник.',
-            'Live stream is not connected yet. Watch via the official source.'
+          <div class="hl-card-note">${_T(
+            'Jonli efir holati tasdiqlanmagan.',
+            'Жонли эфир ҳолати тасдиқланмаган.',
+            'Статус прямого эфира не подтверждён.',
+            'Live status has not been verified.'
           )}</div>
-          <button class="hl-card-btn" data-url="${s.official_external_url}">
-            ${isLive ? _T("Jonli efirni ochish", "Жонли эфирни очиш", 'Открыть прямой эфир', 'Open live stream') : _T("Rasmiy manbani ochish", "Расмий манбани очиш", 'Открыть официальный источник', 'Open official source')} ↗
+          <button class="hl-card-btn" data-url="${_esc(s.official_external_url)}" ${hasSource ? '' : 'disabled'}>
+            ${_T("Rasmiy manbani ochish", "Расмий манбани очиш", 'Открыть официальный источник', 'Open official source')} ↗
           </button>
           <div class="hl-card-authority">${_esc(s.official_authority)}</div>
         </div>

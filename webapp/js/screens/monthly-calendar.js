@@ -50,8 +50,7 @@ const MonthlyCalendarScreen = (function () {
   }
 
   function _monthLabel() {
-    const names = MONTH_NAMES[_lang] || MONTH_NAMES.en;
-    return `${names[_month - 1]} ${_year}`;
+    return `${t('calendar_gregorian_months', _lang)[_month - 1]} ${_year}`;
   }
 
   function _shellHTML() {
@@ -87,7 +86,7 @@ const MonthlyCalendarScreen = (function () {
     }
     body.innerHTML = `<div class="mc-loading">${_T('Yuklanmoqda…','Юкланмоқда…','Загрузка…','Loading…')}</div>`;
     try {
-      const r = await fetch(`/api/prayer-times/month?lat=${_lat}&lon=${_lon}&month=${_month}&year=${_year}&lang=${_lang}`);
+      const r = await fetch(`/api/prayer-times/month?lat=${_lat}&lon=${_lon}&month=${_month}&year=${_year}&lang=${_lang}&${window.PrayerPreferences.query()}`);
       const d = await r.json();
       if (d.error) throw new Error(d.error);
       body.innerHTML = _tableHTML(d);

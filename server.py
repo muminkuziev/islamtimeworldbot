@@ -97,6 +97,11 @@ WEBHOOK_DOMAIN = _get_webhook_domain()
 
 def _resolve_users_db() -> Path:
     """Pick a writable path for users.db with fallback chain."""
+    if os.getenv("ISLAMTIME_QA_MODE") == "1":
+        # Explicitly isolated QA storage; never inspect or copy real user data.
+        qa_path = BASE_DIR / ".qa-runtime" / "users-test.db"
+        qa_path.parent.mkdir(parents=True, exist_ok=True)
+        return qa_path
     candidates = [
         Path("/app/persist/users.db"),   # Render persistent disk (when mounted)
         Path("/app/data/users.db"),      # Render Docker container
@@ -1305,6 +1310,8 @@ def _scheduler_enabled() -> bool:
     incident this was added for). Set ENABLE_SCHEDULER=true explicitly to
     opt back in for a deliberate local scheduler test.
     """
+    if os.getenv("ISLAMTIME_QA_MODE") == "1":
+        return False
     explicit = os.getenv("ENABLE_SCHEDULER", "").lower()
     if explicit in ("true", "false"):
         return explicit == "true"
@@ -1314,14 +1321,15 @@ def _scheduler_enabled() -> bool:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     _init_users_db()
-    _backup_db()                                      # daily backup on every (re)start
+    if os.getenv("ISLAMTIME_QA_MODE") != "1":
+        _backup_db()                                  # production/local operational backup
     scheduler_on = _scheduler_enabled()
     if scheduler_on:
         await _init_notif_bot()                       # only when the scheduler can actually run
     else:
         print("[SCHED] Notification scheduler DISABLED (not production; "
               "set ENABLE_SCHEDULER=true to force it on for a local test)", flush=True)
-    if _is_production():
+    if os.getenv("ISLAMTIME_QA_MODE") != "1" and _is_production():
         await _init_bot()                             # webhook + commands (prod only)
     notif_task = asyncio.create_task(_notification_scheduler()) if scheduler_on else None
     print(f"[OK] Server ready — uptime tracking started", flush=True)
@@ -1766,6 +1774,7 @@ async def api_prayer_times(
     lon:    float = Query(..., ge=-180, le=180),
     lang:   str   = Query("uz"),
     method: int   = Query(3, ge=0, le=23),
+    school: int   = Query(0, ge=0, le=1),
 ):
     """
     Full prayer times card data:
@@ -1775,12 +1784,12 @@ async def api_prayer_times(
     from domain.prayer.service import prayer_service
     from domain.prayer.extras  import fetch_all_extras
 
-    cache_key = f"{round(lat, 2)},{round(lon, 2)},{method},{lang}"
+    cache_key = f"{lat},{lon},{method},{school},{lang},{datetime.now(timezone.utc).date()}"
     cached = _pt_cache_get(cache_key)
     if cached is not None:
         return JSONResponse(cached)
 
-    prayer_task = prayer_service.get_prayer_data(lat, lon, lang, method)
+    prayer_task = prayer_service.get_prayer_data(lat, lon, lang, method, school)
     extras_task = fetch_all_extras(lat, lon, lang)
 
     prayer_data, extras = await asyncio.gather(prayer_task, extras_task)
@@ -1807,11 +1816,12 @@ async def api_prayer_times_month(
     year:   int   = Query(..., ge=1900, le=2200),
     lang:   str   = Query("uz"),
     method: int   = Query(3, ge=0, le=23),
+    school: int   = Query(0, ge=0, le=1),
 ):
     """Oylik namoz taqvimi — full month, same calculation service as the
     daily Prayer Times screen (domain.prayer.service.PrayerService)."""
     from domain.prayer.service import prayer_service
-    data = await prayer_service.get_monthly_prayer_data(lat, lon, month, year, lang, method)
+    data = await prayer_service.get_monthly_prayer_data(lat, lon, month, year, lang, method, school)
     if not data:
         return JSONResponse(
             {"error": "Could not fetch monthly prayer times. Check coordinates or try again."},
@@ -1863,7 +1873,7 @@ async def api_fiqh(
 async def api_quran_translation_sources():
     """Per-language Quran translation provenance/verification status.
     See domain/quran/translation_registry.py — nothing here is AI-translated,
-    and nothing is marked usable without independent human confirmation."""
+    and source availability is separate from independent license review."""
     from domain.quran.translation_registry import all_sources
     return JSONResponse({"sources": all_sources()})
 
@@ -2010,7 +2020,8 @@ async def api_hadeethenc(
     page: int = Query(1, ge=1),
     limit: int = Query(12, ge=1, le=50),
     q: str = Query("", max_length=160),
-    book: str = Query("", max_length=160),
+    # Verified source attributions reach 254 characters; retain them exactly.
+    book: str = Query("", max_length=512),
     hadith_id: str|None = Query(None, max_length=32),
 ):
     """Verified HadeethEnc list, search and detail."""
@@ -2025,7 +2036,7 @@ async def api_hadeethenc(
     offset = (page - 1) * limit
 
     def _query():
-        con = sqlite3.connect(str(db_path))
+        con = sqlite3.connect(db_path.resolve().as_uri() + "?mode=ro", uri=True)
         con.row_factory = sqlite3.Row
         cur = con.cursor()
         params: list = [language]
@@ -2079,7 +2090,7 @@ async def api_hadeethenc_books(lang: str = Query("en")):
     language = _hadeethenc_lang(lang)
 
     def _query():
-        con = sqlite3.connect(str(db_path))
+        con = sqlite3.connect(db_path.resolve().as_uri() + "?mode=ro", uri=True)
         rows = con.execute(
             "SELECT attribution, COUNT(*) FROM hadeeth_verified WHERE language=? "
             "AND attribution IS NOT NULL AND TRIM(attribution) != '' "
@@ -2094,6 +2105,18 @@ async def api_hadeethenc_books(lang: str = Query("en")):
         return JSONResponse({"books": books, "total": 144, "language": language, "verified": True})
     except Exception as exc:
         return JSONResponse({"error": str(exc)}, status_code=500)
+
+
+@app.get("/api/hadeethenc/daily")
+async def api_hadeethenc_daily(lang: str = Query("en")):
+    """Read-only daily verified content; independent of location permission."""
+    from domain.prayer.extras import get_daily_hadith
+
+    language = _hadeethenc_lang(lang)
+    hadith = await asyncio.to_thread(get_daily_hadith, language)
+    if not hadith:
+        return JSONResponse({"error": "Verified hadith unavailable", "language": language}, status_code=503)
+    return JSONResponse({"hadith": hadith, "language": language, "verified": True})
 
 
 # ── Android App: Device Registration (FCM token) ──────────────────────────

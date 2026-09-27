@@ -1,7 +1,7 @@
 """Prayer times domain service — fetches, processes, and formats data."""
 
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -219,8 +219,9 @@ def _calc_next_prayer(timings: dict, tz_str: str) -> dict:
     """Return the next salah key, local time, and countdown info."""
     try:
         tz = ZoneInfo(tz_str)
-    except (ZoneInfoNotFoundError, Exception):
-        tz = ZoneInfo("UTC")
+    except (ZoneInfoNotFoundError, ValueError):
+        # UTC must remain usable on Windows even before the tzdata wheel is installed.
+        tz = timezone.utc
 
     now = datetime.now(tz)
 
@@ -264,11 +265,12 @@ class PrayerService:
         lon: float,
         lang: str = "uz",
         method: int = 3,
+        school: int = 0,
     ) -> Optional[dict]:
         """Fetch, parse, and return all prayer data for a location."""
 
         aladhan_data, geo_data = await asyncio.gather(
-            fetch_timings(lat, lon, method),
+            fetch_timings(lat, lon, method, school),
             reverse_geocode(lat, lon),
         )
 
@@ -310,6 +312,7 @@ class PrayerService:
             "country":      geo_data.get("country", ""),
             "country_code": geo_data.get("country_code", ""),
             "timezone":     tz_str,
+            "school":       school,
             "method":       (meta.get("method") or {}).get("name", "") if isinstance(meta.get("method"), dict) else "",
             "prayers":      prayers,
             "next_prayer":  next_prayer,
@@ -317,6 +320,7 @@ class PrayerService:
                 "day":      hijri.get("day", ""),
                 "month_en": hijri_m.get("en", ""),
                 "month_ar": hijri_m.get("ar", ""),
+                "month_num": hijri_m.get("number", ""),
                 "year":     hijri.get("year", ""),
                 "full":     f"{hijri.get('day','')} {month_name} {hijri.get('year','')}",
             },
@@ -339,6 +343,7 @@ class PrayerService:
         year: int,
         lang: str = "uz",
         method: int = 3,
+        school: int = 0,
     ) -> Optional[dict]:
         """Full month of prayer times for the Oylik namoz taqvimi screen.
 
@@ -350,7 +355,7 @@ class PrayerService:
         from infrastructure.external.aladhan_api import fetch_calendar
 
         calendar_data, geo_data = await asyncio.gather(
-            fetch_calendar(lat, lon, month, year, method),
+            fetch_calendar(lat, lon, month, year, method, school),
             reverse_geocode(lat, lon),
         )
         if not calendar_data:
@@ -381,6 +386,7 @@ class PrayerService:
             "month":   month,
             "year":    year,
             "days":    days,
+            "school":  school,
             "lat": lat, "lon": lon,
         }
 

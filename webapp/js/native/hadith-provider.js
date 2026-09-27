@@ -4,14 +4,23 @@ const HadithRegistry = (function () {
   const CANONICAL = new Set(['ar','en','id','ur','bn','fr','hi','fa','tr','ru','uz','de','ms']);
   const ALIASES = { uz_cyr:'uz' };
   function language(code) {
-    const value = ALIASES[code] || code || 'en';
+    const normalized = String(code || 'en').toLowerCase().replace(/-/g, '_');
+    const value = ALIASES[normalized] || normalized;
     return CANONICAL.has(value) ? value : 'en';
   }
-  async function request(path, params) {
+  async function request(path, params, signal) {
     const query = new URLSearchParams(params || {});
-    const response = await fetch(path + (query.toString() ? '?' + query : ''));
+    const response = await fetch(path + (query.toString() ? '?' + query : ''), { signal });
     if (!response.ok) throw new Error('Hadith request failed');
-    return response.json();
+    const data = await response.json();
+    if (data.language !== params.lang || data.verified !== true) throw new Error('Hadith source/language mismatch');
+    if (path.endsWith('/books') ? !Array.isArray(data.books) : !Array.isArray(data.hadiths)) {
+      throw new Error('Invalid Hadith provider response');
+    }
+    if (data.hadiths && data.hadiths.some(row => row.language !== params.lang || !row.text || row.source !== 'hadeethenc.com')) {
+      throw new Error('Hadith content provenance mismatch');
+    }
+    return data;
   }
   const verified = {
     key: 'hadeethenc',
@@ -21,7 +30,7 @@ const HadithRegistry = (function () {
       return request('/api/hadeethenc', {
         page: page || 1, limit: limit || 12, lang: language(lang),
         q: filters?.q || '', book: filters?.book || ''
-      });
+      }, filters?.signal);
     },
     detail(id, lang) {
       return request('/api/hadeethenc', { hadith_id:id, lang:language(lang), limit:1 });

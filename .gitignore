@@ -118,3 +118,7 @@ serviceAccountKey.json
 # ── Real user data (PII — NEVER commit) ────────────────────
 users.db
 data/users.db
+
+# Isolated completion QA; never stage browser profiles or test user storage.
+.qa*
+backups/completion-*/

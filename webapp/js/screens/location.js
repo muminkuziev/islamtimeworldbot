@@ -29,8 +29,8 @@ const LocationScreen = (function () {
 
   let _loading = false;
 
-  function _lc(key, lang) { const n = LC[key]; return n ? (n[lang] || n.en || '') : ''; }
-  function _mazhName(k, lang) { const n = MAZH_NAMES[k]; return n ? (n[lang] || n.en || k) : k; }
+  function _lc(key, lang) { const n = LC[key]; return n ? localizeRecord(n, lang) : ''; }
+  function _mazhName(k, lang) { const n = MAZH_NAMES[k]; return n ? localizeRecord(n, lang) : k; }
 
   /* ── Entry points ─────────────────────────────────────────── */
   function render() {
@@ -176,7 +176,7 @@ const LocationScreen = (function () {
       _loading = false;
       if (lbl) lbl.textContent = _lc('gpsBtn', lang);
       const msg = ERR[code] || ERR[2];
-      const text = msg[lang] || msg[lang.split('_')[0]] || msg.en;
+      const text = localizeRecord(msg, lang);
       const old = document.getElementById('lc-gps-err');
       if (old) old.remove();
       const div = document.createElement('div');
@@ -188,10 +188,12 @@ const LocationScreen = (function () {
     }
 
     /* Save coordinates and sync to server, then go to dashboard */
-    function _saveAndGo(lat, lon) {
+    function _saveAndGo(lat, lon, approximate = false) {
       localStorage.setItem('islamtime_location_asked', '1'); /* only written on GPS success */
       localStorage.setItem('islamtime_last_lat', String(lat));
       localStorage.setItem('islamtime_last_lon', String(lon));
+      if (approximate) window.ThemeEngine?.refresh();
+      else window.ThemeEngine?.setLocation(lat, lon);
       /* Sync to server — Telegram user_id (web) or device_id (native Android) */
       const userId   = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
       const deviceId = window.IslamNative?.deviceId?.();
@@ -214,7 +216,7 @@ const LocationScreen = (function () {
         .then(function(r) { return r.json(); })
         .then(function(d) {
           if (d && d.latitude && d.longitude) {
-            _saveAndGo(parseFloat(d.latitude), parseFloat(d.longitude));
+            _saveAndGo(parseFloat(d.latitude), parseFloat(d.longitude), true);
           } else { _showError(2); }
         })
         .catch(function() { _showError(2); });

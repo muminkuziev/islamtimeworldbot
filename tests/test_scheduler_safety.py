@@ -18,9 +18,12 @@ import pytest
 @pytest.fixture
 def server_module(monkeypatch):
     monkeypatch.setenv("BOT_TOKEN", "test-token-not-real")
+    monkeypatch.setenv("ISLAMTIME_QA_MODE", "1")
     import server
     importlib.reload(server)
+    monkeypatch.delenv("ISLAMTIME_QA_MODE", raising=False)
     yield server
+    monkeypatch.setenv("ISLAMTIME_QA_MODE", "1")
     importlib.reload(server)
 
 
@@ -47,3 +50,11 @@ def test_explicit_override_false_wins_even_in_production(server_module, monkeypa
     monkeypatch.setenv("RENDER", "true")
     monkeypatch.setenv("ENABLE_SCHEDULER", "false")
     assert server_module._scheduler_enabled() is False
+
+
+def test_qa_mode_cannot_enable_real_scheduler(server_module, monkeypatch):
+    monkeypatch.setenv("ISLAMTIME_QA_MODE", "1")
+    monkeypatch.setenv("RENDER", "true")
+    monkeypatch.setenv("ENABLE_SCHEDULER", "true")
+    assert server_module._scheduler_enabled() is False
+    assert server_module._resolve_users_db() == server_module.BASE_DIR / ".qa-runtime" / "users-test.db"

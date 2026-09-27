@@ -111,20 +111,20 @@ const QiblaScreen = (function () {
   <div class="nm-tile-ov"></div>
   <div class="qb-hdr-inner">
     <div class="qb-nav-row">
-      <button class="qb-back" id="qb-back">← ${_T('Menyu','Меню','Меню','Menu')}</button>
+      <button class="qb-back" id="qb-back"><img src="assets/icons/tabler/chevron-right.svg" alt="" aria-hidden="true"><span>${_T('Menyu','Меню','Меню','Menu')}</span></button>
       <div class="qb-nav-actions">
         <div id="qb-gps-badge"></div>
-        <button class="qb-settings-btn" id="qb-settings" aria-label="Settings"><span class="material-symbols-rounded" data-icon="settings" aria-hidden="true">settings</span></button>
+        <button class="qb-settings-btn" id="qb-settings" aria-label="Settings"><img src="assets/icons/tabler/settings.svg" alt="" aria-hidden="true"></button>
       </div>
     </div>
     <div class="qb-title">${_T("Qibla yo'nalishi","Қибла йўналиши","Направление Киблы","Qibla Direction")}</div>
     <div class="qb-artitle">اتجاه القبلة · Masjid al-Haram</div>
-    <div class="qb-verse-intro">“${_T('Masjid al-Haram tomonga yuzlan','Масжид ал-Ҳарам томонига юзлан','Обратись лицом к Масджид аль-Хараму','Turn your face toward Masjid al-Haram')}”<br><span>Al-Baqara 2:144</span></div>
+    <div class="qb-verse-intro" data-quran-verse="2:144"></div>
     <div class="qb-hdivider"></div>
     <div class="qb-tabs">
-      <button class="qb-tab active" data-tab="kompas"><span class="material-symbols-rounded" data-icon="explore" aria-hidden="true">explore</span> ${_T('Kompas','Компас','Компас','Compass')}</button>
-      <button class="qb-tab" data-tab="xarita"><span class="material-symbols-rounded" data-icon="map" aria-hidden="true">map</span> ${_T('Xarita','Харита','Карта','Map')}</button>
-      <button class="qb-tab" data-tab="malumot"><span class="material-symbols-rounded" data-icon="info" aria-hidden="true">info</span> ${_T("Ma'lumot","Маълумот","Информация","Info")}</button>
+      <button class="qb-tab active" data-tab="kompas"><img src="assets/icons/tabler/compass.svg" alt="" aria-hidden="true"> ${_T('Kompas','Компас','Компас','Compass')}</button>
+      <button class="qb-tab" data-tab="xarita"><img src="assets/icons/tabler/map.svg" alt="" aria-hidden="true"> ${_T('Xarita','Харита','Карта','Map')}</button>
+      <button class="qb-tab" data-tab="malumot"><img src="assets/icons/tabler/info-circle.svg" alt="" aria-hidden="true"> ${_T("Ma'lumot","Маълумот","Информация","Info")}</button>
     </div>
   </div>
 </div>
@@ -284,9 +284,7 @@ const QiblaScreen = (function () {
   </div>
 
   <div class="qb-calibrate-tip">
-    <div class="qb-calibrate-copy">${_T('Aniqroq natija uchun telefoningizni','Аниқроқ натижа учун телефонингизни','Для точного результата переместите телефон','For better accuracy, move your phone')}
-    ${(_lang === 'ru' || _lang === 'en') ? '' : `<span> "8-${_T('raqam','рақам')}" </span>`}
-    ${_T('shaklida harakatlantiring','шаклида ҳаракатлантиринг',_lang === 'ru' ? 'в форме цифры "8"' : '', _lang === 'en' ? 'in a figure-8 pattern' : '')}</div>
+    <div class="qb-calibrate-copy">${_T('Kompasni sozlash uchun telefonni 8 shaklida harakatlantiring','Компасни созлаш учун телефонни 8 шаклида ҳаракатлантиринг','Для калибровки компаса двигайте телефон восьмёркой','Calibrating compass — move your phone in a figure-8')}</div>
     <img src="assets/reference-ui/qibla-calibration.png" alt="" aria-hidden="true">
   </div>
 
@@ -504,6 +502,7 @@ const QiblaScreen = (function () {
           lm.getLocation(loc => {
             if (loc) {
               _lat = loc.latitude; _lon = loc.longitude;
+              window.ThemeEngine?.setLocation(_lat, _lon);
               _computeAndShow(); _startOrientation();
             } else _browserGeo();
           });
@@ -526,6 +525,7 @@ const QiblaScreen = (function () {
         _gpsAccuracyM = (typeof pos.coords.accuracy === 'number' && pos.coords.accuracy > 0) ? pos.coords.accuracy : null;
         localStorage.setItem('islamtime_last_lat', _lat);
         localStorage.setItem('islamtime_last_lon', _lon);
+        window.ThemeEngine?.setLocation(_lat, _lon);
         if (_gpsAccuracyM !== null) localStorage.setItem('islamtime_last_accuracy', _gpsAccuracyM);
         localStorage.setItem('islamtime_last_location_at', Date.now());
         _show('#qb-location-error-badge', false);
@@ -574,8 +574,9 @@ const QiblaScreen = (function () {
     /* GPS badge in header */
     const gpsBadge = _el?.querySelector('#qb-gps-badge');
     if (gpsBadge) gpsBadge.innerHTML =
-      `<div class="qb-gps-dot"></div>
-       <span class="qb-gps-txt">GPS${_city ? ' · '+_city : ' · ' + _T('Topildi','Топилди','Найдено','Found')}</span>`;
+      `<img src="assets/icons/tabler/map-pin.svg" alt="" aria-hidden="true">
+       <span class="qb-gps-txt">${_city || _T('Joylashuv topildi','Жойлашув топилди','Место найдено','Location found')}</span>
+       <img class="qb-gps-chevron" src="assets/icons/tabler/chevron-right.svg" alt="" aria-hidden="true">`;
 
     /* Kompas: swap badges (found-vs-calibrating handled by _updateQualityBadge,
        gated on real GPS+compass quality, never shown unconditionally), fill grid */
@@ -766,7 +767,11 @@ const QiblaScreen = (function () {
     ur:     ['شمال','شمال مشرق','مشرق','جنوب مشرق','جنوب','جنوب مغرب','مغرب','شمال مغرب'],
   };
   function _dirLabel(a) {
-    const d = DIR_MAP[_lang] || DIR_MAP.en;
+    const d = DIR_MAP[_lang] || {
+      bn: ['উত্তর','উত্তর-পূর্ব','পূর্ব','দক্ষিণ-পূর্ব','দক্ষিণ','দক্ষিণ-পশ্চিম','পশ্চিম','উত্তর-পশ্চিম'],
+      fa: ['شمال','شمال شرقی','شرق','جنوب شرقی','جنوب','جنوب غربی','غرب','شمال غربی'],
+      ms: ['Utara','Timur laut','Timur','Tenggara','Selatan','Barat daya','Barat','Barat laut']
+    }[_lang] || DIR_MAP.en;
     return d[Math.round(a / 45) % 8];
   }
 

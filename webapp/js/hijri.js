@@ -42,7 +42,9 @@ window.HijriCalc = (function () {
     }
 
     function monthName(monthNum, lang) {
-        const m = _MONTHS[lang] || _MONTHS.en;
+        const normalized = typeof normalizeLanguage === 'function' ? normalizeLanguage(lang) : lang;
+        const m = typeof I18N !== 'undefined' && I18N.calendar_hijri_months[normalized]
+          ? I18N.calendar_hijri_months[normalized] : (_MONTHS[normalized] || _MONTHS.en);
         return m[monthNum - 1] || '';
     }
 

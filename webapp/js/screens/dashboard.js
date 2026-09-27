@@ -180,7 +180,7 @@ const DashboardScreen = (function () {
   Object.assign(L.seconds,{fa:'ثانیه',bn:'সেকেন্ড',ms:'saat'}); Object.assign(L.remaining,{fa:'مانده',bn:'বাকি',ms:'lagi'});
   function _l(key) {
     const d = L[key];
-    return d ? (d[_lang] || d.en || '') : key;
+    return d ? localizeRecord(d, _lang) : key;
   }
 
   /* ══════════════════════════════════════════════
@@ -197,6 +197,7 @@ const DashboardScreen = (function () {
     _loadCity();
     _loadPrayer();
     _loadHaramaynRow();
+    _loadDailyHadith();
   }
 
   function update(lang) {
@@ -211,13 +212,13 @@ const DashboardScreen = (function () {
     const uzHomeTitles = { quran:"Qur’on", hadith:'Hadislar', qibla:'Qibla', calendar:'Hijriy taqvim', dhikr:'Duolar va zikr', boshqalar:'Boshqalar' };
     const tiles = MODULES.filter(mod => HOME_MODULES.has(mod.key)).sort((a, b) => HOME_ORDER.indexOf(a.key) - HOME_ORDER.indexOf(b.key)).map(mod => {
       const title = _lang === 'uz' ? uzHomeTitles[mod.key] : t('modules_list.' + mod.key, _lang);
-      const sub   = _lang === 'uz'     ? mod.sub
+      const sub   = mod.key === 'hadith' ? '144 ' + localizeRecord(_EXTRA_T['Verified hadiths'], _lang) : (_lang === 'uz'     ? mod.sub
                   : _lang === 'uz_cyr' ? (mod.sub_cyr || mod.sub)
-                  : (CANONICAL_HOME_SUBS[_lang]?.[mod.key] || mod['sub_' + _lang] || mod.sub_en || mod.sub);
+                  : (CANONICAL_HOME_SUBS[_lang]?.[mod.key] || mod['sub_' + _lang] || mod.sub_en || mod.sub));
       return `
         <div class="db-tile-wrap">
           <div class="db-cell" data-module="${mod.key}" role="button" tabindex="0">
-            <span class="db-cell-icon" aria-hidden="true">${_moduleIconSvg(mod.key)}</span>
+            <span class="db-cell-icon" aria-hidden="true">${_moduleIconImg(mod.key)}</span>
             <div class="db-cell-title">${title}</div>
             <div class="db-cell-sub">${sub}</div>
           </div>
@@ -233,7 +234,7 @@ const DashboardScreen = (function () {
     <div class="db-top-row">
       <div class="db-location-block">
         <div class="db-location-line">
-          <span class="db-location-pin" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 22s7-6.2 7-13A7 7 0 1 0 5 9c0 6.8 7 13 7 13Z"/><circle cx="12" cy="9" r="2.4"/></svg></span>
+          <span class="db-location-pin" aria-hidden="true"><img src="assets/icons/tabler/map-pin.svg" alt=""></span>
           <span class="db-city-name" id="db-city-name">GPS</span>
         </div>
         <div class="db-location-date">
@@ -244,12 +245,13 @@ const DashboardScreen = (function () {
       </div>
       <div class="db-top-right">
         <button class="db-notify-btn" id="db-notify-btn" type="button" aria-label="${_T('Bildirishnomalar','Билдиришномалар','Уведомления','Notifications')}">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
+          <img src="assets/icons/tabler/bell.svg" alt="" aria-hidden="true">
           <i aria-hidden="true"></i>
         </button>
       </div>
     </div>
 
+    <div class="db-brand"><strong>IslamTimeWorld</strong><span>${t('sloganDua', _lang)}</span></div>
     <div class="db-divider"></div>
 
     <div class="db-next-wrap">
@@ -257,12 +259,12 @@ const DashboardScreen = (function () {
         <div class="db-next-topline"></div>
         <div class="db-next-row">
           <div class="db-next-main">
-            <div class="db-next-lbl">${_l('nextPrayer')}</div>
+            <div class="db-next-lbl">${_T('Keyingi namoz','Кейинги намоз','Следующий намаз','Next prayer')}</div>
             <div class="db-next-name" id="db-np-name">—</div>
             <div class="db-next-remain" id="db-np-remain">${_l('loading')}</div>
-            <div class="db-next-time-line"><span class="material-symbols-rounded" data-icon="schedule" aria-hidden="true">schedule</span><span class="db-next-time" id="db-np-time">—:—</span><span>${_T('da','да','в','')}</span></div>
+            <div class="db-next-time-line"><img src="assets/icons/tabler/clock.svg" alt="" aria-hidden="true"><span class="db-next-time" id="db-np-time">—:—</span><span>${_T('da','да','в','')}</span></div>
           </div>
-          <button class="db-adhan-btn" type="button" aria-label="${_T('Azon','Азон','Азан','Adhan')}"><span class="material-symbols-rounded" data-icon="volume_up" aria-hidden="true">volume_up</span></button>
+          <button class="db-adhan-btn" type="button" aria-label="${_T('Namoz vaqtlari','Намоз вақтлари','Время намаза','Prayer times')}"><img src="assets/icons/tabler/chevron-right.svg" alt="" aria-hidden="true"></button>
           <div class="db-next-sub" id="db-np-sub">—</div>
         </div>
         <div class="db-prog">
@@ -286,14 +288,14 @@ const DashboardScreen = (function () {
   <div class="db-grid">${tiles}</div>
 
   <button class="db-hadith-card" id="db-hadith-card" type="button">
-    <span class="material-symbols-rounded db-hadith-icon" data-icon="auto_stories" aria-hidden="true">auto_stories</span>
+    <span class="db-hadith-icon" aria-hidden="true"><img src="assets/icons/tabler/book-2.svg" alt=""></span>
     <span class="db-hadith-copy">
       <strong>${_T('Kun hadisi','Кун ҳадиси','Хадис дня','Hadith of the day')}</strong>
-      <span class="db-hadith-quote" id="db-hadith-daily">“${_T("Amallar niyatlariga bog‘liqdir.","Амаллар ниятларига боғлиқдир.","Дела оцениваются по намерениям.","Actions are judged by intentions.")}”</span>
-      <small id="db-hadith-source">HadeethEnc ID: 65000 | ${_T('Buxoriy, Muslim','Бухорий, Муслим','Аль-Бухари, Муслим','Bukhari, Muslim')}</small>
+      <span class="db-hadith-quote" id="db-hadith-daily">${_l('loading')}</span>
+      <small id="db-hadith-source"></small>
     </span>
-    <span class="db-hadith-grade">${_T('Sahih','Саҳиҳ','Сахих','Sahih')}</span>
-    <span class="material-symbols-rounded db-hadith-arrow" data-icon="chevron_right" aria-hidden="true">chevron_right</span>
+    <span class="db-hadith-grade" hidden></span>
+    <span class="db-hadith-arrow" aria-hidden="true"><img src="assets/icons/tabler/chevron-right.svg" alt=""></span>
   </button>
 
   <div class="db-section-lbl db-haramayn-label"><span>${_T('Haramayn','Ҳарамайн','Харамайн','Haramayn')}</span><button type="button" id="db-haramayn-all">${_T("Barchasini ko'rish",'Барчасини кўриш','Смотреть все','View all')} <span aria-hidden="true">›</span></button></div>
@@ -307,40 +309,31 @@ const DashboardScreen = (function () {
 
   function _T(lat, cyr, ru, en) { return _resolveT(lat, cyr, ru, en, _lang); }
 
-  function _moduleIconSvg(key) {
-    const start = '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">';
-    const icons = {
-      quran:'<path d="M4 7c4-1 8 .2 12 3v17c-4-3-8-4-12-3V7Zm24 0c-4-1-8 .2-12 3v17c4-3 8-4 12-3V7Z"/><path d="M16 10v17"/>',
-      hadith:'<rect x="5" y="7" width="22" height="20" rx="2"/><path d="M10 4v6m12-6v6M5 13h22M10 18h3m4 0h3m-10 5h3m4 0h3"/>',
-      qibla:'<circle cx="16" cy="16" r="12"/><path d="m20.5 11.5-3 7-7 3 3-7 7-3Z"/>',
-      calendar:'<rect x="5" y="7" width="22" height="20" rx="2"/><path d="M10 4v6m12-6v6M5 13h22M10 18h3m4 0h3m-10 5h3m4 0h3"/>',
-      dhikr:'<path d="M10 27c-3-3-5-6-5-10 0-2 2-3 3-1v-6c0-2 3-2 3 0v5-8c0-2 3-2 3 0v8-6c0-2 3-2 3 0v8-4c0-2 3-2 3 0v8c0 3-2 5-4 7m6-2c3-2 5-5 5-9 0-2-2-3-3-1"/>',
-      boshqalar:'<circle cx="7" cy="16" r="2.4" fill="currentColor" stroke="none"/><circle cx="16" cy="16" r="2.4" fill="currentColor" stroke="none"/><circle cx="25" cy="16" r="2.4" fill="currentColor" stroke="none"/>'
-    };
-    return start + (icons[key] || icons.boshqalar) + '</svg>';
+  function _moduleIconImg(key) {
+    const names = { quran:'book-2', hadith:'calendar', qibla:'compass', calendar:'calendar', dhikr:'pray', boshqalar:'dots' };
+    return `<img src="assets/icons/tabler/${names[key] || 'dots'}.svg" alt="">`;
   }
 
-  function _prayerIconSvg(index) {
-    if (index === 0) return '<svg viewBox="0 0 24 24"><path d="M4 15h16M6 15a6 6 0 0 1 12 0M12 4v3M4.5 7.5l2 2M19.5 7.5l-2 2"/></svg>';
-    if (index === 1 || index === 2) return '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10 2 2M19 5l-2 2M7 17l-2 2"/></svg>';
-    return '<svg viewBox="0 0 24 24"><path d="M20 15.5A8 8 0 0 1 8.5 4 8.5 8.5 0 1 0 20 15.5Z"/></svg>';
+  function _prayerIconImg(index) {
+    const name = index === 0 ? 'sunrise' : (index < 3 ? 'sun' : 'moon');
+    return `<img src="assets/icons/tabler/${name}.svg" alt="">`;
   }
 
   async function _loadHaramaynRow() {
     const wrap = _el?.querySelector('#db-haramayn-row');
     if (!wrap) return;
     const fallback = [
-      { site_id:'makkah', mosque_en:'Masjid al-Haram', status:'LIVE_EXTERNAL_ACTIVE', official_external_url:'https://www.youtube.com/@SaudiQuranTv/live' },
-      { site_id:'madinah', mosque_en:'Masjid an-Nabawi', status:'LIVE_EXTERNAL_ACTIVE', official_external_url:'https://www.youtube.com/@SaudiSunnahTv/live' },
+      { site_id:'makkah', mosque_en:'Masjid al-Haram', status:'UNAVAILABLE_NOT_CONFIRMED', official_external_url:'https://www.youtube.com/@SaudiQuranTv/live' },
+      { site_id:'madinah', mosque_en:'Masjid an-Nabawi', status:'UNAVAILABLE_NOT_CONFIRMED', official_external_url:'https://www.youtube.com/@SaudiSunnahTv/live' },
     ];
     const paint = sites => {
       const IMG = { makkah:'assets/landing/haram-makkah.webp', madinah:'assets/landing/haram-madinah.webp' };
-      const NAME = { makkah:_T('Makkah LIVE','Макка LIVE','Мекка LIVE','Makkah LIVE'), madinah:_T('Madinah LIVE','Мадина LIVE','Медина LIVE','Madinah LIVE') };
+      const NAME = { makkah:_T('Makka','Макка','Мекка','Makkah'), madinah:_T('Madina','Мадина','Медина','Madinah') };
       const MOSQUE = { makkah:'Masjid al-Haram', madinah:'Masjid an-Nabaviy' };
       wrap.innerHTML = sites.map(site => `
         <button class="db-haramayn-mini" data-site="${site.site_id}">
           <img src="${IMG[site.site_id]}" alt="${site.mosque_en}" loading="lazy">
-          <div class="db-haramayn-mini-badge">${site.status === 'LIVE_EXTERNAL_ACTIVE' || site.status === 'LIVE_EMBED_ACTIVE' ? '<span aria-hidden="true">▶</span> LIVE' : _T('Mavjud emas','Мавжуд эмас','Недоступно','Unavailable')}</div>
+          <div class="db-haramayn-mini-badge">${site.live_verified === true && Date.now() - Date.parse(site.verified_at) < 300000 && (site.status === 'LIVE_EXTERNAL_ACTIVE' || site.status === 'LIVE_EMBED_ACTIVE') ? '<span aria-hidden="true">▶</span> LIVE' : _T('Rasmiy manbani ochish','Расмий манбани очиш','Открыть официальный источник','Open official source')}</div>
           <div class="db-haramayn-mini-copy"><strong>${NAME[site.site_id]}</strong><small>${MOSQUE[site.site_id]}</small></div>
         </button>`).join('');
       wrap.querySelectorAll('.db-haramayn-mini').forEach((btn, index) => btn.addEventListener('click', () => {
@@ -364,6 +357,7 @@ const DashboardScreen = (function () {
      Events
   ══════════════════════════════════════════════ */
   function _bindEvents() {
+    _el.querySelector('.db-adhan-btn')?.addEventListener('click', () => _onModuleTap('prayer'));
     _el.querySelector('#db-hadith-card')?.addEventListener('click', () => _onModuleTap('hadith'));
     _el.querySelector('#db-haramayn-all')?.addEventListener('click', () => { HaramaynScreen.load(_lang); window.App.navigate('screen-haramayn'); });
 
@@ -390,12 +384,8 @@ const DashboardScreen = (function () {
     if (!uzEl || !arEl) return;
 
     const n = new Date();
-    const days   = DAYS_MAP[_lang]   || DAYS_MAP.en;
-    const months = MONTHS_MAP[_lang] || MONTHS_MAP.en;
-    uzEl.textContent = `${days[n.getDay()]}, ${String(n.getDate()).padStart(2,'0')} ${months[n.getMonth()]} ${n.getFullYear()}`;
-
-    const h = window.HijriCalc.toHijriFromDate(n);
-    arEl.textContent = window.HijriCalc.formatArabic(h);
+    uzEl.textContent = formatLocalizedDate(n, _lang, { weekday:true });
+    arEl.textContent = formatLocalizedDate(n, _lang, { calendar:'islamic' });
   }
 
   /* ══════════════════════════════════════════════
@@ -411,7 +401,7 @@ const DashboardScreen = (function () {
     /* 2. Stored coords → Nominatim (language-aware) */
     const sLat = parseFloat(localStorage.getItem('islamtime_last_lat') || '');
     const sLon = parseFloat(localStorage.getItem('islamtime_last_lon') || '');
-    if (sLat && sLon) { _fetchCity(sLat, sLon); return; }
+    if (Number.isFinite(sLat) && Number.isFinite(sLon)) { _fetchCity(sLat, sLon); return; }
 
     /* 3. Browser geo */
     if (navigator.geolocation) {
@@ -425,13 +415,7 @@ const DashboardScreen = (function () {
 
   async function _fetchCity(lat, lon) {
     /* Language-specific Accept-Language so Nominatim returns names in the right script */
-    const acceptLang = (_lang === 'ru' || _lang === 'uz_cyr') ? 'ru,en'
-                     : _lang === 'ar'                         ? 'ar,en'
-                     : _lang === 'en'                         ? 'en'
-                     : _lang === 'tr'                         ? 'tr,en'
-                     : _lang === 'de'                         ? 'de,en'
-                     : _lang === 'fr'                         ? 'fr,en'
-                     :                                          'uz,en';
+    const acceptLang = _lang === 'uz_cyr' ? 'uz' : _lang;
     try {
       const r = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
@@ -455,15 +439,16 @@ const DashboardScreen = (function () {
   /* Recalculate which prayer is next using the CURRENT time (not cached countdown).
      Called every render so the card is never stale even when loaded from cache. */
   function _recalcNextPrayer(data) {
-    const prayers = (data.prayers || []).filter(p => p.key !== 'sunrise');
+    const prayers = (data.prayers || []).filter(p => p.key.toLowerCase() !== 'sunrise');
     const now     = new Date();
-    const nowMin  = now.getHours() * 60 + now.getMinutes();
+    const parts = new Intl.DateTimeFormat('en-GB', { timeZone:data.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone, hour:'2-digit', minute:'2-digit', hourCycle:'h23' }).formatToParts(now);
+    const nowMin = Number(parts.find(p => p.type === 'hour').value) * 60 + Number(parts.find(p => p.type === 'minute').value);
     const nowSec  = now.getSeconds();
     for (const p of prayers) {
       if (!p.time || !p.time.includes(':')) continue;
       const [h, m]  = p.time.split(':').map(Number);
       const pMin    = h * 60 + m;
-      if (pMin > nowMin) {
+      if (pMin * 60 > nowMin * 60 + nowSec) {
         return { key: p.key, time: p.time, countdown_seconds: Math.max(0, (pMin - nowMin) * 60 - nowSec) };
       }
     }
@@ -478,7 +463,7 @@ const DashboardScreen = (function () {
     /* Use cached prayer TIMES (valid all day) but always recalc next_prayer with current time */
     try {
       const c = JSON.parse(localStorage.getItem('islamtime_dash_pt') || '{}');
-      if (c.date === today && c.lang === _lang && c.data) {
+      if (c.date === today && Date.now() - c.savedAt < 300000 && c.lang === _lang && c.preferences === window.PrayerPreferences.key() && c.lat === localStorage.getItem('islamtime_last_lat') && c.lon === localStorage.getItem('islamtime_last_lon') && c.data) {
         _renderPrayer({ ...c.data, next_prayer: _recalcNextPrayer(c.data) });
         return;
       }
@@ -487,33 +472,45 @@ const DashboardScreen = (function () {
     /* fetch */
     const sLat = parseFloat(localStorage.getItem('islamtime_last_lat') || '');
     const sLon = parseFloat(localStorage.getItem('islamtime_last_lon') || '');
-    if (sLat && sLon) { _fetchPrayer(sLat, sLon); return; }
+    if (Number.isFinite(sLat) && Number.isFinite(sLon)) { _fetchPrayer(sLat, sLon); return; }
 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         pos => {
           localStorage.setItem('islamtime_last_lat', pos.coords.latitude);
           localStorage.setItem('islamtime_last_lon', pos.coords.longitude);
+          window.ThemeEngine?.setLocation(pos.coords.latitude, pos.coords.longitude);
           _fetchPrayer(pos.coords.latitude, pos.coords.longitude);
         },
-        () => {},
+        _showPrayerUnavailable,
         { timeout: 5000, maximumAge: 300000 }
       );
-    }
+    } else _showPrayerUnavailable();
   }
 
   async function _fetchPrayer(lat, lon) {
+    const lang = _lang;
+    const preferences = window.PrayerPreferences.key();
+    window.ThemeEngine?.refresh();
     try {
       const r = await fetch(
-        `${window.location.origin}/api/prayer-times?lat=${lat}&lon=${lon}&lang=${_lang}`
+        `${window.location.origin}/api/prayer-times?lat=${lat}&lon=${lon}&lang=${_lang}&${window.PrayerPreferences.query()}`
       );
-      if (!r.ok) return;
+      if (!r.ok) throw new Error('Prayer unavailable');
       const data = await r.json();
-      if (data.error) return;
+      if (lang !== _lang || preferences !== window.PrayerPreferences.key()) return;
+      if (data.error) throw new Error('Prayer unavailable');
       const today = new Date().toISOString().slice(0, 10);
-      localStorage.setItem('islamtime_dash_pt', JSON.stringify({ date: today, lang: _lang, data }));
+      localStorage.setItem('islamtime_dash_pt', JSON.stringify({ date: today, savedAt:Date.now(), lang: _lang, preferences:window.PrayerPreferences.key(), lat:String(lat), lon:String(lon), data }));
       _renderPrayer({ ...data, next_prayer: _recalcNextPrayer(data) });
-    } catch {}
+    } catch { if (lang === _lang) _showPrayerUnavailable(); }
+  }
+
+  function _showPrayerUnavailable() {
+    const label = _el?.querySelector('#db-np-remain');
+    if (label) { label.textContent = _T('Qayta urinish','Қайта уриниш','Повторить','Retry'); label.classList.add('db-prayer-unavailable'); }
+    const action = _el?.querySelector('.db-adhan-btn');
+    if (action) action.setAttribute('aria-label', _T('Namoz vaqtlari','Намоз вақтлари','Время намаза','Prayer times'));
   }
 
   function _renderPrayer(data) {
@@ -528,11 +525,13 @@ const DashboardScreen = (function () {
     const nameEl   = _el?.querySelector('#db-np-name');
     const timeEl   = _el?.querySelector('#db-np-time');
     const remainEl = _el?.querySelector('#db-np-remain');
+    remainEl?.classList.remove('db-prayer-unavailable');
     const subEl    = _el?.querySelector('#db-np-sub');
     const fillEl   = _el?.querySelector('#db-prog-fill');
     const startEl  = _el?.querySelector('#db-prog-start');
     const endEl    = _el?.querySelector('#db-prog-end');
     if (!nameEl) return;
+    remainEl?.classList.remove('db-prayer-unavailable');
 
     nameEl.textContent = pObj.name || np.key;
     timeEl.textContent = np.time || '—:—';
@@ -555,7 +554,7 @@ const DashboardScreen = (function () {
     const strip = _el?.querySelector('#db-prayer-strip');
     if (strip) {
       strip.innerHTML = prayers.slice(0, 6).map((p, index) => `<button class="db-prayer-chip${p.key === np.key ? ' active' : ''}" type="button" data-prayer="${p.key}">
-        <span class="db-prayer-icon" aria-hidden="true">${_prayerIconSvg(index)}</span><span class="db-prayer-name">${_esc(p.name || p.key)}</span><strong>${_esc(p.time || '—')}</strong>
+        <span class="db-prayer-icon" aria-hidden="true">${_prayerIconImg(index)}</span><span class="db-prayer-name">${_esc(p.name || p.key)}</span><strong>${_esc(p.time || '—')}</strong>
       </button>`).join('');
       strip.querySelectorAll('.db-prayer-chip').forEach(btn => btn.addEventListener('click', () => _onModuleTap('prayer')));
     }
@@ -563,13 +562,28 @@ const DashboardScreen = (function () {
     /* weather widget */
     _renderWeather(data.weather);
 
-    const hadithEl = _el?.querySelector('#db-hadith-daily');
-    const hadithSourceEl = _el?.querySelector('#db-hadith-source');
-    const dailyHadith = data.daily_hadith;
-    if (hadithEl && dailyHadith?.text) {
-      const text = String(dailyHadith.text).trim();
-      hadithEl.textContent = `“${text.length > 62 ? text.slice(0, 59) + '…' : text}”`;
-      if (hadithSourceEl) hadithSourceEl.textContent = dailyHadith.source || 'HadeethEnc';
+  }
+
+  async function _loadDailyHadith() {
+    const lang = _lang;
+    try {
+      const response = await fetch(`/api/hadeethenc/daily?lang=${lang}`, { signal:AbortSignal.timeout(8000) });
+      if (!response.ok) throw new Error('Daily Hadith unavailable');
+      const payload = await response.json();
+      const hadith = payload.hadith;
+      if (!hadith || payload.language !== lang || !payload.verified) throw new Error('Daily Hadith source mismatch');
+      if (_lang !== lang) return;
+      const copy = _el?.querySelector('#db-hadith-daily');
+      if (copy) copy.textContent = hadith.text || t('translation_unavailable',lang);
+      const source = _el?.querySelector('#db-hadith-source');
+      if (source) source.textContent = hadith.source || '';
+      const grade = _el?.querySelector('.db-hadith-grade');
+      if (grade) { grade.textContent = hadith.grade || ''; grade.hidden = !hadith.grade; }
+    } catch {
+      if (_lang === lang) {
+        const copy = _el?.querySelector('#db-hadith-daily');
+        if (copy) copy.textContent = t('translation_unavailable',lang);
+      }
     }
   }
 
@@ -587,7 +601,7 @@ const DashboardScreen = (function () {
       sunrise:   { uz:'Quyosh chiqishi', uz_cyr:'Қуёш чиқиши',    ru:'Рассвет',      en:'Sunrise',         tr:'Gündoğumu',        ar:'شروق الشمس',        kk:'Күн шығысы',       tg:'Тулӯи офтоб',      ky:'Күн чыгуу',        de:'Sonnenaufgang',        fr:'Lever du soleil',  id:'Matahari terbit',hi:'सूर्योदय',       ur:'طلوع آفتاب'     },
       sunset:    { uz:'Quyosh botishi',  uz_cyr:'Қуёш ботиши',    ru:'Закат',        en:'Sunset',          tr:'Gün batımı',       ar:'غروب الشمس',        kk:'Күн батысы',       tg:'Ғуруби офтоб',     ky:'Күн батуу',        de:'Sonnenuntergang',      fr:'Coucher du soleil',id:'Matahari terbenam',hi:'सूर्यास्त',    ur:'غروب آفتاب'     },
     };
-    const wt = (k) => (WL[k]?.[_lang] || WL[k]?.en || k);
+    const wt = (k) => localizeRecord(WL[k], _lang);
     wrap.style.display = 'block';
     wrap.innerHTML = `
       <div style="background:linear-gradient(135deg,rgba(91,155,213,.1),rgba(91,155,213,.04));border:1px solid rgba(91,155,213,.2);border-radius:14px;padding:12px 14px">
@@ -629,9 +643,7 @@ const DashboardScreen = (function () {
         return;
       }
       const h = Math.floor(secs/3600), m = Math.floor((secs%3600)/60), s = secs%60;
-      el.textContent = h > 0
-        ? `${h} ${_l('hours')} ${m} ${_l('minutes')} ${_l('remaining')}`
-        : `${m} ${_l('minutes')} ${s} ${_l('seconds')} ${_l('remaining')}`;
+      el.textContent = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
       secs--;
     }
     _tick();
