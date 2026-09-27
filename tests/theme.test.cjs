@@ -12,7 +12,7 @@ const solar = require(themePath);
 const warsaw = { lat: 52.2297, lon: 21.0122 };
 const summer = Date.parse('2026-06-21T12:00:00Z');
 
-function browser({ now = summer, storage = {}, dark = false, blockedStorage = false, permission = 'denied' } = {}) {
+function browser({ now = summer, storage = {}, dark = false, blockedStorage = false, permission = 'denied', plugins } = {}) {
   let clock = now, nextId = 0, geoCalls = 0;
   const values = new Map(Object.entries(storage));
   const events = new Map(), windowEvents = new Map(), attrs = {}, timers = new Map();
@@ -26,6 +26,7 @@ function browser({ now = summer, storage = {}, dark = false, blockedStorage = fa
   const media = { matches: dark, addEventListener(type, fn) { this.change = fn; } };
   const root = {
     document,
+    Capacitor: plugins ? { Plugins: plugins } : undefined,
     CustomEvent: class { constructor(type, options) { this.type = type; this.detail = options && options.detail; } },
     localStorage: {
       getItem(key) { if (blockedStorage) throw new Error('Storage disabled'); return values.get(key) ?? null; },
@@ -56,6 +57,27 @@ test('sunrise switches to day exactly; sunset switches to night exactly', () => 
   assert.equal(solar.resolveTheme('auto', sun.sunset - 1, warsaw, true).theme, 'light');
   assert.equal(solar.resolveTheme('auto', sun.sunset, warsaw, false).theme, 'dark');
   assert.ok(solar.resolveTheme('auto', sun.sunset, warsaw, false).nextChange > sun.sunset);
+});
+
+test('native status and navigation controls contrast with day and night backgrounds', () => {
+  const styles = [], colors = [], appearances = [];
+  const b = browser({ plugins: {
+    StatusBar: {
+      setStyle: value => { styles.push(value.style); },
+      setBackgroundColor: value => { colors.push(value.color); },
+    },
+    SystemAppearance: { setTheme: value => { appearances.push(value.dark); } },
+  } });
+  assert.equal(styles.at(-1), 'LIGHT');
+  assert.equal(colors.at(-1), '#FFFFFF');
+  assert.equal(appearances.at(-1), false);
+  b.engine.setMode('night');
+  assert.equal(styles.at(-1), 'DARK');
+  assert.equal(colors.at(-1), '#091714');
+  assert.equal(appearances.at(-1), true);
+  b.engine.setMode('day');
+  assert.equal(styles.at(-1), 'LIGHT');
+  assert.equal(appearances.at(-1), false);
 });
 
 test('seasonal sunrise and sunset are physically plausible in both hemispheres', () => {

@@ -52,8 +52,10 @@
 
   /* ── Status Bar ─────────────────────────────────────────── */
   if (StatusBar) {
-    StatusBar.setStyle({ style: 'DARK' }).catch(() => {});
-    StatusBar.setBackgroundColor({ color: '#FFFFFF' }).catch(() => {});
+    const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    StatusBar.setStyle({ style: dark ? 'DARK' : 'LIGHT' }).catch(() => {});
+    StatusBar.setBackgroundColor({ color: dark ? '#091714' : '#FFFFFF' }).catch(() => {});
+    Plugins.SystemAppearance?.setTheme({ dark }).catch(() => {});
   }
 
   /* ── Splash Screen ──────────────────────────────────────── */

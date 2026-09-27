@@ -34,7 +34,7 @@
     },
 
     "StatusBar": {
-      "style":           "Dark",
+      "style":           "Light",
       "backgroundColor": "#FFFFFF",
       "overlaysWebView": true,
       "animation":       "SLIDE"

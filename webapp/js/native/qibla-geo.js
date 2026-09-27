@@ -11,6 +11,25 @@ const QiblaGeo = (function () {
   const KAABA_LON = 39.8262;
   const EARTH_RADIUS_KM = 6371;
 
+  function validCoordinates(lat, lon) {
+    return Number.isFinite(lat) && Number.isFinite(lon) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180;
+  }
+
+  function normalizeHeading(value) {
+    return Number.isFinite(value) ? ((value % 360) + 360) % 360 : null;
+  }
+
+  // Relative yaw starts at an arbitrary zero and must never become a Qibla heading.
+  function absoluteHeadingFromEvent(event, screenAngle = 0) {
+    if (Number.isFinite(event.webkitCompassHeading) && event.webkitCompassHeading >= 0) {
+      if (Number.isFinite(event.webkitCompassAccuracy) && event.webkitCompassAccuracy < 0) return null;
+      return normalizeHeading(event.webkitCompassHeading + screenAngle);
+    }
+    if (event.absolute !== true && event.type !== 'deviceorientationabsolute') return null;
+    if (!Number.isFinite(event.alpha)) return null;
+    return normalizeHeading(360 - event.alpha + screenAngle);
+  }
+
   function bearingToKaaba(lat, lon) {
     const lat1 = lat * Math.PI / 180, lat2 = KAABA_LAT * Math.PI / 180;
     const dLon = (KAABA_LON - lon) * Math.PI / 180;
@@ -23,7 +42,8 @@ const QiblaGeo = (function () {
     const lat1 = lat * Math.PI / 180, lat2 = KAABA_LAT * Math.PI / 180;
     const dLat = (KAABA_LAT - lat) * Math.PI / 180, dLon = (KAABA_LON - lon) * Math.PI / 180;
     const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
-    return EARTH_RADIUS_KM * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const clamped = Math.max(0, Math.min(1, a));
+    return EARTH_RADIUS_KM * 2 * Math.atan2(Math.sqrt(clamped), Math.sqrt(1 - clamped));
   }
 
   /* lat/lon (degrees) -> unit-sphere-relative 3D point, radius r.
@@ -73,5 +93,6 @@ const QiblaGeo = (function () {
   return {
     KAABA_LAT, KAABA_LON, bearingToKaaba, distanceToKaabaKm,
     latLonToVector3, greatCirclePoints, headingDelta,
+    validCoordinates, normalizeHeading, absoluteHeadingFromEvent,
   };
 })();

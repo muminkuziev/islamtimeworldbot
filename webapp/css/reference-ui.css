@@ -16,7 +16,7 @@ button, input { font-family:'Plus Jakarta Sans','Inter',system-ui,sans-serif; }
 
 /* Reference bottom navigation */
 .app-bottom-nav {
-  height:calc(68px + var(--sab, 0px))!important;
+  height:calc(var(--nav-h) + var(--sab, 0px))!important;
   padding:5px 8px calc(5px + var(--sab, 0px))!important;
   background:rgba(255,255,255,.97)!important;
   border-top:1px solid #e5efec!important;
@@ -242,7 +242,8 @@ button, input { font-family:'Plus Jakarta Sans','Inter',system-ui,sans-serif; }
 #screen-qibla .qb-tab img { width:18px; height:18px; vertical-align:middle; }
 #screen-qibla .qb-tab.active img { filter:brightness(0) invert(1); }
 #screen-qibla .qb-body { padding:18px 16px 28px!important; gap:8px!important; }
-#screen-qibla .qb-panel { position:relative; gap:8px!important; }
+#screen-qibla .qb-panel { position:relative; flex-shrink:0; gap:8px!important; }
+#screen-qibla .qb-panel > * { flex-shrink:0; }
 #screen-qibla .qb-found-badge, #screen-qibla .qb-load-badge { order:-5; min-height:36px!important; padding:6px 12px!important; border-radius:14px!important; }
 #screen-qibla .qb-ios-permission-badge,#screen-qibla .qb-ios-denied-badge { position:absolute!important; top:47px; right:7px; z-index:8; width:auto!important; min-height:32px!important; padding:0!important; border:0!important; border-radius:18px!important; background:rgba(255,255,255,.94)!important; box-shadow:var(--ref-shadow)!important; }
 #screen-qibla .qb-ios-permission-btn { width:auto!important; min-height:32px; padding:5px 12px!important; color:var(--ref-green)!important; font-size:9px!important; }
@@ -419,7 +420,8 @@ button, input { font-family:'Plus Jakarta Sans','Inter',system-ui,sans-serif; }
 #screen-dashboard .db-hadith-grade { max-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 #screen-dashboard .db-notify-btn i { display:none; }
 #screen-dashboard .db-hero-overlay { background-image:linear-gradient(90deg,rgba(0,116,80,.98),rgba(0,116,80,.76) 47%,rgba(0,72,48,.04)),url('../assets/reference-ui/makkah-hero.png')!important; background-position:center!important; background-size:cover!important; }
-body.has-bottom-nav #screen-prayer .pm-content,body.has-bottom-nav #screen-mosques .ms-body,body.has-bottom-nav #screen-qibla .qb-body { padding-bottom:calc(90px + var(--safe-bottom,0px))!important; }
+/* #app already ends above the entire navigation bar, including its safe area. */
+body.has-bottom-nav #screen-prayer .pm-content,body.has-bottom-nav #screen-mosques .ms-body,body.has-bottom-nav #screen-qibla .qb-body { padding-bottom:24px!important; }
 .quran-source-note { margin:0 0 12px; padding:9px 12px; border:1px solid var(--ref-line); border-radius:12px; color:var(--ref-green-dark); font-size:11px; line-height:1.5; }
 #screen-quran .q-rdr-hdr { position:relative; min-height:200px!important; }
 #screen-quran .q-rdr-hdr .q-back-btn { display:flex!important; }
@@ -448,6 +450,20 @@ body.has-bottom-nav #screen-prayer .pm-content,body.has-bottom-nav #screen-mosqu
 #screen-dashboard .db-prayer-unavailable { font-size:20px!important; line-height:1.3!important; }
 
 .screen [data-quran-verse] .verified-verse-copy { display:-webkit-box!important; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; max-height:2.8em; }
+
+/* Short windows (landscape, split-screen or a resized keyboard viewport) must
+   scroll the header too, so fixed-height artwork cannot hide the controls. */
+@media (max-height:600px) {
+  #screen-dashboard, #screen-qibla, #screen-mosques,
+  #screen-quran, #screen-prayer { overflow-y:auto; overscroll-behavior:contain; }
+  #screen-dashboard .db-body, #screen-qibla .qb-body, #screen-mosques .ms-body,
+  #screen-quran .q-content, #screen-prayer .pm-content {
+    flex:0 0 auto; overflow:visible;
+  }
+  #screen-quran .screen-inner, #screen-prayer .screen-inner {
+    flex:0 0 auto; height:auto; min-height:100%; overflow:visible;
+  }
+}
 #screen-prayer .pm-hdr-quote { max-height:44px; overflow:hidden; }
 #screen-prayer .pm-banner { background:#f3fcf8!important; }
 #screen-prayer .pm-ayah-ar { display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; font-size:22px!important; line-height:1.7!important; }

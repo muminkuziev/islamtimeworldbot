@@ -129,8 +129,13 @@
     }
     const bar = root.Capacitor && root.Capacitor.Plugins && root.Capacitor.Plugins.StatusBar;
     if (bar) {
-      try { Promise.resolve(bar.setStyle({ style: theme === 'dark' ? 'LIGHT' : 'DARK' })).catch(() => {}); } catch (_) {}
+      // Capacitor DARK means a dark background with light system glyphs.
+      try { Promise.resolve(bar.setStyle({ style: theme === 'dark' ? 'DARK' : 'LIGHT' })).catch(() => {}); } catch (_) {}
       try { Promise.resolve(bar.setBackgroundColor({ color })).catch(() => {}); } catch (_) {}
+    }
+    const appearance = root.Capacitor && root.Capacitor.Plugins && root.Capacitor.Plugins.SystemAppearance;
+    if (appearance) {
+      try { Promise.resolve(appearance.setTheme({ dark: theme === 'dark' })).catch(() => {}); } catch (_) {}
     }
   }
 

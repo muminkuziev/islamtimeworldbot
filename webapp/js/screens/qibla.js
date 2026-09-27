@@ -38,19 +38,25 @@ const QiblaScreen = (function () {
   let _orientationStarted = false;
   let _hasAbsoluteOrientation = false;
   let _awaitingOrientationPermission = false;
+  let _active = false;
+  let _generation = 0;
+  let _locationRequest = 0;
+  let _nativeCompass = null;
+  let _nativeListener = null;
+  let _nativeActive = false;
+  let _orientationTimer = null;
+  let _visibilityCb = null;
+  let _lastReadingAt = 0;
+  let _sensorStatus = 'waiting';
+  let _needsFlat = false;
+  let _iosPermissionGranted = false;
+  let _sensorSource = 'browser';
 
   /* ══════════════════════════════════════════════
      Entry points
   ══════════════════════════════════════════════ */
   function render() {
-    _lang = window.App?.state?.lang || 'uz';
-    _tab = 'kompas'; _found = false;
-    _el = document.getElementById('screen-qibla');
-    if (!_el) return;
-    _el.innerHTML = _buildHTML();
-    _bind();
-    _initGlobes();
-    _startLocation();
+    load(window.App?.state?.lang || 'uz');
   }
 
   function load(lang) {
@@ -60,9 +66,11 @@ const QiblaScreen = (function () {
     _resetRuntimeState();
     _el = document.getElementById('screen-qibla');
     if (!_el) return;
+    _active = true;
     _el.innerHTML = _buildHTML();
     _bind();
     _initGlobes();
+    _startOrientation();
     _startLocation();
   }
 
@@ -83,12 +91,24 @@ const QiblaScreen = (function () {
   }
 
   function unload() {
+    _active = false;
+    _generation++;
+    _locationRequest++;
     _destroyGlobes();
     if (_orientCb) {
       window.removeEventListener('deviceorientationabsolute', _orientCb);
       window.removeEventListener('deviceorientation', _orientCb);
       _orientCb = null;
     }
+    if (_visibilityCb) document.removeEventListener('visibilitychange', _visibilityCb);
+    _visibilityCb = null;
+    if (_orientationTimer) clearInterval(_orientationTimer);
+    _orientationTimer = null;
+    if (_nativeListener) Promise.resolve(_nativeListener.remove()).catch(() => {});
+    _nativeListener = null;
+    if (_nativeCompass) _nativeCompass.stop().catch(() => {});
+    _nativeCompass = null;
+    _nativeActive = false;
     _orientationStarted = false;
   }
 
@@ -98,6 +118,8 @@ const QiblaScreen = (function () {
     _found = false; _gpsAccuracyM = null; _compassAccDeg = null;
     _hasOrientation = false; _hasAbsoluteOrientation = false;
     _calibrating = false; _awaitingOrientationPermission = false;
+    _sensorStatus = 'waiting'; _needsFlat = false; _lastReadingAt = 0;
+    _sensorSource = 'browser';
   }
 
   /* ══════════════════════════════════════════════
@@ -199,6 +221,7 @@ const QiblaScreen = (function () {
   <div id="qb-calibrate-badge" class="qb-found-badge qb-calibrate-badge" style="display:none">
     <span>🧭 ${_T("Kompas kalibrlanmoqda — telefonni 8 shaklida aylantiring","Компас калибрланмоқда — телефонни 8 шаклида айлантиринг",'Калибровка компаса — двигайте телефон по форме "8"','Calibrating compass — move your phone in a figure-8')}</span>
   </div>
+  <div id="qb-sensor-status" class="qb-found-badge qb-location-error-badge" role="status" aria-live="polite" style="display:none"></div>
   <div id="qb-ios-permission-badge" class="qb-found-badge qb-ios-permission-badge" style="display:none">
     <button id="qb-ios-permission-btn" class="qb-ios-permission-btn">
       ${_T('Kompasni yoqish','Компасни ёқиш','Включить компас','Enable compass')}
@@ -229,18 +252,20 @@ const QiblaScreen = (function () {
     <circle cx="${CX}" cy="${CY}" r="${R}" fill="url(#qb-bg)"/>
     <circle cx="${CX}" cy="${CY}" r="${R}" fill="none"
       stroke="rgba(22,121,74,.25)" stroke-width="1.5"/>
+    <g id="qb-compass-dial" visibility="hidden">
     ${ticks}
     ${cardText}
     <circle cx="${CX}" cy="${CY}" r="${(R*0.65).toFixed(0)}"
       fill="none" stroke="rgba(22,121,74,.07)" stroke-width="1"/>
     <circle cx="${CX}" cy="${CY}" r="${(R*0.4).toFixed(0)}"
       fill="none" stroke="rgba(22,121,74,.07)" stroke-width="1"/>
-    <!-- North: static red dashed line pointing up -->
+    <!-- North dial follows the measured device heading. -->
     <line x1="${CX}" y1="${CY}" x2="${CX}" y2="${CY-(R-30)}"
       stroke="#e05555" stroke-width="1.5" opacity=".5"
       stroke-dasharray="4 3" stroke-linecap="round"/>
+    </g>
     <!-- Qibla needle — rotated via setAttribute -->
-    <g id="qb-needle">
+    <g id="qb-needle" visibility="hidden">
       <line x1="${CX}" y1="${CY}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}"
         stroke="#4fcfa0" stroke-width="6" opacity=".15" stroke-linecap="round"/>
       <line x1="${CX}" y1="${CY}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}"
@@ -259,6 +284,7 @@ const QiblaScreen = (function () {
     <image href="assets/reference-ui/kaaba-icon.png" x="${CX-14}" y="${CY-14}" width="28" height="28" preserveAspectRatio="xMidYMid meet" clip-path="url(#qb-kaaba-clip)"/>
   </svg>
   </div>
+  <div id="qb-live-heading" class="qb-load-badge" style="display:none"></div>
 
   <div id="qb-igrid" class="qb-igrid" style="display:none">
     <div class="qb-icell">
@@ -455,14 +481,23 @@ const QiblaScreen = (function () {
     }));
 
     _el.querySelector('#qb-ios-permission-btn')?.addEventListener('click', () => {
-      DeviceOrientationEvent.requestPermission().then(state => {
+      const generation = _generation;
+      DeviceOrientationEvent.requestPermission(true).then(state => {
+        if (!_active || generation !== _generation) return;
         _awaitingOrientationPermission = false;
         _show('#qb-ios-permission-badge', false);
-        if (state === 'granted') _attachOrientationListener();
-        else _show('#qb-ios-denied-badge', true);
+        if (state === 'granted') {
+          _iosPermissionGranted = true;
+          _attachOrientationListener();
+        } else {
+          _sensorStatus = 'denied';
+          _show('#qb-ios-denied-badge', true);
+        }
         _updateQualityBadge();
       }).catch(() => {
+        if (!_active || generation !== _generation) return;
         _awaitingOrientationPermission = false;
+        _sensorStatus = 'denied';
         _show('#qb-ios-permission-badge', false);
         _show('#qb-ios-denied-badge', true);
         _updateQualityBadge();
@@ -480,6 +515,8 @@ const QiblaScreen = (function () {
      Location
   ══════════════════════════════════════════════ */
   function _startLocation() {
+    const generation = _generation;
+    const current = () => _active && generation === _generation;
     /* cached coords → instant */
     const sLat = parseFloat(localStorage.getItem('islamtime_last_lat') || '');
     const sLon = parseFloat(localStorage.getItem('islamtime_last_lon') || '');
@@ -498,10 +535,13 @@ const QiblaScreen = (function () {
     const lm = window.Telegram?.WebApp?.LocationManager;
     if (lm) {
       lm.init(() => {
+        if (!current()) return;
         if (lm.isAccessGranted) {
           lm.getLocation(loc => {
-            if (loc) {
+            if (!current()) return;
+            if (loc && QiblaGeo.validCoordinates(loc.latitude, loc.longitude)) {
               _lat = loc.latitude; _lon = loc.longitude;
+              _gpsAccuracyM = Number.isFinite(loc.horizontal_accuracy) && loc.horizontal_accuracy > 0 ? loc.horizontal_accuracy : null;
               window.ThemeEngine?.setLocation(_lat, _lon);
               _computeAndShow(); _startOrientation();
             } else _browserGeo();
@@ -514,13 +554,23 @@ const QiblaScreen = (function () {
   }
 
   function _browserGeo() {
+    const generation = _generation;
+    const request = ++_locationRequest;
+    const current = () => _active && generation === _generation && request === _locationRequest;
     if (!navigator.geolocation) {
       _showLocationError(_T('Bu qurilmada GPS mavjud emas','Бу қурилмада GPS мавжуд эмас','GPS недоступен на этом устройстве','GPS is unavailable on this device'));
       return;
     }
 
-    const requestLocation = () => navigator.geolocation.getCurrentPosition(
+    const requestLocation = () => {
+      if (!current()) return;
+      navigator.geolocation.getCurrentPosition(
       pos => {
+        if (!current()) return;
+        if (!QiblaGeo.validCoordinates(pos.coords.latitude, pos.coords.longitude)) {
+          _showLocationError(_T('Joylashuv olinmadi','Жойлашув олинмади','Не удалось определить местоположение','Location unavailable'));
+          return;
+        }
         _lat = pos.coords.latitude; _lon = pos.coords.longitude;
         _gpsAccuracyM = (typeof pos.coords.accuracy === 'number' && pos.coords.accuracy > 0) ? pos.coords.accuracy : null;
         localStorage.setItem('islamtime_last_lat', _lat);
@@ -532,18 +582,23 @@ const QiblaScreen = (function () {
         _computeAndShow(); _startOrientation();
       },
       err => {
+        if (!current()) return;
         const denied = err && err.code === 1;
         _showLocationError(denied
           ? _T('GPS ruxsatini yoqing','GPS рухсатини ёқинг','Разрешите доступ к геолокации','Enable location permission')
           : _T('Joylashuv olinmadi','Жойлашув олинмади','Не удалось определить местоположение','Location unavailable'));
       },
       { timeout: 15000, maximumAge: 60000, enableHighAccuracy: true }
-    );
+      );
+    };
 
     if (typeof window._requestLocationPermission === 'function') {
       window._requestLocationPermission()
-        .then(granted => granted ? requestLocation() : _showLocationError(
-          _T('GPS ruxsatini yoqing','GPS рухсатини ёқинг','Разрешите доступ к геолокации','Enable location permission')))
+        .then(granted => {
+          if (!current()) return;
+          if (granted) requestLocation();
+          else _showLocationError(_T('GPS ruxsatini yoqing','GPS рухсатини ёқинг','Разрешите доступ к геолокации','Enable location permission'));
+        })
         .catch(requestLocation);
     } else requestLocation();
   }
@@ -558,9 +613,11 @@ const QiblaScreen = (function () {
      Compute & update all views
   ══════════════════════════════════════════════ */
   function _computeAndShow() {
+    if (!_active || !QiblaGeo.validCoordinates(_lat, _lon)) return;
     _qiblaAngle = _bearingToKaaba(_lat, _lon);
     _distKm     = _distToKaaba(_lat, _lon);
     _found      = true;
+    if (_nativeCompass) _nativeCompass.setLocation({ latitude: _lat, longitude: _lon }).catch(() => {});
 
     if (_routeGlobe) _routeGlobe.setRoute(_lat, _lon, KAABA_LAT, KAABA_LON);
 
@@ -619,8 +676,8 @@ const QiblaScreen = (function () {
 
     _setText('#qb-map-dist-badge', `~ ${Math.round(_distKm).toLocaleString()} km`);
     _setText('#qb-coord-city', _city || '—');
-    _setText('#qb-coord-lat', _lat ? `${_lat.toFixed(2)}° N` : '—');
-    _setText('#qb-coord-lon', _lon ? `${_lon.toFixed(2)}° E` : '—');
+    _setText('#qb-coord-lat', Number.isFinite(_lat) ? `${Math.abs(_lat).toFixed(2)}° ${_lat < 0 ? 'S' : 'N'}` : '—');
+    _setText('#qb-coord-lon', Number.isFinite(_lon) ? `${Math.abs(_lon).toFixed(2)}° ${_lon < 0 ? 'W' : 'E'}` : '—');
     _setText('#qb-dist-km',    Math.round(_distKm).toLocaleString());
     _setText('#qb-dist-angle', `${Math.round(_qiblaAngle)}°`);
     _setText('#qb-dist-dir',   _dirLabel(_qiblaAngle));
@@ -630,12 +687,13 @@ const QiblaScreen = (function () {
      Orientation
   ══════════════════════════════════════════════ */
   function _startOrientation() {
+    if (!_active || _orientationStarted || _awaitingOrientationPermission) return;
     // iOS 13+ requires an explicit, user-gesture-triggered permission grant
     // before deviceorientation events fire at all — without this, the
     // compass silently never works on iOS (no error, just zero events).
     const needsIosPermission = typeof DeviceOrientationEvent !== 'undefined'
       && typeof DeviceOrientationEvent.requestPermission === 'function';
-    if (needsIosPermission) {
+    if (needsIosPermission && !_iosPermissionGranted) {
       _awaitingOrientationPermission = true;
       _show('#qb-ios-permission-badge', true);
       _updateQualityBadge();
@@ -647,59 +705,104 @@ const QiblaScreen = (function () {
   function _attachOrientationListener() {
     if (_orientationStarted) return;
     _orientationStarted = true;
-    let _lastHeading = null;
-    let _bigJumpCount = 0;
+    const generation = _generation;
+    _lastReadingAt = Date.now();
     _orientCb = e => {
-      const hasWebkit = typeof e.webkitCompassHeading === 'number';
-      // Some browsers/environments fire a single null-data "capability probe"
-      // event (alpha/beta/gamma all null) just to signal the API exists —
-      // that is NOT a real compass reading and must not flip the quality
-      // gate to "found".
-      const hasUsableReading = hasWebkit || typeof e.alpha === 'number';
-      if (!hasUsableReading) return;
-
-      const screenAngle = Number(screen.orientation?.angle ?? window.orientation ?? 0) || 0;
-      const rawHeading = hasWebkit
-        ? e.webkitCompassHeading
-        : ((360 - e.alpha + screenAngle) % 360 + 360) % 360;
-      if (_hasOrientation) {
-        const smoothDelta = ((rawHeading - _deviceNorth + 540) % 360) - 180;
-        _deviceNorth = (_deviceNorth + smoothDelta * 0.22 + 360) % 360;
-      } else {
-        _deviceNorth = rawHeading;
+      if (!_active || _nativeActive || document.hidden || generation !== _generation) return;
+      const screenAngle = Number(window.screen?.orientation?.angle ?? window.orientation ?? 0) || 0;
+      const heading = QiblaGeo.absoluteHeadingFromEvent(e, screenAngle);
+      if (heading === null) {
+        if (!_hasOrientation && Number.isFinite(e.alpha)) _sensorStatus = 'relative';
+        _updateQualityBadge();
+        return;
       }
-      _hasAbsoluteOrientation = _hasAbsoluteOrientation || hasWebkit
-        || e.absolute === true || e.type === 'deviceorientationabsolute';
-
-      // iOS reports a real per-reading uncertainty; Android's DeviceOrientation
-      // API does not expose one at all — leave it unknown rather than invent one.
-      if (hasWebkit && typeof e.webkitCompassAccuracy === 'number' && e.webkitCompassAccuracy >= 0) {
-        _compassAccDeg = e.webkitCompassAccuracy;
-      } else if (!hasWebkit && 'absolute' in e) {
-        // Chrome/Android: e.absolute === true means a real absolute (magnetometer-
-        // backed) heading; false/undefined means relative-only, i.e. not yet
-        // calibrated against magnetic north — treat as unknown accuracy.
-        _compassAccDeg = e.absolute ? null : null; // still unknown numerically either way
-      }
-
-      // Heuristic calibration-needed signal: large heading jumps between
-      // consecutive readings suggest the magnetometer hasn't settled yet.
-      if (_lastHeading !== null) {
-        const diff = Math.abs(((_deviceNorth - _lastHeading + 540) % 360) - 180);
-        if (diff > 45) _bigJumpCount++;
-      }
-      _lastHeading = _deviceNorth;
-      _calibrating = _bigJumpCount >= 2 && _bigJumpCount < 6;
-
-      _hasOrientation = true;
-      _updateNeedle();
-      _updateQualityBadge();
-      if (_compassGlobe) _compassGlobe.setHeadingDeg(_deviceNorth);
+      _acceptHeading({
+        heading,
+        accuracyDegrees: Number.isFinite(e.webkitCompassAccuracy) && e.webkitCompassAccuracy >= 0 ? e.webkitCompassAccuracy : null,
+        calibrationRequired: Number.isFinite(e.webkitCompassAccuracy) && e.webkitCompassAccuracy > 20,
+        needsFlat: Number.isFinite(e.beta) && Number.isFinite(e.gamma)
+          && Math.abs(Math.cos(e.beta * Math.PI / 180) * Math.cos(e.gamma * Math.PI / 180)) < 0.5,
+      });
     };
     /* Some Android WebViews expose the absolute event property but only
        dispatch deviceorientation, so listen to both variants. */
     window.addEventListener('deviceorientationabsolute', _orientCb);
     window.addEventListener('deviceorientation', _orientCb);
+    _visibilityCb = () => {
+      _hasOrientation = false;
+      _hasAbsoluteOrientation = false;
+      _sensorStatus = 'waiting';
+      _lastReadingAt = Date.now();
+      _updateNeedle();
+      _updateQualityBadge();
+    };
+    document.addEventListener('visibilitychange', _visibilityCb);
+    // A missing sensor is not a calibration problem. Never leave a frozen arrow
+    // labelled as live when WebView/browser events stop or never arrive.
+    _orientationTimer = setInterval(() => {
+      if (!_active || document.hidden || Date.now() - _lastReadingAt < 6000) return;
+      _sensorStatus = _hasOrientation ? 'stale' : 'unavailable';
+      _hasOrientation = false;
+      _hasAbsoluteOrientation = false;
+      _updateNeedle();
+      _updateQualityBadge();
+    }, 1500);
+    _startNativeCompass(generation);
+    _updateQualityBadge();
+  }
+
+  async function _startNativeCompass(generation) {
+    const cap = window.Capacitor;
+    if (!cap?.isNativePlatform?.() || cap.getPlatform?.() !== 'android' || !cap.isPluginAvailable?.('Compass')) return;
+    const plugin = cap.Plugins?.Compass || cap.registerPlugin('Compass');
+    _nativeCompass = plugin;
+    let listener;
+    try {
+      listener = await plugin.addListener('heading', reading => {
+        if (!_active || generation !== _generation || document.hidden) return;
+        if (reading.absolute !== true || !Number.isFinite(reading.heading)) return;
+        _nativeActive = true;
+        _sensorSource = 'native';
+        _acceptHeading(reading);
+      });
+      if (!_active || generation !== _generation) {
+        await listener.remove();
+        return;
+      }
+      _nativeListener = listener;
+      const result = await plugin.start(QiblaGeo.validCoordinates(_lat, _lon) ? { latitude: _lat, longitude: _lon } : {});
+      if (!_active || generation !== _generation) return;
+      _nativeActive = result.available === true;
+      if (!_nativeActive && !_hasOrientation) {
+        _sensorStatus = 'unavailable';
+        _updateQualityBadge();
+      }
+    } catch (_) {
+      // Keep the browser listener as a fallback if an older native shell lacks
+      // this plugin or a vendor refuses sensor registration.
+      if (listener) await Promise.resolve(listener.remove()).catch(() => {});
+      if (generation !== _generation) return;
+      _nativeListener = null;
+      _nativeActive = false;
+    }
+  }
+
+  function _acceptHeading(reading) {
+    const heading = QiblaGeo.normalizeHeading(reading.heading);
+    if (heading === null) return;
+    _deviceNorth = _hasOrientation
+      ? QiblaGeo.normalizeHeading(_deviceNorth + QiblaGeo.headingDelta(heading, _deviceNorth) * 0.35)
+      : heading;
+    _hasOrientation = true;
+    _hasAbsoluteOrientation = true;
+    _lastReadingAt = Date.now();
+    _sensorStatus = 'ready';
+    _compassAccDeg = Number.isFinite(reading.accuracyDegrees) && reading.accuracyDegrees >= 0 ? reading.accuracyDegrees : null;
+    _calibrating = reading.calibrationRequired === true;
+    _needsFlat = reading.needsFlat === true;
+    _updateNeedle();
+    _updateQualityBadge();
+    if (_compassGlobe) _compassGlobe.setHeadingDeg(_deviceNorth);
   }
 
   /* The bearing is valid as soon as GPS is known. This stricter quality gate
@@ -710,6 +813,7 @@ const QiblaScreen = (function () {
     if (!_hasAbsoluteOrientation) return false;
     if (_gpsAccuracyM !== null && _gpsAccuracyM > 100) return false; // >100m fix is too coarse to trust
     if (_calibrating) return false;
+    if (_needsFlat) return false;
     return true;
   }
 
@@ -717,11 +821,30 @@ const QiblaScreen = (function () {
     const good = _qualityGood();
     const calculated = _found && Number.isFinite(_qiblaAngle);
     _show('#qb-found-badge', calculated);
-    // Whenever we're not confidently "found" — whether because no compass
-    // reading has arrived yet, or because jitter suggests it needs
-    // calibrating — show the figure-8 guidance rather than leaving a blank
-    // gap that could be mistaken for a frozen screen.
-    _show('#qb-calibrate-badge', calculated && !good && !_awaitingOrientationPermission);
+    _show('#qb-calibrate-badge', _hasOrientation && _calibrating && !_awaitingOrientationPermission);
+    const status = _el?.querySelector('#qb-sensor-status');
+    if (status) {
+      let message = '';
+      if (!_awaitingOrientationPermission && _sensorStatus !== 'denied') {
+        if (!_hasOrientation && _sensorStatus === 'waiting') message = _sensorText('waiting');
+        else if (!_hasOrientation) message = _sensorText('unavailable');
+        else if (_needsFlat) message = _sensorText('flat');
+      }
+      status.textContent = message;
+      status.style.display = message ? 'flex' : 'none';
+    }
+    const compass = _el?.querySelector('#qb-compass-svg');
+    if (compass) {
+      compass.dataset.sensorState = !_hasOrientation ? _sensorStatus : _needsFlat ? 'hold-flat' : _calibrating ? 'calibrating' : 'ready';
+      compass.dataset.quality = good ? 'ready' : 'limited';
+      compass.dataset.sensorSource = _sensorSource;
+      compass.dataset.heading = _hasOrientation ? _deviceNorth.toFixed(1) : '';
+    }
+    const headingLabel = _el?.querySelector('#qb-live-heading');
+    if (headingLabel) {
+      headingLabel.style.display = _hasOrientation ? 'flex' : 'none';
+      headingLabel.textContent = `${_sensorText('heading')} · ${Math.round(_deviceNorth) % 360}°`;
+    }
     if (calculated) {
       const ang = Math.round(_qiblaAngle);
       _setText('#qb-badge-deg', `${ang}°`);
@@ -740,6 +863,13 @@ const QiblaScreen = (function () {
   function _updateNeedle() {
     const needle = _el?.querySelector('#qb-needle');
     if (!needle) return;
+    needle.setAttribute('visibility', _found && _hasOrientation && _hasAbsoluteOrientation ? 'visible' : 'hidden');
+    const dial = _el?.querySelector('#qb-compass-dial');
+    if (dial) {
+      dial.setAttribute('visibility', _hasOrientation && _hasAbsoluteOrientation ? 'visible' : 'hidden');
+      dial.setAttribute('transform', `rotate(${(-_deviceNorth).toFixed(1)}, ${CX}, ${CY})`);
+    }
+    if (!_found || !_hasOrientation) return;
     const delta = QiblaGeo.headingDelta(_qiblaAngle, _deviceNorth);
     needle.setAttribute('transform', `rotate(${delta.toFixed(1)}, ${CX}, ${CY})`);
   }
@@ -749,6 +879,30 @@ const QiblaScreen = (function () {
   ══════════════════════════════════════════════ */
   function _bearingToKaaba(lat, lon) { return QiblaGeo.bearingToKaaba(lat, lon); }
   function _distToKaaba(lat, lon)    { return QiblaGeo.distanceToKaabaKm(lat, lon); }
+
+  // Device-status copy, including all 13 supported languages and legacy choices.
+  const SENSOR_COPY = {
+    uz: ['Telefon yo‘nalishi', 'Kompas sensori kutilmoqda…', 'Kompas sensori ishlamayapti. Qibla burchagi va Xarita bo‘limidan foydalaning.', 'Telefonni tekis, ekranini yuqoriga qaratib ushlang.'],
+    uz_cyr: ['Телефон йўналиши', 'Компас сенсори кутилмоқда…', 'Компас сенсори ишламаяпти. Қибла бурчаги ва Харита бўлимидан фойдаланинг.', 'Телефонни текис, экранини юқорига қаратиб ушланг.'],
+    en: ['Phone heading', 'Waiting for the compass sensor…', 'Compass sensor unavailable. Use the Qibla bearing and Map tab.', 'Hold your phone flat with the screen facing up.'],
+    ru: ['Направление телефона', 'Ожидание датчика компаса…', 'Датчик компаса недоступен. Используйте угол Киблы и вкладку «Карта».', 'Держите телефон горизонтально, экраном вверх.'],
+    tr: ['Telefon yönü', 'Pusula sensörü bekleniyor…', 'Pusula sensörü kullanılamıyor. Kıble açısını ve Harita sekmesini kullanın.', 'Telefonu ekranı yukarı bakacak şekilde yatay tutun.'],
+    ar: ['اتجاه الهاتف', 'في انتظار مستشعر البوصلة…', 'مستشعر البوصلة غير متاح. استخدم زاوية القبلة وعلامة تبويب الخريطة.', 'أمسك الهاتف بشكل أفقي مع توجيه الشاشة إلى الأعلى.'],
+    de: ['Telefonausrichtung', 'Warten auf den Kompasssensor…', 'Kompasssensor nicht verfügbar. Nutzen Sie den Qibla-Winkel und die Karte.', 'Halten Sie das Telefon waagerecht mit dem Bildschirm nach oben.'],
+    fr: ['Orientation du téléphone', 'En attente du capteur de boussole…', 'Capteur de boussole indisponible. Utilisez l’angle de la Qibla et l’onglet Carte.', 'Tenez le téléphone à plat, écran vers le haut.'],
+    id: ['Arah ponsel', 'Menunggu sensor kompas…', 'Sensor kompas tidak tersedia. Gunakan sudut kiblat dan tab Peta.', 'Pegang ponsel mendatar dengan layar menghadap ke atas.'],
+    hi: ['फ़ोन की दिशा', 'कंपास सेंसर की प्रतीक्षा है…', 'कंपास सेंसर उपलब्ध नहीं है। क़िबला कोण और मानचित्र टैब का उपयोग करें।', 'फ़ोन को समतल रखें और स्क्रीन को ऊपर की ओर रखें।'],
+    ur: ['فون کی سمت', 'کمپاس سینسر کا انتظار ہے…', 'کمپاس سینسر دستیاب نہیں۔ قبلہ زاویہ اور نقشہ ٹیب استعمال کریں۔', 'فون کو ہموار رکھیں اور اسکرین اوپر کی طرف رکھیں۔'],
+    bn: ['ফোনের দিক', 'কম্পাস সেন্সরের জন্য অপেক্ষা করা হচ্ছে…', 'কম্পাস সেন্সর পাওয়া যাচ্ছে না। কিবলার কোণ এবং মানচিত্র ট্যাব ব্যবহার করুন।', 'ফোনটি সমতল করে স্ক্রিন উপরের দিকে রাখুন।'],
+    fa: ['جهت گوشی', 'در انتظار حسگر قطب‌نما…', 'حسگر قطب‌نما در دسترس نیست. از زاویه قبله و زبانه نقشه استفاده کنید.', 'گوشی را افقی و صفحه را رو به بالا نگه دارید.'],
+    ms: ['Arah telefon', 'Menunggu sensor kompas…', 'Sensor kompas tidak tersedia. Gunakan sudut kiblat dan tab Peta.', 'Pegang telefon secara mendatar dengan skrin menghadap ke atas.'],
+    kk: ['Телефон бағыты', 'Компас сенсоры күтілуде…', 'Компас сенсоры қолжетімсіз. Құбыла бұрышын және Карта бөлімін пайдаланыңыз.', 'Телефонды экран жағын жоғары қаратып, көлденең ұстаңыз.'],
+    tg: ['Самти телефон', 'Интизори сенсори қутбнамо…', 'Сенсори қутбнамо дастрас нест. Кунҷи қибла ва бахши Харитаро истифода баред.', 'Телефонро уфуқӣ ва экранашро ба боло нигоҳ доред.'],
+    ky: ['Телефондун багыты', 'Компас сенсору күтүлүүдө…', 'Компас сенсору жеткиликсиз. Кыбыла бурчун жана Карта бөлүмүн колдонуңуз.', 'Телефонду экранын өйдө каратып, туурасынан кармаңыз.'],
+  };
+  function _sensorText(key) {
+    return (SENSOR_COPY[_lang] || SENSOR_COPY.en)[{ heading: 0, waiting: 1, unavailable: 2, flat: 3 }[key]];
+  }
 
   const DIR_MAP = {
     uz:     ['Shimol',"Shimoli-sharq",'Sharq','Janubi-sharq','Janub',"Janubi-g'arb","G'arb","Shimoli-g'arb"],
