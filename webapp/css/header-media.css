@@ -1,0 +1,108 @@
+/* Shared photo sizing, loaded after the screen and theme styles.
+   Keep the complete source photograph inside every header. Header controls
+   retain their existing space; contain preserves the image's aspect ratio. */
+#app :is(
+  #screen-quran .q-header-photo,
+  #screen-qibla .qb-hdr-photo,
+  #screen-mosques .ms-hdr-photo,
+  #screen-dhikr .zk-hdr-photo,
+  #screen-hadith .hd-hdr-photo
+) {
+  inset: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  object-position: center !important;
+}
+
+#app #screen-dashboard .db-hdr-photo {
+  object-fit: contain !important;
+  object-position: center !important;
+}
+
+/* Opaque navigation strips have their own space below the photograph. */
+#app #screen-quran .q-header-photo {
+  bottom: 42px !important;
+  height: calc(100% - 42px) !important;
+}
+#app #screen-qibla .qb-hdr-photo {
+  bottom: 35px !important;
+  height: calc(100% - 35px) !important;
+}
+#app #screen-mosques .ms-hdr-photo {
+  bottom: 35px !important;
+  height: calc(100% - 35px) !important;
+}
+
+/* On secondary pages, searches/book/month controls start below the title.
+   Confine the artwork to that title band instead of hiding it behind them. */
+#app #screen-hadith .hd-hdr-photo {
+  content: url('../assets/reference-ui/makkah-hero.png');
+  bottom: auto !important;
+  height: 100px !important;
+}
+#app #screen-duas .du-hdr::before,
+#app #screen-names .nm-header::before,
+#app #screen-calendar .hc-hdr::before {
+  bottom: auto !important;
+  height: 100px !important;
+}
+
+/* Gradient layers cover the box; photograph layers fit without cropping.
+   These longhands also win over the dark theme's background shorthand. */
+#app :is(
+  #screen-others .ot-header,
+  #screen-shahodat .sh-header,
+  #screen-haramayn .hl-header,
+  #screen-qazo .qz-header,
+  #screen-monthly-calendar .mc-header
+) {
+  background-size: 100% 100%, contain !important;
+  background-position: center, center !important;
+  background-repeat: no-repeat !important;
+}
+
+#app #screen-prayer .q-header::before,
+#app #screen-duas .du-hdr::before,
+#app #screen-names .nm-header::before,
+#app #screen-settings .st-header::before,
+#app #screen-calendar .hc-hdr::before {
+  background-size: contain !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+}
+
+#app #screen-qibla .qb-hdr .nm-tile-ov,
+#app #screen-mosques .ms-hdr .nm-tile-ov {
+  height: 100% !important;
+}
+
+/* Home has text beside the photo. Keep its complete image on the far side
+   and mirror only the scrim direction in RTL, never the photograph itself. */
+#app #screen-dashboard .db-hero-overlay {
+  background-image: linear-gradient(90deg,#007450 0%,#007450 30%,rgba(0,116,80,.76) 53%,rgba(0,72,48,.04)),url('../assets/reference-ui/makkah-hero.png') !important;
+  background-size: 100% 100%, contain !important;
+  background-position: center, right center !important;
+  background-repeat: no-repeat !important;
+  background-color: #007450 !important;
+  transform: none !important;
+}
+html[dir="rtl"] #app #screen-dashboard .db-hero-overlay {
+  background-image: linear-gradient(270deg,#007450 0%,#007450 30%,rgba(0,116,80,.76) 53%,rgba(0,72,48,.04)),url('../assets/reference-ui/makkah-hero.png') !important;
+  background-position: center, left center !important;
+}
+
+/* Auto margins in the existing tablet rules must not shrink flex items to
+   their text width. Keep the same 520px layout while filling available space. */
+@media (min-width: 521px) {
+  #app :is(#screen-dashboard .db-hdr, #screen-quran .q-header,
+    #screen-prayer .q-header, #screen-qibla .qb-hdr, #screen-mosques .ms-hdr) {
+    width: 100%;
+  }
+  #app :is(#screen-hadith, #screen-duas, #screen-dhikr, #screen-calendar,
+    #screen-names, #screen-others, #screen-shahodat, #screen-haramayn,
+    #screen-settings, #screen-qazo, #screen-monthly-calendar) > * {
+    width: 100%;
+  }
+}
