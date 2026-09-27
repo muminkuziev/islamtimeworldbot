@@ -1,16 +1,20 @@
 package com.islamtimeworld.app;
 
 import android.os.Bundle;
+import android.graphics.Color;
 import android.view.View;
 import android.webkit.WebView;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.WebViewListener;
 
 public class MainActivity extends BridgeActivity {
     private String lastSafeArea;
+    private boolean darkSystemAppearance;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,6 +27,27 @@ public class MainActivity extends BridgeActivity {
         // this is Android's own recommended pattern for this exact setting.
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG);
         setupWindowInsets();
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        // Splash removal, keyboard dismissal and activity return may restore
+        // the launch window's appearance after the WebView's first theme call.
+        if (hasFocus) getWindow().getDecorView().post(this::applySystemAppearance);
+    }
+
+    public void setSystemAppearance(boolean dark) {
+        darkSystemAppearance = dark;
+        applySystemAppearance();
+    }
+
+    private void applySystemAppearance() {
+        WindowInsetsControllerCompat controller =
+            WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        controller.setAppearanceLightStatusBars(!darkSystemAppearance);
+        controller.setAppearanceLightNavigationBars(!darkSystemAppearance);
+        getWindow().setNavigationBarColor(Color.parseColor(darkSystemAppearance ? "#091714" : "#FFFFFF"));
     }
 
     // CSS reserves only the system UI that actually overlaps this WebView.
