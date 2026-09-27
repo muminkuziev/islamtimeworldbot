@@ -564,25 +564,37 @@ const DashboardScreen = (function () {
 
   }
 
+  let _dailyHadithRequest = 0;
   async function _loadDailyHadith() {
-    const lang = _lang;
+    const lang = _lang, request = ++_dailyHadithRequest;
+    const isCurrent = () => _lang === lang && request === _dailyHadithRequest;
+    const clearAttribution = () => {
+      const source = _el?.querySelector('#db-hadith-source');
+      if (source) source.textContent = '';
+      const grade = _el?.querySelector('.db-hadith-grade');
+      if (grade) { grade.textContent = ''; grade.hidden = true; }
+    };
+    clearAttribution();
+    const initialCopy = _el?.querySelector('#db-hadith-daily');
+    if (initialCopy) initialCopy.textContent = t('loading', lang);
     try {
       const response = await fetch(`/api/hadeethenc/daily?lang=${lang}`, { signal:AbortSignal.timeout(8000) });
       if (!response.ok) throw new Error('Daily Hadith unavailable');
       const payload = await response.json();
       const hadith = payload.hadith;
-      if (!hadith || payload.language !== lang || !payload.verified) throw new Error('Daily Hadith source mismatch');
-      if (_lang !== lang) return;
+      if (!hadith || payload.language !== lang || hadith.language !== lang || !payload.verified || typeof hadith.text !== 'string' || !hadith.text.trim()) throw new Error('Daily Hadith source mismatch');
+      if (!isCurrent()) return;
       const copy = _el?.querySelector('#db-hadith-daily');
-      if (copy) copy.textContent = hadith.text || t('translation_unavailable',lang);
+      if (copy) copy.textContent = hadith.text;
       const source = _el?.querySelector('#db-hadith-source');
       if (source) source.textContent = hadith.source || '';
       const grade = _el?.querySelector('.db-hadith-grade');
       if (grade) { grade.textContent = hadith.grade || ''; grade.hidden = !hadith.grade; }
     } catch {
-      if (_lang === lang) {
+      if (isCurrent()) {
+        clearAttribution();
         const copy = _el?.querySelector('#db-hadith-daily');
-        if (copy) copy.textContent = t('translation_unavailable',lang);
+        if (copy) copy.textContent = t('error', lang);
       }
     }
   }
