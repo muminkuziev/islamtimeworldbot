@@ -1989,6 +1989,8 @@ async def api_hadith_category(name: str = Query(...), lang: str = Query("en")):
 
 # ── Verified HadeethEnc API ────────────────────────────────────────────────
 # Every row served here belongs to the integrity-tested 144 x 13 corpus.
+from domain.content.uzbek import search_key as _uzbek_search_key, to_latin as _uzbek_to_latin, with_latin_display
+
 _HADEETHENC_LANGS = {"ar", "en", "id", "ur", "bn", "fr", "hi", "fa", "tr", "ru", "uz", "de", "ms"}
 _HADEETHENC_ALIASES = {"uz_cyr": "uz"}
 
@@ -2000,7 +2002,7 @@ def _hadeethenc_lang(lang: str) -> str:
 
 
 def _verified_hadith_row(row, arabic_text: str = "") -> dict:
-    return {
+    return with_latin_display({
         "id": row["id"],
         "title": row["title"] or "",
         "text": row["hadeeth_text"],
@@ -2011,7 +2013,7 @@ def _verified_hadith_row(row, arabic_text: str = "") -> dict:
         "source": row["source"],
         "source_api": row["source_api"] or "",
         "language": row["language"],
-    }
+    })
 
 
 @app.get("/api/hadeethenc")
@@ -2048,8 +2050,14 @@ async def api_hadeethenc(
             where.append("h.attribution=?")
             params.append(book)
         if q.strip():
-            term = f"%{q.strip()}%"
-            where.append("(h.id LIKE ? OR h.title LIKE ? OR h.hadeeth_text LIKE ? OR h.attribution LIKE ? OR h.explanation LIKE ?)")
+            columns = ("h.id", "h.title", "h.hadeeth_text", "h.attribution", "h.explanation")
+            if language == "uz":
+                con.create_function("uzbek_search_key", 1, _uzbek_search_key, deterministic=True)
+                term = f"%{_uzbek_search_key(q.strip())}%"
+                columns = tuple(f"uzbek_search_key({column})" for column in columns)
+            else:
+                term = f"%{q.strip()}%"
+            where.append("(" + " OR ".join(f"{column} LIKE ?" for column in columns) + ")")
             params.extend([term, term, term, term, term])
         predicate = " AND ".join(where)
         total = cur.execute(f"SELECT COUNT(*) FROM hadeeth_verified h WHERE {predicate}", params).fetchone()[0]
@@ -2098,7 +2106,10 @@ async def api_hadeethenc_books(lang: str = Query("en")):
             (language,),
         ).fetchall()
         con.close()
-        return [{"name": r[0], "count": r[1]} for r in rows]
+        return [{
+            "name": r[0], "count": r[1],
+            **({"display_name": _uzbek_to_latin(r[0])} if language == "uz" else {}),
+        } for r in rows]
 
     try:
         books = await asyncio.to_thread(_query)

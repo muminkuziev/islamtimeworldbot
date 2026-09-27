@@ -585,11 +585,11 @@ const DashboardScreen = (function () {
       if (!hadith || payload.language !== lang || hadith.language !== lang || !payload.verified || typeof hadith.text !== 'string' || !hadith.text.trim()) throw new Error('Daily Hadith source mismatch');
       if (!isCurrent()) return;
       const copy = _el?.querySelector('#db-hadith-daily');
-      if (copy) copy.textContent = hadith.text;
+      if (copy) copy.textContent = HadithDisplay.field(hadith, 'text', lang);
       const source = _el?.querySelector('#db-hadith-source');
       if (source) source.textContent = hadith.source || '';
       const grade = _el?.querySelector('.db-hadith-grade');
-      if (grade) { grade.textContent = hadith.grade || ''; grade.hidden = !hadith.grade; }
+      if (grade) { grade.textContent = HadithDisplay.field(hadith, 'grade', lang); grade.hidden = !hadith.grade; }
     } catch {
       if (isCurrent()) {
         clearAttribution();

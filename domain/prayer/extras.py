@@ -496,6 +496,7 @@ def get_daily_hadith(lang: str = "en") -> dict:
     """
     from pathlib import Path
     import sqlite3
+    from domain.content.uzbek import with_latin_display
 
     l = _HADITH_LANG_FALLBACK.get(lang, lang)
     if l not in _HADITH_CANONICAL_LANGS:
@@ -523,7 +524,7 @@ def get_daily_hadith(lang: str = "en") -> dict:
         con.close()
         if not row:
             return {}
-        return {
+        return with_latin_display({
             "id":          hadith_id,
             "text":        row["hadeeth_text"],
             "title":       row["title"],
@@ -534,7 +535,7 @@ def get_daily_hadith(lang: str = "en") -> dict:
             "source":      row["source"],
             "source_api":  row["source_api"],
             "source_note": "HadeethEnc.com — verified 144-hadith, 13-language corpus",
-        }
+        })
     except Exception:
         return {}
 

@@ -1289,8 +1289,8 @@ const PrayerScreen = (function () {
     return `
       <div class="pm-card pm-card--green">
         <div class="pm-card-label"><span class="pm-card-dot pm-card-dot--green"></span>${_l('dailyHadith', _lang)}</div>
-        <div class="pm-hadith-text">"${_esc(h.text)}"</div>
-        <div class="pm-hadith-narrator">${_esc(h.narrator)}</div>
+        <div class="pm-hadith-text">"${_esc(HadithDisplay.field(h, 'text', _lang))}"</div>
+        <div class="pm-hadith-narrator">${_esc(HadithDisplay.field(h, 'narrator', _lang))}</div>
         <div class="pm-hadith-source">${_esc(h.source)}</div>
       </div>`;
   }

@@ -1,4 +1,5 @@
-/* Verified HadeethEnc reader. Religious text and grades remain source-exact. */
+/* Verified HadeethEnc reader. Originals remain source-exact; Uzbek display
+   fields change the script only, while filters retain the source keys. */
 const HadithScreen = (function () {
   'use strict';
   const PAGE_SIZE = 12;
@@ -10,6 +11,7 @@ const HadithScreen = (function () {
     char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char]));
   const T = (uz, cyr, ru, en) => _resolveT(uz, cyr, ru, en, lang);
   const provider = () => window.HadithRegistry.get('hadeethenc');
+  const text = (record, key) => HadithDisplay.field(record, key, lang);
   const label = {
     hadith: () => T('Hadislar','Ҳадислар','Хадисы','Hadiths'),
     source: () => T('Manba','Манба','Источник','Source'),
@@ -79,13 +81,13 @@ const HadithScreen = (function () {
     if (tab === 'books' && booksFailed) return `<div class="hd-empty" role="alert">${label.error()}<br><button class="hd-retry-btn" id="hd-books-retry">${label.retry()}</button></div>`;
     if (tab === 'books') return books.length
       ? `<div class="hd-kat-grid">${books.map((item, index) =>
-          `<button class="hd-kat-card" data-book="${index}"><span class="hd-kat-card-name" dir="auto">${esc(item.name)}</span><span class="hd-kat-card-sub">${item.count}</span></button>`).join('')}</div>`
+          `<button class="hd-kat-card" data-book="${index}"><span class="hd-kat-card-name" dir="auto">${esc(HadithDisplay.bookName(item, lang))}</span><span class="hd-kat-card-sub">${item.count}</span></button>`).join('')}</div>`
       : `<div class="hd-empty">${label.empty()}</div>`;
     const search = tab === 'search' ? `<form class="hd-search-wrap" id="hd-search-form">
       <input class="hd-search-in" id="hd-search" type="search" maxlength="160" dir="auto" value="${esc(query)}" placeholder="${label.search()}" aria-label="${label.search()}">
       <button class="hd-search-clr" type="submit" aria-label="${label.search()}">⌕</button>
       ${query ? `<button class="hd-search-clr" type="button" id="hd-search-clr" aria-label="${label.back()}">×</button>` : ''}</form>` : '';
-    const filter = book ? `<div class="hd-kat-badge"><span dir="auto">${esc(book)}</span><button id="hd-kat-clr" class="hd-kat-clr" aria-label="${label.back()}">×</button></div>` : '';
+    const filter = book ? `<div class="hd-kat-badge"><span dir="auto">${esc(HadithDisplay.bookName(books.find(item => item.name === book) || { name:book }, lang))}</span><button id="hd-kat-clr" class="hd-kat-clr" aria-label="${label.back()}">×</button></div>` : '';
     let list;
     if (loading) list = `<div class="hd-loading" role="status"><div class="hd-spinner"></div><span>${typeof t === 'function' ? t('loading', lang) : ''}</span></div>`;
     else if (failed) list = `<div class="hd-empty" role="alert">${label.error()}<br><button class="hd-retry-btn" id="hd-retry">${label.retry()}</button></div>`;
@@ -100,10 +102,10 @@ const HadithScreen = (function () {
 
   function card(hadith, index) {
     return `<button class="hd-card" data-idx="${index}" type="button" style="width:100%;text-align:start">
-      ${hadith.title ? `<div class="hd-chapter-hdr" dir="auto">${esc(hadith.title)}</div>` : ''}
-      <div class="${hadith.language === 'ar' ? 'hd-card-ar' : 'hd-card-uz'}" dir="auto">${esc(hadith.text)}</div>
+      ${hadith.title ? `<div class="hd-chapter-hdr" dir="auto">${esc(text(hadith, 'title'))}</div>` : ''}
+      <div class="${hadith.language === 'ar' ? 'hd-card-ar' : 'hd-card-uz'}" dir="auto">${esc(text(hadith, 'text'))}</div>
       <div class="hd-card-foot"><div class="hd-card-foot-left">
-      ${hadith.grade ? `<span class="hd-sahih" dir="auto">${esc(hadith.grade)}</span>` : ''}
+      ${hadith.grade ? `<span class="hd-sahih" dir="auto">${esc(text(hadith, 'grade'))}</span>` : ''}
       </div><span class="hd-card-ref">HadeethEnc · ${esc(hadith.id)}</span></div></button>`;
   }
 
@@ -114,12 +116,12 @@ const HadithScreen = (function () {
     return `<button class="hd-detail-back" id="hd-detail-back">${label.back()}</button>
       <article class="hd-detail-box"><div class="hd-detail-topline"></div>
       <div class="hd-detail-badges"><span class="hd-detail-ref">HadeethEnc · ${esc(h.id)}</span>
-      ${h.grade ? `<span class="hd-detail-sahih" dir="auto">${esc(h.grade)}</span>` : ''}</div>
-      ${h.title ? `<h2 class="hd-chapter-hdr" dir="auto">${esc(h.title)}</h2>` : ''}
+      ${h.grade ? `<span class="hd-detail-sahih" dir="auto">${esc(text(h, 'grade'))}</span>` : ''}</div>
+      ${h.title ? `<h2 class="hd-chapter-hdr" dir="auto">${esc(text(h, 'title'))}</h2>` : ''}
       ${h.arabic ? `<div class="hd-detail-ar" lang="ar" dir="rtl">${esc(h.arabic)}</div>` : ''}
-      ${h.language !== 'ar' ? `<div class="hd-detail-sep"></div><div class="hd-detail-uz" lang="${esc(h.language)}" dir="auto" style="white-space:pre-line">${esc(h.text)}</div>` : ''}
-      ${h.attribution ? `<div class="hd-detail-rowi" dir="auto">${esc(h.attribution)}</div>` : ''}
-      ${h.explanation ? `<div class="hd-detail-sep"></div><div class="hd-detail-uz" dir="auto" style="white-space:pre-line">${esc(h.explanation)}</div>` : ''}
+      ${h.language !== 'ar' ? `<div class="hd-detail-sep"></div><div class="hd-detail-uz" lang="${lang === 'uz' ? 'uz-Latn' : esc(h.language)}" dir="auto" style="white-space:pre-line">${esc(text(h, 'text'))}</div>` : ''}
+      ${h.attribution ? `<div class="hd-detail-rowi" dir="auto">${esc(text(h, 'attribution'))}</div>` : ''}
+      ${h.explanation ? `<div class="hd-detail-sep"></div><div class="hd-detail-uz" dir="auto" style="white-space:pre-line">${esc(text(h, 'explanation'))}</div>` : ''}
       <a class="hd-detail-ref" href="${esc(sourceUrl)}" target="_blank" rel="noopener noreferrer">${label.source()}: ${esc(h.source)}</a>
       </article><div class="hd-detail-nav">
       <button class="hd-nav-btn" id="hd-nav-prev" ${selected === 0 ? 'disabled' : ''}>${label.previous()}</button>
