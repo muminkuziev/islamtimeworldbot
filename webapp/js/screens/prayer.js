@@ -1339,6 +1339,54 @@ const PrayerScreen = (function () {
     ).join('');
   }
 
+  async function _fetchWeatherOpenMeteo() {
+    if (_lat === null || _lon === null || !_data) return false;
+    try {
+      const qs = new URLSearchParams({
+        latitude: String(_lat), longitude: String(_lon),
+        current: 'temperature_2m,apparent_temperature,weather_code,relative_humidity_2m,wind_speed_10m,wind_direction_10m,surface_pressure,visibility',
+        hourly: 'temperature_2m,weather_code,precipitation_probability,uv_index',
+        daily: 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset',
+        timezone: 'auto', forecast_days: '6', wind_speed_unit: 'kmh'
+      });
+      const r = await fetch(`https://api.open-meteo.com/v1/forecast?${qs}`, { cache: 'no-store' });
+      if (!r.ok) throw new Error(`Open-Meteo HTTP ${r.status}`);
+      const raw = await r.json(), c = raw.current || {}, h = raw.hourly || {}, d = raw.daily || {};
+      const now = new Date();
+      let idx = Math.max(0, (h.time || []).findIndex(t => {
+        const dt = new Date(t); return dt.getDate() === now.getDate() && dt.getHours() === now.getHours();
+      }));
+      const hourly = [];
+      for (let i = idx; i < Math.min(idx + 8, (h.time || []).length); i++) hourly.push({
+        time: String(h.time[i] || '').slice(11,16), temp_c: Math.round(h.temperature_2m?.[i] ?? 0),
+        code: Number(h.weather_code?.[i] ?? 0), precip_pct: Math.round(h.precipitation_probability?.[i] ?? 0)
+      });
+      const locale = {uz:'uz-UZ',uz_cyr:'uz-Cyrl-UZ',ru:'ru-RU',en:'en-US',tr:'tr-TR',ar:'ar-SA',de:'de-DE',fr:'fr-FR',id:'id-ID',hi:'hi-IN',ur:'ur-PK',fa:'fa-IR',bn:'bn-BD',ms:'ms-MY'}[_lang] || 'en-US';
+      const forecast = (d.time || []).slice(0,5).map((date,i) => ({
+        date, day_name: new Intl.DateTimeFormat(locale,{weekday:'long'}).format(new Date(date+'T12:00:00')),
+        temp_min_c: Math.round(d.temperature_2m_min?.[i] ?? 0), temp_max_c: Math.round(d.temperature_2m_max?.[i] ?? 0),
+        code: Number(d.weather_code?.[i] ?? 0), precip_pct: Math.round(d.precipitation_probability_max?.[i] ?? 0)
+      }));
+      const temp = Math.round(c.temperature_2m ?? 0), hum = Math.round(c.relative_humidity_2m ?? 0);
+      const dew = Math.round(temp - ((100 - hum) / 5));
+      _data.weather = {
+        temp_c: temp, feels_like_c: Math.round(c.apparent_temperature ?? temp),
+        temp_min_c: Math.round(d.temperature_2m_min?.[0] ?? temp), temp_max_c: Math.round(d.temperature_2m_max?.[0] ?? temp),
+        description: _l('weather', _lang), humidity: hum, wind_kmph: Math.round(c.wind_speed_10m ?? 0),
+        wind_dir: '', wind_dir_full: '', pressure_hpa: Math.round(c.surface_pressure ?? 0) || null,
+        visibility_km: c.visibility == null ? null : Math.round(c.visibility / 1000), dew_point_c: dew,
+        uv_index: h.uv_index?.[idx] == null ? null : Math.round(h.uv_index[idx]),
+        sunrise: String(d.sunrise?.[0] || '').slice(11,16), sunset: String(d.sunset?.[0] || '').slice(11,16), hourly, forecast
+      };
+      _weatherRetries = 0;
+      if (_tab === 'obhavo') _renderTabContent();
+      return true;
+    } catch (err) {
+      console.warn('[weather] Open-Meteo browser fallback failed', err?.message || err);
+      return false;
+    }
+  }
+
   async function _fetchWeatherDirect() {
     if (_lat === null || _lon === null || !_data) return false;
     try {
@@ -1357,9 +1405,10 @@ const PrayerScreen = (function () {
       if (_tab === 'obhavo') _renderTabContent();
       return true;
     } catch (err) {
-      console.warn('[weather] direct fetch failed', err?.message || err);
-      if (_tab === 'obhavo') _renderTabContent();
-      return false;
+      console.warn('[weather] server fetch failed', err?.message || err);
+      const ok = await _fetchWeatherOpenMeteo();
+      if (!ok && _tab === 'obhavo') _renderTabContent();
+      return ok;
     }
   }
 
