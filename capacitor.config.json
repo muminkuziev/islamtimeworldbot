@@ -46,8 +46,7 @@
 
     "LocalNotifications": {
       "smallIcon":          "ic_notification",
-      "iconColor":          "#16794A",
-      "sound":              "beep.wav"
+      "iconColor":          "#16794A"
     },
 
     "Geolocation": {

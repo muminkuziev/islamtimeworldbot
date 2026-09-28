@@ -1,6 +1,13 @@
 package com.islamtimeworld.app;
 
 import android.os.Bundle;
+import android.os.Build;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.Context;
+import android.media.AudioAttributes;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.graphics.Color;
 import android.view.View;
 import android.webkit.WebView;
@@ -26,7 +33,46 @@ public class MainActivity extends BridgeActivity {
         // it explicitly here instead: on for debug builds, off for release —
         // this is Android's own recommended pattern for this exact setting.
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG);
+        createNotificationChannels();
         setupWindowInsets();
+    }
+
+    private void createNotificationChannels() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
+        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm == null) return;
+
+        AudioAttributes audio = new AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build();
+
+        NotificationChannel silent = new NotificationChannel("itw_silent", "IslamTimeWorld — Ovozsiz", NotificationManager.IMPORTANCE_HIGH);
+        silent.setDescription("Namoz eslatmalari — ovozsiz va vibratsiyasiz");
+        silent.setSound(null, null);
+        silent.enableVibration(false);
+
+        NotificationChannel sound = new NotificationChannel("itw_sound", "IslamTimeWorld — Oddiy ovoz", NotificationManager.IMPORTANCE_HIGH);
+        sound.setDescription("Namoz eslatmalari — standart notification ovozi");
+        sound.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION), audio);
+        sound.enableVibration(false);
+
+        NotificationChannel vibrate = new NotificationChannel("itw_vibrate", "IslamTimeWorld — Vibratsiya", NotificationManager.IMPORTANCE_HIGH);
+        vibrate.setDescription("Namoz eslatmalari — faqat vibratsiya");
+        vibrate.setSound(null, null);
+        vibrate.enableVibration(true);
+        vibrate.setVibrationPattern(new long[]{0, 350, 180, 350});
+
+        Uri adhanUri = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.adhan);
+        NotificationChannel adhan = new NotificationChannel("itw_adhan", "IslamTimeWorld — Azon", NotificationManager.IMPORTANCE_HIGH);
+        adhan.setDescription("Namoz eslatmalari — Azon ovozi");
+        adhan.setSound(adhanUri, audio);
+        adhan.enableVibration(false);
+
+        nm.createNotificationChannel(silent);
+        nm.createNotificationChannel(sound);
+        nm.createNotificationChannel(vibrate);
+        nm.createNotificationChannel(adhan);
     }
 
     @Override

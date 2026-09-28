@@ -33,7 +33,7 @@ const SplashScreen = (function () {
       <div class="splash-wrap">
         <img
           class="splash-logo"
-          src="assets/logo.svg"
+          src="assets/branding/official-icon.png"
           alt="IslamTimeWorldBot"
           draggable="false"
         />

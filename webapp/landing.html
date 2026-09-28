@@ -9,8 +9,9 @@
   <meta name="theme-color" content="#0d7e5d">
   <meta name="color-scheme" content="light">
 
-  <link rel="icon" type="image/svg+xml" href="assets/landing/favicon.svg">
-  <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
   <!-- Open Graph / Twitter -->
   <meta property="og:type" content="website">
@@ -169,13 +170,11 @@
     .brand-icon {
       width: 44px;
       height: 44px;
-      background: linear-gradient(135deg, #0d7e5d 0%, #064e39 100%);
       border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      box-shadow: 0 4px 12px rgba(13, 126, 93, 0.25);
+      display: block;
+      object-fit: cover;
+      flex: 0 0 auto;
+      box-shadow: 0 4px 12px rgba(8, 13, 26, 0.22);
     }
 
     .brand-title {
@@ -1358,6 +1357,7 @@
   <nav class="navbar" aria-label="Asosiy menyu">
     <div class="container nav-inner">
       <a href="#hero" class="brand" aria-label="IslamTimeWorld — bosh sahifa">
+        <img class="brand-icon" src="assets/branding/official-icon.png" alt="" aria-hidden="true">
         <div>
           <div class="brand-title">IslamTimeWorld</div>
           <div class="brand-tagline">Har kuningiz Allohga yaqinroq bo'lsin!</div>
@@ -1738,12 +1738,7 @@
   <footer class="footer" id="help">
     <div class="container footer-inner">
       <a href="#hero" class="brand" aria-label="IslamTimeWorld — yuqoriga">
-        <div class="brand-icon" style="width:36px;height:36px;border-radius:10px;" aria-hidden="true">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 3c-1.5 1.5-2 3.5-2 5h4c0-1.5-.5-3.5-2-5z"/>
-            <path d="M4 10h16v11H4z"/>
-          </svg>
-        </div>
+        <img class="brand-icon" style="width:36px;height:36px;border-radius:10px;" src="assets/branding/official-icon.png" alt="" aria-hidden="true">
         <div>
           <div class="brand-title" style="font-size:18px;">IslamTimeWorld</div>
           <div class="brand-tagline" style="font-size:10.5px;">Har kuningiz Allohga yaqinroq bo'lsin!</div>

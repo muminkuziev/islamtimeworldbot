@@ -4636,6 +4636,8 @@ button {
 .pm-timing-row { display:flex; justify-content:space-between; align-items:center; background:rgba(22,33,43,.025); border:1px solid rgba(22,33,43,.05); border-radius:12px; padding:10px 14px; }
 .pm-timing-name { font-size:13px; font-weight:600; color:#16212B; letter-spacing:-.2px; }
 .pm-timing-btns { display:flex; gap:5px; }
+.pm-notif-mode-row { flex-wrap:wrap; }
+.pm-notif-mode-row .pm-timing-btn { flex:1 1 calc(50% - 5px); min-height:34px; }
 .pm-timing-btn { background:rgba(22,33,43,.05); border:1px solid rgba(22,33,43,.08); border-radius:7px; padding:4px 7px; cursor:pointer; font-size:9px; font-weight:600; color:rgba(22,33,43,.5); font-family:'Inter',system-ui,sans-serif; }
 .pm-timing-btn--on { background:rgba(22,121,74,.15); border-color:rgba(22,121,74,.3); color:#16794A; }
 .pm-action-row { display:flex; flex-direction:column; gap:8px; }

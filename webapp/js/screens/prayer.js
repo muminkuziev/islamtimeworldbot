@@ -65,6 +65,10 @@ const PrayerScreen = (function () {
     const p = _getNotifPrefs();
     return p['timing_' + key] ?? 0;
   }
+  function _getNotifMode() {
+    const p = _getNotifPrefs();
+    return ['silent','sound','vibrate','adhan'].includes(p.mode) ? p.mode : 'sound';
+  }
 
   /* ── i18n strings ──────────────────────────────────────────── */
   const L = {
@@ -460,6 +464,7 @@ const PrayerScreen = (function () {
       _data = json;
       _syncLocationToServer(lat, lon, json.city || '');
       _renderFull();
+      _syncNativePrayerNotifications();
     } catch { if (isCurrent()) _showError('network'); }
   }
 
@@ -483,7 +488,7 @@ const PrayerScreen = (function () {
     if (!el) return;
     el.innerHTML = `
       <div class="pm-loader">
-        <img src="assets/logo.svg" class="pm-loader-logo" alt=""/>
+        <img src="assets/branding/official-icon.png" class="pm-loader-logo" alt=""/>
         <div class="splash-dots">
           <span class="splash-dot"></span><span class="splash-dot"></span><span class="splash-dot"></span>
         </div>
@@ -1178,6 +1183,16 @@ const PrayerScreen = (function () {
         }).join('')}
       </div>
 
+      <div class="pm-section-lbl" style="margin-top:14px">${_T('BILDIRISHNOMA OVOZI','БИЛДИРИШНОМА ОВОЗИ','ЗВУК УВЕДОМЛЕНИЯ','NOTIFICATION MODE')}</div>
+      <div class="pm-timing-btns pm-notif-mode-row" role="radiogroup" aria-label="Notification mode">
+        ${[
+          ['silent', _T('Ovozsiz','Овозсиз','Без звука','Silent')],
+          ['sound', _T('Oddiy ovoz','Оддий овоз','Обычный звук','Standard sound')],
+          ['vibrate', _T('Vibratsiya','Вибрация','Вибрация','Vibration')],
+          ['adhan', _T('Azon ovozi','Азон овози','Азан','Adhan sound')],
+        ].map(([mode,label]) => `<button type="button" class="pm-timing-btn pm-notif-mode-btn${_getNotifMode()===mode?' pm-timing-btn--on':''}" data-notif-mode="${mode}" role="radio" aria-checked="${_getNotifMode()===mode}">${label}</button>`).join('')}
+      </div>
+
       <div class="pm-section-lbl" style="margin-top:14px">${_T('ESLATMA VAQTI (daqiqa oldin)','ЭСЛАТМА ВАҚТИ (дақиқа олдин)','НАПОМИНАНИЕ ЗА (минут)','REMINDER (minutes before)')}</div>
       <div class="pm-timing-list">
         ${prayers.map(p => {
@@ -1205,6 +1220,17 @@ const PrayerScreen = (function () {
   }
 
   /* Save notification preferences to server so the scheduler can deliver them */
+  function _syncNativePrayerNotifications() {
+    const prefs = _getNotifPrefs();
+    if (!prefs.push) {
+      window.IslamNative?.cancelPrayerNotifications?.();
+      return;
+    }
+    const timing = {};
+    ['fajr','dhuhr','asr','maghrib','isha'].forEach(k => timing[k] = Number(_getTimingPref(k) || 0));
+    window.IslamNative?.schedulePrayerNotifications?.(_data?.prayers || [], timing, _getNotifMode());
+  }
+
   async function _syncNotifPrefsToServer(enabled) {
     const userId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || null;
     if (!userId) return;
@@ -1223,6 +1249,7 @@ const PrayerScreen = (function () {
           enabled:   enabled ? 1 : 0,
           timing,
           tz_offset: tzOffset,
+          mode:      _getNotifMode(),
         }),
         signal: AbortSignal.timeout(5000),
       });
@@ -1238,12 +1265,33 @@ const PrayerScreen = (function () {
         const k  = tog.dataset.pref;
         const on = tog.classList.toggle('pm-toggle--on');
         _setNotifPref(k, on);
-        if (k === 'push') _syncNotifPrefsToServer(on);  /* register/unregister with server */
+        if (k === 'push') {
+          _syncNotifPrefsToServer(on);
+          _syncNativePrayerNotifications();
+        }
         window.Telegram?.WebApp?.HapticFeedback?.selectionChanged();
       });
     });
 
-    el.querySelectorAll('.pm-timing-btn').forEach(btn => {
+    el.querySelectorAll('.pm-notif-mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mode = btn.dataset.notifMode;
+        _setNotifPref('mode', mode);
+        el.querySelectorAll('.pm-notif-mode-btn').forEach(b => {
+          const on = b.dataset.notifMode === mode;
+          b.classList.toggle('pm-timing-btn--on', on);
+          b.setAttribute('aria-checked', String(on));
+        });
+        window.IslamNative?.setNotificationMode?.(mode);
+        if (_getNotifPrefs().push) {
+          _syncNotifPrefsToServer(true);
+          _syncNativePrayerNotifications();
+        }
+        window.Telegram?.WebApp?.HapticFeedback?.selectionChanged();
+      });
+    });
+
+    el.querySelectorAll('.pm-timing-btn[data-pkey]').forEach(btn => {
       btn.addEventListener('click', () => {
         const pkey = btn.dataset.pkey;
         const val  = btn.dataset.val;
@@ -1252,7 +1300,10 @@ const PrayerScreen = (function () {
           b.classList.toggle('pm-timing-btn--on', b.dataset.val === val);
         });
         /* Sync timing changes to server if push is already enabled */
-        if (_getNotifPrefs().push) _syncNotifPrefsToServer(true);
+        if (_getNotifPrefs().push) {
+          _syncNotifPrefsToServer(true);
+          _syncNativePrayerNotifications();
+        }
         window.Telegram?.WebApp?.HapticFeedback?.selectionChanged();
       });
     });

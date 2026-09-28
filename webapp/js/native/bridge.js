@@ -14,7 +14,7 @@
   const Plugins = Cap.Plugins;
   const {
     App, StatusBar, SplashScreen,
-    PushNotifications, Haptics, Network,
+    PushNotifications, LocalNotifications, Haptics, Network,
     Geolocation,
   } = Plugins;
 
@@ -143,6 +143,7 @@
 
   /* ── Register device token on server ───────────────────── */
   function _registerDevice(fcmToken) {
+    const userId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || null;
     fetch('/api/app/register-device', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -151,8 +152,56 @@
         fcm_token: fcmToken,
         lang:      localStorage.getItem('islamtime_lang') || 'uz',
         platform:  Cap.getPlatform?.() || 'android',
+        user_id:   userId,
       }),
     }).catch(() => {});
+  }
+
+  /* ── Local prayer notifications ─────────────────────── */
+  async function _cancelPrayerNotifications() {
+    if (!LocalNotifications) return;
+    try {
+      await LocalNotifications.cancel({ notifications: [5101,5102,5103,5104,5105].map(id => ({ id })) });
+    } catch (_) {}
+  }
+
+  async function _schedulePrayerNotifications(prayers, timing, mode) {
+    if (!LocalNotifications || !Array.isArray(prayers)) return;
+    await _cancelPrayerNotifications();
+    try {
+      const perm = await LocalNotifications.checkPermissions();
+      let allowed = perm.display === 'granted';
+      if (!allowed && perm.display !== 'denied') {
+        const req = await LocalNotifications.requestPermissions();
+        allowed = req.display === 'granted';
+      }
+      if (!allowed) return;
+
+      const channelId = 'itw_' + (['silent','sound','vibrate','adhan'].includes(mode) ? mode : 'sound');
+      const now = new Date();
+      const list = prayers.filter(p => p && p.key !== 'sunrise' && /^\d{2}:\d{2}$/.test(p.time || ''));
+      const notifications = [];
+      list.slice(0,5).forEach((p, i) => {
+        const [h,m] = p.time.split(':').map(Number);
+        const at = new Date(now);
+        at.setHours(h, m, 0, 0);
+        at.setMinutes(at.getMinutes() + Number(timing?.[p.key] || 0));
+        if (at <= now) return;
+        notifications.push({
+          id: 5101 + i,
+          title: 'IslamTimeWorld · ' + (p.name || p.key),
+          body: (p.name || p.key) + ' · ' + p.time,
+          schedule: { at },
+          channelId,
+          smallIcon: 'ic_notification',
+          iconColor: '#16794A',
+          extra: { screen: 'prayer', prayer: p.key, mode }
+        });
+      });
+      if (notifications.length) await LocalNotifications.schedule({ notifications });
+    } catch (e) {
+      console.warn('[LocalNotifications] schedule failed:', e);
+    }
   }
 
   /* ── Haptics (native replacement for Telegram.HapticFeedback) */
@@ -172,12 +221,20 @@
   }
 
   /* ── Public API ─────────────────────────────────────────── */
+  function _setNotificationMode(mode) {
+    if (!['silent','sound','vibrate','adhan'].includes(mode)) return;
+    localStorage.setItem('islamtime_notification_mode', mode);
+  }
+
   window.IslamNative = {
-    isOnline:       () => _isOnline,
-    deviceId:       _deviceId,
-    platform:       Cap.getPlatform?.() || 'android',
-    initPush:       _initPush,
-    registerDevice: _registerDevice,
+    isOnline:            () => _isOnline,
+    deviceId:            _deviceId,
+    platform:            Cap.getPlatform?.() || 'android',
+    initPush:            _initPush,
+    registerDevice:              _registerDevice,
+    setNotificationMode:         _setNotificationMode,
+    schedulePrayerNotifications: _schedulePrayerNotifications,
+    cancelPrayerNotifications:   _cancelPrayerNotifications,
   };
 
   /* ── Boot ────────────────────────────────────────────────── */
