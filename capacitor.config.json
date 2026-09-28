@@ -14,7 +14,7 @@
     "backgroundColor":             "#FFFFFF",
     "allowMixedContent":           false,
     "captureInput":                true,
-    "webContentsDebuggingEnabled": true,
+    "webContentsDebuggingEnabled": false,
     "initialFocus":                false,
     "appendUserAgent":             "IslamTimeWorld/Android"
   },
