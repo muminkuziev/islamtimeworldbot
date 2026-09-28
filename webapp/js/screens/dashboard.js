@@ -227,7 +227,7 @@ const DashboardScreen = (function () {
 
     return `
 <div class="db-hdr">
-  <img class="db-hdr-photo" src="assets/landing/haram-madinah.webp" alt="Masjid an-Nabawi" loading="eager">
+  <img class="db-hdr-photo" src="assets/landing/hero-bg.webp" alt="Masjid al-Haram" loading="eager">
   <div class="nm-tile-ov db-hero-overlay"></div>
   <div class="db-hdr-inner">
 

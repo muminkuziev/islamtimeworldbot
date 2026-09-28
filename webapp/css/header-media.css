@@ -218,16 +218,16 @@ html[data-theme="dark"] #app #screen-hadith .hd-hdr { background-image: none !im
 /* Home has text beside the photo. Keep its complete image on the far side
    and mirror only the scrim direction in RTL, never the photograph itself. */
 #app #screen-dashboard .db-hero-overlay {
-  background-image: linear-gradient(90deg,#007450 0%,#007450 28%,rgba(0,116,80,.72) 50%,rgba(0,72,48,.04) 78%),url('../assets/landing/haram-madinah.webp') !important;
+  background-image: linear-gradient(90deg,#007450 0%,#007450 30%,rgba(0,116,80,.76) 53%,rgba(0,72,48,.04)),url('../assets/reference-ui/makkah-hero.png') !important;
   background-size: 100% 100%, cover !important;
-  background-position: center, 50% 48% !important;
+  background-position: center, 58% center !important;
   background-repeat: no-repeat !important;
   background-color: #007450 !important;
   transform: none !important;
 }
 html[dir="rtl"] #app #screen-dashboard .db-hero-overlay {
-  background-image: linear-gradient(270deg,#007450 0%,#007450 28%,rgba(0,116,80,.72) 50%,rgba(0,72,48,.04) 78%),url('../assets/landing/haram-madinah.webp') !important;
-  background-position: center, 50% 48% !important;
+  background-image: linear-gradient(270deg,#007450 0%,#007450 30%,rgba(0,116,80,.76) 53%,rgba(0,72,48,.04)),url('../assets/reference-ui/makkah-hero.png') !important;
+  background-position: center, left center !important;
 }
 
 /* Auto margins in the existing tablet rules must not shrink flex items to
