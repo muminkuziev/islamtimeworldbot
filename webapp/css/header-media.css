@@ -91,9 +91,9 @@
    photograph is never mirrored in RTL; only the scrim direction flips. */
 #app #screen-hadith {
   --hero-img: url('../assets/landing/haram-madinah.webp');
-  --hero-pos: 50% 100%;
-  --hero-h: 176px;
-  --hero-scrim: .8;
+  --hero-pos: 50% 60%;
+  --hero-h: 232px;
+  --hero-scrim: .56;
 }
 #app #screen-duas {
   --hero-img: url('../assets/landing/haram-makkah.webp');
@@ -189,7 +189,7 @@ html[dir="rtl"] #app :is(#screen-hadith, #screen-duas, #screen-dhikr, #screen-na
 
 /* Per-screen placement: keep the landmark clear and let the first control
    straddle the photo's lower edge. */
-#app #screen-hadith .hd-hdr--photo { min-height: 0 !important; }
+#app #screen-hadith .hd-hdr--photo { min-height: 255px !important; }
 #app #screen-hadith .hd-books {
   position: absolute;
   top: 3px;
@@ -201,7 +201,7 @@ html[dir="rtl"] #app :is(#screen-hadith, #screen-duas, #screen-dhikr, #screen-na
   padding: 6px 12px !important;
   border-radius: 13px !important;
 }
-#app #screen-hadith .hd-tabs { margin-top: 56px !important; }
+#app #screen-hadith .hd-tabs { margin-top: 92px !important; }
 #app #screen-duas .du-title { margin-top: 28px !important; }
 #app #screen-names .nm-title-wrap { margin-top: 25px !important; }
 #app :is(#screen-hadith .hd-tabs, #screen-duas .du-search-wrap, #screen-names .nm-search-box) {
