@@ -24,6 +24,11 @@ def _cget(key):
         return item[0]
     return None
 
+def _cget_stale(key):
+    """Return the last cached value even after TTL expiry, for outage fallback."""
+    item = _CACHE.get(key)
+    return item[0] if item else None
+
 def _cput(key, val, ttl: float):
     _CACHE[key] = (val, time.monotonic() + ttl)
 
@@ -156,14 +161,26 @@ async def fetch_weather(lat: float, lon: float, lang: str = "en") -> Optional[di
             "forecast_days": 6,
             "wind_speed_unit": "kmh",
         }
-        try:
-            async with aiohttp.ClientSession() as sess:
-                async with sess.get(url, params=params, timeout=_TIMEOUT) as resp:
-                    if resp.status == 200:
-                        raw = await resp.json(content_type=None)
-                        _cput(raw_key, raw, 600)
-        except Exception:
-            pass
+        last_error = None
+        for attempt in range(3):
+            try:
+                timeout = aiohttp.ClientTimeout(total=15, connect=6)
+                async with aiohttp.ClientSession(headers=_UA) as sess:
+                    async with sess.get(url, params=params, timeout=timeout) as resp:
+                        if resp.status == 200:
+                            raw = await resp.json(content_type=None)
+                            _cput(raw_key, raw, 600)
+                            break
+                        last_error = RuntimeError(f"Open-Meteo HTTP {resp.status}")
+            except Exception as exc:
+                last_error = exc
+            if attempt < 2:
+                await asyncio.sleep(0.6 * (attempt + 1))
+
+        if raw is None:
+            raw = _cget_stale(raw_key)
+            if raw is not None:
+                print(f"[weather] Open-Meteo unavailable; using stale cache: {last_error}", flush=True)
 
     if raw is None:
         return None
