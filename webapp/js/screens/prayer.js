@@ -833,25 +833,13 @@ const PrayerScreen = (function () {
   function _buildObHavoTab() {
     const w = _data.weather;
     if (!w) {
-      if (_weatherRetries < 3 && _lat && _lon) {
+      if (_weatherRetries < 3 && _lat !== null && _lon !== null) {
         _weatherRetries++;
         setTimeout(async function() {
           if (_data && !_data.weather) {
-            try {
-              const r = await fetch(
-                `${window.location.origin}/api/weather?lat=${_lat}&lon=${_lon}&lang=${_lang}&${window.PrayerPreferences.query()}`,
-                { signal: AbortSignal.timeout(8000) }
-              );
-              if (r.ok) {
-                const wd = await r.json();
-                if (!wd.error && wd.temp_c !== undefined) {
-                  _data.weather = wd;
-                  if (_tab === 'obhavo') _renderTabContent();
-                } else if (_tab === 'obhavo') _renderTabContent();
-              } else if (_tab === 'obhavo') _renderTabContent();
-            } catch { if (_tab === 'obhavo') _renderTabContent(); }
+            await _fetchWeatherDirect();
           }
-        }, 2500);
+        }, _weatherRetries === 1 ? 200 : 1200);
         return `
         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:16px;text-align:center">
           <div style="width:44px;height:44px;border:3px solid rgba(91,155,213,.15);border-top-color:#5b9bd5;border-radius:50%;animation:spin 1s linear infinite"></div>
@@ -1351,16 +1339,37 @@ const PrayerScreen = (function () {
     ).join('');
   }
 
-  function _retryWeather() {
-    if (_lat !== null && _lon !== null) {
-      _showLoading();
-      _fetchPrayerTimes(_lat, _lon);
+  async function _fetchWeatherDirect() {
+    if (_lat === null || _lon === null || !_data) return false;
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 15000);
+      const r = await fetch(
+        `${window.location.origin}/api/weather?lat=${encodeURIComponent(_lat)}&lon=${encodeURIComponent(_lon)}&lang=${encodeURIComponent(_lang)}`,
+        { signal: controller.signal, cache: 'no-store' }
+      );
+      clearTimeout(timer);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const wd = await r.json();
+      if (wd?.error || wd?.temp_c === undefined) throw new Error(wd?.error || 'invalid_weather');
+      _data.weather = wd;
+      _weatherRetries = 0;
+      if (_tab === 'obhavo') _renderTabContent();
+      return true;
+    } catch (err) {
+      console.warn('[weather] direct fetch failed', err?.message || err);
+      if (_tab === 'obhavo') _renderTabContent();
+      return false;
     }
+  }
+
+  function _retryWeather() {
+    if (_lat !== null && _lon !== null) _fetchWeatherDirect();
   }
 
   function _retryWeatherFull() {
     _weatherRetries = 0;
-    _retryWeather();
+    _fetchWeatherDirect();
   }
 
   return { render, load, _retryWeather, _retryWeatherFull };
