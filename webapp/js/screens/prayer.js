@@ -259,7 +259,7 @@ const PrayerScreen = (function () {
               <span id="pm-hdr-method" class="pm-hdr-city">Muslim World League</span>
             </div>
             <div class="pm-hdr-date" id="pm-hdr-date"></div>
-            <div class="pm-hdr-quote" data-quran-verse="4:103"></div>
+            <div class="pm-hdr-quote" data-quran-verse="108:2"></div>
           </div>
           <div id="pm-banner-wrap"></div>
           <div class="q-divider" style="margin-top:10px"></div>

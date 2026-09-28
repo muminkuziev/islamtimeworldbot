@@ -69,8 +69,14 @@
   object-position: 50% 54% !important;
 }
 #app #screen-prayer .q-header::before {
+  inset: 0 0 111px 0 !important;
   background-image: url('../assets/reference-ui/makkah-hero.png') !important;
-  background-position: 58% 44% !important;
+  background-size: cover !important;
+  background-position: 72% 72% !important;
+  background-repeat: no-repeat !important;
+}
+#app #screen-prayer .q-header::after {
+  inset: 0 0 111px 0 !important;
 }
 #app #screen-settings .st-header::before,
 #app #screen-calendar .hc-hdr::before {
