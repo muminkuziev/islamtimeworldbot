@@ -246,7 +246,7 @@ const QuranScreen = (function () {
     return `
       <div class="screen-inner q-screen">
         <div class="q-header">
-          <img class="q-header-photo" src="assets/landing/hero-bg.webp" alt="Makkah" loading="eager">
+          <img class="q-header-photo" src="assets/reference-ui/quran-open.png" alt="Open Quran" loading="eager">
           <div class="q-nav-row">
             <span></span>
             <div class="q-header-actions">

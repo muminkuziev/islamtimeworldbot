@@ -364,7 +364,7 @@ out center tags;`.trim();
   function _buildHTML() {
     return `
 <div class="ms-hdr">
-  <img class="ms-hdr-photo" src="assets/landing/haram-madinah.webp" alt="Masjid an-Nabawi" loading="eager">
+  <img class="ms-hdr-photo" src="assets/reference-ui/mosque-hero.png" alt="Mosque" loading="eager">
   <div class="nm-tile-bg"></div>
   <div class="nm-tile-ov"></div>
   <div class="ms-hdr-inner">
