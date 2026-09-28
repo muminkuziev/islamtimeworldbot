@@ -1,5 +1,5 @@
 from pathlib import Path
-from PIL import Image
+from PIL import Image, ImageDraw
 
 ROOT = Path(r"C:\Projects\IslamTimeWorldBot")
 WEB = ROOT / "webapp"
@@ -45,10 +45,21 @@ foreground_sizes = {
     "xxxhdpi": 432,
 }
 
+def legacy_icon(size, circular=False):
+    canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    inner = max(1, int(size * 0.88))
+    icon = master.resize((inner, inner), Image.Resampling.LANCZOS)
+    if circular:
+        mask = Image.new("L", (inner, inner), 0)
+        ImageDraw.Draw(mask).ellipse((0, 0, inner - 1, inner - 1), fill=255)
+        icon.putalpha(mask)
+    canvas.alpha_composite(icon, ((size-inner)//2, (size-inner)//2))
+    return canvas
+
 for density, size in densities.items():
     folder = ANDROID / f"mipmap-{density}"
-    square(size).save(folder / "ic_launcher.png")
-    square(size).save(folder / "ic_launcher_round.png")
+    legacy_icon(size).save(folder / "ic_launcher.png")
+    legacy_icon(size, circular=True).save(folder / "ic_launcher_round.png")
 
 for density, size in foreground_sizes.items():
     folder = ANDROID / f"mipmap-{density}"
@@ -59,9 +70,21 @@ for density, size in foreground_sizes.items():
     canvas.alpha_composite(icon, offset)
     canvas.save(folder / "ic_launcher_foreground.png")
 
-for splash in ANDROID.rglob("splash.png"):
-    old = Image.open(splash)
-    w, h = old.size
+splash_sizes = {
+    "drawable/splash.png": (480, 320),
+    "drawable-land-mdpi/splash.png": (480, 320),
+    "drawable-land-hdpi/splash.png": (720, 480),
+    "drawable-land-xhdpi/splash.png": (960, 640),
+    "drawable-land-xxhdpi/splash.png": (1440, 960),
+    "drawable-land-xxxhdpi/splash.png": (1920, 1280),
+    "drawable-port-mdpi/splash.png": (320, 480),
+    "drawable-port-hdpi/splash.png": (480, 720),
+    "drawable-port-xhdpi/splash.png": (640, 960),
+    "drawable-port-xxhdpi/splash.png": (960, 1440),
+    "drawable-port-xxxhdpi/splash.png": (1280, 1920),
+}
+for rel, (w, h) in splash_sizes.items():
+    splash = ANDROID / rel
     canvas = Image.new("RGBA", (w, h), bg)
     inner = int(min(w, h) * 0.36)
     icon = master.resize((inner, inner), Image.Resampling.LANCZOS)
