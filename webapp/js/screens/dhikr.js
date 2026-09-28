@@ -187,7 +187,7 @@ const DhikrScreen = (function () {
     return `
       <div class="zk-screen">
         <div class="zk-hdr">
-          <img class="zk-hdr-photo" src="assets/landing/haram-madinah.webp" alt="Masjid an-Nabawi" loading="eager">
+          <img class="zk-hdr-photo" src="assets/landing/hero-bg.webp" alt="Masjid al-Haram" loading="eager">
           <div class="zk-hdr-tile"></div>
           <div class="zk-hdr-ov"></div>
           <div class="zk-hdr-cnt">
@@ -334,7 +334,7 @@ const DhikrScreen = (function () {
         ${_modal !== null ? _modalHTML(_modal, z.t) : ''}
 
         <div class="zk-hdr">
-          <img class="zk-hdr-photo" src="assets/landing/haram-madinah.webp" alt="Masjid an-Nabawi" loading="eager">
+          <img class="zk-hdr-photo" src="assets/landing/hero-bg.webp" alt="Masjid al-Haram" loading="eager">
           <div class="zk-hdr-tile"></div>
           <div class="zk-hdr-ov"></div>
           <div class="zk-hdr-cnt">

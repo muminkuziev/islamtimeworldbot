@@ -64,7 +64,7 @@ const HadithScreen = (function () {
   function shell() {
     const tabs = [['hadiths', label.hadith()], ['books', label.source()], ['search', label.search()]];
     return `<div class="hd-hdr hd-hdr--photo">
-      <img class="hd-hdr-photo" src="assets/landing/hero-bg.webp" alt="" loading="eager">
+      <img class="hd-hdr-photo" src="assets/landing/haram-madinah.webp" alt="" loading="eager">
       <div class="nm-tile-ov"></div><div class="hd-hdr-inner">
       <div class="hd-nav-row"><button class="hd-back" id="hd-back">${label.back()}</button></div>
       <h1 class="hd-title">${label.hadith()}</h1>
