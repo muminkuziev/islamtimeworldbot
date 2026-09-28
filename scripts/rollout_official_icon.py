@@ -21,11 +21,18 @@ for size in (16, 32, 48, 180, 192, 512):
         out.save(WEB / "assets" / "icons" / f"icon-{size}.png")
     elif size == 180:
         out.save(WEB / "apple-touch-icon.png")
+        out.save(BRANDING / "apple-touch-icon.png")
     else:
         out.save(WEB / f"favicon-{size}x{size}.png")
+        out.save(BRANDING / f"favicon-{size}x{size}.png")
 
 master.save(
     WEB / "favicon.ico",
+    format="ICO",
+    sizes=[(16, 16), (32, 32), (48, 48)],
+)
+master.save(
+    BRANDING / "favicon.ico",
     format="ICO",
     sizes=[(16, 16), (32, 32), (48, 48)],
 )
