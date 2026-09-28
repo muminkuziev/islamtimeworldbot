@@ -12,13 +12,13 @@
   width: 100% !important;
   max-width: 100% !important;
   height: 100% !important;
-  object-fit: contain !important;
+  object-fit: cover !important;
   object-position: center !important;
 }
 
 #app #screen-dashboard .db-hdr-photo {
-  object-fit: contain !important;
-  object-position: center !important;
+  object-fit: cover !important;
+  object-position: 58% center !important;
 }
 
 /* Opaque navigation strips have their own space below the photograph. */
@@ -38,9 +38,11 @@
 /* On secondary pages, searches/book/month controls start below the title.
    Confine the artwork to that title band instead of hiding it behind them. */
 #app #screen-hadith .hd-hdr-photo {
-  content: url('../assets/reference-ui/makkah-hero.png');
+  content: url('../assets/landing/hero-bg.webp');
   bottom: auto !important;
-  height: 100px !important;
+  height: 150px !important;
+  object-fit: cover !important;
+  object-position: center 46% !important;
 }
 #app #screen-duas .du-hdr::before,
 #app #screen-names .nm-header::before,
@@ -58,7 +60,7 @@
   #screen-qazo .qz-header,
   #screen-monthly-calendar .mc-header
 ) {
-  background-size: 100% 100%, contain !important;
+  background-size: 100% 100%, cover !important;
   background-position: center, center !important;
   background-repeat: no-repeat !important;
 }
@@ -68,9 +70,30 @@
 #app #screen-names .nm-header::before,
 #app #screen-settings .st-header::before,
 #app #screen-calendar .hc-hdr::before {
-  background-size: contain !important;
+  background-size: cover !important;
   background-position: center !important;
   background-repeat: no-repeat !important;
+}
+
+/* Screen-specific real-photo treatment. Reuse only existing project assets;
+   do not synthesize or fetch unverified mosque imagery during this pass. */
+#app #screen-quran .q-header-photo {
+  content: url('../assets/landing/hero-makkah-panorama.png');
+  object-position: 58% 48% !important;
+}
+#app #screen-prayer .q-header::before {
+  background-image: url('../assets/reference-ui/makkah-hero.png') !important;
+  background-position: 58% 44% !important;
+}
+#app #screen-duas .du-hdr::before {
+  background-image: url('../assets/landing/haram-madinah.webp') !important;
+  background-position: center 46% !important;
+}
+#app #screen-names .nm-header::before,
+#app #screen-settings .st-header::before,
+#app #screen-calendar .hc-hdr::before {
+  background-image: url('../assets/reference-ui/mosque-hero.png') !important;
+  background-position: center 46% !important;
 }
 
 #app #screen-qibla .qb-hdr .nm-tile-ov,
@@ -82,8 +105,8 @@
    and mirror only the scrim direction in RTL, never the photograph itself. */
 #app #screen-dashboard .db-hero-overlay {
   background-image: linear-gradient(90deg,#007450 0%,#007450 30%,rgba(0,116,80,.76) 53%,rgba(0,72,48,.04)),url('../assets/reference-ui/makkah-hero.png') !important;
-  background-size: 100% 100%, contain !important;
-  background-position: center, right center !important;
+  background-size: 100% 100%, cover !important;
+  background-position: center, 58% center !important;
   background-repeat: no-repeat !important;
   background-color: #007450 !important;
   transform: none !important;
