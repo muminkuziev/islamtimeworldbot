@@ -91,9 +91,9 @@
    photograph is never mirrored in RTL; only the scrim direction flips. */
 #app #screen-hadith {
   --hero-img: url('../assets/landing/haram-madinah.webp');
-  --hero-pos: 50% 60%;
+  --hero-pos: 50% 100%;
   --hero-h: 232px;
-  --hero-scrim: .56;
+  --hero-scrim: .42;
 }
 #app #screen-duas {
   --hero-img: url('../assets/landing/haram-makkah.webp');
