@@ -90,10 +90,10 @@
    top of the header, with the first control straddling its lower edge. The
    photograph is never mirrored in RTL; only the scrim direction flips. */
 #app #screen-hadith {
-  --hero-img: url('../assets/landing/hadith-nabawi-custom.webp');
+  --hero-img: url('../assets/landing/hadith-hero.webp');
   --hero-pos: 50% 50%;
   --hero-h: 232px;
-  --hero-scrim: .42;
+  --hero-scrim: .30;
 }
 #app #screen-duas {
   --hero-img: url('../assets/landing/haram-makkah.webp');
