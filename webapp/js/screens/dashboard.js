@@ -206,11 +206,54 @@ const DashboardScreen = (function () {
   }
 
   /* GPS moved (ThemeEngine re-checks on open/resume): refresh city and times. */
+  let _relocations = 0;
   document.addEventListener('islamtime:locationchange', () => {
+    _relocations++;
     if (!_el?.isConnected) return;
     _loadCity();
     _loadPrayer();
   });
+
+  /* Tap on the city: ask GPS for the current position now. A user gesture, so
+     the permission prompt is allowed here (background refresh never prompts). */
+  let _locating = false;
+  async function _locateNow() {
+    if (_locating) return;
+    _locating = true;
+    const nameEl = _el?.querySelector('#db-city-name');
+    const previous = nameEl?.textContent || '';
+    if (nameEl) nameEl.textContent = _T('Aniqlanmoqda...','Аниқланмоқда...','Определяется...','Detecting...');
+    window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
+    try {
+      const { latitude: lat, longitude: lon } = await _currentPosition();
+      localStorage.setItem('islamtime_location_asked', '1');
+      localStorage.setItem('islamtime_gps', 'true');
+      const before = _relocations;
+      if (window.ThemeEngine) window.ThemeEngine.setLocation(lat, lon);
+      else { localStorage.setItem('islamtime_last_lat', lat); localStorage.setItem('islamtime_last_lon', lon); }
+      // Same place (under 1 km): no change event, so refresh here.
+      if (_relocations === before) { _fetchCity(lat, lon); _loadPrayer(); }
+    } catch (err) {
+      if (nameEl) nameEl.textContent = err?.code === 1
+        ? _T('Ruxsat berilmagan','Рухсат берилмаган','Доступ запрещён','Permission denied')
+        : _T("Aniqlab bo'lmadi","Аниқлаб бўлмади","Не удалось определить",'Could not detect');
+      setTimeout(() => { if (nameEl?.isConnected && !_locating) nameEl.textContent = previous; }, 2500);
+    } finally {
+      _locating = false;
+    }
+  }
+
+  async function _currentPosition() {
+    const opts = { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 };
+    const nativeGeo = window.Capacitor?.isNativePlatform?.() && window.Capacitor.Plugins?.Geolocation;
+    if (nativeGeo) {
+      if (window._requestLocationPermission && !(await window._requestLocationPermission())) throw { code: 1 };
+      return (await nativeGeo.getCurrentPosition(opts)).coords;
+    }
+    if (!navigator.geolocation) throw { code: 2 };
+    return new Promise((resolve, reject) =>
+      navigator.geolocation.getCurrentPosition(pos => resolve(pos.coords), reject, opts));
+  }
 
   /* ══════════════════════════════════════════════
      HTML
@@ -240,10 +283,10 @@ const DashboardScreen = (function () {
 
     <div class="db-top-row">
       <div class="db-location-block">
-        <div class="db-location-line">
+        <button class="db-location-line" id="db-locate" type="button" aria-label="${_T('Joylashuvni aniqlash','Жойлашувни аниқлаш','Определить местоположение','Detect location')}">
           <span class="db-location-pin" aria-hidden="true"><img src="assets/icons/tabler/map-pin.svg" alt=""></span>
-          <span class="db-city-name" id="db-city-name">GPS</span>
-        </div>
+          <span class="db-city-name" id="db-city-name" aria-live="polite">GPS</span>
+        </button>
         <div class="db-location-date">
           <span class="db-date-uz" id="db-date-uz">—</span>
           <span class="db-date-ar" id="db-date-ar">—</span>
@@ -368,6 +411,8 @@ const DashboardScreen = (function () {
     _el.querySelector('#db-hadith-card')?.addEventListener('click', () => _onModuleTap('hadith'));
     _el.querySelector('#db-haramayn-all')?.addEventListener('click', () => { HaramaynScreen.load(_lang); window.App.navigate('screen-haramayn'); });
 
+    _el.querySelector('#db-locate')?.addEventListener('click', _locateNow);
+
     _el.querySelector('#db-notify-btn')?.addEventListener('click', () => {
       SettingsScreen.load(_lang);
       window.App.navigate('screen-settings');
@@ -399,15 +444,17 @@ const DashboardScreen = (function () {
      City badge
   ══════════════════════════════════════════════ */
   function _loadCity() {
-    /* 1. Per-language mosque cache (correct key: islamtime_mosques_${lang}_v2) */
+    const sLat = parseFloat(localStorage.getItem('islamtime_last_lat') || '');
+    const sLon = parseFloat(localStorage.getItem('islamtime_last_lon') || '');
+
+    /* 1. Per-language mosque cache, only if saved for the current place (~1 km):
+          several screens update coords directly, which would leave an old city. */
     try {
       const mc = JSON.parse(localStorage.getItem('islamtime_mosques_' + _lang + '_v2') || 'null');
-      if (mc && mc.city) { _setCity(mc.city); return; }
+      if (mc && mc.city && Math.abs(mc.lat - sLat) < 0.01 && Math.abs(mc.lon - sLon) < 0.015) { _setCity(mc.city); return; }
     } catch {}
 
     /* 2. Stored coords → Nominatim (language-aware) */
-    const sLat = parseFloat(localStorage.getItem('islamtime_last_lat') || '');
-    const sLon = parseFloat(localStorage.getItem('islamtime_last_lon') || '');
     if (Number.isFinite(sLat) && Number.isFinite(sLon)) { _fetchCity(sLat, sLon); return; }
 
     /* 3. Browser geo */

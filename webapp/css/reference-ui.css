@@ -38,6 +38,9 @@ button, input { font-family:'Plus Jakarta Sans','Inter',system-ui,sans-serif; }
 #screen-dashboard .db-hdr-inner { padding:11px 14px 0!important; }
 #screen-dashboard .db-top-row { height:55px!important; min-height:0!important; margin:0!important; align-items:center!important; }
 #screen-dashboard .db-location-line { gap:8px!important; }
+#screen-dashboard button.db-location-line { background:none; border:0; padding:0; margin:0; font:inherit; color:inherit; text-align:start; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+#screen-dashboard button.db-location-line:active { opacity:.6; }
+#screen-dashboard button.db-location-line:focus-visible { outline:2px solid currentColor; outline-offset:3px; border-radius:6px; }
 #screen-dashboard .db-location-pin { width:20px!important; height:24px!important; padding:0!important; color:var(--ref-green)!important; background:transparent!important; }
 #screen-dashboard .db-location-pin img { width:20px; height:24px; filter:invert(38%) sepia(42%) saturate(1150%) hue-rotate(112deg) brightness(88%); }
 #screen-dashboard .db-city-name { font-size:15px!important; font-weight:800!important; color:#0b1820!important; letter-spacing:-.35px!important; }
