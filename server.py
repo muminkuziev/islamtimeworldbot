@@ -1404,6 +1404,20 @@ async def pwa_manifest():
         headers={"Cache-Control": "public, max-age=3600"},
     )
 
+# Browsers, bookmarks, search engines and link previews request these at the root.
+@app.get("/favicon.ico")
+@app.get("/favicon-16x16.png")
+@app.get("/favicon-32x32.png")
+@app.get("/favicon-48x48.png")
+@app.get("/apple-touch-icon.png")
+@app.get("/apple-touch-icon-precomposed.png")
+async def root_icon(request: Request):
+    name = request.url.path.lstrip("/").replace("-precomposed", "")
+    return FileResponse(
+        str(WEBAPP_DIR / name),
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
+
 @app.get("/sw.js")
 async def service_worker():
     return FileResponse(
