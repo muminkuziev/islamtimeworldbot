@@ -9,9 +9,9 @@
   <meta name="theme-color" content="#0d7e5d">
   <meta name="color-scheme" content="light">
 
-  <link rel="icon" href="/assets/branding/favicon.ico" sizes="any">
-  <link rel="icon" type="image/png" sizes="32x32" href="/assets/branding/favicon-32x32.png">
-  <link rel="apple-touch-icon" href="/assets/branding/apple-touch-icon.png">
+  <link rel="icon" href="/assets/branding/favicon.ico?v=3" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/branding/favicon-32x32.png?v=3">
+  <link rel="apple-touch-icon" href="/assets/branding/apple-touch-icon.png?v=3">
 
   <!-- Open Graph / Twitter -->
   <meta property="og:type" content="website">
@@ -673,16 +673,20 @@
     }
 
     .mazhab-circle {
-      width: 52px;
-      height: 52px;
+      width: 64px;
+      height: 64px;
       border-radius: 50%;
       background: var(--primary-light);
       border: 2px solid #bfe0d3;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--primary);
-      font-size: 20px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(13, 126, 93, 0.15);
+    }
+
+    .mazhab-circle img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
 
     .mazhab-name {
@@ -721,11 +725,7 @@
       width: 56px;
       height: 56px;
       border-radius: 16px;
-      background: linear-gradient(135deg, #0d7e5d 0%, #064e39 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #ffffff;
+      display: block;
       flex-shrink: 0;
       box-shadow: 0 4px 14px rgba(13, 126, 93, 0.2);
     }
@@ -1204,9 +1204,9 @@
       margin-top: 10px;
     }
     .footer-links a { display: inline-block; padding: 8px 2px; }
-    .footer-copy, .photo-credit { color: #5f746b !important; }
+    .footer-copy, .photo-credit, .mazhab-credit { color: #5f746b !important; }
 
-    .photo-credit {
+    .photo-credit, .mazhab-credit {
       font-size: 12px;
       color: #8c9e97;
       margin-top: 8px;
@@ -1670,19 +1670,19 @@
           <p class="box-subtitle">Barcha musulmonlar uchun qulay</p>
           <ul class="mazhabs-grid" role="list" style="list-style:none">
             <li class="mazhab-card">
-              <span class="mazhab-circle" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3c-1.5 1.5-2 3.5-2 5h4c0-1.5-.5-3.5-2-5z"></path><path d="M4 10h16v11H4z"></path></svg></span>
+              <span class="mazhab-circle" title="Abu Hanifa Mosque, Baghdad"><img src="assets/landing/mazhab-hanafi.webp" width="64" height="64" loading="lazy" decoding="async" alt=""></span>
               <span class="mazhab-name">Hanafiy</span>
             </li>
             <li class="mazhab-card">
-              <span class="mazhab-circle" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3c-1.5 1.5-2 3.5-2 5h4c0-1.5-.5-3.5-2-5z"></path><path d="M4 10h16v11H4z"></path></svg></span>
+              <span class="mazhab-circle" title="Imam al-Shafi'i Mausoleum, Cairo"><img src="assets/landing/mazhab-shafii.webp" width="64" height="64" loading="lazy" decoding="async" alt=""></span>
               <span class="mazhab-name">Shofi'iy</span>
             </li>
             <li class="mazhab-card">
-              <span class="mazhab-circle" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3c-1.5 1.5-2 3.5-2 5h4c0-1.5-.5-3.5-2-5z"></path><path d="M4 10h16v11H4z"></path></svg></span>
+              <span class="mazhab-circle" title="Masjid an-Nabawi, Madinah"><img src="assets/landing/mazhab-maliki.webp" width="64" height="64" loading="lazy" decoding="async" alt=""></span>
               <span class="mazhab-name">Molikiy</span>
             </li>
             <li class="mazhab-card">
-              <span class="mazhab-circle" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3c-1.5 1.5-2 3.5-2 5h4c0-1.5-.5-3.5-2-5z"></path><path d="M4 10h16v11H4z"></path></svg></span>
+              <span class="mazhab-circle" title="Ahmad ibn Hanbal Mosque, Madinah"><img src="assets/landing/mazhab-hanbali.webp" width="64" height="64" loading="lazy" decoding="async" alt=""></span>
               <span class="mazhab-name">Hanbaliy</span>
             </li>
           </ul>
@@ -1696,13 +1696,7 @@
     <div class="container">
       <div class="download-banner">
         <div class="dl-left">
-          <div class="dl-icon" aria-hidden="true">
-            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 3c-1.5 1.5-2 3.5-2 5h4c0-1.5-.5-3.5-2-5z"/>
-              <path d="M4 10h16v11H4z"/>
-              <path d="M9 21v-4a3 3 0 0 1 6 0v4"/>
-            </svg>
-          </div>
+          <img class="dl-icon" src="assets/branding/official-icon.png" width="56" height="56" loading="lazy" alt="" aria-hidden="true">
           <div>
             <h3 class="dl-title">Bugunoq IslamTimeWorld'dan foydalaning</h3>
             <p class="dl-subtitle">Hozir Telegram bot orqali; Google Play ilovasi tayyor bo'lganda shu yerda e'lon qilinadi.</p>
@@ -1760,12 +1754,13 @@
       <div class="footer-copy">
         © 2026 IslamTimeWorld. Barcha huquqlar himoyalangan.
         <div class="photo-credit">Fotosuratlar: Wikimedia Commons (CC0).</div>
+        <div class="mazhab-credit">Abu Hanifa Mosque © <a href="https://commons.wikimedia.org/wiki/File:Abu_hanifa_1.JPG" target="_blank" rel="noopener">Moshtakmoshtak</a>, CC BY-SA 3.0 · Imam al-Shafi'i Mausoleum © <a href="https://commons.wikimedia.org/wiki/File:Schafi%27i-Mausoleum_in_Kairo.jpg" target="_blank" rel="noopener">PaFra</a>, CC BY-SA 3.0 · Ahmad ibn Hanbal Mosque © <a href="https://commons.wikimedia.org/wiki/File:Ahmad_ibn_Hanbal_Mosque.jpg" target="_blank" rel="noopener">Imam Khairul Annas</a>, CC BY-SA 4.0 (cropped)</div>
         <div class="footer-founder">IslamTimeWorld · Asoschisi: <strong>Mumin Kuziev</strong></div>
       </div>
     </div>
   </footer>
 
-  <script src="js/landing-i18n.js?v=1"></script>
+  <script src="js/landing-i18n.js?v=2"></script>
   <script>
     (function () {
       var nav = document.querySelector('.navbar');

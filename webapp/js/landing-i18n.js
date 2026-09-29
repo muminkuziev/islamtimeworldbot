@@ -89,7 +89,7 @@
     text('[data-live="makkah"]', p.makkah); text('[data-live="madinah"]', p.madinah);
     nth('.box-title', [p.langs,p.schools]); nth('.box-subtitle', [p.oneApp,p.allMuslims]);
     nth('.flag-name', LANGS.map(function (lang) { return lang[1]; }));
-    nth('.mazhab-name', p.schoolDesc.split(/,\s*/));
+    nth('.mazhab-name', p.schoolDesc.split(/[,،]\s*/));
     text('.soon-chip', SOON[code]); label('.btn-video', VIDEO[code]);
     text('.dl-title', p.useToday); text('.dl-subtitle', p.useSub); text('.qr-text', p.scan);
     nth('.footer-links a', [p.privacy,p.terms,p.help,p.contact]);
