@@ -251,7 +251,7 @@ const DashboardScreen = (function () {
       </div>
     </div>
 
-    <div class="db-brand"><strong>IslamTimeWorld</strong><span>${t('sloganDua', _lang)}</span></div>
+    <div class="db-brand"><img class="db-brand-icon" src="assets/branding/official-icon.png" width="32" height="32" alt="" aria-hidden="true"><strong>IslamTimeWorld</strong><span>${t('sloganDua', _lang)}</span></div>
     <div class="db-divider"></div>
 
     <div class="db-next-wrap">
