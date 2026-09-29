@@ -174,20 +174,40 @@
     return getState();
   }
 
+  // Rough equirectangular distance; accurate enough to detect "the user moved".
+  function distanceKm(a, b) {
+    const rad = Math.PI / 180;
+    const x = (b.lon - a.lon) * rad * Math.cos(((a.lat + b.lat) / 2) * rad);
+    const y = (b.lat - a.lat) * rad;
+    return Math.sqrt(x * x + y * y) * 6371;
+  }
+
   function setLocation(lat, lon) {
     if (!validLocation(lat, lon)) return false;
+    const previous = location || cachedLocation();
     location = { lat, lon };
     source = 'location';
     if (root) {
       write('islamtime_last_lat', lat);
       write('islamtime_last_lon', lon);
+      if (previous && distanceKm(previous, location) > 1) {
+        // City name and nearby mosques are cached per place; drop them so every
+        // screen resolves the new city instead of showing the old one.
+        try {
+          Object.keys(root.localStorage)
+            .filter(key => key.startsWith('islamtime_mosques_'))
+            .forEach(key => root.localStorage.removeItem(key));
+        } catch (_) {}
+        root.document.dispatchEvent(new root.CustomEvent('islamtime:locationchange', { detail: { lat, lon } }));
+      }
       refresh();
     }
     return true;
   }
 
   async function refreshLocation() {
-    if (!root || mode !== 'auto' || geoPending || read('islamtime_gps') === 'false') return;
+    // Location is app-wide (prayer times, city, Qibla), not only for the theme.
+    if (!root || geoPending || read('islamtime_gps') === 'false') return;
     if (Date.now() - lastGeoAttempt < MINUTE) return;
     lastGeoAttempt = Date.now();
     geoPending = true;
@@ -204,9 +224,12 @@
         return;
       }
       const nav = root.navigator;
-      if (nav && nav.permissions && nav.geolocation) {
-        const permission = await nav.permissions.query({ name: 'geolocation' });
-        if (permission.state === 'granted') {
+      if (nav && nav.geolocation) {
+        // Telegram's WebView often reports "prompt" (or lacks the Permissions
+        // API) even after the user allowed location; trust a prior GPS success.
+        let state = 'prompt';
+        try { if (nav.permissions) state = (await nav.permissions.query({ name: 'geolocation' })).state; } catch (_) {}
+        if (state === 'granted' || (state === 'prompt' && read('islamtime_location_asked') === '1')) {
           await new Promise(resolve => nav.geolocation.getCurrentPosition(pos => {
             setLocation(pos.coords.latitude, pos.coords.longitude);
             resolve();

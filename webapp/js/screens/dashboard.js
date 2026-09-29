@@ -205,6 +205,13 @@ const DashboardScreen = (function () {
     render();
   }
 
+  /* GPS moved (ThemeEngine re-checks on open/resume): refresh city and times. */
+  document.addEventListener('islamtime:locationchange', () => {
+    if (!_el?.isConnected) return;
+    _loadCity();
+    _loadPrayer();
+  });
+
   /* ══════════════════════════════════════════════
      HTML
   ══════════════════════════════════════════════ */

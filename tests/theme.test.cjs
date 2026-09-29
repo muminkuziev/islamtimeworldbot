@@ -199,6 +199,24 @@ test('previously granted location is refreshed without a permission prompt', asy
   assert.equal(b.attrs['data-theme'], 'light');
 });
 
+test('travelling user is relocated on open even in manual night mode and Telegram "prompt" state', async () => {
+  const bialystok = { islamtime_last_lat: '53.1325', islamtime_last_lon: '23.1688' };
+  const b = browser({ permission: 'prompt', storage: { ...bialystok, islamtime_theme_mode: 'night', islamtime_location_asked: '1' } });
+  let moved = null;
+  b.document.addEventListener('islamtime:locationchange', event => { moved = event.detail; });
+  b.event('islamtime:resume');
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(b.geoCalls(), 1);
+  assert.equal(b.values.get('islamtime_last_lat'), String(warsaw.lat));
+  assert.deepEqual({ ...moved }, warsaw);
+});
+
+test('"prompt" state without a prior GPS success never requests location', async () => {
+  const b = browser({ permission: 'prompt' });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(b.geoCalls(), 0);
+});
+
 test('missing storage remains usable and system preference changes propagate', () => {
   const b = browser({ blockedStorage: true });
   assert.equal(b.engine.getMode(), 'auto');
