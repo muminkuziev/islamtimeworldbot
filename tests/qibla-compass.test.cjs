@@ -177,6 +177,19 @@ test('no sensor yields explicit fallback and no frozen Qibla arrow or calibratio
   assert.match(app.node('#qb-ig-angle').textContent, /148/);
 });
 
+test('without a live sensor a north-up bearing diagram shows the Qibla angle; a live reading replaces it', () => {
+  const app = setup(); app.load(); app.fix(); app.advance(7000);
+  const bearing = app.node('#qb-bearing-static');
+  assert.equal(bearing.attributes.visibility, 'visible');
+  assert.equal(bearing.attributes.transform, 'rotate(147.6, 125, 125)');
+  assert.equal(app.node('#qb-compass-dial').attributes.visibility, 'visible');
+  assert.equal(app.node('#qb-compass-dial').attributes.transform, 'rotate(0.0, 125, 125)');
+  assert.equal(app.node('#qb-needle').attributes.visibility, 'hidden');
+  app.web({ type: 'deviceorientationabsolute', alpha: 20, absolute: true });
+  assert.equal(app.node('#qb-bearing-static').attributes.visibility, 'hidden');
+  assert.equal(app.node('#qb-needle').attributes.visibility, 'visible');
+});
+
 test('relative browser yaw never overwrites a real absolute compass heading', () => {
   const app = setup(); app.load(); app.fix();
   app.web({ type: 'deviceorientationabsolute', alpha: 20, absolute: true });

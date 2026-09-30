@@ -1,9 +1,8 @@
 /* ═══════════════════════════════════════════════════════════════
    Qibla geographic calculations — single source of truth.
 
-   Used by both the 2D compass (qibla.js) and the 3D globe
-   (earth-globe.js) so the app never has two different Qibla
-   calculation implementations disagreeing with each other.
+   Used by the compass (qibla.js) so the app never has two different
+   Qibla calculation implementations disagreeing with each other.
    ═══════════════════════════════════════════════════════════════ */
 
 const QiblaGeo = (function () {

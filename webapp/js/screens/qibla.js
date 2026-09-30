@@ -8,8 +8,7 @@
 
 const QiblaScreen = (function () {
 
-  /* Single source of truth for geography — shared with EarthGlobe so the
-     compass and the 3D globes never disagree. See native/qibla-geo.js */
+  /* Single source of truth for geography — see native/qibla-geo.js */
   const KAABA_LAT = QiblaGeo.KAABA_LAT;
   const KAABA_LON = QiblaGeo.KAABA_LON;
   const S  = 250;               /* SVG compass size */
@@ -33,8 +32,6 @@ const QiblaScreen = (function () {
   let _compassAccDeg  = null;  // degrees, from webkitCompassAccuracy when the platform provides it
   let _hasOrientation = false; // true once at least one real orientation event has been received
   let _calibrating    = false; // true when we've detected the compass needs the figure-8 gesture
-  let _routeGlobe     = null;  // EarthGlobe instance — top "global route" view
-  let _compassGlobe   = null;  // EarthGlobe instance — behind the SVG compass
   let _orientationStarted = false;
   let _hasAbsoluteOrientation = false;
   let _awaitingOrientationPermission = false;
@@ -82,32 +79,14 @@ const QiblaScreen = (function () {
     _active = true;
     _el.innerHTML = _buildHTML();
     _bind();
-    _initGlobes();
     _startOrientation();
     _startLocation();
-  }
-
-  /* Real 3D globes (Three.js) when WebGL is available; the existing SVG
-     compass + Xarita map tab already work fully without them, so no
-     separate "fallback UI" is needed when it's not. */
-  function _initGlobes() {
-    if (typeof EarthGlobe === 'undefined' || !EarthGlobe.isSupported()) return;
-    const routeEl = _el?.querySelector('#qb-route-globe');
-    const compassEl = _el?.querySelector('#qb-compass-globe');
-    if (routeEl) _routeGlobe = EarthGlobe.create(routeEl, 'route');
-    if (compassEl) _compassGlobe = EarthGlobe.create(compassEl, 'compass');
-  }
-
-  function _destroyGlobes() {
-    if (_routeGlobe)   { _routeGlobe.destroy();   _routeGlobe = null; }
-    if (_compassGlobe) { _compassGlobe.destroy(); _compassGlobe = null; }
   }
 
   function unload() {
     _active = false;
     _generation++;
     _locationRequest++;
-    _destroyGlobes();
     if (_orientCb) {
       window.removeEventListener('deviceorientationabsolute', _orientCb);
       window.removeEventListener('deviceorientation', _orientCb);
@@ -153,8 +132,8 @@ const QiblaScreen = (function () {
       </div>
     </div>
     <div class="qb-title">${_T("Qibla yo'nalishi","Қибла йўналиши","Направление Киблы","Qibla Direction")}</div>
-    <div class="qb-artitle">اتجاه القبلة · Masjid al-Haram</div>
-    <div class="qb-verse-intro" data-quran-verse="2:144"></div>
+    <div class="qb-artitle">Masjid al-Haram <span class="qb-artitle-ar" lang="ar" dir="rtl">اتجاه القبلة</span></div>
+    <div class="qb-verse-intro" data-quran-verse="2:115"></div>
     <div class="qb-hdivider"></div>
     <div class="qb-tabs">
       <button class="qb-tab active" data-tab="kompas"><img src="assets/icons/tabler/compass.svg" alt="" aria-hidden="true"> ${_T('Kompas','Компас','Компас','Compass')}</button>
@@ -176,37 +155,36 @@ const QiblaScreen = (function () {
 
   /* ── Kompas ── */
   function _panelKompas() {
-    /* tick marks */
-    const ticks = Array.from({length: 72}, (_, i) => {
-      const deg = i * 5;
+    /* Minor ticks every 30°, strong ticks on the four cardinals (reference style). */
+    const ticks = Array.from({length: 12}, (_, i) => {
+      const deg = i * 30, card = deg % 90 === 0;
       const rad = (deg - 90) * Math.PI / 180;
-      const isMaj = deg % 90 === 0, isMed = deg % 45 === 0;
-      const len = isMaj ? 12 : isMed ? 8 : 5;
-      const x1 = CX + (R - 2) * Math.cos(rad),      y1 = CY + (R - 2) * Math.sin(rad);
-      const x2 = CX + (R - 2 - len) * Math.cos(rad), y2 = CY + (R - 2 - len) * Math.sin(rad);
-      return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}"
-        x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"
-        stroke="${isMaj ? 'rgba(22,121,74,.6)' : 'rgba(22,121,74,.2)'}"
-        stroke-width="${isMaj ? 1.5 : 0.8}"/>`;
+      const r1 = card ? R + 3 : R - 4, r2 = card ? R - 13 : R - 10;
+      return `<line x1="${(CX + r1*Math.cos(rad)).toFixed(1)}" y1="${(CY + r1*Math.sin(rad)).toFixed(1)}"
+        x2="${(CX + r2*Math.cos(rad)).toFixed(1)}" y2="${(CY + r2*Math.sin(rad)).toFixed(1)}"
+        stroke="${card ? '#0b6b47' : 'rgba(11,107,71,.28)'}" stroke-width="${card ? 3 : 1.2}" stroke-linecap="round"/>`;
     }).join('');
 
     /* International compass marks stay unambiguous in all 13 languages. */
     const cards = [{a:0,l:'N'},{a:90,l:'E'},{a:180,l:'S'},{a:270,l:'W'}];
     const cardText = cards.map(({a, l}) => {
-      const rad = (a - 90) * Math.PI / 180, r2 = R - 22;
+      const rad = (a - 90) * Math.PI / 180, r2 = R - 30;
       return `<text x="${(CX + r2*Math.cos(rad)).toFixed(1)}"
-        y="${(CY + r2*Math.sin(rad) + 4).toFixed(1)}"
-        text-anchor="middle" font-size="11"
+        y="${(CY + r2*Math.sin(rad) + 5.5).toFixed(1)}"
+        text-anchor="middle" font-size="16"
         font-family="Inter,system-ui,sans-serif" font-weight="700"
-        fill="${a === 0 ? '#16794A' : 'rgba(22,33,43,.4)'}">${l}</text>`;
+        fill="#10262d">${l}</text>`;
     }).join('');
 
-    /* needle geometry at 0° (pointing up); rotated dynamically via transform */
-    const nRad = -Math.PI / 2;
-    const nx = CX + (R - 30) * Math.cos(nRad), ny = CY + (R - 30) * Math.sin(nRad);
-    const t1x = CX + 10*Math.cos(nRad - Math.PI/2), t1y = CY + 10*Math.sin(nRad - Math.PI/2);
-    const t2x = CX + 10*Math.cos(nRad + Math.PI/2), t2y = CY + 10*Math.sin(nRad + Math.PI/2);
-    const odx = CX + (R - 2)*Math.cos(nRad),         ody = CY + (R - 2)*Math.sin(nRad);
+    /* Qibla pointer at 0° (up); rotated by transform. Same shape for the live
+       needle and the static north-up bearing diagram. */
+    const tipY = CY - (R - 22), dotY = CY - (R - 14);
+    const pointer = (id, vis) => `
+    <g id="${id}" visibility="${vis}">
+      <polygon points="${CX - 13},${CY - 8} ${CX + 13},${CY - 8} ${CX + 2.5},${tipY} ${CX - 2.5},${tipY}"
+        fill="url(#qb-pointer)"/>
+      <circle cx="${CX}" cy="${dotY}" r="6.5" fill="#0b7a4f" stroke="#fff" stroke-width="2.5"/>
+    </g>`;
 
     return `
 <div id="qb-panel-kompas" class="qb-panel">
@@ -245,86 +223,64 @@ const QiblaScreen = (function () {
   </div>
 
   <div class="qb-compass-stack" style="width:${S}px;height:${S}px">
-  <div id="qb-compass-globe-wrap" class="qb-compass-globe-wrap" style="width:${S}px;height:${S}px">
-    <div id="qb-compass-globe" class="qb-compass-globe"></div>
-  </div>
   <svg id="qb-compass-svg" width="${S}" height="${S}" viewBox="0 0 ${S} ${S}">
     <defs>
-      <filter id="qb-glow">
-        <feGaussianBlur stdDeviation="3" result="blur"/>
-        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-      </filter>
-      <radialGradient id="qb-bg" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stop-color="#EFF6F2" stop-opacity="0.35"/>
-        <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.55"/>
-      </radialGradient>
-      <clipPath id="qb-kaaba-clip"><circle cx="${CX}" cy="${CY}" r="14"/></clipPath>
+      <linearGradient id="qb-pointer" x1="0" y1="1" x2="0" y2="0">
+        <stop offset="0%" stop-color="#1fa36f"/>
+        <stop offset="100%" stop-color="#0b7a4f"/>
+      </linearGradient>
+      <clipPath id="qb-kaaba-clip"><circle cx="${CX}" cy="${CY}" r="21"/></clipPath>
     </defs>
-    <circle cx="${CX}" cy="${CY}" r="${R+6}" fill="none"
-      stroke="rgba(22,121,74,.08)" stroke-width="1"/>
-    <circle cx="${CX}" cy="${CY}" r="${R}" fill="url(#qb-bg)"/>
-    <circle cx="${CX}" cy="${CY}" r="${R}" fill="none"
-      stroke="rgba(22,121,74,.25)" stroke-width="1.5"/>
+    <circle cx="${CX}" cy="${CY}" r="${R + 5}" fill="#fff"/>
+    <circle cx="${CX}" cy="${CY}" r="${R}" fill="#fff" stroke="rgba(11,107,71,.14)" stroke-width="1"/>
+    <circle cx="${CX}" cy="${CY}" r="${(R * 0.66).toFixed(0)}" fill="none" stroke="rgba(11,107,71,.09)" stroke-width="1"/>
+    <circle cx="${CX}" cy="${CY}" r="${(R * 0.4).toFixed(0)}" fill="none" stroke="rgba(11,107,71,.09)" stroke-width="1"/>
+    <!-- Dial: follows the live heading; north-up when only the bearing is known. -->
     <g id="qb-compass-dial" visibility="hidden">
     ${ticks}
     ${cardText}
-    <circle cx="${CX}" cy="${CY}" r="${(R*0.65).toFixed(0)}"
-      fill="none" stroke="rgba(22,121,74,.07)" stroke-width="1"/>
-    <circle cx="${CX}" cy="${CY}" r="${(R*0.4).toFixed(0)}"
-      fill="none" stroke="rgba(22,121,74,.07)" stroke-width="1"/>
-    <!-- North dial follows the measured device heading. -->
-    <line x1="${CX}" y1="${CY}" x2="${CX}" y2="${CY-(R-30)}"
-      stroke="#e05555" stroke-width="1.5" opacity=".5"
-      stroke-dasharray="4 3" stroke-linecap="round"/>
+    <line x1="${CX}" y1="${CY - 30}" x2="${CX}" y2="${CY - (R - 44)}"
+      stroke="#0b7a4f" stroke-width="1.6" stroke-dasharray="5 4" stroke-linecap="round" opacity=".75"/>
     </g>
-    <!-- Qibla needle — rotated via setAttribute -->
-    <g id="qb-needle" visibility="hidden">
-      <line x1="${CX}" y1="${CY}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}"
-        stroke="#4fcfa0" stroke-width="6" opacity=".15" stroke-linecap="round"/>
-      <line x1="${CX}" y1="${CY}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}"
-        stroke="#4fcfa0" stroke-width="2" opacity=".9" stroke-linecap="round"/>
-      <polygon
-        points="${t1x.toFixed(1)},${t1y.toFixed(1)} ${t2x.toFixed(1)},${t2y.toFixed(1)} ${nx.toFixed(1)},${ny.toFixed(1)}"
-        fill="#4fcfa0" opacity=".85" filter="url(#qb-glow)"/>
-      <circle cx="${odx.toFixed(1)}" cy="${ody.toFixed(1)}" r="5"
-        fill="#4fcfa0" opacity=".9" filter="url(#qb-glow)"/>
-    </g>
-    <!-- Center circle on top -->
-    <circle cx="${CX}" cy="${CY}" r="20"
-      fill="#F6FAF8" stroke="rgba(22,121,74,.3)" stroke-width="1.5"/>
-    <circle cx="${CX}" cy="${CY}" r="14"
-      fill="rgba(22,121,74,.1)" stroke="rgba(22,121,74,.2)" stroke-width="1"/>
-    <image href="assets/reference-ui/kaaba-icon.png" x="${CX-14}" y="${CY-14}" width="28" height="28" preserveAspectRatio="xMidYMid meet" clip-path="url(#qb-kaaba-clip)"/>
+    <!-- Static bearing diagram (north-up) — only while no live compass reading. -->
+    ${pointer('qb-bearing-static', 'hidden')}
+    <!-- Live Qibla needle — rotated via setAttribute -->
+    ${pointer('qb-needle', 'hidden')}
+    <!-- Center: Kaaba -->
+    <circle cx="${CX}" cy="${CY}" r="27" fill="#fff" stroke="#0b7a4f" stroke-width="2.5"/>
+    <image href="assets/reference-ui/kaaba-icon.png" x="${CX - 21}" y="${CY - 21}" width="42" height="42" preserveAspectRatio="xMidYMid slice" clip-path="url(#qb-kaaba-clip)"/>
   </svg>
   </div>
   <div id="qb-live-heading" class="qb-load-badge" style="display:none"></div>
 
   <div id="qb-igrid" class="qb-igrid" style="display:none">
     <div class="qb-icell">
-      <span class="qb-icell-icon material-symbols-rounded" data-icon="explore" aria-hidden="true">explore</span>
+      <svg class="qb-icell-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>
       <div><div class="qb-icell-lbl">${_T('Qibla burchagi','Қибла бурчаги','Угол Киблы','Qibla angle')}</div>
       <div class="qb-icell-val" id="qb-ig-angle">—</div></div>
     </div>
     <div class="qb-icell">
-      <span class="qb-icell-icon material-symbols-rounded" data-icon="map" aria-hidden="true">map</span>
+      <svg class="qb-icell-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 4L3 11l7 3 3 7z" fill="currentColor"/></svg>
       <div><div class="qb-icell-lbl">${_T("Yo'nalish","Йўналиш","Направление","Direction")}</div>
       <div class="qb-icell-val" id="qb-ig-north">—</div></div>
     </div>
     <div class="qb-icell">
-      <span class="qb-icell-icon material-symbols-rounded" data-icon="location_on" aria-hidden="true">location_on</span>
+      <svg class="qb-icell-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s7-6.2 7-12a7 7 0 10-14 0c0 5.8 7 12 7 12z" fill="currentColor" stroke="none"/><circle cx="12" cy="10" r="2.6" fill="#fff" stroke="none"/></svg>
       <div><div class="qb-icell-lbl">${_T("Ka'baga masofa","Каъбага масофа","Расстояние до Каабы","Distance to Ka'bah")}</div>
       <div class="qb-icell-val" id="qb-ig-dir">—</div></div>
     </div>
     <div class="qb-icell">
-      <span class="qb-icell-icon material-symbols-rounded" data-icon="verified_user" aria-hidden="true">verified_user</span>
+      <svg class="qb-icell-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>
       <div><div class="qb-icell-lbl">${_T('Aniqlik','Аниқлик','Точность','Accuracy')}</div>
       <div class="qb-icell-val" id="qb-ig-accuracy">—</div></div>
     </div>
   </div>
 
   <div class="qb-calibrate-tip">
-    <div class="qb-calibrate-copy">${_T('Kompasni sozlash uchun telefonni 8 shaklida harakatlantiring','Компасни созлаш учун телефонни 8 шаклида ҳаракатлантиринг','Для калибровки компаса двигайте телефон восьмёркой','Calibrating compass — move your phone in a figure-8')}</div>
+    <span class="qb-calibrate-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 12c-2-2.7-3.6-4-5.5-4a4 4 0 000 8c1.9 0 3.5-1.3 5.5-4zm0 0c2 2.7 3.6 4 5.5 4a4 4 0 000-8c-1.9 0-3.5 1.3-5.5 4z"/></svg></span>
+    <div class="qb-calibrate-copy">${_T('Aniqroq natija uchun telefoningizni "8-raqam" shaklida harakatlantiring.','Аниқроқ натижа учун телефонингизни "8-рақам" шаклида ҳаракатлантиринг.','Для точного результата двигайте телефон в форме «восьмёрки».','Calibrating compass — move your phone in a figure-8').replace(/("8[^"]*"|«[^»]*»)/, '<span>$1</span>')}</div>
     <img src="assets/reference-ui/qibla-calibration.png" alt="" aria-hidden="true">
+    <img class="qb-calibrate-chevron" src="assets/icons/tabler/chevron-right.svg" alt="" aria-hidden="true">
   </div>
 
   <button class="qb-masjid-card" id="qb-open-haramayn-card">
@@ -480,8 +436,6 @@ const QiblaScreen = (function () {
         _el.querySelector('#qb-panel-xarita').style.display  = _tab==='xarita'  ? 'flex':'none';
         _el.querySelector('#qb-panel-malumot').style.display = _tab==='malumot' ? 'flex':'none';
         // Pause the WebGL render loops off-screen — saves GPU/battery.
-        if (_routeGlobe)   _routeGlobe.setVisible(_tab === 'kompas');
-        if (_compassGlobe) _compassGlobe.setVisible(_tab === 'kompas');
         window.Telegram?.WebApp?.HapticFeedback?.selectionChanged();
       });
     });
@@ -632,21 +586,16 @@ const QiblaScreen = (function () {
     _found      = true;
     if (_nativeCompass) _nativeCompass.setLocation({ latitude: _lat, longitude: _lon }).catch(() => {});
 
-    if (_routeGlobe) _routeGlobe.setRoute(_lat, _lon, KAABA_LAT, KAABA_LON);
-
-    /* city name from mosques cache */
-    try { _city = JSON.parse(localStorage.getItem('islamtime_mosques_v1') || '{}').city || ''; }
-    catch { _city = ''; }
-
     const ang = Math.round(_qiblaAngle);
     const dir = _dirLabel(_qiblaAngle);
 
-    /* GPS badge in header */
+    /* GPS badge in header: "City, Country" for the current coordinates. */
     const gpsBadge = _el?.querySelector('#qb-gps-badge');
     if (gpsBadge) gpsBadge.innerHTML =
       `<img src="assets/icons/tabler/map-pin.svg" alt="" aria-hidden="true">
        <span class="qb-gps-txt">${_city || _T('Joylashuv topildi','Жойлашув топилди','Место найдено','Location found')}</span>
        <img class="qb-gps-chevron" src="assets/icons/tabler/chevron-right.svg" alt="" aria-hidden="true">`;
+    if (!_city) _resolvePlace(_lat, _lon);
 
     /* Kompas: swap badges (found-vs-calibrating handled by _updateQualityBadge,
        gated on real GPS+compass quality, never shown unconditionally), fill grid */
@@ -668,6 +617,20 @@ const QiblaScreen = (function () {
     _setText('#qb-m-dir',   dir);
 
     _updateNeedle();
+  }
+
+  async function _resolvePlace(lat, lon) {
+    const generation = _generation;
+    try {
+      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&zoom=10&lat=${lat}&lon=${lon}`,
+        { headers: { 'Accept-Language': _lang === 'uz_cyr' ? 'uz' : _lang } });
+      const a = (await r.json()).address || {};
+      const city = a.city || a.town || a.village || a.county || a.state || '';
+      if (!city || generation !== _generation || lat !== _lat || lon !== _lon) return;
+      _city = a.country ? `${city}, ${a.country}` : city;
+      _setText('.qb-gps-txt', _city);
+      _setText('#qb-coord-city', _city);
+    } catch { /* keep "Location found" */ }
   }
 
   function _updateMap() {
@@ -820,7 +783,6 @@ const QiblaScreen = (function () {
     _needsFlat = reading.needsFlat === true;
     _updateNeedle();
     _updateQualityBadge();
-    if (_compassGlobe) _compassGlobe.setHeadingDeg(_deviceNorth);
   }
 
   /* The bearing is valid as soon as GPS is known. This stricter quality gate
@@ -881,11 +843,19 @@ const QiblaScreen = (function () {
   function _updateNeedle() {
     const needle = _el?.querySelector('#qb-needle');
     if (!needle) return;
-    needle.setAttribute('visibility', _found && _hasOrientation && _hasAbsoluteOrientation ? 'visible' : 'hidden');
+    const live = _hasOrientation && _hasAbsoluteOrientation;
+    needle.setAttribute('visibility', _found && live ? 'visible' : 'hidden');
+    // Without a live reading, show a north-up bearing diagram (like a map),
+    // never the live needle; the sensor status text says it is not live.
+    const bearing = _el?.querySelector('#qb-bearing-static');
+    if (bearing) {
+      bearing.setAttribute('visibility', _found && !live ? 'visible' : 'hidden');
+      bearing.setAttribute('transform', `rotate(${_qiblaAngle.toFixed(1)}, ${CX}, ${CY})`);
+    }
     const dial = _el?.querySelector('#qb-compass-dial');
     if (dial) {
-      dial.setAttribute('visibility', _hasOrientation && _hasAbsoluteOrientation ? 'visible' : 'hidden');
-      dial.setAttribute('transform', `rotate(${(-_deviceNorth).toFixed(1)}, ${CX}, ${CY})`);
+      dial.setAttribute('visibility', live || _found ? 'visible' : 'hidden');
+      dial.setAttribute('transform', `rotate(${(live ? -_deviceNorth : 0).toFixed(1)}, ${CX}, ${CY})`);
     }
     if (!_found || !_hasOrientation) return;
     const delta = QiblaGeo.headingDelta(_qiblaAngle, _deviceNorth);

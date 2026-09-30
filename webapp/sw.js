@@ -6,13 +6,14 @@
      - External (CDN, Telegram SDK)     : network-only
    ================================================================ */
 
-const CACHE = 'islamtime-v51';
+const CACHE = 'islamtime-v52';
 
 const PRECACHE = [
   '/app',
   '/manifest.json',
   '/css/styles.css',
   '/css/reference-ui.css',
+  '/css/qibla-reference.css',
   '/css/reference-pages.css',
   '/css/theme.css',
   '/css/header-media.css',
@@ -24,7 +25,6 @@ const PRECACHE = [
   '/js/hijri.js',
   '/js/app.js',
   '/js/safe-area.js',
-  '/js/lib/three.min.js',
   '/js/screens/splash.js',
   '/js/screens/language.js',
   '/js/screens/mazhab.js',
@@ -47,7 +47,6 @@ const PRECACHE = [
   '/js/screens/settings.js',
   '/js/native/bridge.js',
   '/js/native/qibla-geo.js',
-  '/js/native/earth-globe.js',
   '/js/native/quran-provider.js',
   '/js/native/hadith-provider.js',
   '/data/names_of_allah.js',
@@ -64,9 +63,6 @@ const PRECACHE = [
   '/assets/branding/apple-touch-icon.png',
   '/assets/landing/haram-makkah.webp',
   '/assets/landing/haram-madinah.webp',
-  '/assets/earth/earth_atmos_2048.jpg',
-  '/assets/earth/earth_normal_2048.jpg',
-  '/assets/earth/earth_specular_2048.jpg',
   '/assets/reference-ui/makkah-hero.png',
   '/assets/reference-ui/mosque-hero.png',
   '/assets/reference-ui/quran-open.png',
