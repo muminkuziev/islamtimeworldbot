@@ -279,16 +279,20 @@ const MosquesScreen = (function () {
 out center tags;`.trim();
 
     try {
-      const resp = await fetch(OVERPASS_URL, {
-        method : 'POST',
-        body   : 'data=' + encodeURIComponent(query),
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        signal : controller.signal,
+      const params = new URLSearchParams({
+        lat: String(LA),
+        lon: String(LO),
+        radius: String(R),
+      });
+      const resp = await fetch('/api/mosques/nearby?' + params.toString(), {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        signal: controller.signal,
       });
       if (!resp.ok) throw new Error('http');
       const data = await resp.json();
       if (requestId !== _requestId) return;
-      if (!Array.isArray(data.elements) || data.remark) throw new Error('incomplete Overpass response');
+      if (!Array.isArray(data.elements)) throw new Error('incomplete mosque response');
 
       const mapped = (data.elements || []).map(e => {
         const lat = e.lat ?? e.center?.lat;

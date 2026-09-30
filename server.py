@@ -1655,6 +1655,75 @@ async def api_save_user_location(request: Request):
         return {"ok": False, "error": str(e)}
 
 
+# ── Nearby mosques (server-side Overpass proxy with fallback) ──────────────
+@app.get("/api/mosques/nearby")
+async def api_nearby_mosques(
+    lat: float = Query(..., ge=-90, le=90),
+    lon: float = Query(..., ge=-180, le=180),
+    radius: int = Query(10000, ge=500, le=50000),
+):
+    import aiohttp as _aiohttp
+
+    query = f"""[out:json][timeout:22];
+(
+  node["amenity"="mosque"](around:{radius},{lat},{lon});
+  way["amenity"="mosque"](around:{radius},{lat},{lon});
+  relation["amenity"="mosque"](around:{radius},{lat},{lon});
+  node["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{lat},{lon});
+  way["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{lat},{lon});
+  relation["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{lat},{lon});
+  node["amenity"="prayer_hall"]["religion"="muslim"](around:{radius},{lat},{lon});
+  way["amenity"="prayer_hall"]["religion"="muslim"](around:{radius},{lat},{lon});
+  node["amenity"="community_centre"]["religion"="muslim"](around:{radius},{lat},{lon});
+  way["amenity"="community_centre"]["religion"="muslim"](around:{radius},{lat},{lon});
+  node["building"="mosque"](around:{radius},{lat},{lon});
+  way["building"="mosque"](around:{radius},{lat},{lon});
+);
+out center tags;""".strip()
+
+    endpoints = (
+        "https://overpass-api.de/api/interpreter",
+        "https://overpass.private.coffee/api/interpreter",
+    )
+    errors = []
+    timeout = _aiohttp.ClientTimeout(total=28)
+    headers = {
+        "User-Agent": "IslamTimeWorld/1.0 (nearby-mosques; https://islamtimeworld.com)",
+        "Accept": "application/json",
+    }
+    async with _aiohttp.ClientSession(timeout=timeout, headers=headers) as session:
+        for endpoint in endpoints:
+            try:
+                async with session.post(
+                    endpoint,
+                    data={"data": query},
+                    headers={"Content-Type": "application/x-www-form-urlencoded"},
+                ) as response:
+                    if response.status != 200:
+                        errors.append(f"{endpoint}: HTTP {response.status}")
+                        continue
+                    payload = await response.json(content_type=None)
+                    elements = payload.get("elements")
+                    if not isinstance(elements, list):
+                        errors.append(f"{endpoint}: invalid payload")
+                        continue
+                    return JSONResponse({
+                        "elements": elements,
+                        "provider": endpoint,
+                        "radius": radius,
+                        "lat": lat,
+                        "lon": lon,
+                    }, headers={"Cache-Control": "public, max-age=120"})
+            except Exception as exc:
+                errors.append(f"{endpoint}: {type(exc).__name__}")
+
+    print(f"[WARN] nearby mosques failed: {'; '.join(errors)}", flush=True)
+    return JSONResponse(
+        {"elements": [], "error": "mosque_provider_unavailable", "details": errors},
+        status_code=503,
+    )
+
+
 # ── User Notification Prefs API ───────────────────────────────────────────
 @app.post("/api/user/notifications")
 async def api_save_notif_prefs(request: Request):

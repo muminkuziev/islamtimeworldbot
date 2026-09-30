@@ -343,8 +343,8 @@ ${saved.map(d => _buildCard(d, favs, false)).join('\n')}`;
   }
 
   function _backLabel() {
-    if (_selDuaId !== null) return '← ' + (_selCat ? _catLabel(_selCat) : _T("Du'olar","Дуолар","Дуа","Duas"));
-    if (_selCat !== null)   return '← ' + _T('Kategoriyalar','Категориялар','Категории','Categories');
+    if (_selDuaId !== null) return '← ' + _T('Orqaga','Орқага','Назад','Back');
+    if (_selCat !== null)   return '← ' + _T('Orqaga','Орқага','Назад','Back');
     return '← ' + _T('Menyu','Меню','Меню','Menu');
   }
 

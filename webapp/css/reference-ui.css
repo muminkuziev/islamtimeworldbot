@@ -163,7 +163,7 @@ button, input { font-family:'Plus Jakarta Sans','Inter',system-ui,sans-serif; }
 #screen-quran .q-header-photo { inset:0!important; width:100%!important; height:100%!important; content:url('../assets/reference-ui/makkah-hero.png'); opacity:1!important; mask-image:none!important; -webkit-mask-image:none!important; object-position:58% 45%!important; }
 #screen-quran .q-header::after { background:linear-gradient(90deg,rgba(255,255,255,.98) 0%,rgba(255,255,255,.88) 42%,rgba(255,255,255,.08) 100%)!important; }
 #screen-quran .q-nav-row { height:36px!important; margin-bottom:0!important; justify-content:space-between!important; }
-#screen-quran .q-back-btn { display:none!important; }
+#screen-quran .q-back-btn { display:inline-flex!important; }
 #screen-quran .q-header-actions { margin-left:auto; display:flex; gap:8px; }
 #screen-quran .q-header-action { width:34px; height:34px; padding:0; display:grid; place-items:center; border:0; border-radius:50%; background:#fff; box-shadow:var(--ref-shadow); }
 #screen-quran .q-header-action img { width:20px; height:20px; }
