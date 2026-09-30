@@ -6,7 +6,7 @@
      - External (CDN, Telegram SDK)     : network-only
    ================================================================ */
 
-const CACHE = 'islamtime-v52';
+const CACHE = 'islamtime-v53';
 
 const PRECACHE = [
   '/app',
@@ -14,6 +14,7 @@ const PRECACHE = [
   '/css/styles.css',
   '/css/reference-ui.css',
   '/css/qibla-reference.css',
+  '/css/home-header.css',
   '/css/reference-pages.css',
   '/css/theme.css',
   '/css/header-media.css',

@@ -282,18 +282,12 @@ const DashboardScreen = (function () {
   <div class="db-hdr-inner">
 
     <div class="db-top-row">
-      <div class="db-location-block">
+      <div class="db-brand"><img class="db-brand-icon" src="assets/branding/official-icon.png" width="32" height="32" alt="" aria-hidden="true"><strong>IslamTimeWorld</strong><span>${t('sloganDua', _lang)}</span></div>
+      <div class="db-top-right">
         <button class="db-location-line" id="db-locate" type="button" aria-label="${_T('Joylashuvni aniqlash','Жойлашувни аниқлаш','Определить местоположение','Detect location')}">
           <span class="db-location-pin" aria-hidden="true"><img src="assets/icons/tabler/map-pin.svg" alt=""></span>
           <span class="db-city-name" id="db-city-name" aria-live="polite">GPS</span>
         </button>
-        <div class="db-location-date">
-          <span class="db-date-uz" id="db-date-uz">—</span>
-          <span class="db-date-ar" id="db-date-ar">—</span>
-        </div>
-        <div class="db-slogan">${t('sloganDua', _lang)}</div>
-      </div>
-      <div class="db-top-right">
         <button class="db-notify-btn" id="db-notify-btn" type="button" aria-label="${_T('Bildirishnomalar','Билдиришномалар','Уведомления','Notifications')}">
           <img src="assets/icons/tabler/bell.svg" alt="" aria-hidden="true">
           <i aria-hidden="true"></i>
@@ -301,14 +295,13 @@ const DashboardScreen = (function () {
       </div>
     </div>
 
-    <div class="db-brand"><img class="db-brand-icon" src="assets/branding/official-icon.png" width="32" height="32" alt="" aria-hidden="true"><strong>IslamTimeWorld</strong><span>${t('sloganDua', _lang)}</span></div>
-    <div class="db-divider"></div>
 
     <div class="db-next-wrap">
       <div class="db-next-box">
         <div class="db-next-topline"></div>
         <div class="db-next-row">
           <div class="db-next-main">
+            <div class="db-next-date"><span class="db-date-uz" id="db-date-uz">—</span><span class="db-date-ar" id="db-date-ar">—</span></div>
             <div class="db-next-lbl">${_T('Keyingi namoz','Кейинги намоз','Следующий намаз','Next prayer')}</div>
             <div class="db-next-name" id="db-np-name">—</div>
             <div class="db-next-remain" id="db-np-remain">${_l('loading')}</div>
