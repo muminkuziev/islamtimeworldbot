@@ -1991,7 +1991,7 @@ def _muslim_row(r, lang: str) -> dict:
     }
 
 
-# ── Hadith API compatibility (verified HadeethEnc corpus only) ───────────────
+# ── Hadith API compatibility (verified language-specific providers) ──────────
 @app.get("/api/hadith")
 async def api_hadith(
     collection: str = Query("hadeethenc"),
@@ -2000,6 +2000,8 @@ async def api_hadith(
     lang: str = Query("en"),
     chapter_id: int|None = Query(None),
 ):
+    if (lang or "").lower().replace("-", "_") == "av":
+        return await api_avar_hadiths(page=page, limit=limit, q="", book="", hadith_id=None)
     return await api_hadeethenc(lang=lang, page=page, limit=limit, q="", book="", hadith_id=None)
 
 
@@ -2009,12 +2011,17 @@ async def api_hadith_search(
     collection: str = Query("hadeethenc"),
     lang: str = Query("en"),
 ):
+    if (lang or "").lower().replace("-", "_") == "av":
+        return await api_avar_hadiths(page=1, limit=50, q=q, book="", hadith_id=None)
     return await api_hadeethenc(lang=lang, page=1, limit=50, q=q, book="", hadith_id=None)
 
 
 @app.get("/api/hadith/categories")
 async def api_hadith_categories(lang: str = Query("en")):
-    response = await api_hadeethenc_books(lang)
+    if (lang or "").lower().replace("-", "_") == "av":
+        response = await api_avar_hadiths_books()
+    else:
+        response = await api_hadeethenc_books(lang)
     payload = json.loads(response.body)
     return JSONResponse({"categories": payload.get("books", []), "verified": True})
 
@@ -2028,7 +2035,114 @@ async def api_hadith_muslim_books(lang: str = Query("en")):
 
 @app.get("/api/hadith/category")
 async def api_hadith_category(name: str = Query(...), lang: str = Query("en")):
+    if (lang or "").lower().replace("-", "_") == "av":
+        return await api_avar_hadiths(page=1, limit=50, q="", book=name, hadith_id=None)
     return await api_hadeethenc(lang=lang, page=1, limit=50, q="", book=name, hadith_id=None)
+
+
+# ── Verified Avar Hadith corpus ────────────────────────────────────────────
+# Curated Avar-language hadiths published by As-Salam / DUM Dagestan.
+# Every selected item is adjacent to an explicit Sahih al-Bukhari and/or
+# Sahih Muslim attribution in the Avar source article. No machine translation.
+from functools import lru_cache
+
+
+_AVAR_HADITH_PATH = BASE_DIR / "data" / "avar_verified_hadiths.json"
+
+
+@lru_cache(maxsize=1)
+def _load_avar_hadiths() -> tuple[dict, ...]:
+    if not _AVAR_HADITH_PATH.exists():
+        return tuple()
+    payload = json.loads(_AVAR_HADITH_PATH.read_text(encoding="utf-8"))
+    rows = payload.get("hadiths", [])
+    return tuple(row for row in rows if isinstance(row, dict) and row.get("language") == "av")
+
+
+def _avar_hadith_row(row: dict) -> dict:
+    return {
+        "id": row.get("id", ""),
+        "title": row.get("title", ""),
+        "text": row.get("text", ""),
+        "arabic": row.get("arabic", ""),
+        "attribution": row.get("attribution", ""),
+        "grade": row.get("grade", "sahih"),
+        "explanation": "",
+        "source": row.get("source", "as-salam.press"),
+        "source_url": row.get("source_url", ""),
+        "source_api": row.get("source_url", ""),
+        "language": "av",
+        "provider_label": "Ас-Салам · ДУМ Дагестана",
+    }
+
+
+@app.get("/api/avar-hadiths")
+async def api_avar_hadiths(
+    page: int = Query(1, ge=1),
+    limit: int = Query(12, ge=1, le=50),
+    q: str = Query("", max_length=160),
+    book: str = Query("", max_length=512),
+    hadith_id: str|None = Query(None, max_length=32),
+):
+    """Verified Avar-language list, search and detail."""
+    import math
+
+    rows = list(_load_avar_hadiths())
+    if not rows and not _AVAR_HADITH_PATH.exists():
+        return JSONResponse(
+            {"hadiths": [], "total": 0, "page": page, "pages": 0, "language": "av", "verified": False},
+            status_code=503,
+        )
+    if hadith_id:
+        rows = [row for row in rows if str(row.get("id", "")) == hadith_id]
+    if book:
+        rows = [row for row in rows if str(row.get("attribution", "")) == book]
+    term = q.strip().casefold()
+    if term:
+        rows = [
+            row for row in rows
+            if term in " ".join([
+                str(row.get("id", "")),
+                str(row.get("title", "")),
+                str(row.get("text", "")),
+                str(row.get("attribution", "")),
+                str(row.get("article_title", "")),
+            ]).casefold()
+        ]
+
+    total = len(rows)
+    offset = (page - 1) * limit
+    page_rows = rows[offset:offset + limit]
+    return JSONResponse({
+        "hadiths": [_avar_hadith_row(row) for row in page_rows],
+        "total": total,
+        "page": page,
+        "pages": math.ceil(total / limit) if total else 0,
+        "language": "av",
+        "verified": True,
+        "provider": "as-salam.press / DUM Dagestan",
+    })
+
+
+@app.get("/api/avar-hadiths/books")
+async def api_avar_hadiths_books():
+    """Source facets for the verified Avar corpus."""
+    from collections import Counter
+
+    rows = list(_load_avar_hadiths())
+    counts = Counter(str(row.get("attribution", "")).strip() for row in rows)
+    books = [
+        {"name": name, "count": count}
+        for name, count in sorted(counts.items(), key=lambda item: (-item[1], item[0]))
+        if name
+    ]
+    return JSONResponse({
+        "books": books,
+        "total": len(rows),
+        "language": "av",
+        "verified": True,
+        "provider": "as-salam.press / DUM Dagestan",
+    })
 
 
 # ── Verified HadeethEnc API ────────────────────────────────────────────────

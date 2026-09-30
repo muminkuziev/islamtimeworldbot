@@ -42,9 +42,48 @@ const HadithRegistry = (function () {
       return this.list(page || 1, limit || 12, lang, { q:query });
     }
   };
+
+  async function requestAvar(path, params, signal) {
+    const query = new URLSearchParams(params || {});
+    const response = await fetch(path + (query.toString() ? '?' + query : ''), { signal });
+    if (!response.ok) throw new Error('Avar Hadith request failed');
+    const data = await response.json();
+    if (data.language !== 'av' || data.verified !== true) throw new Error('Avar Hadith source/language mismatch');
+    if (path.endsWith('/books') ? !Array.isArray(data.books) : !Array.isArray(data.hadiths)) {
+      throw new Error('Invalid Avar Hadith provider response');
+    }
+    if (data.hadiths && data.hadiths.some(row =>
+      row.language !== 'av' || !row.text || row.source !== 'as-salam.press' || !row.source_url
+    )) {
+      throw new Error('Avar Hadith content provenance mismatch');
+    }
+    return data;
+  }
+
+  const avarOfficial = {
+    key: 'avar_official',
+    count: 194,
+    languages: ['av'],
+    list(page, limit, _lang, filters) {
+      return requestAvar('/api/avar-hadiths', {
+        page: page || 1, limit: limit || 12,
+        q: filters?.q || '', book: filters?.book || ''
+      }, filters?.signal);
+    },
+    detail(id) {
+      return requestAvar('/api/avar-hadiths', { hadith_id:id, limit:1 });
+    },
+    books() {
+      return requestAvar('/api/avar-hadiths/books', {});
+    },
+    search(query, _lang, page, limit) {
+      return this.list(page || 1, limit || 12, 'av', { q:query });
+    }
+  };
+
   return {
-    get: key => key === 'hadeethenc' ? verified : null,
-    list: () => [verified],
+    get: key => key === 'hadeethenc' ? verified : key === 'avar_official' ? avarOfficial : null,
+    list: () => [verified, avarOfficial],
     language,
   };
 })();

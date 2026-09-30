@@ -10,7 +10,10 @@ const HadithScreen = (function () {
   const esc = value => String(value ?? '').replace(/[&<>"']/g,
     char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char]));
   const T = (uz, cyr, ru, en) => _resolveT(uz, cyr, ru, en, lang);
-  const provider = () => window.HadithRegistry.get('hadeethenc');
+  const provider = () => window.HadithRegistry.get(lang === 'av' ? 'avar_official' : 'hadeethenc');
+  const providerMeta = () => lang === 'av'
+    ? { name:'Ас-Салам · ДУМ Дагестана', count:194 }
+    : { name:'HadeethEnc', count:144 };
   const text = (record, key) => HadithDisplay.field(record, key, lang);
   const label = {
     hadith: () => T('Hadislar','Ҳадислар','Хадисы','Hadiths'),
@@ -63,13 +66,14 @@ const HadithScreen = (function () {
 
   function shell() {
     const tabs = [['hadiths', label.hadith()], ['books', label.source()], ['search', label.search()]];
+    const meta = providerMeta();
     return `<div class="hd-hdr hd-hdr--photo">
       <img class="hd-hdr-photo" src="assets/landing/haram-madinah.webp" alt="" loading="eager">
       <div class="nm-tile-ov"></div><div class="hd-hdr-inner">
       <div class="hd-nav-row"><button class="hd-back" id="hd-back">${label.back()}</button></div>
       <h1 class="hd-title">${label.hadith()}</h1>
-      <div class="hd-books"><div class="hd-book-btn gold"><div class="hd-book-name gold">HadeethEnc</div>
-      <div class="hd-book-cnt">144 ${T('tasdiqlangan hadis','тасдиқланган ҳадис','проверенных хадисов','verified hadiths')}</div></div></div>
+      <div class="hd-books"><div class="hd-book-btn gold"><div class="hd-book-name gold">${esc(meta.name)}</div>
+      <div class="hd-book-cnt">${meta.count} ${T('tasdiqlangan hadis','тасдиқланган ҳадис','проверенных хадисов','verified hadiths')}</div></div></div>
       <div class="hd-tabs" role="tablist">${tabs.map(([key, text]) =>
         `<button class="hd-tab${tab === key ? ' active' : ''}" role="tab" aria-selected="${tab === key}" data-tab="${key}">${text}</button>`).join('')}</div>
       </div></div><div class="hd-body" id="hd-body">${body()}</div>`;
@@ -106,16 +110,17 @@ const HadithScreen = (function () {
       <div class="${hadith.language === 'ar' ? 'hd-card-ar' : 'hd-card-uz'}" dir="auto">${esc(text(hadith, 'text'))}</div>
       <div class="hd-card-foot"><div class="hd-card-foot-left">
       ${hadith.grade ? `<span class="hd-sahih" dir="auto">${esc(text(hadith, 'grade'))}</span>` : ''}
-      </div><span class="hd-card-ref">HadeethEnc · ${esc(hadith.id)}</span></div></button>`;
+      </div><span class="hd-card-ref">${esc(hadith.provider_label || (hadith.source === 'as-salam.press' ? 'Ас-Салам' : 'HadeethEnc'))} · ${esc(hadith.id)}</span></div></button>`;
   }
 
   function detail() {
     const h = rows[selected];
     if (!h) return `<div class="hd-empty">${label.empty()}</div>`;
-    const sourceUrl = `https://hadeethenc.com/${encodeURIComponent(h.language)}/browse/hadith/${encodeURIComponent(h.id)}`;
+    const sourceUrl = h.source_url || `https://hadeethenc.com/${encodeURIComponent(h.language)}/browse/hadith/${encodeURIComponent(h.id)}`;
+    const sourceLabel = h.provider_label || (h.source === 'as-salam.press' ? 'Ас-Салам' : 'HadeethEnc');
     return `<button class="hd-detail-back" id="hd-detail-back">${label.back()}</button>
       <article class="hd-detail-box"><div class="hd-detail-topline"></div>
-      <div class="hd-detail-badges"><span class="hd-detail-ref">HadeethEnc · ${esc(h.id)}</span>
+      <div class="hd-detail-badges"><span class="hd-detail-ref">${esc(sourceLabel)} · ${esc(h.id)}</span>
       ${h.grade ? `<span class="hd-detail-sahih" dir="auto">${esc(text(h, 'grade'))}</span>` : ''}</div>
       ${h.title ? `<h2 class="hd-chapter-hdr" dir="auto">${esc(text(h, 'title'))}</h2>` : ''}
       ${h.arabic ? `<div class="hd-detail-ar" lang="ar" dir="rtl">${esc(h.arabic)}</div>` : ''}
