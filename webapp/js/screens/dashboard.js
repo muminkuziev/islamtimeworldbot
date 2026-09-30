@@ -307,7 +307,6 @@ const DashboardScreen = (function () {
             <div class="db-next-remain" id="db-np-remain">${_l('loading')}</div>
             <div class="db-next-time-line"><img src="assets/icons/tabler/clock.svg" alt="" aria-hidden="true"><span class="db-next-time" id="db-np-time">—:—</span><span>${_T('da','да','в','')}</span></div>
           </div>
-          <button class="db-adhan-btn" type="button" aria-label="${_T('Namoz vaqtlari','Намоз вақтлари','Время намаза','Prayer times')}"><img src="assets/icons/tabler/chevron-right.svg" alt="" aria-hidden="true"></button>
           <div class="db-next-sub" id="db-np-sub">—</div>
         </div>
         <div class="db-prog">
@@ -400,7 +399,6 @@ const DashboardScreen = (function () {
      Events
   ══════════════════════════════════════════════ */
   function _bindEvents() {
-    _el.querySelector('.db-adhan-btn')?.addEventListener('click', () => _onModuleTap('prayer'));
     _el.querySelector('#db-hadith-card')?.addEventListener('click', () => _onModuleTap('hadith'));
     _el.querySelector('#db-haramayn-all')?.addEventListener('click', () => { HaramaynScreen.load(_lang); window.App.navigate('screen-haramayn'); });
 
@@ -556,8 +554,6 @@ const DashboardScreen = (function () {
   function _showPrayerUnavailable() {
     const label = _el?.querySelector('#db-np-remain');
     if (label) { label.textContent = _T('Qayta urinish','Қайта уриниш','Повторить','Retry'); label.classList.add('db-prayer-unavailable'); }
-    const action = _el?.querySelector('.db-adhan-btn');
-    if (action) action.setAttribute('aria-label', _T('Namoz vaqtlari','Намоз вақтлари','Время намаза','Prayer times'));
   }
 
   function _renderPrayer(data) {

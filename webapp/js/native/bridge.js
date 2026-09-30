@@ -165,8 +165,10 @@
     } catch (_) {}
   }
 
+  let _lastSchedule = null; // so a mode change elsewhere can reschedule
   async function _schedulePrayerNotifications(prayers, timing, mode) {
     if (!LocalNotifications || !Array.isArray(prayers)) return;
+    _lastSchedule = { prayers, timing };
     await _cancelPrayerNotifications();
     try {
       const perm = await LocalNotifications.checkPermissions();
@@ -224,6 +226,8 @@
   function _setNotificationMode(mode) {
     if (!['silent','sound','vibrate','adhan'].includes(mode)) return;
     localStorage.setItem('islamtime_notification_mode', mode);
+    // Android binds sound/vibration to the channel chosen at schedule time.
+    if (_lastSchedule) _schedulePrayerNotifications(_lastSchedule.prayers, _lastSchedule.timing, mode);
   }
 
   window.IslamNative = {

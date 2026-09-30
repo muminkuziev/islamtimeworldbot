@@ -1,6 +1,5 @@
 /* Home header: brand on top with location beside it; the Gregorian/Hijri
-   date lives inside the "Next prayer" card; the prayer-times button sits in
-   the card corner on the Kaaba side. Loaded last; scoped to Home. */
+   date lives inside the "Next prayer" card. Loaded last; scoped to Home. */
 
 #app #screen-dashboard .db-hdr { min-height:330px!important; }
 #app #screen-dashboard .db-hdr-inner { padding:8px 14px 0!important; }
@@ -31,12 +30,6 @@
 #app #screen-dashboard .db-next-name { font-size:28px!important; font-weight:600!important; letter-spacing:0!important; }
 #app #screen-dashboard .db-next-remain { font-size:34px!important; font-weight:600!important; letter-spacing:.5px!important; font-variant-numeric:tabular-nums; }
 #app #screen-dashboard .db-next-time-line { margin-top:6px!important; }
-
-/* Prayer-times button: bottom corner on the Kaaba side (end side; mirrors in
-   RTL together with the photo). */
-#app #screen-dashboard .db-adhan-btn { position:absolute!important; top:auto!important; bottom:10px!important; inset-inline-end:10px!important; inset-inline-start:auto!important; left:auto; width:36px!important; height:36px!important; min-height:36px!important; box-shadow:0 4px 12px rgba(0,0,0,.18); }
-html[dir="rtl"] #app #screen-dashboard .db-adhan-btn { right:auto!important; left:10px!important; }
-html[dir="rtl"] #app #screen-dashboard .db-adhan-btn img { transform:scaleX(-1); }
 
 #app #screen-dashboard .db-prayer-strip { top:236px!important; }
 

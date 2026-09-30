@@ -151,6 +151,7 @@ def _init_users_db():
             ("notif_timing",            "TEXT DEFAULT '{}'"),
             ("notif_tz_offset",         "INTEGER DEFAULT 0"),
             ("notif_sent",              "TEXT DEFAULT '{}'"),
+            ("notif_mode",              "TEXT DEFAULT 'sound'"),
             ("daily_briefing_enabled",  "INTEGER DEFAULT 1"),
             ("daily_briefing_time",     "TEXT DEFAULT '04:00'"),
             ("briefing_sent",           "TEXT DEFAULT ''"),
@@ -385,6 +386,32 @@ async def _init_notif_bot():
         print(f"[WARN] _init_notif_bot: {e}", flush=True)
 
 
+NOTIF_MODES = ("silent", "sound", "vibrate", "adhan")
+ADHAN_VOICE_PATH = Path(__file__).parent / "assets" / "audio" / "adhan_voice.ogg"
+_adhan_file_id: str | None = None  # Telegram file_id after the first upload
+
+
+async def _send_prayer_message(user_id: int, msg: str, mode: str, offset: int):
+    """Deliver one prayer notification in the user's chosen mode.
+
+    Telegram lets a bot choose silent vs normal delivery only; sound and
+    vibration otherwise follow the user's Telegram settings, so "sound" and
+    "vibrate" are both a normal message here (the Android app has real
+    per-mode channels). The Adhan is the call at the prayer time itself, so
+    it is sent only for on-time notifications, never for early reminders.
+    """
+    global _adhan_file_id
+    adhan_now = mode == "adhan" and offset == 0 and ADHAN_VOICE_PATH.exists()
+    # With the Adhan, the voice message carries the alert; the text stays quiet.
+    await _bot_notif.send_message(user_id, msg, parse_mode="HTML",
+                                  disable_notification=(mode == "silent" or adhan_now))
+    if adhan_now:
+        from aiogram.types import FSInputFile
+        sent = await _bot_notif.send_voice(user_id, _adhan_file_id or FSInputFile(ADHAN_VOICE_PATH))
+        if sent.voice:
+            _adhan_file_id = sent.voice.file_id
+
+
 async def _process_user_notif(user: dict, utc_minutes: int, today_str: str):
     user_id   = user["user_id"]
     lang      = user["language"] or "uz"
@@ -392,6 +419,7 @@ async def _process_user_notif(user: dict, utc_minutes: int, today_str: str):
     lon       = user["last_lon"]
     city      = user["last_city"] or ""
     tz_offset = user["notif_tz_offset"] or 0
+    mode      = user.get("notif_mode") if user.get("notif_mode") in NOTIF_MODES else "sound"
 
     try:
         timing = json.loads(user["notif_timing"] or "{}")
@@ -450,8 +478,8 @@ async def _process_user_notif(user: dict, utc_minutes: int, today_str: str):
 
         msg = _format_notification(lang, key, t, city, offset)
         try:
-            await _bot_notif.send_message(user_id, msg, parse_mode="HTML")
-            print(f"[NOTIF] ✓ uid={user_id} {key} offset={offset}", flush=True)
+            await _send_prayer_message(user_id, msg, mode, offset)
+            print(f"[NOTIF] ✓ uid={user_id} {key} offset={offset} mode={mode}", flush=True)
             new_keys.append(sent_key)
         except Exception as e:
             err = str(e).lower()
@@ -486,7 +514,7 @@ async def _send_due_notifications():
         conn.row_factory = sqlite3.Row
         users = conn.execute("""
             SELECT user_id, language, last_lat, last_lon, last_city,
-                   notif_timing, notif_tz_offset, notif_sent
+                   notif_timing, notif_tz_offset, notif_sent, notif_mode
             FROM users
             WHERE notif_enabled=1 AND last_lat IS NOT NULL AND last_lon IS NOT NULL
         """).fetchall()
@@ -1636,21 +1664,23 @@ async def api_save_notif_prefs(request: Request):
         enabled   = int(data.get("enabled", 0))
         timing    = json.dumps(data.get("timing", {}))
         tz_offset = int(data.get("tz_offset", 0))
+        mode      = data.get("mode") if data.get("mode") in NOTIF_MODES else "sound"
         if not user_id:
             return {"ok": False, "error": "missing user_id"}
         conn = sqlite3.connect(str(USERS_DB))
         conn.execute("""
-            INSERT INTO users (user_id, joined_at, last_active, notif_enabled, notif_timing, notif_tz_offset)
-            VALUES (?, datetime('now'), datetime('now'), ?, ?, ?)
+            INSERT INTO users (user_id, joined_at, last_active, notif_enabled, notif_timing, notif_tz_offset, notif_mode)
+            VALUES (?, datetime('now'), datetime('now'), ?, ?, ?, ?)
             ON CONFLICT(user_id) DO UPDATE SET
                 notif_enabled=excluded.notif_enabled,
                 notif_timing=excluded.notif_timing,
                 notif_tz_offset=excluded.notif_tz_offset,
+                notif_mode=excluded.notif_mode,
                 last_active=excluded.last_active
-        """, (user_id, enabled, timing, tz_offset))
+        """, (user_id, enabled, timing, tz_offset, mode))
         conn.commit()
         conn.close()
-        print(f"[NOTIF] Prefs upserted: uid={user_id} enabled={enabled} timing={timing} tz={tz_offset}", flush=True)
+        print(f"[NOTIF] Prefs upserted: uid={user_id} enabled={enabled} timing={timing} tz={tz_offset} mode={mode}", flush=True)
         return {"ok": True}
     except Exception as e:
         print(f"[WARN] api_save_notif_prefs: {e}", flush=True)

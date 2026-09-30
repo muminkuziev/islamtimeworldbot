@@ -307,7 +307,31 @@ const SettingsScreen = (function () {
           </div>
           ${i < rows.length - 1 ? '<div class="st-div"></div>' : ''}
         `).join('')}
+      </div>
+      <div class="st-sec-lbl" style="margin:16px 0 8px">${_T('BILDIRISHNOMA OVOZI','БИЛДИРИШНОМА ОВОЗИ','ЗВУК УВЕДОМЛЕНИЯ','NOTIFICATION MODE')}</div>
+      <div class="st-sect st-theme-options" role="radiogroup" aria-label="${_T('Bildirishnoma ovozi','Билдиришнома овози','Звук уведомления','Notification mode')}">
+        ${NOTIF_MODES.map(([mode, icon, label]) => `
+          <button type="button" class="st-tema-row" data-notif-mode="${mode}" role="radio" aria-checked="${_notifMode() === mode}">
+            <span class="st-tema-ic"><img src="assets/icons/tabler/${icon}.svg" alt="" width="24" height="24"></span>
+            <span class="st-rb"><span class="st-rl">${label()}</span></span>
+            <span class="st-theme-indicator" aria-hidden="true">${_notifMode() === mode ? '✓' : ''}</span>
+          </button>`).join('')}
       </div>`;
+  }
+
+  /* Shared with the Namoz screen via islamtime_notif_v1.mode. */
+  const NOTIF_MODES = [
+    ['silent',  'moon',   () => _T('Ovozsiz','Овозсиз','Без звука','Silent')],
+    ['sound',   'bell',   () => _T('Oddiy ovoz','Оддий овоз','Обычный звук','Standard sound')],
+    ['vibrate', 'phone',  () => _T('Vibratsiya','Вибрация','Вибрация','Vibration')],
+    ['adhan',   'mosque', () => _T('Azon ovozi','Азон овози','Азан','Adhan sound')],
+  ];
+  function _notifPrefs() {
+    try { return JSON.parse(localStorage.getItem('islamtime_notif_v1') || '{}'); } catch { return {}; }
+  }
+  function _notifMode() {
+    const m = _notifPrefs().mode;
+    return NOTIF_MODES.some(([k]) => k === m) ? m : 'sound';
   }
 
   function _htmlBriefing() {
@@ -829,6 +853,7 @@ const SettingsScreen = (function () {
         enabled:   enabled ? 1 : 0,
         timing,
         tz_offset: tzOff,
+        mode:      _notifMode(),
       }),
     }).catch(() => {});
   }
@@ -861,6 +886,22 @@ const SettingsScreen = (function () {
         el.querySelector(`#${id}`)?.classList.toggle('on', nv);
         if (k === 'push') _saveNotifToServer(nv);
         window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
+      });
+    });
+
+    el.querySelectorAll('[data-notif-mode]').forEach(row => {
+      row.addEventListener('click', () => {
+        const mode = row.dataset.notifMode;
+        const prefs = _notifPrefs(); prefs.mode = mode;
+        localStorage.setItem('islamtime_notif_v1', JSON.stringify(prefs));
+        el.querySelectorAll('[data-notif-mode]').forEach(r => {
+          const on = r.dataset.notifMode === mode;
+          r.setAttribute('aria-checked', String(on));
+          r.querySelector('.st-theme-indicator').textContent = on ? '✓' : '';
+        });
+        window.IslamNative?.setNotificationMode?.(mode);
+        if (_s.push) _saveNotifToServer(true);
+        window.Telegram?.WebApp?.HapticFeedback?.selectionChanged();
       });
     });
   }

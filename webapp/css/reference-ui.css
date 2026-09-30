@@ -60,8 +60,6 @@ button, input { font-family:'Plus Jakarta Sans','Inter',system-ui,sans-serif; }
 #screen-dashboard .db-next-time-line { display:flex; align-items:center; gap:6px; margin-top:7px; color:rgba(255,255,255,.9); font-size:14px; }
 #screen-dashboard .db-next-time-line img { width:15px; height:15px; filter:brightness(0) invert(1); opacity:.92; }
 #screen-dashboard .db-next-time { margin:0!important; color:#fff!important; font-size:14px!important; line-height:1!important; font-weight:600!important; letter-spacing:0!important; text-shadow:none!important; }
-#screen-dashboard .db-adhan-btn { position:absolute; left:42%; right:auto; bottom:3px; width:31px; min-height:31px!important; height:31px; padding:0; display:grid; place-items:center; color:#25383d; background:rgba(255,255,255,.88); border:0; border-radius:50%; }
-#screen-dashboard .db-adhan-btn img { width:17px; height:17px; }
 #screen-dashboard .db-prayer-strip { position:absolute!important; top:215px!important; left:12px!important; right:12px!important; height:87px!important; min-height:0!important; margin:0!important; padding:6px 4px!important; border-radius:17px!important; background:#fff!important; border:0!important; box-shadow:0 6px 20px rgba(19,68,53,.09)!important; gap:1px!important; }
 #screen-dashboard .db-prayer-chip { min-height:75px!important; padding:6px 1px!important; gap:2px!important; border-radius:12px!important; color:#17242a!important; }
 #screen-dashboard .db-prayer-chip.active { background:var(--ref-green)!important; color:#fff!important; box-shadow:none!important; }
