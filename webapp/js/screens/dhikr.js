@@ -24,6 +24,9 @@ const DhikrScreen = (function () {
 
   function _T(lat, cyr, ru, en) { return _resolveT(lat, cyr, ru, en, _lang); }
   function _zUz(z) {
+    if (_lang === 'ce' || _lang === 'av') {
+      return globalThis.CAUCASUS_CONTENT?.dhikr?.[z.id]?.[_lang] || t('translation_unavailable', _lang);
+    }
     const value = _lang === 'id' ? z.idMeaning : z[_lang];
     return typeof value === 'string' && _lang !== 'tr' ? value : t('translation_unavailable', _lang);
   }

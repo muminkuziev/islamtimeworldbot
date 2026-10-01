@@ -58,6 +58,8 @@ const _TRANSLATION_SOURCES = {
   bn: { edition: 'bn.bengali',     translator: 'Muhiuddin Khan',                        verification: 'provider_published' },
   fa: { edition: 'fa.makarem',     translator: 'Naser Makarem Shirazi',                 verification: 'provider_published' },
   ms: { edition: 'ms.basmeih',     translator: 'Abdullah Muhammad Basmeih',             verification: 'provider_published' },
+  ce: { edition: null, resource_id: 106, provider: 'Quran.com (api.quran.com)', translator: 'Magomed Magomedov', verification: 'provider_published', translation_available: true, source_url: 'https://quran.com/' },
+  av: { edition: null, provider: 'canonical Arabic (Uthmani)', translator: null, verification: 'arabic_only', translation_available: false, source_url: null },
   // Legacy/back-compat UI languages without their own edition: fall back to Russian.
   kk: { edition: 'ru.kuliev',      translator: 'Elmir Kuliev',                          verification: 'provider_published', fallback: true },
   tg: { edition: 'ru.kuliev',      translator: 'Elmir Kuliev',                          verification: 'provider_published', fallback: true },
@@ -88,8 +90,9 @@ registerQuranProvider({
   getAyahs: async function (surahId, opts = {}) {
     if (!Number.isInteger(surahId) || surahId < 1 || surahId > 114) throw new Error('Invalid surah');
     const lang    = opts.lang === 'uz_cyr' ? 'uz' : (opts.lang || 'en');
-    const edition = _editionFor(lang);
     if (!_surahOffsetsReady()) await this.listSurahs();
+    if (lang === 'ce') return _fetchQuranComChechen(surahId, opts);
+    const edition = _editionFor(lang);
     const urls = [
       _fetchQuranData(`surah/${surahId}/quran-uthmani`),
       edition ? _fetchQuranData(`surah/${surahId}/${edition}`) : null,
@@ -138,6 +141,44 @@ async function _fetchQuranData(path) {
   return result;
 }
 
+function _cleanQuranComTranslation(value) {
+  return String(value || '')
+    .replace(/<sup\b[^>]*>[\s\S]*?<\/sup>/gi, '')
+    .replace(/<[^>]+>/g, '')
+    .replace(/\u00a0/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+async function _fetchQuranComChechen(surahId, opts = {}) {
+  const count = _surahAyahCounts[surahId];
+  const url = `https://api.quran.com/api/v4/verses/by_chapter/${surahId}?language=chechen&translations=106&fields=text_uthmani&per_page=${count}`;
+  const response = await fetch(url);
+  if (!response.ok) throw new Error('Chechen Quran provider unavailable');
+  const payload = await response.json();
+  const verses = payload?.verses;
+  if (!Array.isArray(verses) || verses.length !== count) throw new Error('Incomplete Chechen Quran translation');
+  if (verses.some((verse, index) =>
+    verse?.verse_number !== index + 1 ||
+    verse?.verse_key !== `${surahId}:${index + 1}` ||
+    typeof verse?.text_uthmani !== 'string' || !verse.text_uthmani.trim() ||
+    !Array.isArray(verse?.translations) || verse.translations[0]?.resource_id !== 106 ||
+    !_cleanQuranComTranslation(verse.translations[0]?.text)
+  )) {
+    throw new Error('Chechen Quran source or verse mismatch');
+  }
+  return verses.map(verse => ({
+    id:              verse.id,
+    surah_id:        surahId,
+    ayah:            verse.verse_number,
+    arabic:          verse.text_uthmani,
+    translation:     _cleanQuranComTranslation(verse.translations[0].text),
+    transliteration: '',
+    audio_url:       _audioUrl(surahId, verse.verse_number, opts.reciter || 'mishary'),
+    source:          _sourceMetaFor('ce'),
+  }));
+}
+
 function _validateSurah(result, surahId, edition) {
   const data = result?.data;
   if (data?.number !== surahId || data?.edition?.identifier !== edition ||
@@ -157,14 +198,17 @@ function _sourceMetaFor(lang) {
   if (!s) return { language: lang, verification: 'unavailable', edition: null, translator: null, is_fallback: false };
   return {
     language:      lang,
-    provider:      'Al-Quran Cloud (api.alquran.cloud)',
+    provider:      s.provider || 'Al-Quran Cloud (api.alquran.cloud)',
     edition:       s.edition,
+    resource_id:   s.resource_id || null,
     translator:    s.translator,
     translator_verification: s.translator_verification || 'provider_metadata',
     project_attribution: s.project_attribution || null,
     verification:  s.verification,
+    translation_available: s.translation_available !== false,
     is_fallback:   !!s.fallback,
-    terms_url:     'https://alquran.cloud/terms-and-conditions',
+    source_url:    s.source_url || null,
+    terms_url:     s.provider ? null : 'https://alquran.cloud/terms-and-conditions',
     legal_clearance: false,
   };
 }

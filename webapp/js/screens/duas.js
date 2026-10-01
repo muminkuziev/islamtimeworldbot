@@ -164,7 +164,7 @@ ${results.length === 0
     if (!dua) return `<div class="du-empty">${_T("Du'o topilmadi","Дуо топилмади","Дуа не найдена","Dua not found")}</div>`;
     const favs     = _getFavs();
     const saved    = favs.includes(dua.id);
-    const transl   = _resolveTransl(dua.translation || {}, _lang);
+    const transl   = _resolveTransl(dua.translation || {}, _lang, dua.id);
     const translit = dua.transliteration || '';
     return `
 <button class="du-detail-back" id="du-detail-back">← ${_T('Orqaga','Орқага','Назад','Back')}</button>
@@ -198,7 +198,7 @@ ${saved.map(d => _buildCard(d, favs, false)).join('\n')}`;
 
   /* ── Dua card ── */
   function _buildCard(dua, favs, compact) {
-    const transl   = _resolveTransl(dua.translation || {}, _lang);
+    const transl   = _resolveTransl(dua.translation || {}, _lang, dua.id);
     const saved    = favs.includes(dua.id);
     const translit = dua.transliteration || '';
     return `<div class="du-card" data-id="${dua.id}">
@@ -355,7 +355,7 @@ ${saved.map(d => _buildCard(d, favs, false)).join('\n')}`;
     const all = (typeof DUAS_DATA !== 'undefined') ? Object.values(DUAS_DATA).flat() : [];
     const q   = _search.toLowerCase();
     return all.filter(d => {
-      const transl  = _resolveTransl(d.translation || {}, _lang).toLowerCase();
+      const transl  = _resolveTransl(d.translation || {}, _lang, d.id).toLowerCase();
       const translit = (d.transliteration || '').toLowerCase();
       return translit.includes(q) || transl.includes(q) || (d.arabic || '').includes(_search);
     });
@@ -378,7 +378,10 @@ ${saved.map(d => _buildCard(d, favs, false)).join('\n')}`;
     return localizeRecord(meta, _lang);
   }
 
-  function _resolveTransl(transl, lang) {
+  function _resolveTransl(transl, lang, id) {
+    if (lang === 'ce' || lang === 'av') {
+      return globalThis.CAUCASUS_CONTENT?.duas?.[id]?.[lang] || t('translation_unavailable', lang);
+    }
     const fb = { uz_cyr: 'uz', kk: 'ru', tg: 'ru', ky: 'ru' };
     const l  = fb[lang] || lang;
     const result = transl[l] || t('translation_unavailable', lang);

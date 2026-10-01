@@ -73,7 +73,7 @@ const ShahodatScreen = (function () {
         <div class="sh-card">
           <div class="sh-ar">${SHAHADA.arabic}</div>
           <div class="sh-translit">${SHAHADA.transliteration}</div>
-          <div class="sh-meaning">${_esc(SHAHADA.meaning[_lang] || t('translation_unavailable', _lang))}</div>
+          <div class="sh-meaning">${_esc((_lang === 'ce' || _lang === 'av') ? (globalThis.CAUCASUS_CONTENT?.shahada?.[_lang] || t('translation_unavailable', _lang)) : (SHAHADA.meaning[_lang] || t('translation_unavailable', _lang)))}</div>
           <div class="sh-ref">📚 ${SHAHADA.ref}</div>
           <button class="sh-memorize-btn${shahadaMemorized ? ' active' : ''}" id="sh-memorize-shahada">
             ${shahadaMemorized ? '✓ ' : ''}${_T("Yodlandi deb belgilash","Ёдланди деб белгилаш",'Отметить как выученное','Mark as memorized')}

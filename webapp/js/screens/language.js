@@ -51,7 +51,7 @@ const LanguageScreen = (function () {
 
         <div class="ls-body">
           <div class="ls-grid" id="ls-grid" role="radiogroup" aria-label="${selLbl}">
-            ${LANG_META.filter(l => l.canonical || l.code === _legacyCode).map(l => _cardHTML(l)).join('')}
+            ${LANG_META.filter(l => l.canonical || l.product || l.code === _legacyCode).map(l => _cardHTML(l)).join('')}
           </div>
         </div>
 

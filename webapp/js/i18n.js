@@ -26,6 +26,8 @@ const LANG_META = [
   { code:'fa',     name:'فارسی',    flag:'🇮🇷', dir:'rtl', sub:'Persian',  canonical:true  },
   { code:'bn',     name:'বাংলা',     flag:'🇧🇩', dir:'ltr', sub:'Bangla',   canonical:true  },
   { code:'ms',     name:'Melayu',   flag:'🇲🇾', dir:'ltr', sub:'Malaysia', canonical:true  },
+  { code:'ce',     name:'Нохчийн',  flag:'🟩', dir:'ltr', sub:'Chechen',  canonical:false, product:true },
+  { code:'av',     name:'МагӀарул', flag:'⛰️', dir:'ltr', sub:'Avar',     canonical:false, product:true },
 ];
 
 const CANONICAL_LANGS = LANG_META.filter(l => l.canonical).map(l => l.code);
@@ -53,7 +55,11 @@ function _missingTranslation(key, lang) {
     _I18N_MISSING.add(id);
     console.warn(`[i18n] Missing translation: ${id}`);
   }
-  return I18N.translation_unavailable[normalizeLanguage(lang)] || I18N.translation_unavailable.en;
+  const normalized = normalizeLanguage(lang);
+  if (normalized === 'ce' || normalized === 'av') {
+    return globalThis.CAUCASUS_I18N?.keys?.[normalized]?.translation_unavailable || '—';
+  }
+  return I18N.translation_unavailable[normalized] || I18N.translation_unavailable.en;
 }
 
 const I18N = {
@@ -963,6 +969,10 @@ const I18N = {
 /* ── t(): translate dot-notation key ───────────────────── */
 function t(key, lang) {
   lang = normalizeLanguage(lang);
+  if (lang === 'ce' || lang === 'av') {
+    const caucasusValue = globalThis.CAUCASUS_I18N?.keys?.[lang]?.[key];
+    return caucasusValue || _missingTranslation(key, lang);
+  }
   const parts = key.split('.');
   let node = I18N;
   for (const part of parts) {
@@ -1634,6 +1644,11 @@ Object.assign(_EXTRA_T, {
 
 function _resolveT(lat, cyr, ru, en, lang) {
   lang = normalizeLanguage(lang);
+  if (lang === 'ce' || lang === 'av') {
+    if (en === '') return '';
+    const translated = globalThis.CAUCASUS_I18N?.phrases?.[lang]?.[en];
+    return translated || _missingTranslation(en || lat, lang);
+  }
   if (lang === 'uz_cyr') return cyr !== undefined ? cyr : lat;
   if (lang === 'ru')     return ru !== undefined ? ru : _missingTranslation(en || lat, lang);
   if (lang === 'en')     return en !== undefined ? en : _missingTranslation(lat, lang);

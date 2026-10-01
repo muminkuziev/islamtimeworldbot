@@ -2069,8 +2069,11 @@ async def api_hadith(
     lang: str = Query("en"),
     chapter_id: int|None = Query(None),
 ):
-    if (lang or "").lower().replace("-", "_") == "av":
+    code = (lang or "").lower().replace("-", "_")
+    if code == "av":
         return await api_avar_hadiths(page=page, limit=limit, q="", book="", hadith_id=None)
+    if code == "ce":
+        return await api_chechen_hadiths(page=page, limit=limit, q="", book="", hadith_id=None)
     return await api_hadeethenc(lang=lang, page=page, limit=limit, q="", book="", hadith_id=None)
 
 
@@ -2080,15 +2083,21 @@ async def api_hadith_search(
     collection: str = Query("hadeethenc"),
     lang: str = Query("en"),
 ):
-    if (lang or "").lower().replace("-", "_") == "av":
+    code = (lang or "").lower().replace("-", "_")
+    if code == "av":
         return await api_avar_hadiths(page=1, limit=50, q=q, book="", hadith_id=None)
+    if code == "ce":
+        return await api_chechen_hadiths(page=1, limit=50, q=q, book="", hadith_id=None)
     return await api_hadeethenc(lang=lang, page=1, limit=50, q=q, book="", hadith_id=None)
 
 
 @app.get("/api/hadith/categories")
 async def api_hadith_categories(lang: str = Query("en")):
-    if (lang or "").lower().replace("-", "_") == "av":
+    code = (lang or "").lower().replace("-", "_")
+    if code == "av":
         response = await api_avar_hadiths_books()
+    elif code == "ce":
+        response = await api_chechen_hadiths_books()
     else:
         response = await api_hadeethenc_books(lang)
     payload = json.loads(response.body)
@@ -2104,8 +2113,11 @@ async def api_hadith_muslim_books(lang: str = Query("en")):
 
 @app.get("/api/hadith/category")
 async def api_hadith_category(name: str = Query(...), lang: str = Query("en")):
-    if (lang or "").lower().replace("-", "_") == "av":
+    code = (lang or "").lower().replace("-", "_")
+    if code == "av":
         return await api_avar_hadiths(page=1, limit=50, q="", book=name, hadith_id=None)
+    if code == "ce":
+        return await api_chechen_hadiths(page=1, limit=50, q="", book=name, hadith_id=None)
     return await api_hadeethenc(lang=lang, page=1, limit=50, q="", book=name, hadith_id=None)
 
 
@@ -2211,6 +2223,94 @@ async def api_avar_hadiths_books():
         "language": "av",
         "verified": True,
         "provider": "as-salam.press / DUM Dagestan",
+    })
+
+
+# ── Verified Chechen Hadith corpus ────────────────────────────────────────
+_CHECHEN_HADITH_PATH = BASE_DIR / "data" / "chechen_verified_hadiths.json"
+
+
+@lru_cache(maxsize=1)
+def _load_chechen_hadiths() -> tuple[dict, ...]:
+    if not _CHECHEN_HADITH_PATH.exists():
+        return tuple()
+    payload = json.loads(_CHECHEN_HADITH_PATH.read_text(encoding="utf-8"))
+    rows = payload.get("hadiths", [])
+    return tuple(row for row in rows if isinstance(row, dict) and row.get("language") == "ce")
+
+
+def _chechen_hadith_row(row: dict) -> dict:
+    return {
+        "id": row.get("id", ""),
+        "title": row.get("article_title", "") or row.get("title", ""),
+        "text": row.get("text", ""),
+        "arabic": "",
+        "attribution": row.get("source", ""),
+        "grade": row.get("grade", "sahih"),
+        "explanation": "",
+        "source": "islamhouse.com",
+        "source_url": row.get("source_url", ""),
+        "source_api": row.get("source_url", ""),
+        "language": "ce",
+        "provider_label": "IslamHouse · Нохчийн",
+    }
+
+
+@app.get("/api/chechen-hadiths")
+async def api_chechen_hadiths(
+    page: int = Query(1, ge=1),
+    limit: int = Query(12, ge=1, le=50),
+    q: str = Query("", max_length=160),
+    book: str = Query("", max_length=512),
+    hadith_id: str|None = Query(None, max_length=32),
+):
+    import math
+    rows = list(_load_chechen_hadiths())
+    if not rows and not _CHECHEN_HADITH_PATH.exists():
+        return JSONResponse(
+            {"hadiths": [], "total": 0, "page": page, "pages": 0, "language": "ce", "verified": False},
+            status_code=503,
+        )
+    if hadith_id:
+        rows = [row for row in rows if str(row.get("id", "")) == hadith_id]
+    if book:
+        rows = [row for row in rows if str(row.get("source", "")) == book]
+    term = q.strip().casefold()
+    if term:
+        rows = [row for row in rows if term in " ".join([
+            str(row.get("id", "")),
+            str(row.get("text", "")),
+            str(row.get("source", "")),
+            str(row.get("article_title", "")),
+        ]).casefold()]
+    total = len(rows)
+    offset = (page - 1) * limit
+    page_rows = rows[offset:offset + limit]
+    return JSONResponse({
+        "hadiths": [_chechen_hadith_row(row) for row in page_rows],
+        "total": total,
+        "page": page,
+        "pages": math.ceil(total / limit) if total else 0,
+        "language": "ce",
+        "verified": True,
+        "provider": "IslamHouse Chechen",
+    })
+
+
+@app.get("/api/chechen-hadiths/books")
+async def api_chechen_hadiths_books():
+    from collections import Counter
+    rows = list(_load_chechen_hadiths())
+    counts = Counter(str(row.get("source", "")).strip() for row in rows)
+    books = [{"name": name, "count": count}
+             for name, count in sorted(counts.items(), key=lambda item: (-item[1], item[0]))
+             if name]
+    return JSONResponse({
+        "books": books,
+        "total": len(rows),
+        "language": "ce",
+        "verified": True,
+        "provider": "IslamHouse Chechen",
     })
 
 
@@ -2347,8 +2447,23 @@ async def api_hadeethenc_books(lang: str = Query("en")):
 
 @app.get("/api/hadeethenc/daily")
 async def api_hadeethenc_daily(lang: str = Query("en")):
-    """Read-only daily verified content; independent of location permission."""
+    """Read-only daily verified content; uses exact selected-language provider."""
     from domain.prayer.extras import get_daily_hadith
+    from datetime import date as _date
+
+    requested = (lang or "en").lower().replace("-", "_")
+    if requested == "av":
+        rows = list(_load_avar_hadiths())
+        if not rows:
+            return JSONResponse({"error": "Verified hadith unavailable", "language": "av"}, status_code=503)
+        row = rows[(_date.today().timetuple().tm_yday - 1) % len(rows)]
+        return JSONResponse({"hadith": _avar_hadith_row(row), "language": "av", "verified": True})
+    if requested == "ce":
+        rows = list(_load_chechen_hadiths())
+        if not rows:
+            return JSONResponse({"error": "Verified hadith unavailable", "language": "ce"}, status_code=503)
+        row = rows[(_date.today().timetuple().tm_yday - 1) % len(rows)]
+        return JSONResponse({"hadith": _chechen_hadith_row(row), "language": "ce", "verified": True})
 
     language = _hadeethenc_lang(lang)
     hadith = await asyncio.to_thread(get_daily_hadith, language)

@@ -77,12 +77,15 @@ const NamesScreen = (function () {
     const names = _all();
     if (!_search) return names;
     const q = _search.toLowerCase();
-    return names.filter(x =>
-      x.tr.toLowerCase().includes(q) ||
-      x.ar.includes(_search) ||
-      (x[_lang] || x.uz || '').toLowerCase().includes(q) ||
-      String(x.n).includes(_search)
-    );
+    return names.filter(x => {
+      const localized = (_lang === 'ce' || _lang === 'av')
+        ? (globalThis.CAUCASUS_CONTENT?.names?.[x.n]?.[_lang]?.meaning || '')
+        : (x[_lang] || x.uz || '');
+      return x.tr.toLowerCase().includes(q) ||
+        x.ar.includes(_search) ||
+        localized.toLowerCase().includes(q) ||
+        String(x.n).includes(_search);
+    });
   }
 
   function _totalZikr() {
@@ -90,6 +93,9 @@ const NamesScreen = (function () {
   }
 
   function _shortMean(name) {
+    if (_lang === 'ce' || _lang === 'av') {
+      return globalThis.CAUCASUS_CONTENT?.names?.[name.n]?.[_lang]?.meaning || t('translation_unavailable', _lang);
+    }
     if (_lang === 'tr') return t('translation_unavailable', _lang);
     const hasCyr = !!name[_lang];
     const full = name[_lang] || t('translation_unavailable', _lang);
@@ -98,6 +104,9 @@ const NamesScreen = (function () {
   }
 
   function _tafsir(name) {
+    if (_lang === 'ce' || _lang === 'av') {
+      return globalThis.CAUCASUS_CONTENT?.names?.[name.n]?.[_lang]?.desc || t('translation_unavailable', _lang);
+    }
     const d = name.desc || {};
     const hasCyr = !!d[_lang];
     const text = d[_lang] || t('translation_unavailable', _lang);

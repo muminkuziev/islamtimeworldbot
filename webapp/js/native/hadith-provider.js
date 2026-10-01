@@ -81,9 +81,47 @@ const HadithRegistry = (function () {
     }
   };
 
+  async function requestChechen(path, params, signal) {
+    const query = new URLSearchParams(params || {});
+    const response = await fetch(path + (query.toString() ? '?' + query : ''), { signal });
+    if (!response.ok) throw new Error('Chechen Hadith request failed');
+    const data = await response.json();
+    if (data.language !== 'ce' || data.verified !== true) throw new Error('Chechen Hadith source/language mismatch');
+    if (path.endsWith('/books') ? !Array.isArray(data.books) : !Array.isArray(data.hadiths)) {
+      throw new Error('Invalid Chechen Hadith provider response');
+    }
+    if (data.hadiths && data.hadiths.some(row =>
+      row.language !== 'ce' || !row.text || row.source !== 'islamhouse.com' || !row.source_url
+    )) {
+      throw new Error('Chechen Hadith content provenance mismatch');
+    }
+    return data;
+  }
+
+  const chechenOfficial = {
+    key: 'chechen_official',
+    count: 93,
+    languages: ['ce'],
+    list(page, limit, _lang, filters) {
+      return requestChechen('/api/chechen-hadiths', {
+        page: page || 1, limit: limit || 12,
+        q: filters?.q || '', book: filters?.book || ''
+      }, filters?.signal);
+    },
+    detail(id) {
+      return requestChechen('/api/chechen-hadiths', { hadith_id:id, limit:1 });
+    },
+    books() {
+      return requestChechen('/api/chechen-hadiths/books', {});
+    },
+    search(query, _lang, page, limit) {
+      return this.list(page || 1, limit || 12, 'ce', { q:query });
+    }
+  };
+
   return {
-    get: key => key === 'hadeethenc' ? verified : key === 'avar_official' ? avarOfficial : null,
-    list: () => [verified, avarOfficial],
+    get: key => key === 'hadeethenc' ? verified : key === 'avar_official' ? avarOfficial : key === 'chechen_official' ? chechenOfficial : null,
+    list: () => [verified, avarOfficial, chechenOfficial],
     language,
   };
 })();

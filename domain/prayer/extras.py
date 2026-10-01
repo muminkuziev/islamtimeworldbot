@@ -93,6 +93,43 @@ _WIND_DIR = {
     "NNW": {"uz":"Shimoldan","en":"From NNW","ru":"С ССЗ","tr":"Kuzey-Kuzeybatıdan","ar":"من الشمال الشمالي الغربي","kk":"ССБ-дан","de":"Von NNW","fr":"Du NNO","id":"Dari UUB","hi":"उत्तर-उत्तरपश्चिम से","ur":"شمال شمال مغرب سے", 'bn': 'উত্তর-উত্তরপশ্চিম থেকে', 'fa': 'از شمال-شمال\u200cغرب', 'ms': 'Dari utara-barat laut'},
 }
 
+# Chechen / Avar dynamic weather labels. These keep server-returned strings in
+# the exact selected UI language instead of falling back to English.
+for _key, _ce, _av in (
+    ("clear", "Стигла цIена ю", "Зоб рагIараб буго"),
+    ("partly", "Декъана марха ю", "Бакьулъ гIадин гьор"),
+    ("cloudy", "Марха ю", "Гьор буго"),
+    ("fog", "Туман бу", "Туман буго"),
+    ("drizzle", "Жима догIа", "ГьитIинаб борохь"),
+    ("rain", "ДогIа", "Борохь"),
+    ("snow", "Лай", "Рукъ"),
+    ("storm", "МухадогIа", "Гьури-бакъ"),
+):
+    _WEATHER_DESCS[_key]["ce"] = _ce
+    _WEATHER_DESCS[_key]["av"] = _av
+
+_DAY_NAMES["ce"] = ["Оршуот","Шинара","Кхаара","Еара","ПIераска","Шуот","КIиранде"]
+_DAY_NAMES["av"] = ["Итни","Талат","АрбагI","Хамис","Рузман","Сабат","АхӀад"]
+
+_CE_WIND = {
+    "N":"Къилбаседехьа","NNE":"Къилбаседа-малхбалехьа","NE":"Малхбален-къилбаседехьа",
+    "ENE":"Малхбалехьа","E":"Малхбалехьа","ESE":"Малхбален-къилбехьа","SE":"Къилба-малхбалехьа",
+    "SSE":"Къилбехьа","S":"Къилбехьа","SSW":"Къилба-малхбузехьа","SW":"Малхбузен-къилбехьа",
+    "WSW":"Малхбузехьа","W":"Малхбузехьа","WNW":"Малхбузен-къилбаседехьа",
+    "NW":"Къилбаседа-малхбузехьа","NNW":"Къилбаседехьа",
+}
+_AV_WIND = {
+    "N":"Къилбаседаса","NNE":"Къилбаседа-малъул рахъалдаса","NE":"Къилбаседа-малъул рахъалдаса",
+    "ENE":"Малъул рахъалдаса","E":"Малъул рахъалдаса","ESE":"Къибла-малъул рахъалдаса",
+    "SE":"Къибла-малъул рахъалдаса","SSE":"Къиблаялась","S":"Къиблаялась",
+    "SSW":"Къибла-бакъалъул рахъалдаса","SW":"Къибла-бакъалъул рахъалдаса",
+    "WSW":"Бакъалъул рахъалдаса","W":"Бакъалъул рахъалдаса","WNW":"Къилбаседа-бакъалъул рахъалдаса",
+    "NW":"Къилбаседа-бакъалъул рахъалдаса","NNW":"Къилбаседаса",
+}
+for _code in _WIND_DIR:
+    _WIND_DIR[_code]["ce"] = _CE_WIND.get(_code, _WIND_DIR[_code].get("en", _code))
+    _WIND_DIR[_code]["av"] = _AV_WIND.get(_code, _WIND_DIR[_code].get("en", _code))
+
 def _calc_dew_point(temp_c: float, humidity: int) -> int:
     """Magnus formula approximation for dew point."""
     import math
@@ -305,6 +342,17 @@ _AQI_LABELS = {
     "Hazardous": {"uz":"Xavfli",      "uz_cyr":"Хавфли",       "en":"Hazardous",  "ru":"Опасное",        "tr":"Tehlikeli",    "ar":"خطير",         "kk":"Қауіпті",     "tg":"Хавфнок",      "ky":"Коркунучтуу",    "de":"Gefährlich",   "fr":"Dangereux",    "id":"Berbahaya",      "hi":"खतरनाक",  "ur":"خطرناک", 'bn': 'বিপজ্জনক', 'fa': 'خطرناک', 'ms': 'Berbahaya'},
 }
 
+for _key, _ce, _av in (
+    ("Good", "Дика", "ЛъикI"),
+    ("Fair", "ТӀекхочуш дика", "Къабул гьабизе бегьулеб"),
+    ("Moderate", "Юккъера", "Бакьулъ"),
+    ("Poor", "Вон", "Квеш"),
+    ("Very Poor", "ЧӀогӀа вон", "ЦӀакъ квеш"),
+    ("Hazardous", "Кхерам бу", "ХӀинкъияб"),
+):
+    _AQI_LABELS[_key]["ce"] = _ce
+    _AQI_LABELS[_key]["av"] = _av
+
 def _aqi_label_key(aqi: float) -> str:
     if aqi <= 20:  return "Good"
     if aqi <= 40:  return "Fair"
@@ -427,71 +475,121 @@ from domain.quran.translation_registry import get_translation_source, UNAVAILABL
 
 
 async def fetch_daily_ayah(lang: str = "en") -> Optional[dict]:
-    """Return exact provider text in the selected language, or no daily ayah."""
+    """Return exact provider text in the selected language, or Arabic-only for Avar."""
+    import re as _re
+
     language = "uz" if lang == "uz_cyr" else lang
-    source = get_translation_source(language)
-    if source.status == UNAVAILABLE or (language != "ar" and not source.edition):
+    source = None if language in {"ce", "av"} else get_translation_source(language)
+    if source is not None and (source.status == UNAVAILABLE or (language != "ar" and not source.edition)):
         return None
+
     today = date.today()
     ayah_num = (today.timetuple().tm_yday % 6236) + 1
-    cache_key = f"ayah:v2:{today.isoformat()}:{language}"
+    cache_key = f"ayah:v3:{today.isoformat()}:{language}"
     cached = _cget(cache_key)
     if cached is not None:
         return cached
 
     editions = ["quran-uthmani", "en.transliteration"]
-    if source.edition:
+    if source is not None and source.edition:
         editions.append(source.edition)
     url = f"https://api.alquran.cloud/v1/ayah/{ayah_num}/editions/{','.join(editions)}"
     try:
-        async with aiohttp.ClientSession() as sess:
-            async with sess.get(url, headers=_UA, timeout=_TIMEOUT) as resp:
+        async with aiohttp.ClientSession(headers=_UA) as sess:
+            async with sess.get(url, timeout=_TIMEOUT) as resp:
                 if resp.status != 200:
                     return None
                 raw = await resp.json(content_type=None)
-        if raw.get("code") != 200 or not isinstance(raw.get("data"), list):
-            return None
-        by_edition = {row.get("edition", {}).get("identifier"): row
-                      for row in raw["data"] if isinstance(row, dict)}
-        ar = by_edition.get("quran-uthmani")
-        if not ar or ar.get("number") != ayah_num or not ar.get("text"):
-            return None
-        surah = ar.get("surah", {})
-        surah_number, ayah_number = surah.get("number"), ar.get("numberInSurah")
-        if not isinstance(surah_number, int) or not 1 <= surah_number <= 114:
-            return None
-        if not isinstance(ayah_number, int) or not 1 <= ayah_number <= 286:
-            return None
 
-        def same_ayah(row):
-            return (row and row.get("number") == ayah_num
-                    and row.get("surah", {}).get("number") == surah_number
-                    and row.get("numberInSurah") == ayah_number)
+            if raw.get("code") != 200 or not isinstance(raw.get("data"), list):
+                return None
+            by_edition = {row.get("edition", {}).get("identifier"): row
+                          for row in raw["data"] if isinstance(row, dict)}
+            ar = by_edition.get("quran-uthmani")
+            if not ar or ar.get("number") != ayah_num or not ar.get("text"):
+                return None
 
-        translated = by_edition.get(source.edition) if source.edition else None
-        if source.edition and (not same_ayah(translated)
-                               or translated.get("edition", {}).get("language") != language
-                               or not translated.get("text")):
-            return None
-        transliteration = by_edition.get("en.transliteration")
-        result = {
-            "arabic": ar["text"],
-            "transliteration": transliteration.get("text", "") if same_ayah(transliteration) else "",
-            "translation": translated["text"] if translated else "",
-            "language": language,
-            "surah_en": surah.get("englishName", ""),
-            "surah_ar": surah.get("name", ""),
-            "surah_number": surah_number,
-            "ayah_number": ayah_number,
-            "reference": f"{surah_number}:{ayah_number}",
-            "source": source.provider,
-            "source_api": url,
-            "edition": source.edition or "quran-uthmani",
-            "translator": source.translator,
-            "translation_source": asdict(source),
-        }
-        _cput(cache_key, result, 86400)
-        return result
+            surah = ar.get("surah", {})
+            surah_number, ayah_number = surah.get("number"), ar.get("numberInSurah")
+            if not isinstance(surah_number, int) or not 1 <= surah_number <= 114:
+                return None
+            if not isinstance(ayah_number, int) or not 1 <= ayah_number <= 286:
+                return None
+
+            def same_ayah(row):
+                return (row and row.get("number") == ayah_num
+                        and row.get("surah", {}).get("number") == surah_number
+                        and row.get("numberInSurah") == ayah_number)
+
+            translation = ""
+            provider = "canonical Arabic (Uthmani)"
+            translator = None
+            edition = "quran-uthmani"
+            source_api = url
+            translation_source = {
+                "language": language,
+                "provider": provider,
+                "edition": None,
+                "translator": None,
+                "status": "arabic_only" if language == "av" else "canonical_arabic",
+                "legal_clearance": False,
+            }
+
+            if language == "ce":
+                verse_key = f"{surah_number}:{ayah_number}"
+                ce_url = f"https://api.quran.com/api/v4/quran/translations/106?verse_key={verse_key}"
+                async with sess.get(ce_url, timeout=_TIMEOUT) as ce_resp:
+                    if ce_resp.status != 200:
+                        return None
+                    ce_raw = await ce_resp.json(content_type=None)
+                rows = ce_raw.get("translations", [])
+                if not rows or rows[0].get("resource_id") != 106 or not rows[0].get("text"):
+                    return None
+                translation = _re.sub(r"<sup\b[^>]*>[\s\S]*?</sup>|<[^>]+>", "", rows[0]["text"])
+                translation = " ".join(translation.replace("\xa0", " ").split())
+                provider = "Quran.com (api.quran.com)"
+                translator = "Magomed Magomedov"
+                edition = "quran.com:106"
+                source_api = ce_url
+                translation_source = {
+                    "language": "ce",
+                    "provider": provider,
+                    "edition": edition,
+                    "translator": translator,
+                    "status": "provider_published",
+                    "legal_clearance": False,
+                }
+            elif source is not None and source.edition:
+                translated = by_edition.get(source.edition)
+                if (not same_ayah(translated)
+                        or translated.get("edition", {}).get("language") != language
+                        or not translated.get("text")):
+                    return None
+                translation = translated["text"]
+                provider = source.provider
+                translator = source.translator
+                edition = source.edition
+                translation_source = asdict(source)
+
+            transliteration = by_edition.get("en.transliteration")
+            result = {
+                "arabic": ar["text"],
+                "transliteration": transliteration.get("text", "") if same_ayah(transliteration) else "",
+                "translation": translation,
+                "language": language,
+                "surah_en": surah.get("englishName", ""),
+                "surah_ar": surah.get("name", ""),
+                "surah_number": surah_number,
+                "ayah_number": ayah_number,
+                "reference": f"{surah_number}:{ayah_number}",
+                "source": provider,
+                "source_api": source_api,
+                "edition": edition,
+                "translator": translator,
+                "translation_source": translation_source,
+            }
+            _cput(cache_key, result, 86400)
+            return result
     except Exception:
         return None
 

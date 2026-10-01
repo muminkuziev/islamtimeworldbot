@@ -10,10 +10,12 @@ const HadithScreen = (function () {
   const esc = value => String(value ?? '').replace(/[&<>"']/g,
     char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char]));
   const T = (uz, cyr, ru, en) => _resolveT(uz, cyr, ru, en, lang);
-  const provider = () => window.HadithRegistry.get(lang === 'av' ? 'avar_official' : 'hadeethenc');
+  const provider = () => window.HadithRegistry.get(lang === 'av' ? 'avar_official' : lang === 'ce' ? 'chechen_official' : 'hadeethenc');
   const providerMeta = () => lang === 'av'
     ? { name:'Ас-Салам · ДУМ Дагестана', count:194 }
-    : { name:'HadeethEnc', count:144 };
+    : lang === 'ce'
+      ? { name:'IslamHouse · Нохчийн', count:93 }
+      : { name:'HadeethEnc', count:144 };
   const text = (record, key) => HadithDisplay.field(record, key, lang);
   const label = {
     hadith: () => T('Hadislar','Ҳадислар','Хадисы','Hadiths'),
@@ -110,14 +112,14 @@ const HadithScreen = (function () {
       <div class="${hadith.language === 'ar' ? 'hd-card-ar' : 'hd-card-uz'}" dir="auto">${esc(text(hadith, 'text'))}</div>
       <div class="hd-card-foot"><div class="hd-card-foot-left">
       ${hadith.grade ? `<span class="hd-sahih" dir="auto">${esc(text(hadith, 'grade'))}</span>` : ''}
-      </div><span class="hd-card-ref">${esc(hadith.provider_label || (hadith.source === 'as-salam.press' ? 'Ас-Салам' : 'HadeethEnc'))} · ${esc(hadith.id)}</span></div></button>`;
+      </div><span class="hd-card-ref">${esc(hadith.provider_label || (hadith.source === 'as-salam.press' ? 'Ас-Салам' : hadith.source === 'islamhouse.com' ? 'IslamHouse' : 'HadeethEnc'))} · ${esc(hadith.id)}</span></div></button>`;
   }
 
   function detail() {
     const h = rows[selected];
     if (!h) return `<div class="hd-empty">${label.empty()}</div>`;
     const sourceUrl = h.source_url || `https://hadeethenc.com/${encodeURIComponent(h.language)}/browse/hadith/${encodeURIComponent(h.id)}`;
-    const sourceLabel = h.provider_label || (h.source === 'as-salam.press' ? 'Ас-Салам' : 'HadeethEnc');
+    const sourceLabel = h.provider_label || (h.source === 'as-salam.press' ? 'Ас-Салам' : h.source === 'islamhouse.com' ? 'IslamHouse' : 'HadeethEnc');
     return `<button class="hd-detail-back" id="hd-detail-back">${label.back()}</button>
       <article class="hd-detail-box"><div class="hd-detail-topline"></div>
       <div class="hd-detail-badges"><span class="hd-detail-ref">${esc(sourceLabel)} · ${esc(h.id)}</span>

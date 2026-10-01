@@ -1,0 +1,442 @@
+[
+  {
+    "key": "bismillah",
+    "en": "بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ"
+  },
+  {
+    "key": "sloganDua",
+    "en": "May every day bring you closer to Allah!"
+  },
+  {
+    "key": "footerFounder",
+    "en": "Founder"
+  },
+  {
+    "key": "assalamu",
+    "en": "Assalamu Alaikum!"
+  },
+  {
+    "key": "welcome",
+    "en": "Welcome"
+  },
+  {
+    "key": "choose_language",
+    "en": "Select language"
+  },
+  {
+    "key": "language_saved",
+    "en": "Language saved"
+  },
+  {
+    "key": "language_changed",
+    "en": "Language changed"
+  },
+  {
+    "key": "main_menu",
+    "en": "Main Menu"
+  },
+  {
+    "key": "open_app",
+    "en": "Open app"
+  },
+  {
+    "key": "back",
+    "en": "Back"
+  },
+  {
+    "key": "loading",
+    "en": "Loading…"
+  },
+  {
+    "key": "error",
+    "en": "An error occurred"
+  },
+  {
+    "key": "retry",
+    "en": "Try again"
+  },
+  {
+    "key": "continue",
+    "en": "Continue"
+  },
+  {
+    "key": "search",
+    "en": "Search…"
+  },
+  {
+    "key": "save",
+    "en": "Save"
+  },
+  {
+    "key": "close",
+    "en": "Close"
+  },
+  {
+    "key": "noData",
+    "en": "No data found"
+  },
+  {
+    "key": "comingSoon",
+    "en": "Coming soon…"
+  },
+  {
+    "key": "modules",
+    "en": "Modules"
+  },
+  {
+    "key": "modules_list.prayer",
+    "en": "Prayer Times"
+  },
+  {
+    "key": "modules_list.qibla",
+    "en": "Qibla"
+  },
+  {
+    "key": "modules_list.mosques",
+    "en": "Nearby Mosques"
+  },
+  {
+    "key": "modules_list.quran",
+    "en": "Quran"
+  },
+  {
+    "key": "modules_list.hadith",
+    "en": "Hadith"
+  },
+  {
+    "key": "modules_list.duas",
+    "en": "Duas"
+  },
+  {
+    "key": "modules_list.dhikr",
+    "en": "Dhikr & Salawat"
+  },
+  {
+    "key": "modules_list.calendar",
+    "en": "Hijri Calendar"
+  },
+  {
+    "key": "modules_list.names",
+    "en": "99 Names of Allah"
+  },
+  {
+    "key": "modules_list.settings",
+    "en": "Settings"
+  },
+  {
+    "key": "modules_list.boshqalar",
+    "en": "Others"
+  },
+  {
+    "key": "nextPrayer",
+    "en": "Next Prayer"
+  },
+  {
+    "key": "allPrayersDone",
+    "en": "All prayers done 🌙"
+  },
+  {
+    "key": "refresh",
+    "en": "🔄 Refresh"
+  },
+  {
+    "key": "changeLocation",
+    "en": "📍 Change Location"
+  },
+  {
+    "key": "qibla_getting_loc",
+    "en": "Getting location…"
+  },
+  {
+    "key": "qibla_degree",
+    "en": "Qibla Direction"
+  },
+  {
+    "key": "qibla_from_north",
+    "en": "from North"
+  },
+  {
+    "key": "qibla_calibrate",
+    "en": "Move phone in figure-8 to calibrate compass"
+  },
+  {
+    "key": "mosques_km",
+    "en": "km away"
+  },
+  {
+    "key": "mosques_none",
+    "en": "No mosques found within 5 km"
+  },
+  {
+    "key": "quran_surah",
+    "en": "Surah"
+  },
+  {
+    "key": "quran_ayah",
+    "en": "Ayah"
+  },
+  {
+    "key": "quran_juz",
+    "en": "Juz"
+  },
+  {
+    "key": "quran_verses",
+    "en": "verses"
+  },
+  {
+    "key": "quran_read",
+    "en": "Read"
+  },
+  {
+    "key": "quran_continue",
+    "en": "Continue reading"
+  },
+  {
+    "key": "quran_bookmarks",
+    "en": "Saved ayahs"
+  },
+  {
+    "key": "quran_filter_all",
+    "en": "All"
+  },
+  {
+    "key": "quran_filter_makka",
+    "en": "Makkan"
+  },
+  {
+    "key": "quran_filter_madina",
+    "en": "Medinan"
+  },
+  {
+    "key": "quran_choose_reciter",
+    "en": "Choose reciter"
+  },
+  {
+    "key": "hadith_bukhari",
+    "en": "Sahih al-Bukhari"
+  },
+  {
+    "key": "hadith_muslim",
+    "en": "Sahih Muslim"
+  },
+  {
+    "key": "hadith_narrator",
+    "en": "Narrated by"
+  },
+  {
+    "key": "hadith_number",
+    "en": "No."
+  },
+  {
+    "key": "hadith_chapter",
+    "en": "Chapter"
+  },
+  {
+    "key": "hadith_search_hint",
+    "en": "Search in Arabic or Indonesian"
+  },
+  {
+    "key": "duas_morning",
+    "en": "Morning Duas"
+  },
+  {
+    "key": "duas_evening",
+    "en": "Evening Duas"
+  },
+  {
+    "key": "duas_food",
+    "en": "Food Duas"
+  },
+  {
+    "key": "duas_travel",
+    "en": "Travel Duas"
+  },
+  {
+    "key": "duas_sleep",
+    "en": "Sleep Duas"
+  },
+  {
+    "key": "duas_mosque",
+    "en": "Mosque Duas"
+  },
+  {
+    "key": "duas_general",
+    "en": "General Duas"
+  },
+  {
+    "key": "dhikr_tap",
+    "en": "Tap to count"
+  },
+  {
+    "key": "dhikr_reset",
+    "en": "Reset"
+  },
+  {
+    "key": "dhikr_complete",
+    "en": "BaarakAllahu! ✨"
+  },
+  {
+    "key": "dhikr_target",
+    "en": "Target"
+  },
+  {
+    "key": "calendar_today",
+    "en": "Today"
+  },
+  {
+    "key": "calendar_converter",
+    "en": "Date Converter"
+  },
+  {
+    "key": "calendar_islamic_events.1/1",
+    "en": "Islamic New Year"
+  },
+  {
+    "key": "calendar_islamic_events.1/10",
+    "en": "Day of Ashura"
+  },
+  {
+    "key": "calendar_islamic_events.3/12",
+    "en": "Mawlid al-Nabi ﷺ"
+  },
+  {
+    "key": "calendar_islamic_events.7/27",
+    "en": "Isra & Mi'raj"
+  },
+  {
+    "key": "calendar_islamic_events.8/15",
+    "en": "Laylat al-Bara'ah"
+  },
+  {
+    "key": "calendar_islamic_events.9/1",
+    "en": "Ramadan begins 🌙"
+  },
+  {
+    "key": "calendar_islamic_events.9/27",
+    "en": "Laylat al-Qadr ✨"
+  },
+  {
+    "key": "calendar_islamic_events.10/1",
+    "en": "Eid al-Fitr 🎉"
+  },
+  {
+    "key": "calendar_islamic_events.12/9",
+    "en": "Day of Arafah"
+  },
+  {
+    "key": "calendar_islamic_events.12/10",
+    "en": "Eid al-Adha 🐑"
+  },
+  {
+    "key": "names_meaning",
+    "en": "Meaning"
+  },
+  {
+    "key": "names_desc",
+    "en": "Description"
+  },
+  {
+    "key": "names_dhikr",
+    "en": "Dhikr"
+  },
+  {
+    "key": "names_recited",
+    "en": "names recited"
+  },
+  {
+    "key": "mosques_found",
+    "en": "mosques found"
+  },
+  {
+    "key": "qibla_dist_kaaba",
+    "en": "Distance to Ka'ba"
+  },
+  {
+    "key": "settings_language",
+    "en": "Language"
+  },
+  {
+    "key": "settings_madhab",
+    "en": "Madhab"
+  },
+  {
+    "key": "settings_prayer_method",
+    "en": "Prayer Calculation Method"
+  },
+  {
+    "key": "settings_notifications",
+    "en": "Notifications"
+  },
+  {
+    "key": "settings_saved",
+    "en": "Saved ✅"
+  },
+  {
+    "key": "settings_hanafi",
+    "en": "Hanafi"
+  },
+  {
+    "key": "settings_shafii",
+    "en": "Shafi'i"
+  },
+  {
+    "key": "settings_maliki",
+    "en": "Maliki"
+  },
+  {
+    "key": "settings_hanbali",
+    "en": "Hanbali"
+  },
+  {
+    "key": "translation_unavailable",
+    "en": "Translation unavailable in this language"
+  },
+  {
+    "key": "theme_auto",
+    "en": "Automatic"
+  },
+  {
+    "key": "theme_day",
+    "en": "Day"
+  },
+  {
+    "key": "theme_night",
+    "en": "Night"
+  },
+  {
+    "key": "theme_auto_desc",
+    "en": "Follows local sunrise and sunset"
+  },
+  {
+    "key": "theme_day_desc",
+    "en": "White, mint and emerald"
+  },
+  {
+    "key": "theme_night_desc",
+    "en": "Dark surfaces and clear text"
+  },
+  {
+    "key": "theme_source_location",
+    "en": "Based on your current location"
+  },
+  {
+    "key": "theme_source_cached",
+    "en": "Based on your last known location"
+  },
+  {
+    "key": "theme_source_system",
+    "en": "Uses your device theme when solar times are unavailable"
+  },
+  {
+    "key": "mosques_loading",
+    "en": "Finding nearby mosques…"
+  },
+  {
+    "key": "mosques_load_error",
+    "en": "Mosque information is temporarily unavailable. Please retry."
+  },
+  {
+    "key": "mosques_retry",
+    "en": "Try again"
+  }
+]
