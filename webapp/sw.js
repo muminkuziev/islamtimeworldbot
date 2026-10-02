@@ -6,7 +6,7 @@
      - External (CDN, Telegram SDK)     : network-only
    ================================================================ */
 
-const CACHE = 'islamtime-v65';
+const CACHE = 'islamtime-v66';
 
 const PRECACHE = [
   '/app',
@@ -50,6 +50,10 @@ const PRECACHE = [
   '/js/screens/settings.js',
   '/js/native/bridge.js',
   '/js/native/qibla-geo.js',
+  '/vendor/maplibre/maplibre-gl.css',
+  '/vendor/maplibre/maplibre-gl.mjs',
+  '/vendor/maplibre/maplibre-gl-shared.mjs',
+  '/vendor/maplibre/maplibre-gl-worker.mjs',
   '/js/native/quran-provider.js',
   '/js/native/hadith-provider.js',
   '/data/names_of_allah.js',
