@@ -24,6 +24,27 @@ test('section Quran verses are not line-clamped',()=>{
   assert.match(css,/\.section-quran-verse \.verified-verse-copy[\s\S]*?max-height:none!important/);
 });
 
+test('prayer screen renders cached prayer times immediately before background refresh',()=>{
+  const code=fs.readFileSync('webapp/js/screens/prayer.js','utf8');
+  assert.match(code,/function _tryRenderPrayerCache/);
+  assert.match(code,/islamtime_prayer_pt_v1/);
+  assert.match(code,/islamtime_dash_pt/);
+  assert.match(code,/const renderedFromCache = _tryRenderPrayerCache/);
+  assert.match(code,/_fetchPrayerTimes\(lat, lon, renderedFromCache\)/);
+});
+
+test('qibla uses the shorter direction-specific verse',()=>{
+  const code=fs.readFileSync('webapp/js/screens/qibla.js','utf8');
+  assert.match(code,/data-quran-verse="2:149"/);
+  assert.doesNotMatch(code,/data-quran-verse="2:115"/);
+});
+
+test('hadith verse is anchored low in the hero above tabs',()=>{
+  const css=fs.readFileSync('webapp/css/reference-ui.css','utf8');
+  assert.match(css,/#screen-hadith \.hd-hdr \.section-quran-verse[\s\S]*?position:absolute!important/);
+  assert.match(css,/#screen-hadith \.hd-hdr \.section-quran-verse[\s\S]*?bottom:54px!important/);
+});
+
 test('nearby mosques uses Capacitor geolocation first and fresh v3 cache',()=>{
   const code=fs.readFileSync('webapp/js/screens/mosques.js','utf8');
   assert.match(code,/Capacitor\?\.Plugins\?\.Geolocation/);

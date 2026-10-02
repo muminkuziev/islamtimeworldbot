@@ -597,3 +597,22 @@ html[data-theme="dark"] #screen-prayer .pm-daily-tabs button.active { color:#052
 #screen-qazo .qz-fiqh-note {
   margin:0!important;
 }
+
+
+/* Hadith hero verse: anchor it low in the photo, directly above the tabs. */
+#screen-hadith .hd-hdr-inner { min-height:220px; }
+#screen-hadith .hd-hdr .section-quran-verse {
+  position:absolute!important;
+  inset-inline:4px!important;
+  bottom:54px!important;
+  margin:0!important;
+  max-width:calc(100% - 8px)!important;
+  font-size:10px!important;
+  line-height:1.38!important;
+  text-align:start!important;
+  z-index:3!important;
+}
+#screen-hadith .hd-hdr .section-quran-verse small {
+  margin-top:3px!important;
+  font-size:8px!important;
+}

@@ -430,6 +430,52 @@ const PrayerScreen = (function () {
     );
   }
 
+  function _recalcCachedNextPrayer(data) {
+    const prayers = (data?.prayers || []).filter(p => p.key?.toLowerCase() !== 'sunrise');
+    if (!prayers.length) return data?.next_prayer || null;
+    const now = new Date();
+    const parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: data.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+      hour:'2-digit', minute:'2-digit', hourCycle:'h23'
+    }).formatToParts(now);
+    const nowMin = Number(parts.find(p => p.type === 'hour')?.value || 0) * 60 +
+                   Number(parts.find(p => p.type === 'minute')?.value || 0);
+    const nowSec = now.getSeconds();
+    for (const prayer of prayers) {
+      if (!prayer.time?.includes(':')) continue;
+      const [h,m] = prayer.time.split(':').map(Number);
+      const target = (h * 60 + m) * 60;
+      const current = nowMin * 60 + nowSec;
+      if (target > current) return {
+        key: prayer.key, time: prayer.time, tomorrow:false,
+        countdown_seconds: target - current
+      };
+    }
+    const first = prayers.find(p => p.time?.includes(':'));
+    if (!first) return data?.next_prayer || null;
+    const [h,m] = first.time.split(':').map(Number);
+    return {
+      key:first.key, time:first.time, tomorrow:true,
+      countdown_seconds: Math.max(0, ((24*60-nowMin)+(h*60+m))*60-nowSec)
+    };
+  }
+
+  function _tryRenderPrayerCache(lat, lon) {
+    const today = new Date().toISOString().slice(0,10);
+    const preferences = window.PrayerPreferences.key();
+    for (const key of ['islamtime_prayer_pt_v1','islamtime_dash_pt']) {
+      try {
+        const c = JSON.parse(localStorage.getItem(key) || '{}');
+        if (!c?.data || c.date !== today || c.lang !== _lang || c.preferences !== preferences) continue;
+        if (Math.abs(Number(c.lat)-Number(lat)) > .001 || Math.abs(Number(c.lon)-Number(lon)) > .001) continue;
+        _data = { ...c.data, next_prayer: _recalcCachedNextPrayer(c.data) };
+        _renderFull();
+        return true;
+      } catch (_) {}
+    }
+    return false;
+  }
+
   function _onLocation(lat, lon, fromCache = false) {
     _lat = lat; _lon = lon;
     if (fromCache) window.ThemeEngine?.refresh();
@@ -438,7 +484,8 @@ const PrayerScreen = (function () {
       localStorage.setItem('islamtime_last_lat', lat);
       localStorage.setItem('islamtime_last_lon', lon);
     } catch (_) {}
-    _fetchPrayerTimes(lat, lon);
+    const renderedFromCache = _tryRenderPrayerCache(lat, lon);
+    _fetchPrayerTimes(lat, lon, renderedFromCache);
   }
 
   function _onRefresh() {
@@ -459,7 +506,7 @@ const PrayerScreen = (function () {
   ══════════════════════════════════════════════════════════════ */
   let _prayerRequest = 0;
   let _loadCycle = 0;
-  async function _fetchPrayerTimes(lat, lon) {
+  async function _fetchPrayerTimes(lat, lon, background = false) {
     const request = ++_prayerRequest, lang = _lang, preferences = window.PrayerPreferences.key();
     const isCurrent = () => request === _prayerRequest && lang === _lang && preferences === window.PrayerPreferences.key();
     try {
@@ -470,10 +517,20 @@ const PrayerScreen = (function () {
       if (json.error) throw new Error(json.error);
       if (!isCurrent()) return;
       _data = json;
+      try {
+        const today = new Date().toISOString().slice(0,10);
+        localStorage.setItem('islamtime_prayer_pt_v1', JSON.stringify({
+          date: today, savedAt: Date.now(), lang: _lang,
+          preferences: window.PrayerPreferences.key(),
+          lat: String(lat), lon: String(lon), data: json
+        }));
+      } catch (_) {}
       _syncLocationToServer(lat, lon, json.city || '');
       _renderFull();
       _syncNativePrayerNotifications();
-    } catch { if (isCurrent()) _showError('network'); }
+    } catch {
+      if (isCurrent() && !background && !_data) _showError('network');
+    }
   }
 
   function _syncLocationToServer(lat, lon, city) {
