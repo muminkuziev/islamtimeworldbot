@@ -94,6 +94,7 @@ function reader() {
     document:{ getElementById:() => element }, AbortController,
     _resolveT:(uz, cyr, ru, en) => en, t:() => 'Loading',
   });
+  vm.runInContext(read('webapp/js/hadith-display.js'), context);
   vm.runInContext(read('webapp/js/screens/hadith.js'), context);
   return { screen:vm.runInContext('HadithScreen', context), pending, body, input, element };
 }

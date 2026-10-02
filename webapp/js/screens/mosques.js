@@ -381,7 +381,7 @@ out center tags;`.trim();
     </div>
     <div class="ms-title">${_T('Yaqin masjidlar','Яқин масжидлар','Ближайшие мечети','Nearby Mosques')}</div>
     <div class="ms-loc">${_T('Allohning uylari','Аллоҳнинг уйлари','Дома Аллаха','Houses of Allah')}</div>
-    <div class="ms-verse" data-quran-verse="9:18"></div>
+    <div class="ms-verse" data-quran-verse="72:18"></div>
     <div class="ms-divider"></div>
     <div class="ms-tabs">
       <button class="ms-tab${_tab === 'royxat' ? ' active' : ''}" data-tab="royxat"><img src="assets/icons/tabler/list.svg" alt="" aria-hidden="true"> ${_T("Ro'yxat","Рўйхат","Список","List")}</button>

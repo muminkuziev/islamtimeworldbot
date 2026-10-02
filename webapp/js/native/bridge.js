@@ -104,6 +104,7 @@
   /* ── FCM Push Notifications ─────────────────────────────── */
   async function _initPush() {
     if (!PushNotifications) return;
+    if ((Cap.getPlatform?.() || 'android') === 'ios') return;
     try {
       const perm = await PushNotifications.checkPermissions();
       let granted = perm.receive === 'granted';
@@ -179,7 +180,9 @@
       }
       if (!allowed) return;
 
-      const channelId = 'itw_' + (['silent','sound','vibrate','adhan'].includes(mode) ? mode : 'sound');
+      const safeMode = ['silent','sound','vibrate','adhan'].includes(mode) ? mode : 'sound';
+      const channelId = safeMode === 'adhan' ? 'itw_adhan_v2' : 'itw_' + safeMode;
+      const platform = Cap.getPlatform?.() || 'android';
       const now = new Date();
       const list = prayers.filter(p => p && p.key !== 'sunrise' && /^\d{2}:\d{2}$/.test(p.time || ''));
       const notifications = [];
@@ -189,7 +192,7 @@
         at.setHours(h, m, 0, 0);
         at.setMinutes(at.getMinutes() + Number(timing?.[p.key] || 0));
         if (at <= now) return;
-        notifications.push({
+        const notification = {
           id: 5101 + i,
           title: 'IslamTimeWorld · ' + (p.name || p.key),
           body: (p.name || p.key) + ' · ' + p.time,
@@ -197,8 +200,13 @@
           channelId,
           smallIcon: 'ic_notification',
           iconColor: '#16794A',
-          extra: { screen: 'prayer', prayer: p.key, mode }
-        });
+          extra: { screen: 'prayer', prayer: p.key, mode: safeMode }
+        };
+        if (platform === 'ios') {
+          if (safeMode === 'adhan') notification.sound = 'adhan_short.wav';
+          else if (safeMode === 'sound') notification.sound = 'default';
+        }
+        notifications.push(notification);
       });
       if (notifications.length) await LocalNotifications.schedule({ notifications });
     } catch (e) {

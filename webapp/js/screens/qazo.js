@@ -114,6 +114,7 @@ const QazoScreen = (function () {
         <div class="qz-header">
           <button class="qz-back" id="qz-back">← ${_T('Namoz','Намоз','Намаз','Prayer')}</button>
           <div class="qz-title">${_T('Qazo namozlari','Қазо намозлари','Восполнение намазов','Missed Prayers (Qazo)')}</div>
+          <div class="section-quran-verse" data-quran-verse="2:238"></div>
         </div>
 
         <div class="qz-total-card">

@@ -31,20 +31,29 @@
     const providerLang = node.dataset.quranLanguage === 'ar' ? 'ar' : (lang === 'uz_cyr' ? 'uz' : lang);
     const meta = window.QuranProvider?.getSourceMeta(providerLang);
     if (!meta) { showState(node, 'error', lang); return; }
-    const edition = providerLang === 'ar' ? 'quran-uthmani' : meta.edition;
-    if (!edition || meta.is_fallback) { showState(node, 'error', lang); return; }
     const reference = node.dataset.quranVerse;
-    const key = `${reference}:${edition}`;
+    const [surah, ayah] = reference.split(':').map(Number);
+    const specialProvider = providerLang === 'ce' || providerLang === 'av';
+    const edition = providerLang === 'ar' ? 'quran-uthmani' : meta.edition;
+    if (!specialProvider && (!edition || meta.is_fallback)) { showState(node, 'error', lang); return; }
+    const providerKey = specialProvider ? `provider:${providerLang}` : edition;
+    const key = `${reference}:${providerKey}`;
     const requestKey = `${key}:${lang}`;
     if (node.dataset.verseRequest === requestKey) return;
     node.dataset.verseRequest = requestKey;
     node.replaceChildren();
     showState(node, 'loading', lang);
     if (!requests.has(key)) requests.set(key, (async () => {
+      if (specialProvider) {
+        const rows = await window.QuranProvider.getAyahs(surah, { lang: providerLang });
+        const row = rows.find(item => item.ayah === ayah);
+        const text = providerLang === 'av' ? row?.arabic : (row?.translation || row?.arabic);
+        if (!row || typeof text !== 'string' || !text.trim()) throw new Error('Verse source mismatch');
+        return text;
+      }
       const response = await fetch(`https://api.alquran.cloud/v1/ayah/${reference}/${edition}`, { signal: AbortSignal.timeout(10000) });
       if (!response.ok) throw new Error('Verse unavailable');
       const result = await response.json();
-      const [surah, ayah] = reference.split(':').map(Number);
       if (result.code !== 200 || result.data?.edition?.identifier !== edition || result.data?.surah?.number !== surah || result.data?.numberInSurah !== ayah || typeof result.data.text !== 'string' || !result.data.text.trim()) throw new Error('Verse source mismatch');
       return result.data.text;
     })());

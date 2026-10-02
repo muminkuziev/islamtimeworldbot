@@ -67,6 +67,7 @@ const ShahodatScreen = (function () {
         <div class="sh-header">
           <button class="sh-back" id="sh-back">← ${_T('Boshqalar','Бошқалар','Другое','Others')}</button>
           <div class="sh-title">${_T('Shahodat va Kalimalar','Шаҳодат ва Калималар','Шахада и Калимы','Shahodat & Kalimas')}</div>
+          <div class="section-quran-verse" data-quran-verse="47:19"></div>
         </div>
 
         <div class="sh-section-label">${_T('Shahodat (imon guvohligi)','Шаҳодат (имон гувоҳлиги)','Шахада (свидетельство веры)','Shahodat (Declaration of Faith)')}</div>

@@ -64,7 +64,7 @@ public class MainActivity extends BridgeActivity {
         vibrate.setVibrationPattern(new long[]{0, 350, 180, 350});
 
         Uri adhanUri = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.adhan);
-        NotificationChannel adhan = new NotificationChannel("itw_adhan", "IslamTimeWorld — Azon", NotificationManager.IMPORTANCE_HIGH);
+        NotificationChannel adhan = new NotificationChannel("itw_adhan_v2", "IslamTimeWorld — Azon", NotificationManager.IMPORTANCE_HIGH);
         adhan.setDescription("Namoz eslatmalari — Azon ovozi");
         adhan.setSound(adhanUri, audio);
         adhan.enableVibration(false);

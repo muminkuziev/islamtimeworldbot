@@ -56,6 +56,7 @@ const HaramaynScreen = (function () {
         <div class="hl-header">
           <button class="hl-back" id="hl-back">← ${_T('Bosh sahifa','Бош саҳифа','Главная','Home')}</button>
           <div class="hl-title">${_T('Haramayn','Ҳарамайн','Харамайн','Haramayn')}</div>
+          <div class="section-quran-verse" data-quran-verse="106:3"></div>
         </div>
         <div id="hl-body" class="hl-body">
           <div class="hl-loading">${_T('Yuklanmoqda…','Юкланмоқда…','Загрузка…','Loading…')}</div>

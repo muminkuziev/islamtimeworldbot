@@ -493,3 +493,44 @@ html[data-theme="dark"] #screen-prayer .pm-daily-tabs button.active { color:#052
 
 #screen-prayer .pm-ayah-ar { -webkit-line-clamp:1; }
 #screen-prayer .pm-ayah-translit { -webkit-line-clamp:1; font-size:11px; }
+
+
+/* Section-header Quran verses: short, source-backed, max two lines. */
+.section-quran-verse {
+  margin: 5px 0 8px;
+  max-width: 100%;
+  font-size: 11px;
+  line-height: 1.45;
+  font-weight: 600;
+  color: rgba(22, 121, 74, .88);
+}
+.section-quran-verse .verified-verse-copy {
+  display: -webkit-box !important;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  max-height: 2.9em;
+}
+.section-quran-verse small {
+  display: block;
+  margin-top: 2px;
+  font-size: 8px;
+  line-height: 1.2;
+  font-weight: 600;
+  opacity: .58;
+}
+#screen-dashboard .db-section-quran-verse,
+#screen-hadith .hd-hdr .section-quran-verse,
+#screen-dhikr .zk-hdr .section-quran-verse {
+  color: rgba(255,255,255,.94);
+  text-shadow: 0 1px 10px rgba(0,0,0,.32);
+}
+#screen-dashboard .db-section-quran-verse small,
+#screen-hadith .hd-hdr .section-quran-verse small,
+#screen-dhikr .zk-hdr .section-quran-verse small {
+  color: rgba(255,255,255,.72);
+}
+#screen-dashboard .db-section-quran-verse {
+  margin: 5px 6px 8px;
+  text-align: center;
+}

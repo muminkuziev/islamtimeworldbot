@@ -139,6 +139,7 @@ const NamesScreen = (function () {
             <div class="nm-title-wrap">
               <div class="nm-title">${_T('Allohning 99 ismi','Аллоҳнинг 99 исми','99 имён Аллаха','99 Names of Allah')}</div>
               <div class="nm-title-ar">أسماء الله الحسنى</div>
+              <div class="section-quran-verse" data-quran-verse="20:8"></div>
             </div>
 
             <div class="nm-search-box">

@@ -203,6 +203,7 @@ const DhikrScreen = (function () {
             </div>
             <div class="zk-h-title">${_T('Zikr va Salovot','Зикр ва Саловот','Зикр и салават','Dhikr & Salawat')}</div>
             <div class="zk-h-ar">الأذكار والصلاة على النبي</div>
+            <div class="section-quran-verse" data-quran-verse="33:41"></div>
           </div>
         </div>
         <div class="zk-list-body">

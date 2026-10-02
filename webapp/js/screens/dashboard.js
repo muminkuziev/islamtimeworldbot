@@ -296,6 +296,8 @@ const DashboardScreen = (function () {
     </div>
 
 
+    <div class="section-quran-verse db-section-quran-verse" data-quran-verse="94:5"></div>
+
     <div class="db-next-wrap">
       <div class="db-next-box">
         <div class="db-next-topline"></div>

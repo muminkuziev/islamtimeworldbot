@@ -257,7 +257,7 @@ const QuranScreen = (function () {
           <div class="q-title-block">
             <div class="q-title-main">${_qt('title')}</div>
             <div class="q-title-sub">${_T('Allohning kalomi','Аллоҳнинг каломи','Слово Аллаха','The word of Allah')}</div>
-            <div class="q-title-quote" data-quran-verse="2:2"></div>
+            <div class="q-title-quote" data-quran-verse="96:1"></div>
           </div>
           <div class="q-divider"></div>
           <div class="q-tabs-row">

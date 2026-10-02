@@ -554,6 +554,7 @@ const CalendarScreen = (function () {
       ${remCount ? `<div class="hc-remind-count">🔔 ${remCount}</div>` : '<div></div>'}
     </div>
     <div class="hc-title">${_T('Hijriy taqvim','Ҳижрий тақвим','Исламский календарь','Islamic Calendar')}</div>
+    <div class="section-quran-verse" data-quran-verse="36:39"></div>
     <div class="hc-sub-row">
       <span style="font-family:'Amiri',serif;font-size:14px;color:#16794A">${_mname()} ${_viewYear}</span>
       <span style="color:rgba(22,33,43,.3)">·</span>
