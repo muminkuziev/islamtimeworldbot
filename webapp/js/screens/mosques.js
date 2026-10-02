@@ -9,10 +9,10 @@ const MosquesScreen = (function () {
   const OVERPASS_URL   = 'https://overpass-api.de/api/interpreter';
   const NOMINATIM_URL  = 'https://nominatim.openstreetmap.org/reverse';
   const RADIUS_DEFAULT = 10000;
-  const GEO_TIMEOUT    = 8000;    /* ms to wait for geolocation (fallback to error UI) */
+  const GEO_TIMEOUT    = 15000;    /* ms to wait for geolocation (fallback to error UI) */
 
   /* Cache key is per-language so city names are always in the right script */
-  function _cacheKey() { return 'islamtime_mosques_' + _lang + '_v2'; }
+  function _cacheKey() { return 'islamtime_mosques_' + _lang + '_v3'; }
 
   let _lang       = 'uz';
   let _tab        = 'royxat';
@@ -124,35 +124,70 @@ const MosquesScreen = (function () {
       _showNoLocation();
     }, GEO_TIMEOUT);
 
-    if (!navigator.geolocation) {
-      clearTimeout(_loadTimer);
-      console.log('[GPS] geolocation not available');
-      _showNoLocation();
+    _requestCurrentLocation(generation, false);
+  }
+
+  function _acceptLocation(generation, lat, lon) {
+    if (generation !== _generation || !_validCoords(lat, lon)) return false;
+    clearTimeout(_loadTimer);
+    _loadTimer = null;
+    _lat = Number(lat);
+    _lon = Number(lon);
+    _city = '';
+    localStorage.setItem('islamtime_last_lat', _lat);
+    localStorage.setItem('islamtime_last_lon', _lon);
+    window.ThemeEngine?.setLocation(_lat, _lon);
+    _saveLocationToServer(_lat, _lon, '');
+    _fetchMosques(false);
+    return true;
+  }
+
+  function _requestCurrentLocation(generation, forceHighAccuracy) {
+    const Geo = window.Capacitor?.Plugins?.Geolocation;
+    const native = !!window.Capacitor?.isNativePlatform?.();
+
+    const browserFallback = () => {
+      if (generation !== _generation) return;
+      if (!navigator.geolocation) {
+        clearTimeout(_loadTimer);
+        _showNoLocation();
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          if (!_acceptLocation(generation, pos.coords.latitude, pos.coords.longitude)) return;
+          console.log('[GPS] mosques browser success');
+        },
+        err => {
+          if (generation !== _generation) return;
+          clearTimeout(_loadTimer);
+          console.log('[GPS] mosques browser error', err?.code, err?.message);
+          _showNoLocation();
+        },
+        {
+          timeout: 12000,
+          maximumAge: forceHighAccuracy ? 0 : 120000,
+          enableHighAccuracy: !!forceHighAccuracy,
+        }
+      );
+    };
+
+    if (native && Geo) {
+      console.log('[GPS] mosques: using Capacitor Geolocation');
+      Geo.getCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 12000,
+        maximumAge: forceHighAccuracy ? 0 : 120000,
+      }).then(pos => {
+        if (!_acceptLocation(generation, pos?.coords?.latitude, pos?.coords?.longitude)) browserFallback();
+      }).catch(err => {
+        console.log('[GPS] mosques Capacitor error', err?.message || err);
+        browserFallback();
+      });
       return;
     }
 
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        if (generation !== _generation) return;
-        clearTimeout(_loadTimer);
-        if (_mosques.length) return;
-        console.log('[GPS] success lat=' + pos.coords.latitude.toFixed(5) + ' lon=' + pos.coords.longitude.toFixed(5));
-        _lat = pos.coords.latitude;
-        _lon = pos.coords.longitude;
-        localStorage.setItem('islamtime_last_lat', _lat);
-        localStorage.setItem('islamtime_last_lon', _lon);
-        window.ThemeEngine?.setLocation(_lat, _lon);
-        _saveLocationToServer(_lat, _lon, '');
-        _fetchMosques(false);
-      },
-      err => {
-        if (generation !== _generation) return;
-        clearTimeout(_loadTimer);
-        console.log('[GPS] error code=' + err.code + ' msg=' + err.message);
-        _showNoLocation();
-      },
-      { timeout: GEO_TIMEOUT - 500, maximumAge: 300000, enableHighAccuracy: false }
-    );
+    browserFallback();
   }
 
   /* No coords available — ask user to share location */
@@ -205,9 +240,10 @@ const MosquesScreen = (function () {
     const generation = _generation;
     localStorage.removeItem('islamtime_last_lat');
     localStorage.removeItem('islamtime_last_lon');
-    ['ar','en','id','ur','bn','fr','hi','fa','tr','ru','uz','de','ms','uz_cyr','kk','tg','ky'].forEach(l =>
-      localStorage.removeItem('islamtime_mosques_' + l + '_v2')
-    );
+    ['ar','en','id','ur','bn','fr','hi','fa','tr','ru','uz','de','ms','uz_cyr','kk','tg','ky','ce','av'].forEach(l => {
+      localStorage.removeItem('islamtime_mosques_' + l + '_v2');
+      localStorage.removeItem('islamtime_mosques_' + l + '_v3');
+    });
     _lat = null; _lon = null; _city = '';
     _mosques = []; _noLocation = false; _notFound = false;
     _loading = true;
@@ -216,24 +252,7 @@ const MosquesScreen = (function () {
     console.log('[GPS] mosques: change location request');
     _loadTimer = setTimeout(() => { if (generation === _generation) _showNoLocation(); }, GEO_TIMEOUT);
 
-    if (!navigator.geolocation) { clearTimeout(_loadTimer); _showNoLocation(); return; }
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        if (generation !== _generation) return;
-        clearTimeout(_loadTimer);
-        console.log('[GPS] success lat=' + pos.coords.latitude.toFixed(5));
-        _lat = pos.coords.latitude;
-        _lon = pos.coords.longitude;
-        localStorage.setItem('islamtime_last_lat', _lat);
-        localStorage.setItem('islamtime_last_lon', _lon);
-        window.ThemeEngine?.setLocation(_lat, _lon);
-        _saveLocationToServer(_lat, _lon, '');
-        _city = '';
-        _fetchMosques(false);
-      },
-      err => { if (generation !== _generation) return; clearTimeout(_loadTimer); console.log('[GPS] error', err?.code); _showNoLocation(); },
-      { timeout: GEO_TIMEOUT - 500, enableHighAccuracy: true }
-    );
+    _requestCurrentLocation(generation, true);
     window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('medium');
   }
 

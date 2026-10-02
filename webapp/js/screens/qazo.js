@@ -113,14 +113,18 @@ const QazoScreen = (function () {
       <div class="qz-screen">
         <div class="qz-header">
           <button class="qz-back" id="qz-back">← ${_T('Namoz','Намоз','Намаз','Prayer')}</button>
-          <div class="qz-title">${_T('Qazo namozlari','Қазо намозлари','Восполнение намазов','Missed Prayers (Qazo)')}</div>
-          <div class="section-quran-verse" data-quran-verse="2:238"></div>
+          <div class="qz-header-copy">
+            <div class="qz-title">${_T('Qazo namozlari','Қазо намозлари','Восполнение намазов','Missed Prayers (Qazo)')}</div>
+            <div class="section-quran-verse qz-header-verse" data-quran-verse="2:238"></div>
+          </div>
         </div>
 
         <div class="qz-total-card">
           <div class="qz-total-num">${total}</div>
           <div class="qz-total-label">${_T('jami qazo','жами қазо','всего қазо','total qazo')}</div>
         </div>
+
+        <div class="qz-list">${rows}</div>
 
         <div class="qz-hint">
           ${_T(
@@ -130,8 +134,6 @@ const QazoScreen = (function () {
             'Enter your own qazo count for each prayer. The app never automatically marks a prayer as qazo.'
           )}
         </div>
-
-        <div class="qz-list">${rows}</div>
 
         <div class="qz-fiqh-note" id="qz-fiqh-note">
           ⚠️ ${_T('Yuklanmoqda…','Юкланмоқда…','Загрузка…','Loading…')}

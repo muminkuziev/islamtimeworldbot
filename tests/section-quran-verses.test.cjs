@@ -3,7 +3,6 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 
 const expected={
-  'dashboard.js':'94:5',
   'prayer.js':'108:2',
   'quran.js':'96:1',
   'qibla.js':'2:115',
@@ -48,10 +47,11 @@ test('section verse loader strips long provider commentary from headers',()=>{
   assert.match(code,/copy\.textContent = compactHeaderVerse\(text, providerLang\)/);
 });
 
-test('section Quran verse styling is capped at two lines',()=>{
+test('section Quran verse styling shows the complete ayah',()=>{
   const css=fs.readFileSync('webapp/css/reference-ui.css','utf8');
-  assert.match(css,/\.section-quran-verse/);
-  assert.match(css,/-webkit-line-clamp:\s*2/);
+  assert.match(css,/\.section-quran-verse \.verified-verse-copy/);
+  assert.match(css,/-webkit-line-clamp:\s*unset/);
+  assert.match(css,/max-height:\s*none/);
 });
 
 test('verified verse loader supports Chechen and Avar providers without cross-language fallback',()=>{

@@ -542,3 +542,58 @@ html[data-theme="dark"] #screen-prayer .pm-daily-tabs button.active { color:#052
 #screen-prayer .pm-content[data-state="error"] { display:block!important; overflow:hidden!important; }
 #screen-prayer .pm-content[data-state="loading"] .pm-loader,
 #screen-prayer .pm-content[data-state="error"] .pm-loader { min-height:220px; }
+
+
+/* 2026-10-02 screenshot QA: section verses must be complete, not clipped. */
+.section-quran-verse .verified-verse-copy {
+  display:block!important;
+  -webkit-line-clamp:unset!important;
+  max-height:none!important;
+  overflow:visible!important;
+}
+
+/* Qazo header: back control stays at the top; title + full ayah sit cleanly
+   in the lower part of the hero frame. */
+#screen-qazo .qz-header {
+  min-height:190px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:flex-end!important;
+  align-items:stretch!important;
+  padding:14px 16px 16px!important;
+}
+#screen-qazo .qz-back {
+  position:absolute!important;
+  top:12px!important;
+  left:14px!important;
+  z-index:4!important;
+}
+#screen-qazo .qz-header-copy {
+  width:100%;
+  margin-top:auto;
+  padding-top:46px;
+}
+#screen-qazo .qz-title {
+  align-self:auto!important;
+  margin:0 0 8px!important;
+  max-width:100%;
+}
+#screen-qazo .qz-header-verse {
+  margin:0!important;
+  max-width:100%!important;
+  font-size:10px!important;
+  line-height:1.42!important;
+  color:#17362e!important;
+}
+#screen-qazo .qz-header-verse small {
+  margin-top:4px!important;
+  font-size:8px!important;
+}
+#screen-qazo .qz-list { margin-bottom:12px!important; }
+#screen-qazo .qz-hint {
+  margin:0 0 10px!important;
+  padding:11px 12px!important;
+}
+#screen-qazo .qz-fiqh-note {
+  margin:0!important;
+}
