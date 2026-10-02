@@ -1402,6 +1402,7 @@ app.mount("/css",    StaticFiles(directory=str(WEBAPP_DIR / "css")),    name="cs
 app.mount("/js",     StaticFiles(directory=str(WEBAPP_DIR / "js")),     name="js")
 app.mount("/data",   StaticFiles(directory=str(WEBAPP_DIR / "data")),   name="webapp_data")
 app.mount("/assets", StaticFiles(directory=str(WEBAPP_DIR / "assets")), name="assets")
+app.mount("/vendor", StaticFiles(directory=str(WEBAPP_DIR / "vendor")), name="vendor")
 
 # ── TWA / Android Digital Asset Links ─────────────────────────────────────
 @app.get("/.well-known/assetlinks.json")
