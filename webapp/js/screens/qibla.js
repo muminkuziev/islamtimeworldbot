@@ -653,6 +653,9 @@ const QiblaScreen = (function () {
         antialias:true,
       });
       _mapV7.addControl(new maplibregl.NavigationControl({visualizePitch:true}), 'top-right');
+      if (maplibregl.ScaleControl) {
+        _mapV7.addControl(new maplibregl.ScaleControl({maxWidth:110, unit:'metric'}), 'bottom-left');
+      }
       if (maplibregl.GlobeControl) _mapV7.addControl(new maplibregl.GlobeControl(), 'top-right');
       _mapV7.on('style.load', () => {
         try { _mapV7.setProjection({type:'globe'}); } catch (_) {}
