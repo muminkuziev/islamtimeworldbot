@@ -5,7 +5,7 @@ const fs=require('node:fs');
 const expected={
   'prayer.js':'108:2',
   'quran.js':'96:1',
-  'qibla.js':'2:149',
+  'qibla.js':'106:3',
   'hadith.js':'53:3',
   'duas.js':'7:55',
   'dhikr.js':'33:41',

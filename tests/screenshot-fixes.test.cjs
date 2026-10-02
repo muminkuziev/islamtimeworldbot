@@ -35,8 +35,9 @@ test('prayer screen renders cached prayer times immediately before background re
 
 test('qibla uses the shorter direction-specific verse',()=>{
   const code=fs.readFileSync('webapp/js/screens/qibla.js','utf8');
-  assert.match(code,/data-quran-verse="2:149"/);
+  assert.match(code,/data-quran-verse="106:3"/);
   assert.doesNotMatch(code,/data-quran-verse="2:115"/);
+  assert.doesNotMatch(code,/data-quran-verse="2:149"/);
 });
 
 test('hadith verse is anchored low in the hero above tabs',()=>{

@@ -133,7 +133,7 @@ const QiblaScreen = (function () {
     </div>
     <div class="qb-title">${_T("Qibla yo'nalishi","Қибла йўналиши","Направление Киблы","Qibla Direction")}</div>
     <div class="qb-artitle">Masjid al-Haram <span class="qb-artitle-ar" lang="ar" dir="rtl">اتجاه القبلة</span></div>
-    <div class="qb-verse-intro" data-quran-verse="2:149"></div>
+    <div class="qb-verse-intro" data-quran-verse="106:3"></div>
     <div class="qb-hdivider"></div>
     <div class="qb-tabs">
       <button class="qb-tab active" data-tab="kompas"><img src="assets/icons/tabler/compass.svg" alt="" aria-hidden="true"> ${_T('Kompas','Компас','Компас','Compass')}</button>
