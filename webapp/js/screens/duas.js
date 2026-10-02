@@ -87,7 +87,7 @@ const DuasScreen = (function () {
     </div>
     <div class="du-title">${_T("Du'olar","Дуолар","Дуа","Duas")}</div>
     <div class="du-ar-sub">الأدعية المأثورة</div>
-    <div class="section-quran-verse" data-quran-verse="21:83"></div>
+    <div class="section-quran-verse" data-quran-verse="7:55"></div>
     <div class="du-search-wrap">
       <span style="font-size:12px;opacity:.35">🔍</span>
       <input class="du-search-in" id="du-search" type="text"

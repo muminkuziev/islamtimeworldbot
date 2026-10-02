@@ -534,3 +534,11 @@ html[data-theme="dark"] #screen-prayer .pm-daily-tabs button.active { color:#052
   margin: 5px 6px 8px;
   text-align: center;
 }
+
+
+/* Prayer fallback surface: never collapse to an empty white area. */
+#screen-prayer .pm-content { min-height:220px!important; background:var(--bg)!important; }
+#screen-prayer .pm-content[data-state="loading"],
+#screen-prayer .pm-content[data-state="error"] { display:block!important; overflow:hidden!important; }
+#screen-prayer .pm-content[data-state="loading"] .pm-loader,
+#screen-prayer .pm-content[data-state="error"] .pm-loader { min-height:220px; }

@@ -25,6 +25,18 @@
       node.append(retry);
     }
   }
+  function compactHeaderVerse(text, lang) {
+    let value = String(text || '').replace(/\s+/g, ' ').trim();
+    if (!value) return value;
+    // Some translation providers append long explanatory tafsir in parentheses.
+    // Section headers must show the ayah translation itself, not commentary.
+    if (lang !== 'ar') {
+      const cut = value.search(/\s\((?:[^)]{40,}|[^)]*\([^)]*)/);
+      if (cut > 20) value = value.slice(0, cut).trim();
+    }
+    return value;
+  }
+
   async function fill(node) {
     const lang = language();
     // Only the Arabic original may explicitly accompany the selected translation.
@@ -62,7 +74,7 @@
       if (!node.isConnected || node.dataset.verseRequest !== requestKey || language() !== lang) return;
       const copy = document.createElement('span');
       copy.className = 'verified-verse-copy';
-      copy.textContent = text;
+      copy.textContent = compactHeaderVerse(text, providerLang);
       if (providerLang === 'ar') copy.dir = 'rtl';
       const source = document.createElement('small');
       source.textContent = `${reference} · ${meta.translator || edition}`;

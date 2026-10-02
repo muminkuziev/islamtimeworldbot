@@ -74,7 +74,7 @@ const HadithScreen = (function () {
       <div class="nm-tile-ov"></div><div class="hd-hdr-inner">
       <div class="hd-nav-row"><button class="hd-back" id="hd-back">${label.back()}</button></div>
       <h1 class="hd-title">${label.hadith()}</h1>
-      <div class="section-quran-verse" data-quran-verse="4:80"></div>
+      <div class="section-quran-verse" data-quran-verse="53:3"></div>
       <div class="hd-books"><div class="hd-book-btn gold"><div class="hd-book-name gold">${esc(meta.name)}</div>
       <div class="hd-book-cnt">${meta.count} ${T('tasdiqlangan hadis','тасдиқланган ҳадис','проверенных хадисов','verified hadiths')}</div></div></div>
       <div class="hd-tabs" role="tablist">${tabs.map(([key, text]) =>

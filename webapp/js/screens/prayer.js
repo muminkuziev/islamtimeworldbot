@@ -339,7 +339,14 @@ const PrayerScreen = (function () {
     }
 
     _showLoading();
+    const cycle = ++_loadCycle;
     _getLocation();
+    // Never leave the page as an empty/loading surface indefinitely.
+    setTimeout(() => {
+      if (cycle !== _loadCycle) return;
+      const content = document.getElementById('prayer-content');
+      if (content?.dataset?.state === 'loading') _showError('network');
+    }, 18000);
   }
 
   function _bindTabs() {
@@ -451,6 +458,7 @@ const PrayerScreen = (function () {
      API
   ══════════════════════════════════════════════════════════════ */
   let _prayerRequest = 0;
+  let _loadCycle = 0;
   async function _fetchPrayerTimes(lat, lon) {
     const request = ++_prayerRequest, lang = _lang, preferences = window.PrayerPreferences.key();
     const isCurrent = () => request === _prayerRequest && lang === _lang && preferences === window.PrayerPreferences.key();
@@ -486,6 +494,7 @@ const PrayerScreen = (function () {
     if (wrap) wrap.innerHTML = '';
     const el = document.getElementById('prayer-content');
     if (!el) return;
+    el.dataset.state = 'loading';
     el.innerHTML = `
       <div class="pm-loader">
         <img src="assets/branding/official-icon.png" class="pm-loader-logo" alt=""/>
@@ -499,6 +508,7 @@ const PrayerScreen = (function () {
   function _showError(reason) {
     const el = document.getElementById('prayer-content');
     if (!el) return;
+    el.dataset.state = 'error';
     el.innerHTML = `
       <div class="pm-loader">
         <div style="font-size:36px;margin-bottom:8px">📍</div>
@@ -506,7 +516,7 @@ const PrayerScreen = (function () {
         <button class="pm-retry-btn" id="prayer-retry">${_l('tryAgain', _lang)}</button>
       </div>`;
     document.getElementById('prayer-retry')
-      ?.addEventListener('click', () => { _showLoading(); _getLocation(); });
+      ?.addEventListener('click', () => load(_lang));
   }
 
   /* ══════════════════════════════════════════════════════════════
@@ -514,6 +524,8 @@ const PrayerScreen = (function () {
   ══════════════════════════════════════════════════════════════ */
   function _renderFull() {
     if (!_data) return;
+    const content = document.getElementById('prayer-content');
+    if (content) content.dataset.state = 'ready';
 
     /* Header meta: location pill + calculation method */
     const navCityEl = document.getElementById('pm-nav-city');
