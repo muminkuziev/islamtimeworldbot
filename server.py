@@ -1657,6 +1657,8 @@ async def api_save_user_location(request: Request):
 
 
 # ── Nearby mosques (server-side Overpass proxy with fallback) ──────────────
+_MOSQUE_API_CACHE: dict[tuple, tuple[float, dict]] = {}
+
 @app.get("/api/mosques/nearby")
 async def api_nearby_mosques(
     lat: float = Query(..., ge=-90, le=90),
@@ -1664,64 +1666,177 @@ async def api_nearby_mosques(
     radius: int = Query(10000, ge=500, le=50000),
 ):
     import aiohttp as _aiohttp
+    import math as _math
 
-    query = f"""[out:json][timeout:22];
+    cache_key = (round(float(lat), 3), round(float(lon), 3), int(radius))
+    cached = _MOSQUE_API_CACHE.get(cache_key)
+    now = time.monotonic()
+    if cached and now - cached[0] < 120:
+        return JSONResponse(
+            cached[1],
+            headers={"Cache-Control": "public, max-age=120", "X-IslamTime-Cache": "HIT"},
+        )
+
+    # Small query: the old 12-clause node/way/relation version regularly
+    # exceeded the mobile client's timeout on public Overpass instances.
+    query = f"""[out:json][timeout:7];
 (
-  node["amenity"="mosque"](around:{radius},{lat},{lon});
-  way["amenity"="mosque"](around:{radius},{lat},{lon});
-  relation["amenity"="mosque"](around:{radius},{lat},{lon});
-  node["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{lat},{lon});
-  way["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{lat},{lon});
-  relation["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{lat},{lon});
-  node["amenity"="prayer_hall"]["religion"="muslim"](around:{radius},{lat},{lon});
-  way["amenity"="prayer_hall"]["religion"="muslim"](around:{radius},{lat},{lon});
-  node["amenity"="community_centre"]["religion"="muslim"](around:{radius},{lat},{lon});
-  way["amenity"="community_centre"]["religion"="muslim"](around:{radius},{lat},{lon});
-  node["building"="mosque"](around:{radius},{lat},{lon});
-  way["building"="mosque"](around:{radius},{lat},{lon});
+  nwr["amenity"="mosque"](around:{radius},{lat},{lon});
+  nwr["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{lat},{lon});
+  nwr["building"="mosque"](around:{radius},{lat},{lon});
 );
 out center tags;""".strip()
 
     endpoints = (
         "https://overpass-api.de/api/interpreter",
         "https://overpass.private.coffee/api/interpreter",
+        "https://overpass.kumi.systems/api/interpreter",
     )
-    errors = []
-    timeout = _aiohttp.ClientTimeout(total=28)
     headers = {
         "User-Agent": "IslamTimeWorld/1.0 (nearby-mosques; https://islamtimeworld.com)",
         "Accept": "application/json",
     }
+    timeout = _aiohttp.ClientTimeout(total=9, connect=4, sock_read=8)
+    errors: list[str] = []
+
+    async def _fetch_one(session, endpoint):
+        try:
+            async with session.post(
+                endpoint,
+                data={"data": query},
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+            ) as response:
+                if response.status != 200:
+                    return None, f"{endpoint}: HTTP {response.status}"
+                payload = await response.json(content_type=None)
+                elements = payload.get("elements")
+                if not isinstance(elements, list):
+                    return None, f"{endpoint}: invalid payload"
+                return {
+                    "elements": elements,
+                    "provider": endpoint,
+                    "radius": radius,
+                    "lat": lat,
+                    "lon": lon,
+                }, None
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            return None, f"{endpoint}: {type(exc).__name__}"
+
     async with _aiohttp.ClientSession(timeout=timeout, headers=headers) as session:
-        for endpoint in endpoints:
-            try:
-                async with session.post(
-                    endpoint,
-                    data={"data": query},
-                    headers={"Content-Type": "application/x-www-form-urlencoded"},
-                ) as response:
-                    if response.status != 200:
-                        errors.append(f"{endpoint}: HTTP {response.status}")
-                        continue
-                    payload = await response.json(content_type=None)
-                    elements = payload.get("elements")
-                    if not isinstance(elements, list):
-                        errors.append(f"{endpoint}: invalid payload")
-                        continue
-                    return JSONResponse({
-                        "elements": elements,
-                        "provider": endpoint,
-                        "radius": radius,
-                        "lat": lat,
-                        "lon": lon,
-                    }, headers={"Cache-Control": "public, max-age=120"})
-            except Exception as exc:
-                errors.append(f"{endpoint}: {type(exc).__name__}")
+        tasks = [asyncio.create_task(_fetch_one(session, endpoint)) for endpoint in endpoints]
+        try:
+            for future in asyncio.as_completed(tasks, timeout=10):
+                payload, error = await future
+                if payload is not None:
+                    _MOSQUE_API_CACHE[cache_key] = (time.monotonic(), payload)
+                    for task in tasks:
+                        if not task.done():
+                            task.cancel()
+                    await asyncio.gather(*tasks, return_exceptions=True)
+                    return JSONResponse(
+                        payload,
+                        headers={"Cache-Control": "public, max-age=120", "X-IslamTime-Cache": "MISS"},
+                    )
+                if error:
+                    errors.append(error)
+        except asyncio.TimeoutError:
+            errors.append("all providers: timeout")
+        finally:
+            for task in tasks:
+                if not task.done():
+                    task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
+
+    # Last-resort bounded Nominatim fallback. This only runs when all
+    # Overpass providers fail, avoiding a permanently broken Nearby screen.
+    try:
+        lat_delta = max(0.01, radius / 111_320.0)
+        lon_scale = max(0.2, _math.cos(_math.radians(lat)))
+        lon_delta = max(0.01, radius / (111_320.0 * lon_scale))
+        viewbox = f"{lon-lon_delta},{lat+lat_delta},{lon+lon_delta},{lat-lat_delta}"
+        params = {
+            "q": "mosque",
+            "format": "jsonv2",
+            "addressdetails": "1",
+            "extratags": "1",
+            "namedetails": "1",
+            "limit": "20",
+            "bounded": "1",
+            "viewbox": viewbox,
+        }
+        fallback_timeout = _aiohttp.ClientTimeout(total=7, connect=3, sock_read=6)
+        async with _aiohttp.ClientSession(timeout=fallback_timeout, headers=headers) as session:
+            async with session.get(
+                "https://nominatim.openstreetmap.org/search", params=params
+            ) as response:
+                if response.status == 200:
+                    rows = await response.json(content_type=None)
+                    elements = []
+                    for row in rows if isinstance(rows, list) else []:
+                        try:
+                            rlat = float(row.get("lat"))
+                            rlon = float(row.get("lon"))
+                        except Exception:
+                            continue
+                        address = row.get("address") or {}
+                        extra = row.get("extratags") or {}
+                        names = row.get("namedetails") or {}
+                        display = str(row.get("display_name") or "")
+                        name = (
+                            names.get("name")
+                            or names.get("name:en")
+                            or display.split(",")[0]
+                            or "Mosque"
+                        )
+                        elements.append({
+                            "type": row.get("osm_type", "node"),
+                            "id": row.get("osm_id"),
+                            "lat": rlat,
+                            "lon": rlon,
+                            "tags": {
+                                "name": name,
+                                "name:en": names.get("name:en", ""),
+                                "name:ar": names.get("name:ar", ""),
+                                "name:pl": names.get("name:pl", ""),
+                                "name:ru": names.get("name:ru", ""),
+                                "addr:street": address.get("road", ""),
+                                "addr:housenumber": address.get("house_number", ""),
+                                "phone": extra.get("phone", ""),
+                                "contact:phone": extra.get("contact:phone", ""),
+                                "website": extra.get("website", ""),
+                                "contact:website": extra.get("contact:website", ""),
+                                "opening_hours": extra.get("opening_hours", ""),
+                            },
+                        })
+                    if elements:
+                        payload = {
+                            "elements": elements,
+                            "provider": "nominatim.openstreetmap.org",
+                            "radius": radius,
+                            "lat": lat,
+                            "lon": lon,
+                            "fallback": True,
+                        }
+                        _MOSQUE_API_CACHE[cache_key] = (time.monotonic(), payload)
+                        return JSONResponse(
+                            payload,
+                            headers={
+                                "Cache-Control": "public, max-age=120",
+                                "X-IslamTime-Cache": "MISS",
+                                "X-IslamTime-Fallback": "Nominatim",
+                            },
+                        )
+                errors.append(f"Nominatim: HTTP {response.status}")
+    except Exception as exc:
+        errors.append(f"Nominatim: {type(exc).__name__}")
 
     print(f"[WARN] nearby mosques failed: {'; '.join(errors)}", flush=True)
     return JSONResponse(
         {"elements": [], "error": "mosque_provider_unavailable", "details": errors},
         status_code=503,
+        headers={"Cache-Control": "no-store"},
     )
 
 
