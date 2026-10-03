@@ -34,6 +34,9 @@ const MosquesScreen = (function () {
   let _selIdx     = null;
   let _el         = null;
   let _loadTimer  = null;
+  let _map        = null;
+  let _mapModule  = null;
+  let _mapMarkers = [];
 
   /* ══════════════════════════════════════════════
      Entry points
@@ -63,6 +66,7 @@ const MosquesScreen = (function () {
     _requestId++;
     _controller?.abort();
     _controller = null;
+    _destroyMap();
     clearTimeout(_loadTimer);
     _loadTimer  = null;
     _tab        = 'royxat';
@@ -599,53 +603,90 @@ ${[
 <div class="ms-osm-attr">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</div>`;
   }
 
-  /* ── SVG map ── */
+  /* ── Real interactive MapLibre map ── */
   function _buildMap() {
-    const shown      = _mosques.slice(0, 10);
-    const mPerDegLat = 111320;
-    const mPerDegLon = mPerDegLat * Math.cos(_lat * Math.PI / 180);
-    const pts = shown.map((m, i) => {
-      const dx   = (m.lon - _lon) * mPerDegLon;
-      const dy   = (m.lat - _lat) * mPerDegLat;
-      const svgX = Math.max(8, Math.min(292, 150 + (dx / _radius) * 128));
-      const svgY = Math.max(8, Math.min(122, 65  - (dy / _radius) * 54));
-      return { ...m, i, svgX, svgY };
-    });
+    const shown = _mosques.slice(0, 20);
     return `
-<div class="ms-map-wrap">
-  <svg class="ms-map-svg" viewBox="0 0 300 130" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <pattern id="msgrid" width="18" height="18" patternUnits="userSpaceOnUse">
-        <path d="M 18 0 L 0 0 0 18" fill="none" stroke="rgba(22,121,74,.05)" stroke-width="0.5"/>
-      </pattern>
-    </defs>
-    <rect width="300" height="130" fill="#F6FAF8"/>
-    <rect width="300" height="130" fill="url(#msgrid)"/>
-    <line x1="0"   y1="65"  x2="300" y2="65"  stroke="rgba(255,255,255,.06)" stroke-width="1.5"/>
-    <line x1="150" y1="0"   x2="150" y2="130" stroke="rgba(255,255,255,.06)" stroke-width="1.5"/>
-    ${pts.map(p => `
-    <line x1="150" y1="65" x2="${p.svgX}" y2="${p.svgY}"
-      stroke="rgba(22,121,74,.12)" stroke-width="1" stroke-dasharray="3 3"/>
-    <circle cx="${p.svgX}" cy="${p.svgY}" r="${_selIdx === p.i ? 8 : 5}"
-      fill="${_selIdx === p.i ? '#4fcfa0' : 'rgba(79,207,160,.5)'}"
-      stroke="${_selIdx === p.i ? '#4fcfa0' : 'transparent'}" stroke-width="2"/>
-    <text x="${p.svgX}" y="${p.svgY - 7}" text-anchor="middle"
-      font-size="8" fill="rgba(22,33,43,.55)"
-      font-family="Inter,system-ui,sans-serif" font-weight="600">${p.i + 1}</text>
-    `).join('')}
-    <circle cx="150" cy="65" r="6" fill="#16794A" opacity=".9"/>
-    <circle cx="150" cy="65" r="12" fill="none" stroke="#16794A" stroke-width="1" opacity=".3"/>
-  </svg>
-  <div class="ms-map-you">${_T('Siz','Сиз','Вы','You')}</div>
+<div class="ms-real-map-shell">
+  <div id="ms-real-map" class="ms-real-map" aria-label="${_T('Masjidlar xaritasi','Масжидлар харитаси','Карта мечетей','Mosques map')}">
+    <div class="ms-map-loading">${_T('Xarita yuklanmoqda...','Харита юкланмоқда...','Загрузка карты...','Loading map...')}</div>
+  </div>
+  <button type="button" class="ms-map-recenter" id="ms-map-recenter" aria-label="${_T('Mening joylashuvim','Менинг жойлашувим','Моё местоположение','My location')}">
+    <img src="assets/icons/tabler/map-pin.svg" alt="">
+  </button>
 </div>
 <div class="ms-map-list">
-  ${pts.map(p => `
-  <div class="ms-map-row${_selIdx === p.i ? ' sel' : ''}" data-idx="${p.i}">
-    <div class="ms-map-num">${p.i + 1}</div>
-    <div class="ms-map-name">${_esc(p.name || 'Masjid')}</div>
-    <div class="ms-map-dist">${_fmtDist(p.distance)}</div>
+  ${shown.map((m,i)=>`
+  <div class="ms-map-row${_selIdx===i?' sel':''}" data-idx="${i}">
+    <div class="ms-map-num">${i+1}</div>
+    <div class="ms-map-name">${_esc(m.name||'Masjid')}</div>
+    <div class="ms-map-dist">${_fmtDist(m.distance)}</div>
   </div>`).join('')}
 </div>`;
+  }
+
+  function _destroyMap() {
+    for (const marker of _mapMarkers) { try { marker.remove(); } catch (_) {} }
+    _mapMarkers = [];
+    if (_map) { try { _map.remove(); } catch (_) {} _map = null; }
+  }
+
+  function _focusMosqueOnMap(index) {
+    const m = _mosques[index];
+    if (!_map || !m) return;
+    _selIdx = index;
+    _map.easeTo({center:[m.lon,m.lat],zoom:15.2,pitch:42,duration:650});
+    (_el?.querySelectorAll('.ms-map-row')||[]).forEach((row,i)=>row.classList.toggle('sel',i===index));
+    (_el?.querySelectorAll('.ms-live-marker-mosque')||[]).forEach((el,i)=>el.classList.toggle('active',i===index));
+  }
+
+  async function _ensureRealMap() {
+    const container = _el?.querySelector('#ms-real-map');
+    if (!container || !_validCoords(_lat,_lon) || !_mosques.length) return;
+    try {
+      _mapModule ||= await import('/vendor/maplibre/maplibre-gl.mjs');
+      if (!container.isConnected) return;
+      const ml = _mapModule;
+      container.innerHTML = '';
+      _map = new ml.Map({
+        container,
+        style:'https://tiles.openfreemap.org/styles/liberty',
+        center:[_lon,_lat], zoom:12.7, pitch:38, bearing:0,
+        antialias:true, attributionControl:true
+      });
+      _map.addControl(new ml.NavigationControl({visualizePitch:true}),'top-right');
+      if (ml.ScaleControl) _map.addControl(new ml.ScaleControl({maxWidth:90,unit:'metric'}),'bottom-left');
+
+      _map.on('load',()=>{
+        const youEl=document.createElement('div');
+        youEl.className='ms-live-marker ms-live-marker-you';
+        youEl.innerHTML='<span class="ms-live-marker-pulse"></span><span class="ms-live-marker-core"></span>';
+        _mapMarkers.push(new ml.Marker({element:youEl,anchor:'center'}).setLngLat([_lon,_lat]).addTo(_map));
+
+        _mosques.slice(0,20).forEach((m,i)=>{
+          const el=document.createElement('button');
+          el.type='button';
+          el.className='ms-live-marker ms-live-marker-mosque';
+          el.textContent=String(i+1);
+          el.addEventListener('click',e=>{e.stopPropagation();_focusMosqueOnMap(i);});
+          const popup=new ml.Popup({offset:22,closeButton:false,className:'ms-map-popup'})
+            .setHTML('<strong>'+_esc(m.name||'Masjid')+'</strong><span>'+_fmtDist(m.distance)+'</span>');
+          _mapMarkers.push(new ml.Marker({element:el,anchor:'center'}).setLngLat([m.lon,m.lat]).setPopup(popup).addTo(_map));
+        });
+
+        const bounds=new ml.LngLatBounds();
+        bounds.extend([_lon,_lat]);
+        _mosques.slice(0,20).forEach(m=>bounds.extend([m.lon,m.lat]));
+        _map.fitBounds(bounds,{padding:{top:52,bottom:52,left:42,right:42},maxZoom:14.8,duration:650});
+      });
+
+      _el?.querySelector('#ms-map-recenter')?.addEventListener('click',()=>{
+        _map?.easeTo({center:[_lon,_lat],zoom:14.5,pitch:35,duration:550});
+      });
+    } catch (error) {
+      console.warn('[MosquesMap] unavailable',error);
+      if (container.isConnected) container.innerHTML='<div class="ms-map-fallback">'+_T('Xarita vaqtincha mavjud emas','Харита вақтинча мавжуд эмас','Карта временно недоступна','Map temporarily unavailable')+'</div>';
+    }
   }
 
   /* ── Schedule ── */
@@ -718,7 +759,7 @@ ${_mosques.slice(0, 8).map(m => {
       if (e.target.closest('#ms-go-home'))      { window.App.navigate('screen-dashboard'); return; }
       if (e.target.closest('#ms-detail-back')) { _selIdx = null; _refreshBody(); return; }
       const mapRow = e.target.closest('.ms-map-row');
-      if (mapRow) { _selIdx = parseInt(mapRow.dataset.idx); _refreshBody(); return; }
+      if (mapRow) { _focusMosqueOnMap(parseInt(mapRow.dataset.idx)); return; }
       const card = e.target.closest('.ms-card');
       if (card) {
         _selIdx = parseInt(card.dataset.idx);
@@ -733,7 +774,13 @@ ${_mosques.slice(0, 8).map(m => {
   ══════════════════════════════════════════════ */
   function _refreshBody() {
     const body = _el?.querySelector('#ms-body');
-    if (body) body.innerHTML = _buildContent();
+    if (!body) return;
+    if (_map) _destroyMap();
+    body.innerHTML = _buildContent();
+    if (_tab === 'xarita' && _mosques.length && !_loading && !_loadError) {
+      const schedule = typeof requestAnimationFrame === 'function' ? requestAnimationFrame : (fn => setTimeout(fn, 0));
+      schedule(() => _ensureRealMap());
+    }
   }
 
   function _updateHeader() {
