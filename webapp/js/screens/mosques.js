@@ -268,7 +268,7 @@ const MosquesScreen = (function () {
     const controller = new AbortController();
     _controller = controller;
     const requestId = ++_requestId;
-    const timeout = setTimeout(() => controller.abort(), 25000);
+    const timeout = setTimeout(() => controller.abort(), 18000);
     _loadError = false;
     _notFound = false;
     _noLocation = false;
@@ -276,24 +276,13 @@ const MosquesScreen = (function () {
     _loading = !background;
     _refreshBody();
 
-    /* Cast a wide net: mosque/prayer_hall/musalla/community_centre/ahmadiyya */
+    /* Lightweight query. Keep it small enough for public Overpass servers. */
     const R = radius, LA = _lat, LO = _lon;
-    const query = `[out:json][timeout:25];
+    const query = `[out:json][timeout:7];
 (
-  node["amenity"="mosque"](around:${R},${LA},${LO});
-  way["amenity"="mosque"](around:${R},${LA},${LO});
-  relation["amenity"="mosque"](around:${R},${LA},${LO});
-  node["amenity"="place_of_worship"]["religion"="muslim"](around:${R},${LA},${LO});
-  way["amenity"="place_of_worship"]["religion"="muslim"](around:${R},${LA},${LO});
-  relation["amenity"="place_of_worship"]["religion"="muslim"](around:${R},${LA},${LO});
-  node["amenity"="prayer_hall"]["religion"="muslim"](around:${R},${LA},${LO});
-  way["amenity"="prayer_hall"]["religion"="muslim"](around:${R},${LA},${LO});
-  node["amenity"="place_of_worship"]["denomination"="ahmadiyya"](around:${R},${LA},${LO});
-  way["amenity"="place_of_worship"]["denomination"="ahmadiyya"](around:${R},${LA},${LO});
-  node["amenity"="community_centre"]["religion"="muslim"](around:${R},${LA},${LO});
-  way["amenity"="community_centre"]["religion"="muslim"](around:${R},${LA},${LO});
-  node["building"="mosque"](around:${R},${LA},${LO});
-  way["building"="mosque"](around:${R},${LA},${LO});
+  nwr["amenity"="mosque"](around:${R},${LA},${LO});
+  nwr["amenity"="place_of_worship"]["religion"="muslim"](around:${R},${LA},${LO});
+  nwr["building"="mosque"](around:${R},${LA},${LO});
 );
 out center tags;`.trim();
 
@@ -303,15 +292,73 @@ out center tags;`.trim();
         lon: String(LO),
         radius: String(R),
       });
-      const resp = await fetch('/api/mosques/nearby?' + params.toString(), {
-        method: 'GET',
-        headers: { 'Accept': 'application/json' },
-        signal: controller.signal,
-      });
-      if (!resp.ok) throw new Error('http');
-      const data = await resp.json();
+
+      let data = null;
+
+      /* Layer 1: our backend proxy. Give it a short deadline so a blocked
+         Render egress path can never hold the mobile UI for 25 seconds. */
+      const backendController = new AbortController();
+      const abortBackend = () => backendController.abort();
+      const backendTimer = setTimeout(abortBackend, 7000);
+      controller.signal.addEventListener('abort', abortBackend, { once: true });
+      try {
+        const resp = await fetch('/api/mosques/nearby?' + params.toString(), {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' },
+          signal: backendController.signal,
+        });
+        if (resp.ok) {
+          const candidate = await resp.json();
+          if (Array.isArray(candidate?.elements)) data = candidate;
+        }
+      } catch (_backendError) {
+        /* Direct provider fallback below. */
+      } finally {
+        clearTimeout(backendTimer);
+        controller.signal.removeEventListener('abort', abortBackend);
+      }
+
+      /* Layer 2: direct-from-device Overpass fallback. This avoids hosting
+         provider egress restrictions and races multiple public instances. */
+      if (!data) {
+        if (controller.signal.aborted) throw new DOMException('Aborted', 'AbortError');
+
+        const endpoints = [
+          'https://overpass-api.de/api/interpreter',
+          'https://overpass.private.coffee/api/interpreter',
+          'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+        ];
+        const body = new URLSearchParams({ data: query }).toString();
+        const directController = new AbortController();
+        const abortDirect = () => directController.abort();
+        const directTimer = setTimeout(abortDirect, 10000);
+        controller.signal.addEventListener('abort', abortDirect, { once: true });
+
+        try {
+          data = await Promise.any(endpoints.map(async endpoint => {
+            const resp = await fetch(endpoint, {
+              method: 'POST',
+              headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+              },
+              body,
+              signal: directController.signal,
+              mode: 'cors',
+            });
+            if (!resp.ok) throw new Error('provider http ' + resp.status);
+            const candidate = await resp.json();
+            if (!Array.isArray(candidate?.elements)) throw new Error('provider payload');
+            return candidate;
+          }));
+        } finally {
+          clearTimeout(directTimer);
+          controller.signal.removeEventListener('abort', abortDirect);
+        }
+      }
+
       if (requestId !== _requestId) return;
-      if (!Array.isArray(data.elements)) throw new Error('incomplete mosque response');
+      if (!Array.isArray(data?.elements)) throw new Error('incomplete mosque response');
 
       const mapped = (data.elements || []).map(e => {
         const lat = e.lat ?? e.center?.lat;
