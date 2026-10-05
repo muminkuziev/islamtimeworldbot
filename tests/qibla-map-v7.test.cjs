@@ -11,7 +11,7 @@ test('Qibla map v7 uses real MapLibre vector map instead of legacy SVG diagram',
   assert.match(code,/new maplibregl\.NavigationControl/);
   assert.match(code,/new maplibregl\.GlobeControl/);
   assert.match(code,/setProjection\(\{type:'globe'\}\)/);
-  assert.match(code,/pitch:48/);
+  assert.match(code,/pitch:42/);
   assert.doesNotMatch(code,/class="qb-map-svg"/);
 });
 

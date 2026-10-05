@@ -51,6 +51,8 @@ const QiblaScreen = (function () {
   let _mapV7 = null;
   let _mapV7Module = null;
   let _mapV7Ready = false;
+  let _mapYouMarker = null;
+  let _mapKaabaMarker = null;
   let _routeGlobe = null;
   let _routeGlobeReady = false;
 
@@ -108,6 +110,10 @@ const QiblaScreen = (function () {
     _nativeCompass = null;
     _nativeActive = false;
     _orientationStarted = false;
+    if (_mapYouMarker) { try { _mapYouMarker.remove(); } catch (_) {} }
+    if (_mapKaabaMarker) { try { _mapKaabaMarker.remove(); } catch (_) {} }
+    _mapYouMarker = null;
+    _mapKaabaMarker = null;
     if (_mapV7) { try { _mapV7.remove(); } catch (_) {} }
     _mapV7 = null;
     _mapV7Ready = false;
@@ -313,8 +319,10 @@ const QiblaScreen = (function () {
     return `
 <div id="qb-panel-xarita" class="qb-panel" style="display:none">
 
-  <div class="qb-map-v7-shell">
+  <div class="qb-map-v7-shell" data-map-state="loading">
     <div id="qb-map-v7" class="qb-map-v7" aria-label="${_T('Qibla xaritasi','Қибла харитаси','Карта Киблы','Qibla map')}"></div>
+    <div class="qb-map-v7-loading" id="qb-map-loading" role="status"><span></span>${_T('Xarita yuklanmoqda…','Харита юкланмоқда…','Карта загружается…','Loading map…')}</div>
+    <div class="qb-map-v7-source">OpenFreeMap · MapLibre</div>
     <div class="qb-map-v7-badge qb-map-v7-badge--you"><span></span>${_T('Siz','Сиз','Вы','You')}</div>
     <div class="qb-map-v7-badge qb-map-v7-badge--kaaba">🕋 ${_T('Makka','Макка','Мекка','Makkah')}</div>
     <div class="qb-map-v7-distance" id="qb-map-dist-badge">~ — km</div>
@@ -770,6 +778,33 @@ const QiblaScreen = (function () {
     }
   }
 
+  function _mapMarkerElement(kind, label) {
+    const el = document.createElement('div');
+    el.className = 'qb-map-marker qb-map-marker--' + kind;
+    el.setAttribute('aria-label', label);
+    el.innerHTML = kind === 'kaaba'
+      ? '<span class="qb-map-marker-pin">🕋</span><small>' + label + '</small>'
+      : '<span class="qb-map-marker-pulse"></span><span class="qb-map-marker-dot"></span><small>' + label + '</small>';
+    return el;
+  }
+
+  function _ensureMapMarkers() {
+    if (!_mapV7 || !_mapV7Module || !Number.isFinite(_lat) || !Number.isFinite(_lon)) return;
+    if (!_mapYouMarker) {
+      _mapYouMarker = new _mapV7Module.Marker({
+        element:_mapMarkerElement('you', _T('Siz','Сиз','Вы','You')),
+        anchor:'center'
+      }).setLngLat([_lon,_lat]).addTo(_mapV7);
+    } else _mapYouMarker.setLngLat([_lon,_lat]);
+
+    if (!_mapKaabaMarker) {
+      _mapKaabaMarker = new _mapV7Module.Marker({
+        element:_mapMarkerElement('kaaba', _T('Ka’ba','Каъба','Кааба','Kaaba')),
+        anchor:'bottom'
+      }).setLngLat([KAABA_LON,KAABA_LAT]).addTo(_mapV7);
+    } else _mapKaabaMarker.setLngLat([KAABA_LON,KAABA_LAT]);
+  }
+
   async function _ensureMapV7() {
     const container = _el?.querySelector('#qb-map-v7');
     if (!container || _mapV7) return;
@@ -780,11 +815,17 @@ const QiblaScreen = (function () {
         container,
         style:'https://tiles.openfreemap.org/styles/liberty',
         center:[Number.isFinite(_lon) ? _lon : 20, Number.isFinite(_lat) ? _lat : 34],
-        zoom:Number.isFinite(_lat) ? 3.3 : 2.4,
-        pitch:48,
-        bearing:-12,
-        attributionControl:true,
+        zoom:Number.isFinite(_lat) ? 3.15 : 2.25,
+        minZoom:1.3,
+        maxZoom:12,
+        pitch:42,
+        maxPitch:60,
+        bearing:-10,
+        attributionControl:false,
         antialias:true,
+        dragRotate:true,
+        touchZoomRotate:true,
+        doubleClickZoom:true,
       });
       _mapV7.addControl(new maplibregl.NavigationControl({visualizePitch:true}), 'top-right');
       if (maplibregl.ScaleControl) {
@@ -796,30 +837,18 @@ const QiblaScreen = (function () {
       });
       _mapV7.on('load', () => {
         _mapV7Ready = true;
+        const shell = _el?.querySelector('.qb-map-v7-shell');
+        if (shell) shell.dataset.mapState = 'ready';
         _mapV7.addSource('qibla-route', { type:'geojson', data:_routeGeoJSON() });
         _mapV7.addLayer({
           id:'qibla-route-glow', type:'line', source:'qibla-route',
-          paint:{ 'line-color':'#ffffff', 'line-width':6, 'line-opacity':0.72, 'line-blur':3 }
+          paint:{ 'line-color':'#ffffff', 'line-width':7.5, 'line-opacity':0.82, 'line-blur':4 }
         });
         _mapV7.addLayer({
           id:'qibla-route', type:'line', source:'qibla-route',
-          paint:{ 'line-color':'#10b981', 'line-width':3.2, 'line-opacity':0.95 }
+          paint:{ 'line-color':'#0bb77d', 'line-width':3.6, 'line-opacity':1 }
         });
-        _mapV7.addSource('qibla-points', {
-          type:'geojson',
-          data:{type:'FeatureCollection',features:[
-            {type:'Feature',properties:{kind:'you'},geometry:{type:'Point',coordinates:[_lon||20,_lat||34]}},
-            {type:'Feature',properties:{kind:'kaaba'},geometry:{type:'Point',coordinates:[KAABA_LON,KAABA_LAT]}}
-          ]}
-        });
-        _mapV7.addLayer({
-          id:'qibla-points', type:'circle', source:'qibla-points',
-          paint:{
-            'circle-radius':['match',['get','kind'],'kaaba',8,7],
-            'circle-color':['match',['get','kind'],'kaaba','#f4c95d','#0d7a55'],
-            'circle-stroke-color':'#ffffff','circle-stroke-width':2.5
-          }
-        });
+        _ensureMapMarkers();
         _fitMapV7();
       });
       _el?.querySelector('#qb-map-fit')?.addEventListener('click', _fitMapV7);
@@ -830,7 +859,11 @@ const QiblaScreen = (function () {
       });
     } catch (error) {
       console.warn('[QiblaMapV7] unavailable', error);
-      container.innerHTML = '<div class="qb-map-v7-fallback">Map unavailable</div>';
+      const shell = _el?.querySelector('.qb-map-v7-shell');
+      if (shell) shell.dataset.mapState = 'error';
+      container.innerHTML = '<div class="qb-map-v7-fallback">' +
+        _T('Xarita hozir mavjud emas','Харита ҳозир мавжуд эмас','Карта сейчас недоступна','Map unavailable') +
+        '</div>';
     }
   }
 
@@ -838,7 +871,13 @@ const QiblaScreen = (function () {
     if (!_mapV7 || !Number.isFinite(_lat) || !Number.isFinite(_lon)) return;
     const bounds = new _mapV7Module.LngLatBounds();
     _routeGeoJSON().features[0]?.geometry?.coordinates?.forEach(c => bounds.extend(c));
-    if (!bounds.isEmpty()) _mapV7.fitBounds(bounds, {padding:42, maxZoom:5.5, pitch:48, bearing:-12, duration:800});
+    if (!bounds.isEmpty()) _mapV7.fitBounds(bounds, {
+      padding:{top:54,right:42,bottom:66,left:42},
+      maxZoom:4.8,
+      pitch:42,
+      bearing:-10,
+      duration:850
+    });
   }
 
   function _updateMap() {
@@ -852,12 +891,7 @@ const QiblaScreen = (function () {
 
     if (_mapV7Ready && _mapV7) {
       _mapV7.getSource('qibla-route')?.setData(_routeGeoJSON());
-      _mapV7.getSource('qibla-points')?.setData({
-        type:'FeatureCollection',features:[
-          {type:'Feature',properties:{kind:'you'},geometry:{type:'Point',coordinates:[_lon,_lat]}},
-          {type:'Feature',properties:{kind:'kaaba'},geometry:{type:'Point',coordinates:[KAABA_LON,KAABA_LAT]}}
-        ]
-      });
+      _ensureMapMarkers();
       _fitMapV7();
     } else if (_tab === 'xarita') {
       _ensureMapV7();
