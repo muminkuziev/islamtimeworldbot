@@ -712,6 +712,11 @@ const QiblaScreen = (function () {
   }
 
   async function _ensureRouteGlobe() {
+    // Owner-approved compass reference uses the lightweight rotating Earth artwork.
+    // Keep the MapLibre implementation below available for future use, but do not
+    // mount a canvas in Kompas mode because it would cover the reference artwork.
+    const ENABLE_LIVE_ROUTE_GLOBE = false;
+    if (!ENABLE_LIVE_ROUTE_GLOBE) return;
     const container = _el?.querySelector('#qb-route-globe');
     if (!container || _routeGlobe) return;
     try {
