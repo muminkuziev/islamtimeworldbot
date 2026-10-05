@@ -57,3 +57,131 @@ html[data-theme="dark"] #app #screen-qibla .qb-calibrate-ico { background:rgba(2
 html[data-theme="dark"] #app #screen-qibla .qb-calibrate-copy { color:rgba(255,255,255,.75)!important; }
 html[data-theme="dark"] #app #screen-qibla .qb-icell-icon { background:rgba(79,207,160,.12); color:#4fcfa0; }
 html[data-theme="dark"] #app #screen-qibla #qb-ig-angle { color:#4fcfa0!important; }
+
+
+/* Qibla Map v7 — real vector map, great-circle route, 3D controls. */
+#app #screen-qibla .qb-map-v7-shell {
+  position:relative;
+  width:100%;
+  height:330px;
+  margin:0 0 12px;
+  overflow:hidden;
+  border:1px solid rgba(18,94,70,.14);
+  border-radius:22px;
+  background:#dceee7;
+  box-shadow:0 14px 32px rgba(9,61,45,.13);
+}
+#app #screen-qibla .qb-map-v7 {
+  position:absolute;
+  inset:0;
+}
+#app #screen-qibla .qb-map-v7::after {
+  content:'';
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(180deg,rgba(2,31,25,.02),rgba(2,31,25,.08));
+}
+#app #screen-qibla .maplibregl-canvas {
+  outline:none;
+}
+#app #screen-qibla .maplibregl-ctrl-top-right {
+  top:10px;
+  right:10px;
+}
+#app #screen-qibla .maplibregl-ctrl-group {
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.72);
+  border-radius:14px;
+  background:rgba(255,255,255,.92);
+  box-shadow:0 8px 20px rgba(9,61,45,.14);
+}
+#app #screen-qibla .qb-map-v7-badge,
+#app #screen-qibla .qb-map-v7-distance,
+#app #screen-qibla .qb-map-v7-action {
+  position:absolute;
+  z-index:5;
+  min-height:32px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid rgba(255,255,255,.78);
+  border-radius:14px;
+  background:rgba(8,44,35,.82);
+  color:#fff;
+  box-shadow:0 7px 18px rgba(0,28,21,.22);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  font-size:10px;
+  font-weight:800;
+}
+#app #screen-qibla .qb-map-v7-badge--you {
+  left:12px;
+  top:12px;
+  padding:0 11px;
+  gap:6px;
+}
+#app #screen-qibla .qb-map-v7-badge--you span {
+  width:8px;
+  height:8px;
+  border:2px solid #fff;
+  border-radius:50%;
+  background:#0d7a55;
+}
+#app #screen-qibla .qb-map-v7-badge--kaaba {
+  left:12px;
+  top:51px;
+  padding:0 11px;
+}
+#app #screen-qibla .qb-map-v7-distance {
+  left:12px;
+  bottom:12px;
+  padding:0 12px;
+  color:#12372c;
+  background:rgba(255,255,255,.94);
+  border-color:rgba(17,121,83,.18);
+}
+#app #screen-qibla .qb-map-v7-actions {
+  position:absolute;
+  right:12px;
+  bottom:12px;
+  z-index:5;
+  display:flex;
+  gap:7px;
+}
+#app #screen-qibla .qb-map-v7-action {
+  position:relative;
+  min-width:40px;
+  padding:0 11px;
+  border:1px solid rgba(255,255,255,.78);
+  cursor:pointer;
+}
+#app #screen-qibla .qb-map-v7-action:first-child {
+  color:#12372c;
+  background:rgba(255,255,255,.94);
+  border-color:rgba(17,121,83,.18);
+}
+#app #screen-qibla .qb-map-v7-fallback {
+  height:100%;
+  display:grid;
+  place-items:center;
+  padding:24px;
+  color:#36594f;
+  background:linear-gradient(145deg,#e9f6f1,#d8ebe4);
+  text-align:center;
+  font-size:12px;
+}
+html[data-theme="dark"] #app #screen-qibla .qb-map-v7-shell {
+  border-color:rgba(94,219,174,.2);
+  background:#0a211b;
+}
+html[data-theme="dark"] #app #screen-qibla .qb-map-v7-action:first-child,
+html[data-theme="dark"] #app #screen-qibla .qb-map-v7-distance {
+  color:#e9fff5;
+  background:rgba(8,44,35,.88);
+  border-color:rgba(99,219,174,.24);
+}
+@media (max-width:370px) {
+  #app #screen-qibla .qb-map-v7-shell { height:300px; border-radius:18px; }
+  #app #screen-qibla .qb-map-v7-action:first-child { display:none; }
+}

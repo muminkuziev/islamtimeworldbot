@@ -48,6 +48,11 @@ const QiblaScreen = (function () {
   let _needsFlat = false;
   let _iosPermissionGranted = false;
   let _sensorSource = 'browser';
+  let _mapV7 = null;
+  let _mapV7Module = null;
+  let _mapV7Ready = false;
+  let _routeGlobe = null;
+  let _routeGlobeReady = false;
 
   /* ══════════════════════════════════════════════
      Entry points
@@ -79,6 +84,7 @@ const QiblaScreen = (function () {
     _active = true;
     _el.innerHTML = _buildHTML();
     _bind();
+    _ensureRouteGlobe();
     _startOrientation();
     _startLocation();
   }
@@ -102,6 +108,12 @@ const QiblaScreen = (function () {
     _nativeCompass = null;
     _nativeActive = false;
     _orientationStarted = false;
+    if (_mapV7) { try { _mapV7.remove(); } catch (_) {} }
+    _mapV7 = null;
+    _mapV7Ready = false;
+    if (_routeGlobe) { try { _routeGlobe.remove(); } catch (_) {} }
+    _routeGlobe = null;
+    _routeGlobeReady = false;
   }
 
   function _resetRuntimeState() {
@@ -190,8 +202,13 @@ const QiblaScreen = (function () {
 <div id="qb-panel-kompas" class="qb-panel">
 
   <div class="qb-route-globe-wrap">
-    <div id="qb-route-globe" class="qb-route-globe"></div>
-    <div class="qb-route-globe-label">${_T('Joylashuvingizdan Kabagacha','Жойлашувингиздан Каъбагача','От вашего местоположения до Каабы','Your location → Kaaba')}</div>
+    <div id="qb-route-globe" class="qb-route-globe" aria-label="${_T('Sizdan Ka’bagacha 3D yo‘l','Сиздан Каъбагача 3D йўл','3D маршрут от вас до Каабы','3D route from you to Kaaba')}"></div>
+    <div class="qb-route-globe-label">${_T('Joylashuvingizdan Ka’bagacha','Жойлашувингиздан Каъбагача','От вашего местоположения до Каабы','Your location → Kaaba')}</div>
+    <div class="qb-route-globe-actions">
+      <button type="button" id="qb-globe-you">${_T('Men','Мен','Я','Me')}</button>
+      <button type="button" id="qb-globe-route">${_T('Yo‘l','Йўл','Маршрут','Route')}</button>
+      <button type="button" id="qb-globe-kaaba">🕋</button>
+    </div>
   </div>
 
   <div id="qb-load-badge" class="qb-load-badge">
@@ -293,45 +310,18 @@ const QiblaScreen = (function () {
 
   /* ── Xarita ── */
   function _panelXarita() {
-    /* default angle 135° so map looks right before real location loads */
-    const rad = (135 - 90) * Math.PI / 180;
-    const mx  = (150 + 120*Math.cos(rad)).toFixed(1);
-    const my  = (88  +  55*Math.sin(rad)).toFixed(1);
-    const lx2 = (150 + 130*Math.cos(rad)).toFixed(1);
-    const ly2 = (88  +  60*Math.sin(rad)).toFixed(1);
-    const mlLeft = (parseFloat(mx)/300*100).toFixed(0);
-    const mlTop  = (parseFloat(my)/160*100 - 7).toFixed(0);
-
     return `
 <div id="qb-panel-xarita" class="qb-panel" style="display:none">
 
-  <div class="qb-map-wrap">
-    <svg class="qb-map-svg" viewBox="0 0 300 160"
-      xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
-      <defs>
-        <pattern id="qbmg" width="15" height="15" patternUnits="userSpaceOnUse">
-          <path d="M 15 0 L 0 0 0 15" fill="none"
-            stroke="rgba(22,121,74,.06)" stroke-width="0.4"/>
-        </pattern>
-      </defs>
-      <rect width="300" height="160" fill="#F6FAF8"/>
-      <rect width="300" height="160" fill="url(#qbmg)"/>
-      <circle cx="150" cy="88" r="30"  fill="none" stroke="rgba(22,121,74,.08)" stroke-width="0.6"/>
-      <circle cx="150" cy="88" r="55"  fill="none" stroke="rgba(22,121,74,.06)" stroke-width="0.5"/>
-      <circle cx="150" cy="88" r="80"  fill="none" stroke="rgba(22,121,74,.05)" stroke-width="0.5"/>
-      <circle cx="150" cy="88" r="105" fill="none" stroke="rgba(22,121,74,.04)" stroke-width="0.4"/>
-      <line id="qb-map-line" x1="150" y1="88" x2="${lx2}" y2="${ly2}"
-        stroke="#4fcfa0" stroke-width="1.2" opacity=".7" stroke-dasharray="5 3"/>
-      <circle cx="150" cy="88" r="4" fill="#16794A" opacity=".9"/>
-      <circle cx="150" cy="88" r="8" fill="none" stroke="#16794A" stroke-width="0.8" opacity=".4"/>
-      <circle id="qb-mecca-dot"  cx="${mx}" cy="${my}" r="4" fill="#4fcfa0" opacity=".9"/>
-      <circle id="qb-mecca-ring" cx="${mx}" cy="${my}" r="8"
-        fill="none" stroke="#4fcfa0" stroke-width="0.8" opacity=".4"/>
-    </svg>
-    <div class="qb-map-you">📍 ${_T('Siz','Сиз','Вы','You')}</div>
-    <div id="qb-map-mecca-lbl" class="qb-map-mecca"
-      style="left:${mlLeft}%;top:${mlTop}%">🕋 ${_T('Makka','Макка','Мекка','Makkah')}</div>
-    <div id="qb-map-dist-badge" class="qb-map-distbadge">~ — km</div>
+  <div class="qb-map-v7-shell">
+    <div id="qb-map-v7" class="qb-map-v7" aria-label="${_T('Qibla xaritasi','Қибла харитаси','Карта Киблы','Qibla map')}"></div>
+    <div class="qb-map-v7-badge qb-map-v7-badge--you"><span></span>${_T('Siz','Сиз','Вы','You')}</div>
+    <div class="qb-map-v7-badge qb-map-v7-badge--kaaba">🕋 ${_T('Makka','Макка','Мекка','Makkah')}</div>
+    <div class="qb-map-v7-distance" id="qb-map-dist-badge">~ — km</div>
+    <div class="qb-map-v7-actions">
+      <button type="button" id="qb-map-fit" class="qb-map-v7-action">${_T('Yo‘lni ko‘rsat','Йўлни кўрсат','Показать маршрут','Show route')}</button>
+      <button type="button" id="qb-map-3d" class="qb-map-v7-action">3D</button>
+    </div>
   </div>
 
   <div class="qb-coord-grid">
@@ -359,15 +349,14 @@ const QiblaScreen = (function () {
     <div class="qb-dist-row">
       <div>
         <div class="qb-dist-km" id="qb-dist-km">—</div>
-        <div class="qb-dist-sub">km · ${_T("To'g'ri chiziq","Тўғри чизиқ","Прямая линия","Straight line")}</div>
+        <div class="qb-dist-sub">km · ${_T("To'g'ri chiziq","Тўғри чизиқ","По прямой","Straight line")}</div>
       </div>
       <div style="text-align:right">
         <div class="qb-dist-angle" id="qb-dist-angle">—°</div>
-        <div class="qb-dist-dir"   id="qb-dist-dir">—</div>
+        <div class="qb-dist-dir" id="qb-dist-dir">—</div>
       </div>
     </div>
   </div>
-
 </div>`;
   }
 
@@ -435,6 +424,10 @@ const QiblaScreen = (function () {
         _el.querySelector('#qb-panel-kompas').style.display  = _tab==='kompas'  ? 'flex':'none';
         _el.querySelector('#qb-panel-xarita').style.display  = _tab==='xarita'  ? 'flex':'none';
         _el.querySelector('#qb-panel-malumot').style.display = _tab==='malumot' ? 'flex':'none';
+        if (_tab === 'xarita') {
+          _ensureMapV7();
+          setTimeout(() => _mapV7?.resize(), 60);
+        }
         // Pause the WebGL render loops off-screen — saves GPU/battery.
         window.Telegram?.WebApp?.HapticFeedback?.selectionChanged();
       });
@@ -476,6 +469,10 @@ const QiblaScreen = (function () {
       _show('#qb-load-badge', true);
       _browserGeo();
     });
+
+    _el.querySelector('#qb-globe-you')?.addEventListener('click', () => _focusRouteGlobe('you'));
+    _el.querySelector('#qb-globe-route')?.addEventListener('click', () => _focusRouteGlobe('route'));
+    _el.querySelector('#qb-globe-kaaba')?.addEventListener('click', () => _focusRouteGlobe('kaaba'));
   }
 
   /* ══════════════════════════════════════════════
@@ -608,7 +605,8 @@ const QiblaScreen = (function () {
     _setText('#qb-ig-north', dir);
     _setText('#qb-ig-dir',   `${Math.round(_distKm).toLocaleString()} km`);
 
-    /* Xarita */
+    /* 3D globe + 2D/3D route map */
+    _updateRouteGlobe();
     _updateMap();
 
     /* Ma'lumot */
@@ -633,30 +631,237 @@ const QiblaScreen = (function () {
     } catch { /* keep "Location found" */ }
   }
 
-  function _updateMap() {
-    const rad  = (_qiblaAngle - 90) * Math.PI / 180;
-    const mx   = (150 + 120*Math.cos(rad)).toFixed(1);
-    const my   = (88  +  55*Math.sin(rad)).toFixed(1);
-    const lx2  = (150 + 130*Math.cos(rad)).toFixed(1);
-    const ly2  = (88  +  60*Math.sin(rad)).toFixed(1);
+  function _vectorToLngLat(point) {
+    const lat = Math.asin(Math.max(-1, Math.min(1, point.y))) * 180 / Math.PI;
+    const theta = Math.atan2(point.z, -point.x) * 180 / Math.PI;
+    let lon = theta - 180;
+    while (lon < -180) lon += 360;
+    while (lon > 180) lon -= 360;
+    return [lon, lat];
+  }
 
-    _setAttr('#qb-map-line',   'x2', lx2); _setAttr('#qb-map-line',   'y2', ly2);
-    _setAttr('#qb-mecca-dot',  'cx', mx);  _setAttr('#qb-mecca-dot',  'cy', my);
-    _setAttr('#qb-mecca-ring', 'cx', mx);  _setAttr('#qb-mecca-ring', 'cy', my);
-
-    const mLbl = _el?.querySelector('#qb-map-mecca-lbl');
-    if (mLbl) {
-      mLbl.style.left = `${(parseFloat(mx)/300*100).toFixed(0)}%`;
-      mLbl.style.top  = `${(parseFloat(my)/160*100 - 7).toFixed(0)}%`;
+  function _routeGeoJSON() {
+    if (!Number.isFinite(_lat) || !Number.isFinite(_lon)) {
+      return { type:'FeatureCollection', features:[] };
     }
+    const coords = QiblaGeo.greatCirclePoints(_lat, _lon, KAABA_LAT, KAABA_LON, 72)
+      .map(_vectorToLngLat);
+    return {
+      type:'FeatureCollection',
+      features:[{ type:'Feature', properties:{}, geometry:{ type:'LineString', coordinates:coords } }]
+    };
+  }
 
+  function _fitRouteGlobe() {
+    if (!_routeGlobe || !_mapV7Module || !Number.isFinite(_lat) || !Number.isFinite(_lon)) return;
+    const bounds = new _mapV7Module.LngLatBounds();
+    const coords = _routeGeoJSON().features[0]?.geometry?.coordinates || [];
+    coords.forEach(c => bounds.extend(c));
+    if (!bounds.isEmpty()) {
+      _routeGlobe.fitBounds(bounds, {
+        padding:34,
+        maxZoom:3.4,
+        pitch:18,
+        bearing:-8,
+        duration:850,
+      });
+    }
+  }
+
+  function _focusRouteGlobe(target) {
+    if (!_routeGlobe) return;
+    if (target === 'you' && Number.isFinite(_lat) && Number.isFinite(_lon)) {
+      _routeGlobe.easeTo({center:[_lon,_lat],zoom:5.2,pitch:30,bearing:0,duration:700});
+    } else if (target === 'kaaba') {
+      _routeGlobe.easeTo({center:[KAABA_LON,KAABA_LAT],zoom:5.4,pitch:30,bearing:0,duration:700});
+    } else {
+      _fitRouteGlobe();
+    }
+  }
+
+  async function _ensureRouteGlobe() {
+    const container = _el?.querySelector('#qb-route-globe');
+    if (!container || _routeGlobe) return;
+    try {
+      _mapV7Module ||= await import('/vendor/maplibre/maplibre-gl.mjs');
+      if (!container.isConnected) return;
+      const ml = _mapV7Module;
+      _routeGlobe = new ml.Map({
+        container,
+        style:'https://tiles.openfreemap.org/styles/liberty',
+        center:Number.isFinite(_lon) && Number.isFinite(_lat) ? [_lon,_lat] : [30,30],
+        zoom:Number.isFinite(_lat) ? 2.4 : 1.8,
+        pitch:18,
+        bearing:-8,
+        attributionControl:false,
+        antialias:true,
+        dragRotate:true,
+        touchZoomRotate:true,
+        scrollZoom:true,
+      });
+      _routeGlobe.on('style.load', () => {
+        try { _routeGlobe.setProjection({type:'globe'}); } catch (_) {}
+      });
+      _routeGlobe.on('load', () => {
+        _routeGlobeReady = true;
+        _routeGlobe.addSource('qb-globe-route', {type:'geojson',data:_routeGeoJSON()});
+        _routeGlobe.addLayer({
+          id:'qb-globe-route-glow',type:'line',source:'qb-globe-route',
+          paint:{'line-color':'#ffffff','line-width':6,'line-opacity':0.7,'line-blur':3}
+        });
+        _routeGlobe.addLayer({
+          id:'qb-globe-route',type:'line',source:'qb-globe-route',
+          paint:{'line-color':'#10b981','line-width':3.2,'line-opacity':0.98}
+        });
+        _routeGlobe.addSource('qb-globe-points',{
+          type:'geojson',
+          data:{type:'FeatureCollection',features:[
+            {type:'Feature',properties:{kind:'you'},geometry:{type:'Point',coordinates:[Number.isFinite(_lon)?_lon:20,Number.isFinite(_lat)?_lat:35]}},
+            {type:'Feature',properties:{kind:'kaaba'},geometry:{type:'Point',coordinates:[KAABA_LON,KAABA_LAT]}}
+          ]}
+        });
+        _routeGlobe.addLayer({
+          id:'qb-globe-points',type:'circle',source:'qb-globe-points',
+          paint:{
+            'circle-radius':['match',['get','kind'],'kaaba',8,7],
+            'circle-color':['match',['get','kind'],'kaaba','#f4c95d','#0d7a55'],
+            'circle-stroke-color':'#ffffff',
+            'circle-stroke-width':2.5
+          }
+        });
+        _routeGlobe.addLayer({
+          id:'qb-globe-labels',type:'symbol',source:'qb-globe-points',
+          layout:{
+            'text-field':['match',['get','kind'],'kaaba','Kaaba',_T('Siz','Сиз','Вы','You')],
+            'text-size':11,
+            'text-offset':[0,1.6],
+            'text-anchor':'top',
+            'text-font':['Noto Sans Regular']
+          },
+          paint:{
+            'text-color':'#10262d',
+            'text-halo-color':'#ffffff',
+            'text-halo-width':1.5
+          }
+        });
+        if (Number.isFinite(_lat) && Number.isFinite(_lon)) _fitRouteGlobe();
+      });
+      _routeGlobe.on('error', e => {
+        if (e?.error) console.warn('[QiblaRouteGlobe] map error', e.error);
+      });
+    } catch (error) {
+      console.warn('[QiblaRouteGlobe] unavailable', error);
+    }
+  }
+
+  function _updateRouteGlobe() {
+    if (_routeGlobeReady && _routeGlobe) {
+      _routeGlobe.getSource('qb-globe-route')?.setData(_routeGeoJSON());
+      _routeGlobe.getSource('qb-globe-points')?.setData({
+        type:'FeatureCollection',
+        features:[
+          {type:'Feature',properties:{kind:'you'},geometry:{type:'Point',coordinates:[_lon,_lat]}},
+          {type:'Feature',properties:{kind:'kaaba'},geometry:{type:'Point',coordinates:[KAABA_LON,KAABA_LAT]}}
+        ]
+      });
+      _fitRouteGlobe();
+    } else {
+      _ensureRouteGlobe();
+    }
+  }
+
+  async function _ensureMapV7() {
+    const container = _el?.querySelector('#qb-map-v7');
+    if (!container || _mapV7) return;
+    try {
+      _mapV7Module ||= await import('/vendor/maplibre/maplibre-gl.mjs');
+      const maplibregl = _mapV7Module;
+      _mapV7 = new maplibregl.Map({
+        container,
+        style:'https://tiles.openfreemap.org/styles/liberty',
+        center:[Number.isFinite(_lon) ? _lon : 20, Number.isFinite(_lat) ? _lat : 34],
+        zoom:Number.isFinite(_lat) ? 3.3 : 2.4,
+        pitch:48,
+        bearing:-12,
+        attributionControl:true,
+        antialias:true,
+      });
+      _mapV7.addControl(new maplibregl.NavigationControl({visualizePitch:true}), 'top-right');
+      if (maplibregl.ScaleControl) {
+        _mapV7.addControl(new maplibregl.ScaleControl({maxWidth:110, unit:'metric'}), 'bottom-left');
+      }
+      if (maplibregl.GlobeControl) _mapV7.addControl(new maplibregl.GlobeControl(), 'top-right');
+      _mapV7.on('style.load', () => {
+        try { _mapV7.setProjection({type:'globe'}); } catch (_) {}
+      });
+      _mapV7.on('load', () => {
+        _mapV7Ready = true;
+        _mapV7.addSource('qibla-route', { type:'geojson', data:_routeGeoJSON() });
+        _mapV7.addLayer({
+          id:'qibla-route-glow', type:'line', source:'qibla-route',
+          paint:{ 'line-color':'#ffffff', 'line-width':6, 'line-opacity':0.72, 'line-blur':3 }
+        });
+        _mapV7.addLayer({
+          id:'qibla-route', type:'line', source:'qibla-route',
+          paint:{ 'line-color':'#10b981', 'line-width':3.2, 'line-opacity':0.95 }
+        });
+        _mapV7.addSource('qibla-points', {
+          type:'geojson',
+          data:{type:'FeatureCollection',features:[
+            {type:'Feature',properties:{kind:'you'},geometry:{type:'Point',coordinates:[_lon||20,_lat||34]}},
+            {type:'Feature',properties:{kind:'kaaba'},geometry:{type:'Point',coordinates:[KAABA_LON,KAABA_LAT]}}
+          ]}
+        });
+        _mapV7.addLayer({
+          id:'qibla-points', type:'circle', source:'qibla-points',
+          paint:{
+            'circle-radius':['match',['get','kind'],'kaaba',8,7],
+            'circle-color':['match',['get','kind'],'kaaba','#f4c95d','#0d7a55'],
+            'circle-stroke-color':'#ffffff','circle-stroke-width':2.5
+          }
+        });
+        _fitMapV7();
+      });
+      _el?.querySelector('#qb-map-fit')?.addEventListener('click', _fitMapV7);
+      _el?.querySelector('#qb-map-3d')?.addEventListener('click', () => {
+        if (!_mapV7) return;
+        const is3d = _mapV7.getPitch() > 20;
+        _mapV7.easeTo({pitch:is3d?0:55,bearing:is3d?0:-18,duration:700});
+      });
+    } catch (error) {
+      console.warn('[QiblaMapV7] unavailable', error);
+      container.innerHTML = '<div class="qb-map-v7-fallback">Map unavailable</div>';
+    }
+  }
+
+  function _fitMapV7() {
+    if (!_mapV7 || !Number.isFinite(_lat) || !Number.isFinite(_lon)) return;
+    const bounds = new _mapV7Module.LngLatBounds();
+    _routeGeoJSON().features[0]?.geometry?.coordinates?.forEach(c => bounds.extend(c));
+    if (!bounds.isEmpty()) _mapV7.fitBounds(bounds, {padding:42, maxZoom:5.5, pitch:48, bearing:-12, duration:800});
+  }
+
+  function _updateMap() {
     _setText('#qb-map-dist-badge', `~ ${Math.round(_distKm).toLocaleString()} km`);
     _setText('#qb-coord-city', _city || '—');
     _setText('#qb-coord-lat', Number.isFinite(_lat) ? `${Math.abs(_lat).toFixed(2)}° ${_lat < 0 ? 'S' : 'N'}` : '—');
     _setText('#qb-coord-lon', Number.isFinite(_lon) ? `${Math.abs(_lon).toFixed(2)}° ${_lon < 0 ? 'W' : 'E'}` : '—');
-    _setText('#qb-dist-km',    Math.round(_distKm).toLocaleString());
+    _setText('#qb-dist-km', Math.round(_distKm).toLocaleString());
     _setText('#qb-dist-angle', `${Math.round(_qiblaAngle)}°`);
-    _setText('#qb-dist-dir',   _dirLabel(_qiblaAngle));
+    _setText('#qb-dist-dir', _dirLabel(_qiblaAngle));
+
+    if (_mapV7Ready && _mapV7) {
+      _mapV7.getSource('qibla-route')?.setData(_routeGeoJSON());
+      _mapV7.getSource('qibla-points')?.setData({
+        type:'FeatureCollection',features:[
+          {type:'Feature',properties:{kind:'you'},geometry:{type:'Point',coordinates:[_lon,_lat]}},
+          {type:'Feature',properties:{kind:'kaaba'},geometry:{type:'Point',coordinates:[KAABA_LON,KAABA_LAT]}}
+        ]
+      });
+      _fitMapV7();
+    } else if (_tab === 'xarita') {
+      _ensureMapV7();
+    }
   }
 
   /* ══════════════════════════════════════════════

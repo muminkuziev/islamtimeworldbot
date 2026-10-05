@@ -250,11 +250,11 @@ button, input { font-family:'Plus Jakarta Sans','Inter',system-ui,sans-serif; }
 #screen-qibla .qb-ios-permission-btn { width:auto!important; min-height:32px; padding:5px 12px!important; color:var(--ref-green)!important; font-size:9px!important; }
 #screen-qibla .qb-route-globe-wrap { order:-4; position:relative; width:calc(100% + 32px)!important; height:275px!important; margin:0 -16px!important; overflow:hidden!important; }
 #screen-qibla .qb-route-globe { position:relative; height:340px!important; width:340px!important; margin:-22px auto 0!important; border:0!important; border-radius:50%!important; overflow:hidden!important; box-shadow:none!important; opacity:1; background:none!important; isolation:isolate; }
-#screen-qibla .qb-route-globe::before { content:''; position:absolute; inset:0; z-index:0; border-radius:50%; background:url('../assets/reference-ui/qibla-earth.png') center/contain no-repeat; transform:scale(1.015) rotate(0deg); transform-origin:50% 50%; animation:qb-earth-spin 72s linear infinite; will-change:transform; pointer-events:none; }
+#screen-qibla .qb-route-globe::before { content:''; position:absolute; inset:0; z-index:0; border-radius:50%; background:url('../assets/reference-ui/qibla-earth.png') center/contain no-repeat; transform:scale(1.015); transform-origin:50% 50%; pointer-events:none; }
 #screen-qibla .qb-route-globe canvas { position:relative; z-index:1; opacity:1!important; }
 #screen-qibla .qb-route-globe:has(canvas)::before { display:none; }
 #screen-qibla .qb-route-globe-label { display:none!important; }
-#screen-qibla .qb-compass-stack { order:-3; z-index:2; margin-top:-272px!important; margin-bottom:0!important; width:250px!important; height:250px!important; border:1px solid rgba(7,135,94,.12); border-radius:50%; background:rgba(255,255,255,.89); box-shadow:0 12px 30px rgba(2,80,54,.14); backdrop-filter:blur(2px); filter:none!important; }
+#screen-qibla .qb-compass-stack { order:-3; z-index:2; margin-top:-272px!important; margin-bottom:0!important; width:250px!important; height:250px!important; border:1px solid rgba(7,135,94,.12); border-radius:50%; background:rgba(255,255,255,.89); box-shadow:0 12px 30px rgba(2,80,54,.14); backdrop-filter:blur(2px); filter:none!important; pointer-events:none; }
 #screen-qibla .qb-compass-stack svg { display:block; width:250px!important; height:250px!important; }
 #screen-qibla .qb-compass-globe-wrap { display:none!important; }
 #screen-qibla .qb-igrid { order:2; gap:7px!important; }
@@ -275,13 +275,11 @@ button, input { font-family:'Plus Jakarta Sans','Inter',system-ui,sans-serif; }
 #screen-qibla .qb-masjid-card strong { font-size:13px; margin-bottom:4px; }
 #screen-qibla .qb-masjid-card small { color:#71817b; font-size:9px; }
 
-@keyframes qb-earth-spin {
-  to { transform:scale(1.015) rotate(360deg); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  #screen-qibla .qb-route-globe::before { animation:none; }
-}
+#screen-qibla .qb-route-globe-actions { position:absolute; z-index:6; top:14px; right:14px; display:flex; gap:6px; pointer-events:auto; }
+#screen-qibla .qb-route-globe-actions button { min-width:38px; height:30px; padding:0 9px; border:1px solid rgba(255,255,255,.72); border-radius:10px; background:rgba(7,55,43,.82); color:#fff; box-shadow:0 4px 14px rgba(0,0,0,.18); backdrop-filter:blur(6px); font:800 9px/1 'Inter',system-ui,sans-serif; }
+#screen-qibla .qb-route-globe-actions button:active { transform:scale(.96); }
+#screen-qibla .qb-route-globe .maplibregl-canvas { cursor:grab; }
+#screen-qibla .qb-route-globe .maplibregl-canvas:active { cursor:grabbing; }
 
 /* ---------- Prayer times ---------- */
 #screen-prayer .q-header { height:294px!important; min-height:294px!important; padding:3px 17px 10px!important; overflow:hidden!important; background:#eef9f7!important; }
