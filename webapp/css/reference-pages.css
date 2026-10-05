@@ -121,3 +121,42 @@ html[dir="rtl"] #screen-calendar .nm-tile-ov { transform:scaleX(-1); }
   #screen-others>*,#screen-shahodat>*,#screen-haramayn>*,#screen-settings>*,
   #screen-qazo>*,#screen-monthly-calendar>* { max-width:520px; margin-inline:auto; }
 }
+
+
+/* Screenshot QA 2026-10-05: Shahodat header must never overlap the verse. */
+#screen-shahodat .sh-header{
+  min-height:176px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  justify-content:flex-start!important;
+  gap:6px!important;
+  padding:18px 16px 14px!important;
+}
+#screen-shahodat .sh-back{
+  align-self:flex-start!important;
+  flex:0 0 auto!important;
+}
+#screen-shahodat .sh-title{
+  align-self:flex-start!important;
+  max-width:72%!important;
+  margin:2px 0 0 2px!important;
+  flex:0 0 auto!important;
+}
+#screen-shahodat .sh-header .section-quran-verse{
+  position:static!important;
+  inset:auto!important;
+  width:100%!important;
+  max-width:100%!important;
+  margin:2px 0 0!important;
+  padding:0 2px!important;
+  flex:0 0 auto!important;
+  text-align:left!important;
+}
+#screen-shahodat .sh-header .section-quran-verse .verified-verse-copy{
+  max-width:100%!important;
+  line-height:1.35!important;
+}
+html[dir="rtl"] #screen-shahodat .sh-header .section-quran-verse{
+  text-align:right!important;
+}

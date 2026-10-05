@@ -506,6 +506,7 @@ const CalendarScreen = (function () {
   function load(lang) {
     _lang = lang;
     _tab = 'taqvim'; _selEvent = null;
+    _viewYear = 0; _viewMonth = 0; _selDay = 1;
     _initToday(); _loadReminders();
     _el = document.getElementById('screen-calendar');
     if (!_el) return;
@@ -521,6 +522,19 @@ const CalendarScreen = (function () {
       gYear: now.getFullYear(), gMonth: now.getMonth() + 1, gDay: now.getDate(),
       hYear: h.hYear, hMonth: h.hMonth, hDay: h.hDay,
     };
+
+    // Keep the Islamic-events list relevant to today instead of showing stale
+    // hard-coded 1447/1448 dates. Each event is moved to its next occurrence
+    // in the current or following Hijri year, then sorted chronologically.
+    HIJRI_EVENTS.forEach(ev => {
+      const alreadyPassed = ev.hMonth < _today.hMonth ||
+        (ev.hMonth === _today.hMonth && ev.hDay < _today.hDay);
+      ev.hYear = _today.hYear + (alreadyPassed ? 1 : 0);
+    });
+    HIJRI_EVENTS.sort((a, b) =>
+      _hijriToJdn(a.hYear, a.hMonth, a.hDay) - _hijriToJdn(b.hYear, b.hMonth, b.hDay)
+    );
+
     if (!_viewYear) { _viewYear = _today.hYear; _viewMonth = _today.hMonth; _selDay = _today.hDay; }
   }
 

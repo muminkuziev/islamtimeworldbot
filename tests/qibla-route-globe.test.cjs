@@ -17,8 +17,8 @@ test('Qibla compass background uses real MapLibre globe with a great-circle rout
   assert.match(js, /qb-globe-kaaba/);
 });
 
-test('decorative infinite Earth spin is disabled', () => {
-  assert.doesNotMatch(css, /qb-earth-spin/);
-  assert.doesNotMatch(css, /animation:qb-earth-spin/);
-  assert.match(css, /qb-route-globe-actions/);
+test('approved compass visual uses the rotating Earth artwork', () => {
+  assert.match(css, /qb-earth-spin/);
+  assert.match(css, /animation:qb-earth-spin 72s/);
+  assert.match(css, /qibla-earth\.png/);
 });

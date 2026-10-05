@@ -167,6 +167,26 @@
   }
 
   let _lastSchedule = null; // so a mode change elsewhere can reschedule
+
+  async function _ensureAdhanChannel() {
+    if ((Cap.getPlatform?.() || 'android') !== 'android' || !LocalNotifications?.createChannel) return;
+    try {
+      // Android notification-channel sound is immutable after creation, so use
+      // a fresh channel id whenever the bundled Adhan asset/config changes.
+      await LocalNotifications.createChannel({
+        id: 'itw_adhan_v3',
+        name: 'Azon ovozi',
+        description: 'Prayer-time Adhan for Islam Time World',
+        importance: 5,
+        visibility: 1,
+        sound: 'adhan.ogg',
+        vibration: true,
+      });
+    } catch (e) {
+      console.warn('[LocalNotifications] adhan channel failed:', e);
+    }
+  }
+
   async function _schedulePrayerNotifications(prayers, timing, mode) {
     if (!LocalNotifications || !Array.isArray(prayers)) return;
     _lastSchedule = { prayers, timing };
@@ -181,7 +201,8 @@
       if (!allowed) return;
 
       const safeMode = ['silent','sound','vibrate','adhan'].includes(mode) ? mode : 'sound';
-      const channelId = safeMode === 'adhan' ? 'itw_adhan_v2' : 'itw_' + safeMode;
+      if (safeMode === 'adhan') await _ensureAdhanChannel();
+      const channelId = safeMode === 'adhan' ? 'itw_adhan_v3' : 'itw_' + safeMode;
       const platform = Cap.getPlatform?.() || 'android';
       const now = new Date();
       const list = prayers.filter(p => p && p.key !== 'sunrise' && /^\d{2}:\d{2}$/.test(p.time || ''));
