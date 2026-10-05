@@ -424,21 +424,45 @@ const QiblaScreen = (function () {
       window.App.navigate('screen-settings');
     });
 
-    _el.querySelectorAll('.qb-tab').forEach(btn => {
-      btn.addEventListener('click', () => {
-        _tab = btn.dataset.tab;
-        _el.querySelectorAll('.qb-tab').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        _el.querySelector('#qb-panel-kompas').style.display  = _tab==='kompas'  ? 'flex':'none';
-        _el.querySelector('#qb-panel-xarita').style.display  = _tab==='xarita'  ? 'flex':'none';
-        _el.querySelector('#qb-panel-malumot').style.display = _tab==='malumot' ? 'flex':'none';
-        if (_tab === 'xarita') {
-          _ensureMapV7();
-          setTimeout(() => _mapV7?.resize(), 60);
-        }
-        // Pause the WebGL render loops off-screen — saves GPU/battery.
-        window.Telegram?.WebApp?.HapticFeedback?.selectionChanged();
+    const switchTab = (tab) => {
+      if (!['kompas','xarita','malumot'].includes(tab)) return;
+      _tab = tab;
+      _el.querySelectorAll('.qb-tab').forEach(b => {
+        const active = b.dataset.tab === tab;
+        b.classList.toggle('active', active);
+        b.setAttribute('aria-selected', active ? 'true' : 'false');
       });
+      const kompas = _el.querySelector('#qb-panel-kompas');
+      const xarita = _el.querySelector('#qb-panel-xarita');
+      const malumot = _el.querySelector('#qb-panel-malumot');
+      if (kompas) kompas.style.display = tab === 'kompas' ? 'flex' : 'none';
+      if (xarita) xarita.style.display = tab === 'xarita' ? 'flex' : 'none';
+      if (malumot) malumot.style.display = tab === 'malumot' ? 'flex' : 'none';
+      if (tab === 'xarita') {
+        requestAnimationFrame(() => {
+          _ensureMapV7();
+          setTimeout(() => {
+            try { _mapV7?.resize(); } catch (_) {}
+            if (_mapV7Ready) _fitMapV7();
+          }, 120);
+        });
+      }
+      window.Telegram?.WebApp?.HapticFeedback?.selectionChanged();
+    };
+
+    _el.querySelectorAll('.qb-tab').forEach(btn => {
+      btn.type = 'button';
+      btn.setAttribute('role', 'tab');
+      btn.setAttribute('aria-selected', btn.classList.contains('active') ? 'true' : 'false');
+      btn.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        switchTab(btn.dataset.tab);
+      }, { passive:false });
+      btn.addEventListener('touchend', (event) => {
+        if (event.cancelable) event.preventDefault();
+        switchTab(btn.dataset.tab);
+      }, { passive:false });
     });
 
     _el.querySelectorAll('#qb-open-haramayn, #qb-open-haramayn-card').forEach(btn => btn.addEventListener('click', () => {
@@ -835,7 +859,16 @@ const QiblaScreen = (function () {
       _mapV7.on('style.load', () => {
         try { _mapV7.setProjection({type:'globe'}); } catch (_) {}
       });
+      const mapReadyTimeout = setTimeout(() => {
+        if (_mapV7Ready) return;
+        const shell = _el?.querySelector('.qb-map-v7-shell');
+        if (shell) shell.dataset.mapState = 'error';
+        const loading = _el?.querySelector('#qb-map-loading');
+        if (loading) loading.textContent = _T('Xarita yuklanmadi. Xarita tugmasini yana bosing.','Xarita yuklanmadi','Xarita yuklanmadi','Map did not load. Tap Map again.');
+      }, 12000);
+      _mapV7.on('error', (event) => console.warn('[QiblaMapV7] map error', event?.error || event));
       _mapV7.on('load', () => {
+        clearTimeout(mapReadyTimeout);
         _mapV7Ready = true;
         const shell = _el?.querySelector('.qb-map-v7-shell');
         if (shell) shell.dataset.mapState = 'ready';
