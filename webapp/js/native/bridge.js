@@ -54,7 +54,7 @@
   if (StatusBar) {
     const dark = document.documentElement.getAttribute('data-theme') === 'dark';
     StatusBar.setStyle({ style: dark ? 'DARK' : 'LIGHT' }).catch(() => {});
-    StatusBar.setBackgroundColor({ color: dark ? '#091714' : '#FFFFFF' }).catch(() => {});
+    StatusBar.setBackgroundColor({ color: dark ? '#031B17' : '#FFFFFF' }).catch(() => {});
     Plugins.SystemAppearance?.setTheme({ dark }).catch(() => {});
   }
 

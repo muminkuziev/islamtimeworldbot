@@ -722,17 +722,17 @@ const QuranScreen = (function () {
             </div>
             <div class="q-audio-time-row">
               <span id="quran-time-curr">0:00</span>
-              <button class="q-audio-repeat" id="quran-repeat-btn">🔁</button>
+              <button class="q-audio-repeat" id="quran-repeat-btn">↻</button>
               <span id="quran-time-dur">--:--</span>
             </div>
             <div class="q-audio-btns">
-              <button class="q-audio-btn" id="quran-prev-btn" ${_surahIdx===0?'disabled':''}>⏮</button>
-              <button class="q-audio-btn" id="quran-seek-back">⏪</button>
+              <button class="q-audio-btn" id="quran-prev-btn" ${_surahIdx===0?'disabled':''}>◀</button>
+              <button class="q-audio-btn" id="quran-seek-back">−15</button>
               <button class="q-audio-play" id="quran-play-btn">
                 <span id="quran-play-icon">▶</span>
               </button>
-              <button class="q-audio-btn" id="quran-seek-fwd">⏩</button>
-              <button class="q-audio-btn" id="quran-next-btn" ${_surahIdx===SURAHS.length-1?'disabled':''}>⏭</button>
+              <button class="q-audio-btn" id="quran-seek-fwd">+15</button>
+              <button class="q-audio-btn" id="quran-next-btn" ${_surahIdx===SURAHS.length-1?'disabled':''}>▶</button>
             </div>
           </div>
         </div>
@@ -911,8 +911,8 @@ const QuranScreen = (function () {
     const btn  = el.querySelector('#quran-play-btn');
     if (!icon) return;
     if (state==='play')  { icon.textContent='▶'; btn?.classList.remove('loading'); }
-    if (state==='pause') { icon.textContent='⏸'; btn?.classList.remove('loading'); }
-    if (state==='load')  { icon.textContent='⏳'; btn?.classList.add('loading'); }
+    if (state==='pause') { icon.textContent='Ⅱ'; btn?.classList.remove('loading'); }
+    if (state==='load')  { icon.textContent='···'; btn?.classList.add('loading'); }
   }
 
   function _updateProgress(el) {

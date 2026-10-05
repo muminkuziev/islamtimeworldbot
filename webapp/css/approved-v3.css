@@ -1,0 +1,256 @@
+/* Islam Time World — approved emerald v3 visual layer
+   Owner-approved 2026-10-05. Scoped to Location, Prayer, Quran reader. */
+
+:root{
+  --itw-ink:#f5fff9;
+  --itw-muted:rgba(232,249,241,.72);
+  --itw-deep:#031b17;
+  --itw-deep2:#06251f;
+  --itw-card:rgba(7,42,34,.88);
+  --itw-card2:rgba(9,52,42,.76);
+  --itw-line:rgba(101,218,176,.25);
+  --itw-green:#19c37d;
+  --itw-mint:#65dab0;
+  --itw-glow:0 0 0 1px rgba(101,218,176,.22),0 10px 28px rgba(0,0,0,.25),0 0 28px rgba(25,195,125,.09);
+}
+
+/* ---------- Location permission ---------- */
+#screen-location{background:var(--itw-deep)!important;color:var(--itw-ink)!important;}
+#screen-location .lc-wrap{
+  position:relative; isolation:isolate;
+  background:
+    radial-gradient(circle at 50% 32%,rgba(25,195,125,.12),transparent 36%),
+    linear-gradient(180deg,rgba(3,27,23,.88),rgba(3,27,23,.98)),
+    url('../assets/reference-ui/mosque-hero.png') center top/cover no-repeat!important;
+}
+#screen-location .lc-wrap::before{
+  content:''; position:absolute; inset:0; z-index:-1; pointer-events:none;
+  background:linear-gradient(180deg,rgba(2,25,21,.2) 0%,rgba(2,25,21,.70) 38%,#031b17 72%);
+}
+#screen-location .lc-header{
+  background:transparent!important; padding:18px 22px 8px!important;
+  min-height:128px!important; overflow:visible!important;
+}
+#screen-location .lc-tile,#screen-location .lc-ov{display:none!important;}
+#screen-location .lc-back{
+  min-height:42px!important; padding:0 14px!important; border:1px solid var(--itw-line)!important;
+  border-radius:15px!important; color:var(--itw-muted)!important;
+  background:rgba(6,41,34,.62)!important; backdrop-filter:blur(16px);
+  font-size:12px!important;font-weight:700!important;
+}
+#screen-location .lc-title{
+  margin-top:14px!important; margin-bottom:4px!important;
+  font-family:Georgia,'Times New Roman',serif!important; font-size:34px!important;
+  line-height:1!important; color:#fff!important; letter-spacing:-.8px!important;
+}
+#screen-location .lc-subtitle{font-size:12px!important;color:var(--itw-muted)!important;}
+#screen-location .lc-divider{margin-top:12px!important;background:linear-gradient(90deg,var(--itw-green),rgba(101,218,176,.05))!important;}
+#screen-location .lc-body{padding:6px 22px 10px!important;align-items:stretch!important;overflow-y:auto!important;}
+#screen-location .lc-icon-wrap{
+  position:relative!important; width:100%!important; height:min(36vh,330px)!important;
+  margin:2px auto 14px!important; border-radius:26px!important; overflow:hidden!important;
+  display:grid!important; place-items:center!important;
+  background:
+    radial-gradient(circle at 50% 57%,rgba(25,195,125,.30) 0 9%,transparent 10%),
+    radial-gradient(circle at 50% 57%,transparent 0 19%,rgba(101,218,176,.22) 20% 20.8%,transparent 21.3%),
+    radial-gradient(circle at 50% 57%,transparent 0 32%,rgba(25,195,125,.13) 33% 33.5%,transparent 34%),
+    linear-gradient(180deg,rgba(0,0,0,.05),rgba(3,27,23,.42)),
+    url('../assets/reference-ui/mosque-hero.png') center 55%/cover no-repeat!important;
+  border:1px solid var(--itw-line)!important; box-shadow:var(--itw-glow)!important;
+}
+#screen-location .lc-icon-wrap::before{
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background:
+    linear-gradient(118deg,transparent 0 43%,rgba(101,218,176,.36) 43.4% 44%,transparent 44.5% 100%),
+    linear-gradient(25deg,transparent 0 51%,rgba(25,195,125,.26) 51.5% 52%,transparent 52.5% 100%);
+  opacity:.7;
+}
+#screen-location .lc-ring-outer{
+  position:relative!important; width:128px!important;height:128px!important;border-radius:50%!important;
+  display:grid!important;place-items:center!important;
+  background:rgba(6,51,41,.72)!important;border:1px solid rgba(101,218,176,.50)!important;
+  box-shadow:0 0 0 16px rgba(25,195,125,.06),0 0 34px rgba(25,195,125,.28)!important;
+}
+#screen-location .lc-ring-inner{
+  width:92px!important;height:92px!important;border-radius:50%!important;
+  display:grid!important;place-items:center!important;
+  background:linear-gradient(145deg,#0d855d,#19c37d)!important;
+  border:1px solid rgba(255,255,255,.42)!important;
+  box-shadow:0 10px 25px rgba(0,0,0,.28),0 0 28px rgba(25,195,125,.42)!important;
+}
+#screen-location .lc-icon-core{font-size:40px!important;filter:drop-shadow(0 4px 9px rgba(0,0,0,.35));}
+#screen-location .lc-heading{
+  text-align:center!important;color:#fff!important;font-size:20px!important;font-weight:800!important;
+  margin:2px auto 6px!important;
+}
+#screen-location .lc-desc{
+  max-width:330px!important;margin:0 auto 16px!important;text-align:center!important;
+  color:var(--itw-muted)!important;font-size:12px!important;line-height:1.55!important;
+}
+#screen-location .lc-features{gap:9px!important;margin-bottom:8px!important;}
+#screen-location .lc-feat{
+  min-height:62px!important;padding:10px 13px!important;border-radius:17px!important;
+  background:linear-gradient(135deg,rgba(12,59,48,.76),rgba(7,40,33,.86))!important;
+  border:1px solid var(--itw-line)!important; box-shadow:0 8px 18px rgba(0,0,0,.14)!important;
+}
+#screen-location .lc-feat-ic{
+  width:40px;height:40px;display:grid;place-items:center;border-radius:13px;
+  background:rgba(25,195,125,.12);border:1px solid rgba(101,218,176,.24);font-size:19px!important;
+}
+#screen-location .lc-feat-txt{color:#eefcf5!important;font-size:13px!important;font-weight:700!important;}
+#screen-location .lc-footer{
+  padding:10px 22px max(20px,env(safe-area-inset-bottom))!important;
+  background:linear-gradient(180deg,transparent,rgba(3,27,23,.98) 24%)!important;
+}
+#screen-location .lc-btn-main{
+  min-height:58px!important;border-radius:19px!important;
+  background:linear-gradient(135deg,#0b8d60,#19c37d 60%,#45e6a5)!important;
+  box-shadow:0 10px 28px rgba(25,195,125,.28),inset 0 1px rgba(255,255,255,.25)!important;
+  font-size:14px!important;font-weight:800!important;
+}
+#screen-location .lc-btn-skip{color:rgba(237,252,244,.72)!important;font-size:12px!important;}
+#screen-location .lc-gps-error{background:#341915!important;color:#ffd8cf!important;border-color:#8d3f31!important;}
+
+/* ---------- Prayer / reminders ---------- */
+#screen-prayer{background:var(--itw-deep)!important;color:var(--itw-ink)!important;}
+#screen-prayer .q-header{
+  min-height:318px!important;
+  background:#05211b!important;
+}
+#screen-prayer .q-header::after{
+  background:linear-gradient(90deg,rgba(3,27,23,.92) 0%,rgba(3,27,23,.58) 48%,rgba(3,27,23,.06) 100%)!important;
+}
+#screen-prayer .q-header>*:not(.q-header-photo){color:#fff!important;}
+#screen-prayer .q-back-btn,#screen-prayer .pm-hdr-greg,#screen-prayer .pm-hdr-hijri,#screen-prayer .pm-hdr-quote{color:rgba(245,255,249,.86)!important;}
+#screen-prayer .q-title-main{color:#fff!important;text-shadow:0 3px 16px rgba(0,0,0,.35);}
+#screen-prayer .q-title-sub{color:rgba(244,255,249,.82)!important;}
+#screen-prayer .pm-content{background:linear-gradient(180deg,#031b17,#05231e)!important;color:#fff!important;padding:10px 16px 96px!important;}
+#screen-prayer .pm-banner{
+  background:linear-gradient(135deg,rgba(8,70,54,.95),rgba(5,43,35,.94))!important;
+  border:1px solid rgba(101,218,176,.42)!important;border-radius:22px!important;
+  box-shadow:var(--itw-glow)!important;padding:16px!important;
+}
+#screen-prayer .pm-banner-label{color:#8aebc4!important;font-size:10px!important;}
+#screen-prayer .pm-banner-name{color:#fff!important;font-size:28px!important;}
+#screen-prayer .pm-banner-bigtime{color:#fff!important;font-size:38px!important;}
+#screen-prayer .pm-banner-cd{color:#55e2a8!important;}
+#screen-prayer .pm-banner-track{height:5px!important;background:rgba(255,255,255,.12)!important;}
+#screen-prayer .pm-banner-fill{background:linear-gradient(90deg,#0d9c68,#35dda0,#c8f7df)!important;}
+#screen-prayer .pm-banner-foot{color:rgba(240,255,248,.72)!important;font-size:10px!important;}
+#screen-prayer .pm-section-lbl{
+  color:#57e4ad!important;font-size:10px!important;letter-spacing:1.6px!important;
+  margin:16px 2px 9px!important;
+}
+#screen-prayer .pm-notif-mode-row{display:grid!important;grid-template-columns:1fr 1fr!important;gap:9px!important;}
+#screen-prayer .pm-notif-mode-btn{
+  min-height:54px!important;border-radius:16px!important;border:1px solid rgba(101,218,176,.24)!important;
+  background:rgba(9,48,39,.82)!important;color:#eafaf2!important;
+  font-size:12px!important;font-weight:700!important;opacity:1!important;
+}
+#screen-prayer .pm-notif-mode-btn.pm-timing-btn--on{
+  color:#fff!important;background:linear-gradient(135deg,#0b8b5f,#0f704f)!important;
+  border-color:#51e5ad!important;box-shadow:0 0 0 1px rgba(81,229,173,.22),0 0 20px rgba(25,195,125,.18)!important;
+}
+#screen-prayer .pm-timing-list{display:flex!important;flex-direction:column!important;gap:8px!important;}
+#screen-prayer .pm-timing-row{
+  display:grid!important;grid-template-columns:minmax(108px,1.25fr) minmax(225px,2fr)!important;
+  gap:10px!important;align-items:center!important;min-height:64px!important;
+  padding:8px 10px!important;border-radius:17px!important;
+  background:rgba(7,43,35,.76)!important;border:1px solid rgba(101,218,176,.18)!important;
+}
+#screen-prayer .pm-timing-name{color:#f5fff9!important;font-size:13px!important;font-weight:800!important;}
+#screen-prayer .pm-timing-row .pm-timing-btns{
+  display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:7px!important;
+}
+#screen-prayer .pm-timing-row .pm-timing-btn{
+  min-width:0!important;min-height:46px!important;padding:6px 4px!important;border-radius:13px!important;
+  background:#0a342b!important;border:1px solid rgba(128,235,195,.28)!important;
+  color:#e8f8f0!important;font-size:10.5px!important;font-weight:800!important;
+  opacity:1!important;text-shadow:none!important;
+}
+#screen-prayer .pm-timing-row .pm-timing-btn.pm-timing-btn--on{
+  color:#fff!important;background:linear-gradient(145deg,#0f9d69,#08764f)!important;
+  border-color:#65dab0!important;box-shadow:0 0 0 1px rgba(101,218,176,.40),0 0 16px rgba(25,195,125,.35)!important;
+}
+#screen-prayer .pm-toggle-row,#screen-prayer .pm-card{
+  background:rgba(7,43,35,.78)!important;border-color:rgba(101,218,176,.18)!important;color:#fff!important;
+}
+#screen-prayer .pm-toggle-info b,#screen-prayer .pm-toggle-info span{color:inherit!important;}
+
+/* ---------- Quran reader / audio ---------- */
+#screen-quran{background:var(--itw-deep)!important;color:#fff!important;}
+#screen-quran .q-rdr-hdr{
+  min-height:600px!important;padding:18px 18px 16px!important;
+  background:
+    linear-gradient(180deg,rgba(3,27,23,.12),rgba(3,27,23,.70) 34%,#031b17 74%),
+    url('../assets/reference-ui/mosque-hero.png') center top/cover no-repeat!important;
+}
+#screen-quran .q-rdr-hdr::after{
+  background:linear-gradient(180deg,rgba(3,27,23,.04),rgba(3,27,23,.72) 55%,#031b17 100%)!important;
+}
+#screen-quran .q-nav-row{min-height:52px!important;margin-bottom:18px!important;}
+#screen-quran .q-back-btn{color:#f4fff9!important;font-size:13px!important;font-weight:700!important;}
+#screen-quran .q-translit-toggle{
+  width:52px!important;height:52px!important;border-radius:15px!important;color:#fff!important;
+  background:linear-gradient(145deg,#0b8259,#0c6045)!important;border:1px solid #55dfaa!important;
+  box-shadow:0 0 20px rgba(25,195,125,.16)!important;
+}
+#screen-quran .q-sura-title-card{
+  margin:0 0 16px!important;padding:20px 16px!important;border-radius:22px!important;
+  background:rgba(6,43,35,.82)!important;border:1px solid rgba(101,218,176,.30)!important;
+  box-shadow:var(--itw-glow)!important;backdrop-filter:blur(12px);
+}
+#screen-quran .q-sura-title-ar{color:#fff!important;font-size:30px!important;}
+#screen-quran .q-sura-title-uz{color:#fff!important;font-size:18px!important;}
+#screen-quran .q-sura-badge{
+  color:#a6efd2!important;background:rgba(25,195,125,.10)!important;border:1px solid rgba(101,218,176,.22)!important;
+}
+#screen-quran .q-audio-card{
+  margin:0!important;padding:18px!important;border-radius:24px!important;
+  background:linear-gradient(145deg,rgba(7,54,43,.94),rgba(5,36,30,.96))!important;
+  border:1px solid rgba(101,218,176,.38)!important;box-shadow:var(--itw-glow)!important;
+}
+#screen-quran .q-audio-avatar{
+  width:48px!important;height:48px!important;border-radius:15px!important;
+  background:linear-gradient(145deg,#0d895e,#0b5942)!important;color:#fff!important;
+  box-shadow:0 0 18px rgba(25,195,125,.18)!important;
+}
+#screen-quran .q-audio-name{color:#fff!important;font-size:13px!important;}
+#screen-quran .q-audio-quality{color:#a8e8cf!important;font-size:10px!important;}
+#screen-quran .quran-wave-bar{background:#5be0ae!important;}
+#screen-quran .q-audio-progress{
+  height:6px!important;margin:16px 0 7px!important;background:rgba(255,255,255,.13)!important;border-radius:999px!important;
+}
+#screen-quran .q-audio-progress-fill{background:linear-gradient(90deg,#16b879,#65dab0,#e7fff3)!important;border-radius:999px!important;}
+#screen-quran .q-audio-time-row{color:rgba(241,255,248,.82)!important;font-size:10px!important;}
+#screen-quran .q-audio-repeat{color:#e8fff4!important;filter:none!important;opacity:.85!important;}
+#screen-quran .q-audio-btns{gap:15px!important;margin-top:6px!important;}
+#screen-quran .q-audio-btn{
+  width:44px!important;height:44px!important;border:1px solid rgba(101,218,176,.20)!important;
+  background:rgba(5,37,30,.84)!important;color:#effff7!important;filter:none!important;
+  box-shadow:none!important;font-family:Arial,sans-serif!important;font-size:19px!important;
+}
+#screen-quran .q-audio-play{
+  width:66px!important;height:66px!important;border:1px solid #66e8b5!important;
+  background:linear-gradient(145deg,#0f9d69,#087b53)!important;color:#fff!important;
+  box-shadow:0 0 0 7px rgba(25,195,125,.08),0 0 28px rgba(25,195,125,.30)!important;
+  font-family:Arial,sans-serif!important;font-size:24px!important;
+}
+#screen-quran .q-audio-play span{color:#fff!important;filter:none!important;font-family:Arial,sans-serif!important;}
+#screen-quran .quran-reader-body{
+  background:linear-gradient(180deg,#031b17,#05231e)!important;padding:10px 16px 110px!important;color:#fff!important;
+}
+#screen-quran .q-ayah-card,#screen-quran .quran-ayah-card{
+  background:rgba(7,43,35,.78)!important;border:1px solid rgba(101,218,176,.18)!important;color:#fff!important;
+}
+#screen-quran .quran-ayah-ar,#screen-quran .q-ayah-ar{color:#fff!important;}
+#screen-quran .quran-ayah-trans,#screen-quran .q-ayah-tr{color:rgba(239,253,246,.82)!important;}
+#screen-quran .quran-source-note{
+  color:#dff8ed!important;background:rgba(7,43,35,.72)!important;border-color:rgba(101,218,176,.18)!important;
+}
+
+@media (max-width:390px){
+  #screen-prayer .pm-timing-row{grid-template-columns:96px 1fr!important;gap:7px!important;}
+  #screen-prayer .pm-timing-row .pm-timing-btn{font-size:9.5px!important;}
+  #screen-location .lc-icon-wrap{height:280px!important;}
+}
