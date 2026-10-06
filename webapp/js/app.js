@@ -82,7 +82,22 @@
         <span class="app-nav-label">${label}</span>
       </button>`;
     }).join('');
-    nav.querySelectorAll('.app-nav-item').forEach(btn => btn.addEventListener('click', () => _openPrimary(btn.dataset.screen)));
+    nav.querySelectorAll('.app-nav-item').forEach(btn => {
+      let lastPointerOpen = 0;
+      btn.addEventListener('pointerup', (event) => {
+        if (event.pointerType && event.pointerType !== 'touch' && event.pointerType !== 'pen') return;
+        event.preventDefault();
+        lastPointerOpen = Date.now();
+        _openPrimary(btn.dataset.screen);
+      }, { passive:false });
+      btn.addEventListener('click', (event) => {
+        if (Date.now() - lastPointerOpen < 650) {
+          event.preventDefault();
+          return;
+        }
+        _openPrimary(btn.dataset.screen);
+      });
+    });
   }
 
   function _openPrimary(screenId) {
@@ -97,7 +112,10 @@
       if (screenId === 'screen-settings') SettingsScreen.load(lang);
     } catch (e) { console.warn('primary navigation load failed:', e); }
     navigate(screenId);
-    try { tg?.HapticFeedback?.selectionChanged(); } catch (_) {}
+    try {
+      if (window.IslamHaptics?.light) window.IslamHaptics.light();
+      else tg?.HapticFeedback?.selectionChanged();
+    } catch (_) {}
   }
 
   function _updateBottomNav(screenId) {

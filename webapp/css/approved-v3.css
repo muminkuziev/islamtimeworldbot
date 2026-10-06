@@ -254,3 +254,23 @@
   #screen-prayer .pm-timing-row .pm-timing-btn{font-size:9.5px!important;}
   #screen-location .lc-icon-wrap{height:280px!important;}
 }
+
+
+/* Native/WebView touch reliability */
+button, [role="button"], a, .app-nav-item {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.app-bottom-nav, .app-bottom-nav .app-nav-item {
+  pointer-events: auto;
+}
+.app-nav-item {
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: pointer;
+}
+.app-nav-item:active,
+button:active,
+[role="button"]:active {
+  transform: scale(.985);
+}
