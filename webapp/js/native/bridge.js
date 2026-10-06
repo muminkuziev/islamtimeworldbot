@@ -271,7 +271,13 @@
   };
 
   /* ── Boot ────────────────────────────────────────────────── */
-  document.addEventListener('DOMContentLoaded', () => _initPush());
+  // Do not auto-register FCM unless Firebase is configured in the native build.
+  // A build without google-services.json otherwise crashes inside FirebaseMessaging.getInstance().
+  // Local prayer notifications and Adhan remain fully functional without Firebase.
+  const PUSH_BOOT_ENABLED = false;
+  if (PUSH_BOOT_ENABLED) {
+    document.addEventListener('DOMContentLoaded', () => _initPush());
+  }
 
   console.log('[Native] Bridge loaded — platform:', Cap.getPlatform?.());
 
