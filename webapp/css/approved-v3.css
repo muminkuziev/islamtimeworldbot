@@ -274,3 +274,213 @@ button:active,
 [role="button"]:active {
   transform: scale(.985);
 }
+
+
+/* ===== 2026-10-06 screenshot QA: Duas + Dhikr + Prayer consistency ===== */
+
+/* DUAS — keep the whole screen in the approved emerald system */
+#screen-duas{
+  background:linear-gradient(180deg,#031b17 0%,#05231e 100%)!important;
+  color:#f4fff9!important;
+}
+#screen-duas .du-hdr{
+  min-height:342px!important;
+  padding:16px 18px 18px!important;
+  border-radius:0 0 28px 28px!important;
+  background:#031b17!important;
+}
+#screen-duas .nm-tile-bg{
+  position:absolute!important; inset:0!important;
+  background:url('../assets/landing/hero-bg.webp') center 46%/cover no-repeat!important;
+  opacity:1!important;
+}
+#screen-duas .nm-tile-ov{
+  position:absolute!important; inset:0!important;
+  background:linear-gradient(180deg,rgba(3,27,23,.34) 0%,rgba(3,27,23,.68) 58%,rgba(3,27,23,.96) 100%)!important;
+}
+#screen-duas .du-hdr-inner{position:relative!important;z-index:2!important;}
+#screen-duas .du-nav-row{margin-bottom:20px!important;}
+#screen-duas .du-back{
+  min-height:42px!important;padding:0 12px!important;border-radius:14px!important;
+  border:1px solid rgba(101,218,176,.24)!important;background:rgba(3,27,23,.44)!important;
+  color:#effff7!important;font-size:12px!important;font-weight:750!important;
+  backdrop-filter:blur(12px);
+}
+#screen-duas .du-lang-badge{
+  min-height:38px!important;display:flex!important;align-items:center!important;
+  background:rgba(3,27,23,.54)!important;border:1px solid rgba(101,218,176,.26)!important;
+  color:#eafff5!important;font-size:10px!important;padding:0 14px!important;
+  backdrop-filter:blur(12px);
+}
+#screen-duas .du-title{
+  font-family:Georgia,'Times New Roman',serif!important;
+  color:#fff!important;font-size:34px!important;line-height:1!important;
+  margin-bottom:9px!important;text-shadow:0 3px 18px rgba(0,0,0,.34);
+}
+#screen-duas .du-ar-sub{color:#d8b96a!important;font-size:16px!important;margin-bottom:10px!important;}
+#screen-duas .section-quran-verse{
+  color:#f3fff9!important;text-shadow:0 2px 12px rgba(0,0,0,.5)!important;
+  margin:0 0 12px!important;
+}
+#screen-duas .section-quran-verse .verified-verse-copy,
+#screen-duas .section-quran-verse small{color:#e8fff4!important;opacity:.96!important;}
+#screen-duas .du-search-wrap{
+  min-height:54px!important;border-radius:17px!important;padding:0 15px!important;margin:0 0 11px!important;
+  background:rgba(5,42,34,.82)!important;border:1px solid rgba(101,218,176,.28)!important;
+  box-shadow:0 9px 24px rgba(0,0,0,.20)!important;backdrop-filter:blur(14px);
+}
+#screen-duas .du-search-in{
+  color:#fff!important;font-size:13px!important;min-height:50px!important;
+}
+#screen-duas .du-search-in::placeholder{color:rgba(234,255,245,.58)!important;}
+#screen-duas .du-search-clr{color:#b8ead5!important;}
+#screen-duas .du-divider{background:rgba(101,218,176,.18)!important;margin-bottom:10px!important;}
+#screen-duas .du-tabs{
+  padding:4px!important;border-radius:16px!important;gap:5px!important;
+  background:rgba(4,37,30,.82)!important;border:1px solid rgba(101,218,176,.22)!important;
+  box-shadow:0 8px 24px rgba(0,0,0,.18)!important;
+}
+#screen-duas .du-tab{
+  min-height:46px!important;border:0!important;border-radius:12px!important;
+  background:transparent!important;color:rgba(237,255,246,.68)!important;
+  font-size:11px!important;font-weight:800!important;
+}
+#screen-duas .du-tab.active{
+  background:linear-gradient(135deg,#0b8e61,#14a873)!important;color:#fff!important;
+  box-shadow:0 6px 16px rgba(25,195,125,.22)!important;
+}
+#screen-duas .du-body{
+  background:linear-gradient(180deg,#031b17,#05231e)!important;
+  padding:14px 14px 110px!important;
+}
+#screen-duas .du-cat-grid{gap:10px!important;}
+#screen-duas .du-cat-card,
+#screen-duas .du-card,
+#screen-duas .du-detail-box{
+  background:linear-gradient(145deg,rgba(8,49,40,.94),rgba(5,38,31,.94))!important;
+  border:1px solid rgba(101,218,176,.22)!important;
+  box-shadow:0 10px 24px rgba(0,0,0,.18)!important;
+}
+#screen-duas .du-cat-card{min-height:122px!important;padding:17px 16px!important;}
+#screen-duas .du-cat-name,#screen-duas .du-card-ar,#screen-duas .du-detail-ar{color:#fff!important;}
+#screen-duas .du-cat-ar,#screen-duas .du-card-src,#screen-duas .du-detail-manba-val{color:#65dab0!important;}
+#screen-duas .du-cat-cnt,#screen-duas .du-sec-lbl,#screen-duas .du-detail-manba-lbl{color:rgba(231,249,241,.66)!important;}
+#screen-duas .du-card-uz,#screen-duas .du-detail-uz{color:rgba(239,253,246,.82)!important;}
+#screen-duas .du-card-translit,#screen-duas .du-detail-translit{color:#9ae8c8!important;background:rgba(25,195,125,.08)!important;}
+#screen-duas .du-detail-ar{background:rgba(255,255,255,.035)!important;}
+#screen-duas .du-detail-manba{background:rgba(255,255,255,.035)!important;border-color:rgba(101,218,176,.15)!important;}
+
+/* DHIKR — fix header overlap, weak contrast and mismatched action controls */
+#screen-dhikr{
+  background:linear-gradient(180deg,#031b17 0%,#05231e 100%)!important;color:#f4fff9!important;
+}
+#screen-dhikr .zk-hdr{
+  min-height:250px!important;border-radius:0 0 28px 28px!important;overflow:hidden!important;
+}
+#screen-dhikr .zk-hdr-photo{object-position:center 48%!important;}
+#screen-dhikr .zk-hdr-ov{
+  position:absolute!important;inset:0!important;
+  background:linear-gradient(180deg,rgba(3,27,23,.38) 0%,rgba(3,27,23,.63) 55%,rgba(3,27,23,.96) 100%)!important;
+}
+#screen-dhikr .zk-hdr-cnt{padding:18px 18px 20px!important;position:relative!important;z-index:3!important;}
+#screen-dhikr .zk-hdr-top{min-height:46px!important;margin-bottom:18px!important;align-items:center!important;}
+#screen-dhikr .zk-back{
+  min-height:42px!important;padding:0 13px!important;border-radius:14px!important;
+  background:rgba(3,27,23,.48)!important;border:1px solid rgba(101,218,176,.24)!important;
+  color:#f3fff9!important;font-size:12px!important;font-weight:750!important;
+  backdrop-filter:blur(12px);
+}
+#screen-dhikr .zk-h-title{
+  font-family:Georgia,'Times New Roman',serif!important;font-size:32px!important;
+  line-height:1.05!important;color:#fff!important;margin:0 0 8px!important;
+  text-shadow:0 3px 18px rgba(0,0,0,.38);
+}
+#screen-dhikr .zk-h-ar{color:#d8b96a!important;font-size:16px!important;margin-bottom:7px!important;}
+#screen-dhikr .zk-hdr .section-quran-verse,
+#screen-dhikr .zk-hdr .section-quran-verse .verified-verse-copy,
+#screen-dhikr .zk-hdr .section-quran-verse small{
+  color:#f0fff7!important;opacity:.95!important;text-shadow:0 2px 12px rgba(0,0,0,.5)!important;
+}
+#screen-dhikr .zk-list-body{
+  background:linear-gradient(180deg,#031b17,#05231e)!important;padding:14px 14px 110px!important;
+}
+#screen-dhikr .zk-list-tabs{
+  padding:4px!important;background:rgba(5,42,34,.86)!important;
+  border:1px solid rgba(101,218,176,.22)!important;border-radius:16px!important;
+  box-shadow:0 8px 22px rgba(0,0,0,.16)!important;
+}
+#screen-dhikr .zk-list-tab{
+  min-height:44px!important;color:rgba(238,255,247,.70)!important;background:transparent!important;
+  border:0!important;border-radius:12px!important;font-weight:800!important;
+}
+#screen-dhikr .zk-list-tab.active{
+  color:#fff!important;background:linear-gradient(135deg,#0b8e61,#14a873)!important;
+  box-shadow:0 6px 16px rgba(25,195,125,.22)!important;
+}
+#screen-dhikr .zk-list-search{
+  min-height:54px!important;background:rgba(5,42,34,.86)!important;
+  border:1px solid rgba(101,218,176,.22)!important;border-radius:17px!important;
+  box-shadow:0 8px 22px rgba(0,0,0,.14)!important;
+}
+#screen-dhikr .zk-list-search input{color:#fff!important;font-size:13px!important;}
+#screen-dhikr .zk-list-search input::placeholder{color:rgba(236,255,246,.54)!important;}
+#screen-dhikr .zk-row{
+  min-height:106px!important;padding:14px 14px!important;margin-bottom:10px!important;
+  background:linear-gradient(145deg,rgba(8,49,40,.94),rgba(5,38,31,.94))!important;
+  border:1px solid rgba(101,218,176,.20)!important;border-radius:19px!important;
+  box-shadow:0 10px 24px rgba(0,0,0,.16)!important;
+}
+#screen-dhikr .zk-ar-row{color:#fff!important;font-size:22px!important;}
+#screen-dhikr .zk-tr-row{font-size:11px!important;font-weight:700!important;opacity:1!important;}
+#screen-dhikr .zk-sub{color:rgba(231,249,241,.62)!important;font-size:9px!important;}
+#screen-dhikr .zk-ref{color:#9ae8c8!important;}
+#screen-dhikr .zk-mini-num{font-weight:800!important;}
+#screen-dhikr .zk-row-ico{
+  width:44px!important;height:44px!important;border-radius:14px!important;
+  background:rgba(25,195,125,.10)!important;border:1px solid rgba(101,218,176,.24)!important;
+  color:#65dab0!important;box-shadow:none!important;
+}
+
+/* PRAYER — daily switch must stay inside its rail; content must be readable */
+#screen-prayer .q-title-sub,
+#screen-prayer .pm-hdr-method{color:#b8efd8!important;opacity:1!important;}
+#screen-prayer .pm-hdr-date,
+#screen-prayer .pm-hdr-quote,
+#screen-prayer .pm-hdr-quote .verified-verse-copy,
+#screen-prayer .pm-hdr-quote small{color:rgba(245,255,249,.88)!important;opacity:1!important;}
+#screen-prayer .pm-daily-wrap{margin:18px 0 14px!important;}
+#screen-prayer .pm-daily-tabs{
+  height:auto!important;min-height:58px!important;margin:0 0 10px!important;padding:5px!important;
+  display:grid!important;grid-template-columns:1fr 1fr!important;gap:6px!important;
+  border-radius:18px!important;background:rgba(255,255,255,.10)!important;
+  border:1px solid rgba(101,218,176,.18)!important;overflow:hidden!important;
+}
+#screen-prayer .pm-daily-tabs button{
+  width:100%!important;min-width:0!important;height:46px!important;min-height:46px!important;
+  margin:0!important;padding:0 10px!important;border:0!important;border-radius:13px!important;
+  background:transparent!important;color:rgba(238,255,247,.72)!important;
+  font-size:12px!important;font-weight:800!important;line-height:1!important;
+  transform:none!important;box-shadow:none!important;
+}
+#screen-prayer .pm-daily-tabs button.active{
+  background:linear-gradient(135deg,#0b8e61,#14a873)!important;color:#fff!important;
+  box-shadow:0 6px 18px rgba(25,195,125,.24)!important;
+}
+#screen-prayer .pm-daily-tabs button:active{transform:scale(.985)!important;}
+#screen-prayer .pm-daily-wrap .pm-card{
+  margin:0!important;padding:18px!important;border-radius:20px!important;
+  background:linear-gradient(145deg,rgba(8,49,40,.94),rgba(5,38,31,.96))!important;
+  border:1px solid rgba(101,218,176,.22)!important;
+  box-shadow:0 10px 24px rgba(0,0,0,.16)!important;
+}
+#screen-prayer .pm-card-label{color:#8de8c2!important;}
+#screen-prayer .pm-ayah-ar{color:#fff!important;opacity:1!important;}
+#screen-prayer .pm-ayah-translit{color:#a2ebcd!important;opacity:1!important;}
+#screen-prayer .pm-ayah-tr{color:#edfdf5!important;opacity:.94!important;}
+#screen-prayer .pm-ayah-ref{color:#65dab0!important;}
+#screen-prayer .pm-hadith-text{color:#edfdf5!important;opacity:.96!important;}
+#screen-prayer .pm-hadith-narrator{color:#8de8c2!important;}
+#screen-prayer .pm-hadith-source{color:rgba(231,249,241,.68)!important;}
+#screen-prayer .pm-daily-expand{color:#65dab0!important;}
+#screen-prayer .pm-vaqt-list{padding-top:4px!important;}
+#screen-prayer .pm-row{overflow:visible!important;}
