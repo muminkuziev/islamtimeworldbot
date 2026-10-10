@@ -74,7 +74,11 @@
       if (!node.isConnected || node.dataset.verseRequest !== requestKey || language() !== lang) return;
       const copy = document.createElement('span');
       copy.className = 'verified-verse-copy';
-      copy.textContent = compactHeaderVerse(text, providerLang);
+      // uz.sodik is published in Cyrillic; the Uzbek-Latin UI displays a
+      // script transliteration of the same provider text (never a new translation).
+      const shown = lang === 'uz' && typeof QuranScreen !== 'undefined'
+        ? QuranScreen.cyrToLat(text) : text;
+      copy.textContent = compactHeaderVerse(shown, providerLang);
       if (providerLang === 'ar') copy.dir = 'rtl';
       const source = document.createElement('small');
       source.textContent = `${reference} · ${meta.translator || edition}`;

@@ -44,7 +44,8 @@ test('legacy replaced section references are gone',()=>{
 test('section verse loader strips long provider commentary from headers',()=>{
   const code=fs.readFileSync('webapp/js/verified-content.js','utf8');
   assert.match(code,/function compactHeaderVerse/);
-  assert.match(code,/copy\.textContent = compactHeaderVerse\(text, providerLang\)/);
+  assert.match(code,/copy\.textContent = compactHeaderVerse\(shown, providerLang\)/);
+assert.match(code,/QuranScreen\.cyrToLat\(text\)/);
 });
 
 test('section Quran verse styling shows the complete ayah',()=>{

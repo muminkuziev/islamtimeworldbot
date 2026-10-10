@@ -999,5 +999,5 @@ const QuranScreen = (function () {
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
-  return { render, load };
+  return { render, load, cyrToLat: _cyrToLat };
 })();
