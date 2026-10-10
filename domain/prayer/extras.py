@@ -531,7 +531,7 @@ async def fetch_daily_ayah(lang: str = "en") -> Optional[dict]:
                 "provider": provider,
                 "edition": None,
                 "translator": None,
-                "status": "arabic_only" if language == "av" else "canonical_arabic",
+                "status": "arabic_only" if language == "av" else (source.status if language == "ar" and source else "canonical_arabic"),
                 "legal_clearance": False,
             }
 

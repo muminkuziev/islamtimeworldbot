@@ -1312,7 +1312,10 @@ const PrayerScreen = (function () {
     try {
       await fetch('/api/user/notifications', {
         method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-Init-Data': window.Telegram?.WebApp?.initData || '',
+      },
         body:    JSON.stringify({
           user_id:   userId,
           enabled:   enabled ? 1 : 0,

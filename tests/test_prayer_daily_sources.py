@@ -31,6 +31,7 @@ def install_provider(monkeypatch, language, mutate=None):
         async def __aexit__(self, *args): pass
         async def json(self, **kwargs): return {"code": 200, "data": list(reversed(rows))}
     class Session:
+        def __init__(self, *args, **kwargs): pass
         async def __aenter__(self): return self
         async def __aexit__(self, *args): pass
         def get(self, url, **kwargs):

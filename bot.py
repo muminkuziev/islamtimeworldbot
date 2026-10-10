@@ -349,7 +349,7 @@ async def cmd_dbcheck(message: types.Message):
     print(f"[CMD] RECEIVED: /dbcheck from uid={message.from_user.id}", flush=True)
     if not await _require_admin(message):
         return
-    url = (config.WEBAPP_URL or "").rstrip("/")
+    url = (config.WEBAPP_URL or "").rstrip("/").removesuffix("/app")
     if not url or url == "https://your-domain.com":
         await message.answer("❌ WEBAPP_URL sozlanmagan (.env ni tekshiring)")
         return
@@ -357,6 +357,7 @@ async def cmd_dbcheck(message: types.Message):
         async with aiohttp.ClientSession() as s:
             async with s.get(
                 f"{url}/api/admin/dbcheck?admin_id={message.from_user.id}",
+                headers={"X-Admin-API-Key": os.getenv("ADMIN_API_SECRET", "")},
                 timeout=aiohttp.ClientTimeout(total=10)
             ) as r:
                 data = await r.json()
@@ -398,7 +399,7 @@ async def cmd_testnotif(message: types.Message):
     print(f"[CMD] RECEIVED: /testnotif from uid={message.from_user.id}", flush=True)
     if not await _require_admin(message):
         return
-    url = (config.WEBAPP_URL or "").rstrip("/")
+    url = (config.WEBAPP_URL or "").rstrip("/").removesuffix("/app")
     if not url or url == "https://your-domain.com":
         await message.answer("❌ WEBAPP_URL sozlanmagan")
         return
@@ -407,6 +408,7 @@ async def cmd_testnotif(message: types.Message):
         async with aiohttp.ClientSession() as s:
             async with s.post(
                 f"{url}/api/admin/testnotif",
+                headers={"X-Admin-API-Key": os.getenv("ADMIN_API_SECRET", "")},
                 json={"admin_id": message.from_user.id},
                 timeout=aiohttp.ClientTimeout(total=15)
             ) as r:
@@ -430,7 +432,7 @@ async def cmd_testbrief(message: types.Message):
     print(f"[CMD] RECEIVED: /testbrief from uid={message.from_user.id}", flush=True)
     if not await _require_admin(message):
         return
-    url = (config.WEBAPP_URL or "").rstrip("/")
+    url = (config.WEBAPP_URL or "").rstrip("/").removesuffix("/app")
     if not url or url == "https://your-domain.com":
         await message.answer("❌ WEBAPP_URL sozlanmagan")
         return
@@ -439,6 +441,7 @@ async def cmd_testbrief(message: types.Message):
         async with aiohttp.ClientSession() as s:
             async with s.post(
                 f"{url}/api/admin/testbrief",
+                headers={"X-Admin-API-Key": os.getenv("ADMIN_API_SECRET", "")},
                 json={"admin_id": message.from_user.id},
                 timeout=aiohttp.ClientTimeout(total=20)
             ) as r:

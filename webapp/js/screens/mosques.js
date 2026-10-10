@@ -218,8 +218,12 @@ const MosquesScreen = (function () {
   async function _loadLocationFromServer() {
     if (!_userId) return null;
     try {
-      const r = await fetch(`/api/user/location?user_id=${_userId}`,
-        { signal: AbortSignal.timeout(5000) });
+      const initData = window.Telegram?.WebApp?.initData || '';
+      if (!initData) return null;
+      const r = await fetch(`/api/user/location?user_id=${_userId}`, {
+        headers: { 'X-Telegram-Init-Data': initData },
+        signal: AbortSignal.timeout(5000),
+      });
       const d = await r.json();
       if (_validCoords(d.lat, d.lon)) return d;
     } catch (_e) {}
@@ -231,7 +235,10 @@ const MosquesScreen = (function () {
     try {
       await fetch('/api/user/location', {
         method : 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Telegram-Init-Data': window.Telegram?.WebApp?.initData || '',
+        },
         body   : JSON.stringify({ user_id: _userId, lat, lon, city }),
         signal : AbortSignal.timeout(5000),
       });

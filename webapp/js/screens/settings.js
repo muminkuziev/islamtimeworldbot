@@ -399,7 +399,10 @@ const SettingsScreen = (function () {
 
       fetch('/api/user/daily-briefing', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-Init-Data': window.Telegram?.WebApp?.initData || '',
+      },
         body: JSON.stringify(payload),
       })
         .then(r => r.json())
@@ -847,7 +850,10 @@ const SettingsScreen = (function () {
     });
     fetch('/api/user/notifications', {
       method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-Init-Data': window.Telegram?.WebApp?.initData || '',
+      },
       body:    JSON.stringify({
         user_id:   uid,
         enabled:   enabled ? 1 : 0,
@@ -864,7 +870,10 @@ const SettingsScreen = (function () {
     const tzOff = -new Date().getTimezoneOffset();
     fetch('/api/user/daily-briefing', {
       method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-Init-Data': window.Telegram?.WebApp?.initData || '',
+      },
       body:    JSON.stringify({
         user_id:   uid,
         enabled:   _s.daily_briefing,

@@ -15,6 +15,10 @@ import logging
 import asyncio
 import sqlite3
 import traceback
+import hashlib
+import hmac
+import secrets
+import re
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -55,7 +59,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from dotenv import load_dotenv
 load_dotenv()
 
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qsl
 
 from fastapi import FastAPI, Query, Request
 from fastapi.responses import FileResponse, JSONResponse
@@ -66,6 +70,9 @@ from fastapi.middleware.cors import CORSMiddleware
 BASE_DIR   = Path(__file__).parent
 WEBAPP_DIR = BASE_DIR / "webapp"
 BOT_TOKEN  = os.getenv("BOT_TOKEN", "")
+# Configure an independent random secret for a header-authenticated Telegram webhook.
+WEBHOOK_SECRET = os.getenv("TELEGRAM_WEBHOOK_SECRET", "")
+ADMIN_API_SECRET = os.getenv("ADMIN_API_SECRET", "")
 
 # WEBAPP_URL — shown in buttons (can be custom domain, e.g. islamtimeworld.com/app)
 WEBAPP_URL = os.getenv("WEBAPP_URL", "")
@@ -1304,11 +1311,20 @@ async def _init_bot():
     except Exception as e:
         print(f"[WARN] set_my_commands failed: {e}", flush=True)
 
-    webhook_url = f"{WEBHOOK_DOMAIN}/webhook/{BOT_TOKEN}"
-    print(f"[BOT] Webhook URL: {webhook_url[:80]}", flush=True)
+    if WEBHOOK_SECRET:
+        if not re.fullmatch(r"[A-Za-z0-9_-]{8,256}", WEBHOOK_SECRET):
+            raise ValueError("TELEGRAM_WEBHOOK_SECRET must be 8-256 URL-safe characters")
+        webhook_url = f"{WEBHOOK_DOMAIN}/webhook"
+    else:
+        webhook_url = f"{WEBHOOK_DOMAIN}/webhook/{BOT_TOKEN}"
+        print("[WARN] Legacy token-in-URL webhook active. Rotate exposed bot token and configure TELEGRAM_WEBHOOK_SECRET.", flush=True)
+    print("[BOT] Webhook configured (secret redacted)", flush=True)
     print(f"[BOT] WebApp URL:  {WEBAPP_URL}", flush=True)
     try:
-        await _bot.set_webhook(webhook_url, drop_pending_updates=False)
+        webhook_options = {"drop_pending_updates": False}
+        if WEBHOOK_SECRET:
+            webhook_options["secret_token"] = WEBHOOK_SECRET
+        await _bot.set_webhook(webhook_url, **webhook_options)
         print(f"[OK] webhook set OK", flush=True)
     except Exception as e:
         _flog.error(f"set_webhook failed: {e}", exc_info=True)
@@ -1321,7 +1337,7 @@ async def _init_bot():
         _WEBHOOK_INFO["set_at"]   = datetime.utcnow().isoformat()
         _WEBHOOK_INFO["verified"] = (wh_info.url == webhook_url)
         pending = wh_info.pending_update_count or 0
-        print(f"[OK] Webhook verified: match={_WEBHOOK_INFO['verified']} url={wh_info.url[-40:]} pending={pending}", flush=True)
+        print(f"[OK] Webhook verified: match={_WEBHOOK_INFO['verified']} pending={pending}", flush=True)
     except Exception as e:
         print(f"[WARN] Webhook verify failed: {e}", flush=True)
 
@@ -1505,42 +1521,28 @@ async def prayer_test_page():
 # ── Health check ───────────────────────────────────────────────────────────
 @app.get("/health")
 async def health():
-    uptime_s = int(time.monotonic() - _START_TIME)
-    h, r = divmod(uptime_s, 3600); m, s = divmod(r, 60)
-    # DB check
-    db_status = "ok"
-    db_users  = 0
-    try:
-        conn = sqlite3.connect(str(USERS_DB), timeout=3)
-        db_users = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
-        conn.close()
-    except Exception as e:
-        db_status = f"error: {e}"
-    return JSONResponse({
-        "status":       "ok",
-        "service":      "IslamTimeWorldBot",
-        "uptime":       f"{h}h {m}m {s}s",
-        "started_at":   _START_DT.isoformat(),
-        "db_status":    db_status,
-        "db_users":     db_users,
-        "bot_status":   "webhook_active" if _bot else "not_initialized",
-        "scheduler":    {
-            "running":   _SCHED_STATUS["running"],
-            "ticks":     _SCHED_STATUS["ticks"],
-            "last_tick": _SCHED_STATUS["last_tick"],
-            "errors":    _SCHED_STATUS["errors"],
-        },
-        "webhook": {
-            "url":      (_WEBHOOK_INFO.get("url") or "")[-60:],
-            "verified": _WEBHOOK_INFO.get("verified", False),
-            "set_at":   _WEBHOOK_INFO.get("set_at"),
-        },
-    })
+    """Public liveness only: never leak secret URLs, user counts or internals."""
+    return JSONResponse(
+        {"status": "ok", "service": "IslamTimeWorldBot"},
+        headers={"Cache-Control": "no-store"},
+    )
+
 
 # ── Telegram Bot Webhook ──────────────────────────────────────────────────
+@app.post("/webhook")
 @app.post("/webhook/{token}")
-async def telegram_webhook(token: str, request: Request):
-    if token != BOT_TOKEN:
+async def telegram_webhook(request: Request, token: str | None = None):
+    if WEBHOOK_SECRET:
+        # Reject the legacy token-in-path endpoint once a secret is configured.
+        authorized = (
+            token is None
+            and secrets.compare_digest(
+                request.headers.get("X-Telegram-Bot-Api-Secret-Token", ""), WEBHOOK_SECRET
+            )
+        )
+    else:
+        authorized = bool(token and BOT_TOKEN and secrets.compare_digest(token, BOT_TOKEN))
+    if not authorized:
         return JSONResponse({"error": "forbidden"}, status_code=403)
 
     try:
@@ -1609,9 +1611,66 @@ async def telegram_webhook(token: str, request: Request):
     return {"ok": True}
 
 
+def _verify_telegram_init_data(init_data: str, expected_user_id: int | None = None, max_age_seconds: int = 86400):
+    """Validate Telegram WebApp initData and optionally bind it to one user ID."""
+    if not BOT_TOKEN or not init_data:
+        return None
+    try:
+        pairs = dict(parse_qsl(init_data, keep_blank_values=True))
+        received_hash = pairs.pop("hash", "")
+        if not received_hash:
+            return None
+
+        auth_date_raw = pairs.get("auth_date", "")
+        auth_date = int(auth_date_raw)
+        now = int(time.time())
+        if auth_date <= 0 or auth_date > now + 60 or now - auth_date > max_age_seconds:
+            return None
+
+        data_check_string = "\n".join(f"{k}={v}" for k, v in sorted(pairs.items()))
+        secret_key = hmac.new(
+            b"WebAppData",
+            BOT_TOKEN.encode("utf-8"),
+            hashlib.sha256,
+        ).digest()
+        calculated_hash = hmac.new(
+            secret_key,
+            data_check_string.encode("utf-8"),
+            hashlib.sha256,
+        ).hexdigest()
+        if not hmac.compare_digest(calculated_hash, received_hash):
+            return None
+
+        user = {}
+        raw_user = pairs.get("user", "")
+        if raw_user:
+            user = json.loads(raw_user)
+        if expected_user_id is not None and int(user.get("id", 0)) != int(expected_user_id):
+            return None
+        return {"user": user, "auth_date": auth_date}
+    except Exception:
+        return None
+
+
+def _telegram_request_is_authorized(request: Request, expected_user_id: int) -> bool:
+    init_data = request.headers.get("X-Telegram-Init-Data", "")
+    return _verify_telegram_init_data(init_data, expected_user_id) is not None
+
+
+def _admin_rest_authorized(request: Request, admin_id: int) -> bool:
+    if not admin_id or admin_id not in ADMIN_IDS:
+        return False
+    if _telegram_request_is_authorized(request, admin_id):
+        return True
+    supplied = request.headers.get("X-Admin-API-Key", "")
+    return bool(ADMIN_API_SECRET and supplied and secrets.compare_digest(supplied, ADMIN_API_SECRET))
+
+
 # ── User Location API ─────────────────────────────────────────────────────
 @app.get("/api/user/location")
-async def api_get_user_location(user_id: int = Query(...)):
+async def api_get_user_location(request: Request, user_id: int = Query(...)):
+    if not _telegram_request_is_authorized(request, user_id):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
     try:
         conn = sqlite3.connect(str(USERS_DB))
         row = conn.execute(
@@ -1637,7 +1696,11 @@ async def api_save_user_location(request: Request):
         city    = str(data.get("city", ""))
         if not user_id:
             return {"ok": False, "error": "missing user_id"}
-        print(f"[LOC] user_id={user_id} lat={lat:.4f} lon={lon:.4f} city={city}", flush=True)
+        if not _telegram_request_is_authorized(request, user_id):
+            return JSONResponse({"error": "unauthorized"}, status_code=401)
+        if not (-90 <= lat <= 90 and -180 <= lon <= 180):
+            return JSONResponse({"error": "invalid coordinates"}, status_code=400)
+        print("[LOC] Authenticated user's location updated", flush=True)
         conn = sqlite3.connect(str(USERS_DB))
         conn.execute("""
             INSERT INTO users (user_id, joined_at, last_active, last_lat, last_lon, last_city)
@@ -1651,9 +1714,9 @@ async def api_save_user_location(request: Request):
         conn.commit()
         conn.close()
         return {"ok": True}
-    except Exception as e:
-        print(f"[WARN] api_save_user_location: {e}", flush=True)
-        return {"ok": False, "error": str(e)}
+    except Exception:
+        print("[WARN] api_save_user_location failed", flush=True)
+        return JSONResponse({"error": "location_update_failed"}, status_code=500)
 
 
 # ── Nearby mosques (server-side Overpass proxy with fallback) ──────────────
@@ -1852,6 +1915,10 @@ async def api_save_notif_prefs(request: Request):
         mode      = data.get("mode") if data.get("mode") in NOTIF_MODES else "sound"
         if not user_id:
             return {"ok": False, "error": "missing user_id"}
+        if not _telegram_request_is_authorized(request, user_id):
+            return JSONResponse({"error": "unauthorized"}, status_code=401)
+        if enabled not in (0, 1) or abs(tz_offset) > 840 or len(timing) > 4096:
+            return JSONResponse({"error": "invalid preferences"}, status_code=400)
         conn = sqlite3.connect(str(USERS_DB))
         conn.execute("""
             INSERT INTO users (user_id, joined_at, last_active, notif_enabled, notif_timing, notif_tz_offset, notif_mode)
@@ -1883,6 +1950,10 @@ async def api_save_daily_briefing(request: Request):
         tz_offset = int(data.get("tz_offset", 0))
         if not user_id:
             return {"ok": False, "error": "missing user_id"}
+        if not _telegram_request_is_authorized(request, user_id):
+            return JSONResponse({"error": "unauthorized"}, status_code=401)
+        if not re.fullmatch(r"(?:[01][0-9]|2[0-3]):[0-5][0-9]", time_str) or abs(tz_offset) > 840:
+            return JSONResponse({"error": "invalid briefing preferences"}, status_code=400)
         conn = sqlite3.connect(str(USERS_DB))
         conn.execute("""
             INSERT INTO users (user_id, joined_at, last_active,
@@ -1905,8 +1976,8 @@ async def api_save_daily_briefing(request: Request):
 
 # ── Admin REST API (called by local bot.py → proxies to Render DB) ────────
 @app.get("/api/admin/dbcheck")
-async def api_admin_dbcheck(admin_id: int = Query(0)):
-    if admin_id not in ADMIN_IDS:
+async def api_admin_dbcheck(request: Request, admin_id: int = Query(0)):
+    if not _admin_rest_authorized(request, admin_id):
         return JSONResponse({"error": "forbidden"}, status_code=403)
     try:
         conn = sqlite3.connect(str(USERS_DB))
@@ -1935,7 +2006,7 @@ async def api_admin_testnotif(request: Request):
     try:
         data     = await request.json()
         admin_id = int(data.get("admin_id", 0))
-        if admin_id not in ADMIN_IDS:
+        if not _admin_rest_authorized(request, admin_id):
             return JSONResponse({"error": "forbidden"}, status_code=403)
         if not _bot_notif:
             return JSONResponse({"error": "bot_notif not initialized"}, status_code=503)
@@ -1966,7 +2037,7 @@ async def api_admin_testbrief(request: Request):
     try:
         data     = await request.json()
         admin_id = int(data.get("admin_id", 0))
-        if admin_id not in ADMIN_IDS:
+        if not _admin_rest_authorized(request, admin_id):
             return JSONResponse({"error": "forbidden"}, status_code=403)
         conn = sqlite3.connect(str(USERS_DB))
         conn.row_factory = sqlite3.Row
@@ -2630,7 +2701,7 @@ async def api_push_broadcast(request: Request):
     try:
         payload  = await request.json()
         admin_id = int(payload.get("admin_id", 0))
-        if admin_id not in ADMIN_IDS:
+        if not _admin_rest_authorized(request, admin_id):
             return JSONResponse({"error": "forbidden"}, status_code=403)
 
         title    = str(payload.get("title", "Islam Time World"))[:100]
@@ -2688,8 +2759,8 @@ async def api_push_broadcast(request: Request):
 
 # ── Android App: Device Stats (admin) ──────────────────────────────────────
 @app.get("/api/admin/app-stats")
-async def api_app_stats(admin_id: int = Query(0)):
-    if admin_id not in ADMIN_IDS:
+async def api_app_stats(request: Request, admin_id: int = Query(0)):
+    if not _admin_rest_authorized(request, admin_id):
         return JSONResponse({"error": "forbidden"}, status_code=403)
     try:
         conn  = _db_connect()
