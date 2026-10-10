@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════
-   IslamTimeWorldBot — i18n  (17 languages; 13 canonical + 4 legacy)
-   Canonical 13: ar en id ur bn fr hi fa tr ru uz de ms
+   IslamTimeWorldBot — i18n  (19 registered: 15 displayed product languages + 4 legacy)
+   Canonical source-backed 13: ar en id ur bn fr hi fa tr ru uz de ms; product additions: ce av
    Legacy (kept for existing users, not in canonical set): uz_cyr kk tg ky
    ═══════════════════════════════════════════════════════════ */
 
@@ -31,6 +31,7 @@ const LANG_META = [
 ];
 
 const CANONICAL_LANGS = LANG_META.filter(l => l.canonical).map(l => l.code);
+const PRODUCT_LANGS = LANG_META.filter(l => l.canonical || l.product).map(l => l.code); // 15 visible product languages; provider coverage varies.
 
 const RTL_LANGS = new Set(['ar','ur','fa']);
 

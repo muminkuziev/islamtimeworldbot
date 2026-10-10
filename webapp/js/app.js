@@ -188,7 +188,7 @@
   }
 
   /* ── Supported active languages — all 14 enabled ── */
-  const _ACTIVE_LANGS = new Set(['ar','en','id','ur','bn','fr','hi','fa','tr','ru','uz','de','ms','uz_cyr','kk','tg','ky']);
+  const _ACTIVE_LANGS = new Set(['ar','en','id','ur','bn','fr','hi','fa','tr','ru','uz','de','ms','uz_cyr','kk','tg','ky','ce','av']);
 
   /* ── Auto-detect language from URL param or Telegram SDK ── */
   function _detectLang() {

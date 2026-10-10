@@ -1,0 +1,98 @@
+/* IslamTimeWorld readability gate: photo text and prayer weather/AQI day/night contrast.
+   Loaded after other theme/approved layers. Does not change app geometry. */
+html[data-theme="light"] #app #screen-prayer,
+html[data-theme="light"] #app #screen-prayer .screen-inner,
+html[data-theme="light"] #app #screen-prayer .pm-content {
+  background:#f4faf7!important;
+  color:#172d27!important;
+}
+html[data-theme="dark"] #app #screen-prayer,
+html[data-theme="dark"] #app #screen-prayer .screen-inner,
+html[data-theme="dark"] #app #screen-prayer .pm-content {
+  background:#091714!important;
+  color:#eef8f4!important;
+}
+/* The weather and air quality templates still contain legacy translucent dark
+   tiles and hard-coded ink. They must be bound to the selected theme. */
+html[data-theme="light"] #app #screen-prayer .pm-content [style*="background:rgba(255,255,255" i] {
+  background:#fff!important;
+  border-color:#dce8e2!important;
+}
+html[data-theme="dark"] #app #screen-prayer .pm-content [style*="background:rgba(255,255,255" i] {
+  background:#153128!important;
+  border-color:#33584b!important;
+}
+html[data-theme="light"] #app #screen-prayer .pm-content [style*="color:rgba(22,33,43" i] {
+  color:#496459!important;
+}
+html[data-theme="dark"] #app #screen-prayer .pm-content [style*="color:rgba(22,33,43" i] {
+  color:#b6d4c7!important;
+}
+html[data-theme="dark"] #app #screen-prayer .pm-content [style*="color:#16212B" i] {
+  color:#edf8f2!important;
+}
+html[data-theme="light"] #app #screen-prayer .pm-content [style*="color:#16212B" i] {
+  color:#172c26!important;
+}
+html[data-theme="light"] #app #screen-prayer .pm-content [style*="color:#4fcfa0" i] {
+  color:#06724c!important;
+}
+html[data-theme="dark"] #app #screen-prayer .pm-content [style*="color:#16794A" i] {
+  color:#73e6ae!important;
+}
+html[data-theme="light"] #app #screen-prayer .pm-content [style*="color:#16794A" i] {
+  color:#076840!important;
+}
+html[data-theme="light"] #app #screen-prayer .pm-content .pm-section-lbl {
+  color:#426557!important;
+}
+html[data-theme="dark"] #app #screen-prayer .pm-content .pm-section-lbl {
+  color:#c2e2d3!important;
+}
+/* Prevent a white photo overlay from washing out the Names of Allah hero. */
+#app #screen-names .nm-header .nm-tile-ov {
+  background:linear-gradient(90deg,rgba(7,31,27,.94),rgba(7,31,27,.78) 60%,rgba(7,31,27,.46))!important;
+}
+#app #screen-names .nm-header .nm-title {
+  color:#fff!important;
+  text-shadow:0 2px 8px rgba(0,0,0,.55)!important;
+}
+#app #screen-names .nm-header .nm-title-ar {
+  color:#e3d7a9!important;
+  text-shadow:0 2px 7px rgba(0,0,0,.5)!important;
+}
+#app #screen-names .nm-header .section-quran-verse,
+#app #screen-names .nm-header .section-quran-verse * {
+  color:#edf9f2!important;
+  opacity:1!important;
+  text-shadow:0 1px 6px rgba(0,0,0,.75)!important;
+}
+#app #screen-names .nm-header .section-quran-verse small,
+#app #screen-names .nm-header .section-quran-verse .verse-source {
+  color:#bcead1!important;
+}
+#app #screen-names .nm-header .nm-back-btn {
+  color:#fff!important;
+  text-shadow:0 1px 6px rgba(0,0,0,.7)!important;
+}
+
+/* Keep the complete Quranic text inside the photograph hero instead of letting
+   the 3-line translation run beneath the search control on narrow phones. */
+#app #screen-names .nm-header {
+  padding-bottom:18px!important;
+}
+#app #screen-names .nm-title-wrap {
+  margin-top:25px!important;
+  margin-bottom:17px!important;
+}
+#app #screen-names .nm-header .section-quran-verse {
+  font-size:11px!important;
+  line-height:1.55!important;
+  margin-top:7px!important;
+  margin-bottom:10px!important;
+}
+#app #screen-names .nm-header .section-quran-verse small {
+  font-size:9px!important;
+  line-height:1.3!important;
+  opacity:1!important;
+}

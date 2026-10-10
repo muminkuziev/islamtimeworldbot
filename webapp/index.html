@@ -34,6 +34,7 @@
   <link rel="stylesheet" href="css/qibla-reference.css?v=20261005.5"/>
   <link rel="stylesheet" href="css/home-header.css?v=20260930.7"/>
   <link rel="stylesheet" href="css/approved-v3.css?v=20261006.2"/>
+  <link rel="stylesheet" href="css/readability-fixes.css?v=20261010.1"/>
 </head>
 <body>
 
@@ -61,7 +62,7 @@
   </div>
 
   <!-- i18n: must load before all screen modules -->
-  <script src="js/i18n.js?v=20261010.1"></script>
+  <script src="js/i18n.js?v=20261010.2"></script>
   <script src="js/caucasus-i18n.js?v=20261001.1"></script>
   <script src="js/caucasus-content.js?v=20261001.1"></script>
 
@@ -75,7 +76,7 @@
   <script src="js/hijri.js?v=20260927.1"></script>
 
   <!-- Capacitor native bridge — loaded FIRST so GPS helper is ready for all screens -->
-  <script src="js/native/bridge.js?v=20261005.2"></script>
+  <script src="js/native/bridge.js?v=20261010.1"></script>
 
   <!-- 3D Earth globe (Qibla screen): vendored Three.js + geo helpers, loaded
        before any screen module that uses them -->
@@ -94,17 +95,17 @@
   <script src="js/screens/quran.js?v=20261005.1"></script>
   <script src="js/screens/hadith.js?v=20261002.2"></script>
   <script src="js/screens/duas.js?v=20261002.2"></script>
-  <script src="js/screens/dhikr.js?v=20261002.1"></script>
+  <script src="js/screens/dhikr.js?v=20261010.1"></script>
   <script src="js/screens/calendar.js?v=20261005.2"></script>
-  <script src="js/screens/names.js?v=20261002.1"></script>
+  <script src="js/screens/names.js?v=20261010.1"></script>
   <script src="js/screens/others.js?v=20260927.1"></script>
   <script src="js/screens/shahodat.js?v=20261002.2"></script>
   <script src="js/screens/haramayn.js?v=20261002.1"></script>
-  <script src="js/screens/settings.js?v=20261010.2"></script>
+  <script src="js/screens/settings.js?v=20261010.3"></script>
   <script src="js/screens/dashboard.js?v=20261002.2"></script>
 
   <!-- App controller -->
-  <script src="js/app.js?v=20261006.1"></script>
+  <script src="js/app.js?v=20261010.2"></script>
 
   <!-- Provider architectures (Quran + Hadith) -->
   <script src="js/native/quran-provider.js?v=20261001.1"></script>

@@ -123,10 +123,23 @@ const DhikrScreen = (function () {
 
   /* ── Vibration ─────────────────────────────────────────────────────────── */
   function _vibrate(milestone) {
+    /* Native Capacitor has the most reliable vibration path on Android.
+       Telegram uses its own haptic API; navigator.vibrate is a browser fallback. */
     try {
-      if (navigator.vibrate)
-        navigator.vibrate(milestone ? [60, 40, 60] : 40);
-    } catch (_) {}
+      if (window.Capacitor?.isNativePlatform?.() && window.IslamHaptics?.vibrate) {
+        window.IslamHaptics.vibrate(!!milestone);
+        return true;
+      }
+      const tg = window.Telegram?.WebApp?.HapticFeedback;
+      if (tg?.impactOccurred && window.Telegram?.WebApp?.initData) {
+        tg.impactOccurred(milestone ? 'heavy' : 'medium');
+        return true;
+      }
+      if (typeof navigator.vibrate === 'function') {
+        return navigator.vibrate(milestone ? [60, 40, 60] : 45);
+      }
+    } catch (_) { /* Device may have disabled haptics in OS settings. */ }
+    return false;
   }
 
   /* ── Entry points ──────────────────────────────────────────────────────── */
@@ -367,7 +380,7 @@ const DhikrScreen = (function () {
         <div class="zk-ms-row">${_msHTML(_cnt, z.ms, z.t)}</div>
 
         <div class="zk-btns-row">
-          <div class="zk-toggle${_vib ? ' zk-on' : ''}" id="zk-vib">
+          <div class="zk-toggle${_vib ? ' zk-on' : ''}" id="zk-vib" role="switch" aria-checked="${_vib}" tabindex="0">
             <span class="zk-tog-ico">${_vib ? '📳' : '🔕'}</span>
             <span class="zk-tog-lbl" style="color:${_vib ? GOLD : CREAMM}">${_vib ? _T('Yoqilgan','Ёқилган','Включено','On') : _T("O'chiq","Ўчиқ","Выключено",'Off')}</span>
           </div>
@@ -398,14 +411,22 @@ const DhikrScreen = (function () {
       el.innerHTML = _listHTML(); _bindList(el);
     });
     el.querySelector('#zk-tap')?.addEventListener('click', () => _onTap(el));
-    el.querySelector('#zk-vib')?.addEventListener('click', () => { _vib = !_vib; _savePrefs(); _rerender(el); });
+    el.querySelector('#zk-vib')?.addEventListener('click', () => {
+      _vib = !_vib;
+      _savePrefs();
+      if (_vib) _vibrate(false); // immediate, observable confirmation
+      _rerender(el);
+    });
+    el.querySelector('#zk-vib')?.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.currentTarget.click(); }
+    });
     el.querySelector('#zk-snd')?.addEventListener('click', () => {
       if (!_snd) _getCtx();   /* init AudioContext on user gesture (browser policy) */
       _snd = !_snd; _savePrefs(); _rerender(el);
     });
     el.querySelector('#zk-reset')?.addEventListener('click', () => {
       _cnt = 0; _modal = null; _rerender(el);
-      window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('medium');
+      if (_vib) _vibrate(false);
     });
     el.querySelector('#zk-modal')?.addEventListener('click', () => { _modal = null; _rerender(el); });
     el.querySelector('#zk-modal-box')?.addEventListener('click', e => e.stopPropagation());
@@ -431,13 +452,11 @@ const DhikrScreen = (function () {
     if (_snd) _playSound(isMilestone);
 
     if (isMilestone) {
-      window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred?.('success');
       _modal = _cnt;
       _rerender(el);
       return;
     }
 
-    window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
     _updateRing(el);
   }
 

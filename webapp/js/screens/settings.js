@@ -127,7 +127,7 @@ const SettingsScreen = (function () {
               <button class="nm-back-btn" id="st-back">
                 ${isMain ? '← ' + _T('Menyu','Меню','Меню','Menu') : '← ' + _T('Sozlamalar','Созламалар','Настройки','Settings')}
               </button>
-              ${isMain ? '<div class="st-ver-badge"><span>v1.0.9</span></div>' : '<div></div>'}
+              ${isMain ? '<div class="st-ver-badge"><span>v1.0.10</span></div>' : '<div></div>'}
             </div>
             <div class="st-title-wrap">
               <div class="st-title">${TITLES[_view] || TITLES.main}</div>
@@ -181,7 +181,7 @@ const SettingsScreen = (function () {
       { v:'briefing',      t:_T('Kunlik briefing',       'Кунлик брифинг',         'Ежедневная сводка',         'Daily Briefing'),        s: _s.daily_briefing ? `${_T("Yoqilgan","Ёқилган","Включено","Enabled")} · ${_s.briefing_time}` : _T("O'chirilgan","Ўчирилган","Отключено","Disabled") },
       { v:'cloudsync',     t:_T('Bulut sinxronizatsiyasi','Булут синхронизацияси',  'Синхронизация с облаком',   'Cloud Sync'),            s: online ? _T("Bog'langan","Боғланган","Подключён",'Connected') : _T('Offline rejim','Офлайн режим','Режим офлайн','Offline mode') },
       { v:'contact',       t:_T('Aloqa va yordam',        'Алоқа ва ёрдам',        'Контакты и помощь',          'Contact & Support'),     s: _T('Xato, fikr, yordam','Хато, фикр, ёрдам','Ошибки, отзывы, помощь','Bugs, feedback, help') },
-      { v:'about',         t:_T('Ilova haqida',           'Илова ҳақида',           'О приложении',              'About'),                 s: `v1.0 · ${CANONICAL_LANGS.length} ${_T('til','тил','языков','languages')}` },
+      { v:'about',         t:_T('Ilova haqida',           'Илова ҳақида',           'О приложении',              'About'),                 s: `v1.0.10 · ${PRODUCT_LANGS.length} ${_T('til','тил','языков','languages')}` },
     ];
 
     return `
@@ -513,9 +513,9 @@ const SettingsScreen = (function () {
         )}</div>
         <div class="ab-hero-divider"></div>
         <div class="ab-hero-meta">
-          🌍 ${CANONICAL_LANGS.length} ${_T('til','тил','языков','languages')} &nbsp;·&nbsp;
+          🌍 ${PRODUCT_LANGS.length} ${_T('til','тил','языков','languages')} &nbsp;·&nbsp;
           📦 ${features.length} ${_T('modul','модул','модулей','modules')} &nbsp;·&nbsp;
-          v1.0.9
+          v1.0.10
         </div>
       </div>
 
@@ -534,7 +534,7 @@ const SettingsScreen = (function () {
       <!-- Stats grid ─────────────────────────── -->
       <div class="ab-stats-grid">
         <div class="ab-stat-box">
-          <div class="ab-stat-num">${CANONICAL_LANGS.length}</div>
+          <div class="ab-stat-num">${PRODUCT_LANGS.length}</div>
           <div class="ab-stat-lbl">${_T('Tillar','Тиллар','Языков','Languages')}</div>
         </div>
         <div class="ab-stat-box">

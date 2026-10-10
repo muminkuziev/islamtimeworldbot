@@ -239,6 +239,7 @@
   window.IslamHaptics = {
     light:   () => Haptics?.impact({ style: 'LIGHT'  }).catch(() => {}),
     medium:  () => Haptics?.impact({ style: 'MEDIUM' }).catch(() => {}),
+    vibrate: (milestone = false) => Haptics?.vibrate({ duration: milestone ? 110 : 45 }).catch(() => {}),
     success: () => Haptics?.notification({ type: 'SUCCESS' }).catch(() => {}),
     error:   () => Haptics?.notification({ type: 'ERROR'   }).catch(() => {}),
   };

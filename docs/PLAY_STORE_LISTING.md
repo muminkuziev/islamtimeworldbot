@@ -28,7 +28,7 @@ IslamTimeWorld brings essential daily Islamic tools together in one focused app.
 • Nearby mosque discovery
 • Haramayn LIVE access
 • Day, Night and Auto themes
-• Multilingual interface with 13 canonical languages
+• Multilingual interface with 15 interface languages (13 core plus Chechen and Avar with feature-dependent content availability)
 
 IslamTimeWorld is designed to make everyday worship tools easy to reach while
 preserving source information and clear language separation.
@@ -50,7 +50,7 @@ IslamTimeWorld kundalik ibodat uchun kerakli asosiy vositalarni bitta ilovada ja
 • Yaqin masjidlarni topish
 • Haramayn LIVE
 • Kunduzgi, tungi va avtomatik mavzu
-• 13 ta asosiy til
+• 15 ta interfeys tili (chechen va avar tillarida ayrim matnlar alohida manbalardan)
 
 IslamTimeWorld kundalik diniy vositalarni qulay va tartibli ko'rinishda taqdim etadi.
 
