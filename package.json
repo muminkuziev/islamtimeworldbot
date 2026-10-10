@@ -1,6 +1,6 @@
 {
   "name": "islamtime-world",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "Islam Time World — Android App (Capacitor)",
   "private": true,
   "dependencies": {

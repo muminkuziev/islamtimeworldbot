@@ -1,0 +1,91 @@
+/* Readable Qur'anic passages on Hadith and 99 Names hero photographs.
+   Keep verified original text intact; improve only contrast and layout. */
+
+/* Hadith hero is a bright dawn photo. Use a dedicated, opaque-enough
+   surface behind the source-backed 53:3 verse, independent of theme. */
+#app #screen-hadith .hd-hdr--photo .nm-tile-ov {
+  background:linear-gradient(180deg,rgba(4,30,29,.48) 0%,rgba(4,30,29,.36) 43%,rgba(2,25,23,.88) 100%)!important;
+}
+#app #screen-hadith .hd-hdr .section-quran-verse {
+  inset-inline:14px!important;
+  bottom:74px!important;
+  max-width:calc(100% - 28px)!important;
+  width:calc(100% - 28px)!important;
+  box-sizing:border-box!important;
+  padding:9px 12px!important;
+  background:rgba(3,33,29,.86)!important;
+  border:1px solid rgba(214,244,228,.28)!important;
+  border-radius:12px!important;
+  box-shadow:0 4px 14px rgba(0,12,12,.24)!important;
+  color:#f6fff8!important;
+  font-size:12px!important;
+  line-height:1.5!important;
+  font-weight:700!important;
+  text-align:start!important;
+  z-index:5!important;
+}
+#app #screen-hadith .hd-hdr .section-quran-verse .verified-verse-copy {
+  color:#f6fff8!important;
+  opacity:1!important;
+  text-shadow:0 1px 3px rgba(0,0,0,.8)!important;
+  overflow-wrap:anywhere;
+}
+#app #screen-hadith .hd-hdr .section-quran-verse small {
+  display:block!important;
+  color:#c7efd7!important;
+  font-size:10px!important;
+  font-weight:650!important;
+  opacity:1!important;
+  line-height:1.4!important;
+  text-shadow:0 1px 3px rgba(0,0,0,.75)!important;
+}
+#app #screen-hadith .hd-chapter-hdr {
+  color:#20634b!important;
+}
+
+/* The 20:8 translation used to end under the light photo/search seam. Make
+   the photographed region follow the entire responsive Names header. */
+#app #screen-names .nm-header {
+  min-height:0!important;
+  height:auto!important;
+}
+#app #screen-names .nm-header::before,
+#app #screen-names .nm-header .nm-tile-ov {
+  height:100%!important;
+  bottom:0!important;
+}
+#app #screen-names .nm-header .nm-tile-ov {
+  background:linear-gradient(90deg,rgba(4,27,23,.95),rgba(4,27,23,.82) 66%,rgba(4,27,23,.58))!important;
+}
+#app #screen-names .nm-header .section-quran-verse {
+  margin:8px 0 13px!important;
+  padding:9px 11px!important;
+  background:rgba(3,34,29,.77)!important;
+  border:1px solid rgba(225,250,239,.22)!important;
+  border-radius:10px!important;
+  font-size:12px!important;
+  line-height:1.5!important;
+  font-weight:700!important;
+  box-sizing:border-box!important;
+}
+#app #screen-names .nm-header .section-quran-verse .verified-verse-copy {
+  overflow-wrap:anywhere!important;
+  color:#fff!important;
+  font-weight:700!important;
+}
+#app #screen-names .nm-header .section-quran-verse small {
+  color:#c7efdb!important;
+  font-size:10px!important;
+  font-weight:650!important;
+  opacity:1!important;
+}
+@media(max-width:359px) {
+  #app #screen-hadith .hd-hdr .section-quran-verse {
+    font-size:11px!important;
+    padding:7px 9px!important;
+  }
+  #app #screen-names .nm-header .section-quran-verse {
+    font-size:11px!important;
+    padding:7px 9px!important;
+  }
+}
