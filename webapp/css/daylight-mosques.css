@@ -1,0 +1,33 @@
+/* 1.0.13: light theme must use light surfaces for prayer controls and dhikr list. */
+html[data-theme="light"] #app #screen-prayer .pm-toggle-row,
+html[data-theme="light"] #app #screen-prayer .pm-timing-row,
+html[data-theme="light"] #app #screen-prayer .pm-info-block {
+ background:#fff!important;border:1px solid #d9e7df!important;
+ box-shadow:0 3px 15px rgba(10,66,47,.055)!important;
+}
+html[data-theme="light"] #app #screen-prayer :is(.pm-toggle-label,.pm-toggle-sub,.pm-timing-name,.pm-info-val) {color:#18392d!important;opacity:1!important}
+html[data-theme="light"] #app #screen-prayer .pm-toggle-sub {color:#52695e!important}
+html[data-theme="light"] #app #screen-prayer .pm-timing-btn {background:#f1f7f4!important;color:#254d3a!important;border-color:#d4e5db!important}
+html[data-theme="light"] #app #screen-prayer .pm-timing-btn--on {background:#d7f5e8!important;color:#075f3d!important}
+html[data-theme="light"] #app #screen-dhikr .zk-screen,
+html[data-theme="light"] #app #screen-dhikr .zk-list-body {background:#f4f9f6!important;color:#162f26!important}
+html[data-theme="light"] #app #screen-dhikr :is(.zk-list-tabs,.zk-row,.zk-list-search) {background:#fff!important;border-color:#d5e5dc!important;box-shadow:0 3px 14px rgba(8,58,39,.045)!important}
+html[data-theme="light"] #app #screen-dhikr :is(.zk-info,.zk-ar-row,.zk-sub,.zk-list-hint,.zk-list-search input) {color:#25483a!important;opacity:1!important}
+html[data-theme="light"] #app #screen-dhikr .zk-tr-row {color:#11704e!important}
+html[data-theme="light"] #app #screen-dhikr .zk-row-ico {background:#e7f5ec!important;border-color:#c8e6d4!important}
+html[data-theme="light"] #app #screen-dhikr .zk-list-tab:not(.active) {color:#365d4a!important}
+html[data-theme="dark"] #app #screen-prayer .pm-toggle-row,
+html[data-theme="dark"] #app #screen-prayer .pm-timing-row,
+html[data-theme="dark"] #app #screen-dhikr .zk-row {background:#153128!important;border-color:#2e5949!important}
+html[data-theme="dark"] #app #screen-prayer :is(.pm-toggle-label,.pm-toggle-sub,.pm-timing-name),
+html[data-theme="dark"] #app #screen-dhikr :is(.zk-ar-row,.zk-info,.zk-sub) {color:#edf7f1!important;opacity:1!important}
+/* Mosque empty-state: vector icon rather than the cartoon emoji. */
+#app #screen-mosques .ms-noloc-icon.ms-modern-mosque {
+ display:flex!important;align-items:center;justify-content:center;
+ width:94px!important;height:94px!important;margin:0 auto 16px!important;
+ background:#eaf5ef!important;border:1px solid #c8e5d5!important;border-radius:25px!important;
+ box-shadow:0 10px 30px rgba(3,70,39,.07)!important;
+}
+#app #screen-mosques .ms-modern-mosque img {width:60px;height:60px;object-fit:contain;filter:invert(34%) sepia(41%) saturate(912%) hue-rotate(107deg) brightness(87%)}
+html[data-theme="dark"] #app #screen-mosques .ms-noloc-icon.ms-modern-mosque {background:#16362a!important;border-color:#326149!important}
+html[data-theme="dark"] #app #screen-mosques .ms-modern-mosque img {filter:invert(80%) sepia(32%) saturate(441%) hue-rotate(94deg)}

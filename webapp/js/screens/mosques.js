@@ -501,10 +501,10 @@ out center tags;`.trim();
     </div>`;
     if (_notFound || !_mosques.length) {
       return radiusBar + `<div class="ms-noloc">
-        <div class="ms-noloc-icon">🕌</div>
+        <div class="ms-noloc-icon ms-modern-mosque"><img src="assets/icons/tabler/mosque.svg" alt="" aria-hidden="true"></div>
         <div class="ms-noloc-title">${_T(
-          "Bu hududda masjid topilmadi",
-          "Бу ҳудудда масжид топилмади",
+          "Yaqin atrofda masjid topilmadi",
+          "Яқин атрофда масжид топилмади",
           "В этом районе мечетей нет",
           "No mosques found in this area"
         )}</div>
