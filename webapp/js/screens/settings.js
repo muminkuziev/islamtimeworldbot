@@ -127,7 +127,7 @@ const SettingsScreen = (function () {
               <button class="nm-back-btn" id="st-back">
                 ${isMain ? '← ' + _T('Menyu','Меню','Меню','Menu') : '← ' + _T('Sozlamalar','Созламалар','Настройки','Settings')}
               </button>
-              ${isMain ? '<div class="st-ver-badge"><span>v1.0 beta</span></div>' : '<div></div>'}
+              ${isMain ? '<div class="st-ver-badge"><span>v1.0.9</span></div>' : '<div></div>'}
             </div>
             <div class="st-title-wrap">
               <div class="st-title">${TITLES[_view] || TITLES.main}</div>
@@ -515,7 +515,7 @@ const SettingsScreen = (function () {
         <div class="ab-hero-meta">
           🌍 ${CANONICAL_LANGS.length} ${_T('til','тил','языков','languages')} &nbsp;·&nbsp;
           📦 ${features.length} ${_T('modul','модул','модулей','modules')} &nbsp;·&nbsp;
-          v1.0 Beta
+          v1.0.9
         </div>
       </div>
 
